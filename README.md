@@ -4,6 +4,15 @@
 
 要件定義から設計・タスク分解・実装・レビュー・検証までの開発フローを、takt のピース（YAML ワークフロー）とファセット群で自動化する。
 
+## インスパイア元
+
+本プロジェクトは以下のプロジェクトにインスパイアされている：
+
+- [Kiro](https://github.com/kirodotdev/Kiro) - Amazon による SDD ベースの AI 開発環境
+- [cc-sdd](https://github.com/gotalab/cc-sdd) - 複数の AI コーディングエージェントに対応した SDD ツール
+
+takt-sdd は cc-sdd の仕様フォーマット（`.kiro/specs/`）と互換性があるため、併用が可能。
+
 ## 概要
 
 SDD は以下のフェーズを順に実行する：
@@ -48,8 +57,14 @@ takt -w sdd -t "要件の説明"
 # Phase 1: 要件生成
 takt -w sdd-requirements -t "要件の説明"
 
+# Phase 1.5: ギャップ分析（既存コードがある場合のみ）
+takt -w sdd-validate-gap
+
 # Phase 2: 設計生成
 takt -w sdd-design
+
+# Phase 2.5: 設計レビュー
+takt -w sdd-validate-design
 
 # Phase 3: タスク生成
 takt -w sdd-tasks
