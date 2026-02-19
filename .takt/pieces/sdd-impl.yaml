@@ -221,10 +221,10 @@ movements:
           - condition: 実装失敗
 
     rules:
-      - condition: any("実装失敗")
-        next: plan
       - condition: any("担当タスク完了")
         next: merge-batch
+      - condition: any("実装失敗")
+        next: plan
       - condition: all("担当タスクなし", "担当タスクなし")
         next: plan
 
