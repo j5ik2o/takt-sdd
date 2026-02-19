@@ -13,22 +13,6 @@
 
 takt-sdd は cc-sdd の仕様フォーマット（`.kiro/specs/`）と互換性があるため、併用が可能。
 
-## 概要
-
-SDD は以下のフェーズを順に実行する：
-
-| Phase | ピース | 内容 |
-|-------|--------|------|
-| 1 | `sdd-requirements` | EARS 形式による要件ドキュメント生成 |
-| 1.5 | `sdd-validate-gap` | 要件と既存コードベースのギャップ分析 |
-| 2 | `sdd-design` | 要件に基づく技術設計と発見ログの生成 |
-| 2.5 | `sdd-validate-design` | 設計の品質レビューと GO/NO-GO 判定 |
-| 3 | `sdd-tasks` | 実装タスクリストの生成 |
-| 4 | `sdd-impl` | 適応型バッチ実装（逐次/並列ワーカー対応） |
-| 5 | `sdd-validate-impl` | アーキテクチャ・QA・実装の並列レビュー |
-
-フルオートピース `sdd` を使うと、Phase 1〜5 を自動遷移で一括実行できる。
-
 ## 特徴
 
 takt-sdd は [takt](https://github.com/nrslib/takt) のステートマシンベースのワークフロー制御により、AI エージェントの実行パスを決定論的に管理する。
@@ -60,6 +44,22 @@ npx create-takt-sdd --lang ja
 
 `.takt/` ディレクトリにピースとファセット群がインストールされる。
 既存の `.takt/` がある場合は `--force` で上書きできる。
+
+## 概要
+
+SDD は以下のフェーズを順に実行する：
+
+| Phase | ピース | 内容 |
+|-------|--------|------|
+| 1 | `sdd-requirements` | EARS 形式による要件ドキュメント生成 |
+| 1.5 | `sdd-validate-gap` | 要件と既存コードベースのギャップ分析 |
+| 2 | `sdd-design` | 要件に基づく技術設計と発見ログの生成 |
+| 2.5 | `sdd-validate-design` | 設計の品質レビューと GO/NO-GO 判定 |
+| 3 | `sdd-tasks` | 実装タスクリストの生成 |
+| 4 | `sdd-impl` | 適応型バッチ実装（逐次/並列ワーカー対応） |
+| 5 | `sdd-validate-impl` | アーキテクチャ・QA・実装の並列レビュー |
+
+フルオートピース `sdd` を使うと、Phase 1〜5 を自動遷移で一括実行できる。
 
 ## 使い方
 
@@ -97,6 +97,20 @@ takt -w sdd-impl
 # Phase 5: 実装検証
 takt -w sdd-validate-impl
 ```
+
+### 出力ファイル
+
+各フェーズの成果物は `.kiro/specs/{feature}/` に出力される。cc-sdd の仕様フォーマットと互換性がある。
+
+| Phase | ファイル | 内容 |
+|-------|----------|------|
+| 1 | `requirements.md` | EARS 形式の要件ドキュメント |
+| 1.5 | `gap-analysis.md` | 要件と既存コードベースのギャップ分析 |
+| 2 | `design.md` | 技術設計（アーキテクチャ、コンポーネント、データモデル） |
+| 2 | `research.md` | 発見ログ（調査結果と設計判断の根拠） |
+| 2.5 | `design-review.md` | 設計レビュー結果（GO/NO-GO 判定） |
+| 3 | `tasks.md` | 実装タスクリスト（実装中に進捗が更新される） |
+
 
 ## プロジェクト構造
 
