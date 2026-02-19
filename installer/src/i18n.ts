@@ -13,6 +13,9 @@ interface Messages {
   archiveError: string;
   helpText: string;
   usageExamples: string;
+  scriptsAdded: (count: number) => string;
+  scriptsSkipped: (keys: string[]) => string;
+  scriptsCreated: string;
 }
 
 const en: Messages = {
@@ -28,6 +31,11 @@ const en: Messages = {
     "Warning: takt is not installed. Install it first: https://github.com/nrslib/takt",
   tarNotFound: "Error: tar command is required.",
   archiveError: "Error: .takt/ not found in the downloaded archive.",
+  scriptsAdded: (count) =>
+    `Added ${count} npm scripts to package.json`,
+  scriptsSkipped: (keys) =>
+    `Skipped existing scripts: ${keys.join(", ")}`,
+  scriptsCreated: "Created package.json with npm scripts",
   helpText: `Usage: npx create-takt-sdd [options]
 
 Options:
@@ -40,14 +48,15 @@ Options:
   Installed to: .takt/
 
   Usage:
-    takt -w sdd -t "description of requirements"
+    npm run sdd -- "description of requirements"
 
   Run individual phases:
-    takt -w sdd-requirements -t "description of requirements"
-    takt -w sdd-design
-    takt -w sdd-tasks
-    takt -w sdd-impl
-    takt -w sdd-validate-impl`,
+    npm run sdd:requirements -- "description of requirements"
+    npm run sdd:design -- "feature={feature}"
+    npm run sdd:validate-design -- "feature={feature}"
+    npm run sdd:tasks -- "feature={feature}"
+    npm run sdd:impl -- "feature={feature}"
+    npm run sdd:validate-impl -- "feature={feature}"`,
 };
 
 const ja: Messages = {
@@ -64,6 +73,11 @@ const ja: Messages = {
   tarNotFound: "エラー: tar コマンドが必要です。",
   archiveError:
     "エラー: ダウンロードしたアーカイブに .takt/ が見つかりません。",
+  scriptsAdded: (count) =>
+    `package.json に ${count} 個の npm scripts を追加しました`,
+  scriptsSkipped: (keys) =>
+    `既存のスクリプトをスキップしました: ${keys.join(", ")}`,
+  scriptsCreated: "npm scripts 付きの package.json を作成しました",
   helpText: `使い方: npx create-takt-sdd [オプション]
 
 オプション:
@@ -76,14 +90,15 @@ const ja: Messages = {
   インストール先: .takt/
 
   使い方:
-    takt -w sdd -t "要件の説明"
+    npm run sdd -- "要件の説明"
 
   各フェーズの個別実行:
-    takt -w sdd-requirements -t "要件の説明"
-    takt -w sdd-design
-    takt -w sdd-tasks
-    takt -w sdd-impl
-    takt -w sdd-validate-impl`,
+    npm run sdd:requirements -- "要件の説明"
+    npm run sdd:design -- "feature={feature}"
+    npm run sdd:validate-design -- "feature={feature}"
+    npm run sdd:tasks -- "feature={feature}"
+    npm run sdd:impl -- "feature={feature}"
+    npm run sdd:validate-impl -- "feature={feature}"`,
 };
 
 const messages: Record<Lang, Messages> = { en, ja };

@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import type { IncomingMessage } from "node:http";
 import https from "node:https";
 import { createWriteStream } from "node:fs";
@@ -19,6 +19,19 @@ const FACET_DIRS = [
   "knowledge",
   "output-contracts",
 ];
+
+const SDD_SCRIPTS: Record<string, string> = {
+  "sdd": "takt --pipeline --skip-git --create-worktree no -w sdd -t",
+  "sdd:requirements": "takt --pipeline --skip-git --create-worktree no -w sdd-requirements -t",
+  "sdd:validate-gap": "takt --pipeline --skip-git --create-worktree no -w sdd-validate-gap -t",
+  "sdd:design": "takt --pipeline --skip-git --create-worktree no -w sdd-design -t",
+  "sdd:validate-design": "takt --pipeline --skip-git --create-worktree no -w sdd-validate-design -t",
+  "sdd:tasks": "takt --pipeline --skip-git --create-worktree no -w sdd-tasks -t",
+  "sdd:impl": "takt --pipeline --skip-git --create-worktree no -w sdd-impl -t",
+  "sdd:validate-impl": "takt --pipeline --skip-git --create-worktree no -w sdd-validate-impl -t",
+  "steering": "takt --pipeline --skip-git --create-worktree no -w steering -t",
+  "steering:custom": "takt --pipeline --skip-git --create-worktree no -w steering-custom -t",
+};
 
 export interface InstallOptions {
   lang: Lang;
@@ -163,6 +176,38 @@ export async function install(options: InstallOptions): Promise<void> {
     const gitignoreSrc = join(extractedTakt, ".gitignore");
     if (existsSync(gitignoreSrc)) {
       cpSync(gitignoreSrc, join(targetPath, ".gitignore"));
+    }
+
+    // package.json に npm scripts を追加
+    const pkgPath = join(options.cwd, "package.json");
+    if (existsSync(pkgPath)) {
+      const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+      const scripts = pkg.scripts ?? {};
+      const added: string[] = [];
+      const skipped: string[] = [];
+      for (const [key, value] of Object.entries(SDD_SCRIPTS)) {
+        if (scripts[key] !== undefined) {
+          skipped.push(key);
+        } else {
+          scripts[key] = value;
+          added.push(key);
+        }
+      }
+      pkg.scripts = scripts;
+      writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
+      if (added.length > 0) {
+        info(msg.scriptsAdded(added.length));
+      }
+      if (skipped.length > 0) {
+        warn(msg.scriptsSkipped(skipped));
+      }
+    } else {
+      const pkg = {
+        private: true,
+        scripts: { ...SDD_SCRIPTS },
+      };
+      writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
+      info(msg.scriptsCreated);
     }
 
     info(msg.complete);
