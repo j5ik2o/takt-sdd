@@ -38,10 +38,17 @@ SDD は以下のフェーズを順に実行する：
 自分のプロジェクトに SDD ワークフローを導入するには、プロジェクトルートで以下を実行する：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/j5ik2o/takt-sdd/main/install.sh | bash
+npx create-takt-sdd
+```
+
+日本語メッセージで実行する場合：
+
+```bash
+npx create-takt-sdd --lang ja
 ```
 
 `.takt/` ディレクトリにピースとファセット群がインストールされる。
+既存の `.takt/` がある場合は `--force` で上書きできる。
 
 ## 使い方
 

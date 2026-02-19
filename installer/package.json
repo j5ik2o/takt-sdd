@@ -1,0 +1,31 @@
+{
+  "name": "create-takt-sdd",
+  "version": "0.1.0",
+  "description": "Installer for takt-sdd: Spec-Driven Development workflow for takt",
+  "type": "module",
+  "bin": {
+    "create-takt-sdd": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc && node scripts/add-shebang.js",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "takt",
+    "sdd",
+    "spec-driven-development",
+    "ai",
+    "workflow"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0"
+  }
+}
