@@ -54,10 +54,10 @@ SDD は以下のフェーズを順に実行する：
 | 1 | `sdd-requirements` | EARS 形式による要件ドキュメント生成 |
 | 1.5 | `sdd-validate-gap` | 要件と既存コードベースのギャップ分析 |
 | 2 | `sdd-design` | 要件に基づく技術設計と発見ログの生成 |
-| 2.5 | `sdd-validate-design` | 設計の品質レビューと GO/NO-GO 判定 |
+| 2.5 | `sdd-validate-design` | 設計の品質レビューと GO/NO-GO 判定, NO-GO時の設計の修正も含む |
 | 3 | `sdd-tasks` | 実装タスクリストの生成 |
 | 4 | `sdd-impl` | 適応型バッチ実装（逐次/並列ワーカー対応） |
-| 5 | `sdd-validate-impl` | アーキテクチャ・QA・実装の並列レビュー |
+| 5 | `sdd-validate-impl` | アーキテクチャ・QA・実装の並列レビュー, NO-GO時の実装の修正も含む |
 
 フルオートピース `sdd` を使うと、Phase 1〜5 を自動遷移で一括実行できる。
 
