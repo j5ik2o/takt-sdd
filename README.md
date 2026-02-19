@@ -24,31 +24,41 @@ SDD は以下のフェーズを順に実行する：
 
 - [takt](https://github.com/nrslib/takt) がインストール済みであること
 
+## インストール
+
+自分のプロジェクトに SDD ワークフローを導入するには、プロジェクトルートで以下を実行する：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/j5ik2o/takt-sdd/main/install.sh | bash
+```
+
+`.takt/` ディレクトリにピースとファセット群がインストールされる。
+
 ## 使い方
 
 ### フルオート実行
 
 ```bash
-./scripts/takt.sh -w sdd -t "要件の説明"
+takt -w sdd -t "要件の説明"
 ```
 
 ### フェーズ別実行
 
 ```bash
 # Phase 1: 要件生成
-./scripts/takt.sh -w sdd-requirements -t "要件の説明"
+takt -w sdd-requirements -t "要件の説明"
 
 # Phase 2: 設計生成
-./scripts/takt.sh -w sdd-design
+takt -w sdd-design
 
 # Phase 3: タスク生成
-./scripts/takt.sh -w sdd-tasks
+takt -w sdd-tasks
 
 # Phase 4: 実装
-./scripts/takt.sh -w sdd-impl
+takt -w sdd-impl
 
 # Phase 5: 実装検証
-./scripts/takt.sh -w sdd-validate-impl
+takt -w sdd-validate-impl
 ```
 
 ## プロジェクト構造
