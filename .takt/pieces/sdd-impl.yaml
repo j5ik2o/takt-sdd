@@ -1,15 +1,91 @@
 name: sdd-impl
-description: SDD Phase 4 - タスクに基づく実装を実行する
+description: SDD Phase 4 - タスクに基づく適応型バッチ実装を実行する
 piece_config:
   provider_options:
     codex:
       network_access: true
     opencode:
       network_access: true
-max_movements: 30
+max_movements: 50
 initial_movement: plan
 
+# --- カスタムファセット セクションマップ ---
+instructions:
+  plan: ../instructions/impl-plan.md
+  implement: ../instructions/impl-execute.md
+  implement-worker: ../instructions/impl-worker.md
+  merge-batch: ../instructions/merge-batch.md
+
+# --- ループ監視 ---
+loop_monitors:
+  - cycle:
+      - plan
+      - implement
+    threshold: 5
+    judge:
+      persona: supervisor
+      instruction_template: |
+        plan と implement のバッチループが {cycle_count} 回繰り返されました。
+
+        **参照するレポート:**
+        - バッチ計画: {report:00-plan.md}
+        - 実装スコープ: {report:coder-scope.md}
+
+        **判断基準:**
+        - 各サイクルで新しいタスクが完了しているか
+        - tasks.md のチェック数が増えているか
+      rules:
+        - condition: 健全（進捗あり）
+          next: plan
+        - condition: 非生産的（改善なし）
+          next: ai_review
+
+  - cycle:
+      - plan
+      - parallel-implement
+      - merge-batch
+    threshold: 5
+    judge:
+      persona: supervisor
+      instruction_template: |
+        plan と parallel-implement のバッチループが {cycle_count} 回繰り返されました。
+
+        **参照するレポート:**
+        - バッチ計画: {report:00-plan.md}
+
+        **判断基準:**
+        - 各サイクルで新しいタスクが完了しているか
+        - tasks.md のチェック数が増えているか
+      rules:
+        - condition: 健全（進捗あり）
+          next: plan
+        - condition: 非生産的（改善なし）
+          next: ai_review
+
+  - cycle:
+      - ai_review
+      - ai_fix
+    threshold: 3
+    judge:
+      persona: supervisor
+      instruction_template: |
+        ai_review と ai_fix のループが {cycle_count} 回繰り返されました。
+
+        **参照するレポート:**
+        - AIレビュー結果: {report:04-ai-review.md}
+
+        **判断基準:**
+        - 各サイクルで新しい問題が発見・修正されているか
+        - 同じ指摘が繰り返されていないか
+      rules:
+        - condition: 健全（進捗あり）
+          next: ai_review
+        - condition: 非生産的（改善なし）
+          next: supervise
+
+# --- Movement定義 ---
 movements:
+  # ===== スケジューラー: タスク流動を見てバッチ決定 =====
   - name: plan
     edit: false
     persona: planner
@@ -27,8 +103,17 @@ movements:
         - name: 00-plan.md
           format: plan
     rules:
-      - condition: 要件が明確で実装可能
+      - condition: 未着手の並列バッチあり
+        next: parallel-implement
+      - condition: 未着手の逐次タスクあり
         next: implement
+      - condition: 全タスク完了
+        next: ai_review
+      - condition: tasks.mdが存在しない、または空
+        next: ABORT
+        appendix: |
+          tasks.md が見つからないか空です。
+          sdd-tasks ピースを先に実行してください。
       - condition: 要件が不明確、情報不足
         next: ABORT
         appendix: |
@@ -36,6 +121,7 @@ movements:
           - {質問1}
           - {質問2}
 
+  # ===== 逐次実装: バッチ内タスクのみ実装 =====
   - name: implement
     edit: true
     persona: coder
@@ -64,13 +150,99 @@ movements:
         - name: coder-decisions.md
           format: coder-decisions
     rules:
-      - condition: 実装完了
-        next: ai_review
-      - condition: 実装未着手（レポートのみ）
-        next: ai_review
+      - condition: バッチの実装完了
+        next: plan
+      - condition: 実装中に問題発生、計画の見直しが必要
+        next: plan
       - condition: 判断できない、情報不足
-        next: ai_review
+        next: plan
 
+  # ===== 並列実装: (P)タスクをワーカーで並列実行 =====
+  - name: parallel-implement
+    parallel:
+      - name: worker-1
+        edit: true
+        persona: coder
+        policy:
+          - coding
+          - testing
+        session: refresh
+        knowledge:
+          - backend
+          - architecture
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
+        required_permission_mode: edit
+        instruction: implement-worker
+        output_contracts:
+          report:
+            - name: worker-1-results.md
+              format: coder-scope
+        rules:
+          - condition: 担当タスク完了
+          - condition: 担当タスクなし
+          - condition: 実装失敗
+
+      - name: worker-2
+        edit: true
+        persona: coder
+        policy:
+          - coding
+          - testing
+        session: refresh
+        knowledge:
+          - backend
+          - architecture
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
+        required_permission_mode: edit
+        instruction: implement-worker
+        output_contracts:
+          report:
+            - name: worker-2-results.md
+              format: coder-scope
+        rules:
+          - condition: 担当タスク完了
+          - condition: 担当タスクなし
+          - condition: 実装失敗
+
+    rules:
+      - condition: any("実装失敗")
+        next: plan
+      - condition: any("担当タスク完了")
+        next: merge-batch
+      - condition: all("担当タスクなし", "担当タスクなし")
+        next: plan
+
+  # ===== バッチ結果統合: 並列ワーカーの結果をtasks.mdに反映 =====
+  - name: merge-batch
+    edit: true
+    persona: planner
+    allowed_tools:
+      - Read
+      - Glob
+      - Write
+    required_permission_mode: edit
+    instruction: merge-batch
+    rules:
+      - condition: 統合完了
+        next: plan
+
+  # ===== AIレビュー =====
   - name: ai_review
     edit: false
     persona: ai-antipattern-reviewer
@@ -94,6 +266,7 @@ movements:
       - condition: AI特有の問題あり
         next: ai_fix
 
+  # ===== AI問題修正 =====
   - name: ai_fix
     edit: true
     persona: coder
@@ -124,6 +297,7 @@ movements:
       - condition: 判断できない、情報不足
         next: supervise
 
+  # ===== 最終検証 =====
   - name: supervise
     edit: false
     persona: supervisor
@@ -149,25 +323,3 @@ movements:
         next: COMPLETE
       - condition: 要求未達成、テスト失敗、ビルドエラー
         next: plan
-
-loop_monitors:
-  - cycle:
-      - ai_review
-      - ai_fix
-    threshold: 3
-    judge:
-      persona: supervisor
-      instruction_template: |
-        ai_review と ai_fix のループが {cycle_count} 回繰り返されました。
-
-        **参照するレポート:**
-        - AIレビュー結果: {report:04-ai-review.md}
-
-        **判断基準:**
-        - 各サイクルで新しい問題が発見・修正されているか
-        - 同じ指摘が繰り返されていないか
-      rules:
-        - condition: 健全（進捗あり）
-          next: ai_review
-        - condition: 非生産的（改善なし）
-          next: supervise
