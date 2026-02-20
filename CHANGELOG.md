@@ -1,3 +1,10 @@
+## [0.5.0](https://github.com/j5ik2o/takt-sdd/compare/v0.4.0...v0.5.0) (2026-02-20)
+
+
+### Features
+
+* **scripts:** prefer local node_modules takt over global ([25c29c0](https://github.com/j5ik2o/takt-sdd/commit/25c29c021af8a3afd37baf18661b420650c0c2b2))
+
 ## [0.4.0](https://github.com/j5ik2o/takt-sdd/compare/v0.3.1...v0.4.0) (2026-02-20)
 
 
