@@ -8,104 +8,113 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![License](https://img.shields.io/badge/License-APACHE2.0-blue.svg)](https://opensource.org/licenses/apache-2-0)
 
-[takt](https://github.com/nrslib/takt) を用いた Spec-Driven Development（SDD: 仕様駆動開発）ワークフロー定義リポジトリ。
+[日本語](README.ja.md)
 
-要件定義から設計・タスク分解・実装・レビュー・検証までの開発フローを、takt のピース（YAML ワークフロー）とファセット群で自動化する。
+A Spec-Driven Development (SDD) workflow definition repository using [takt](https://github.com/nrslib/takt).
 
-takt-sdd は Kiroと互換性(`.kiro/specs/`)があるため、併用が可能。
+Automates the entire development flow — from requirements definition through design, task decomposition, implementation, review, and validation — using takt pieces (YAML workflows) and facets.
 
-## 特徴
+takt-sdd is compatible with Kiro (`.kiro/specs/`) and can be used alongside it.
 
-takt-sdd は [takt](https://github.com/nrslib/takt) のステートマシンベースのワークフロー制御により、AI エージェントの実行パスを決定論的に管理する。
+## Features
 
-- **宣言的ワークフロー制御** — AI エージェントの実行順序・遷移条件をピース（YAML）で宣言的に定義する。AI の出力自体は非決定的だが、「どのステップを、どの順序で、どの条件で遷移するか」は YAML のルールで決定論的に制御される。自由形式のチャットではなく、ステートマシンとしてワークフローが進行する。
-- **Faceted Prompting** — プロンプトを 5 つの独立した関心事（Persona / Policy / Instruction / Knowledge / Output Contract）に分離する。各ファセットは再利用・差し替え可能で、ピース間で共有できる。モノリシックなプロンプトの重複を排除し、保守性を向上させる。
-- **多段階バリデーション** — 要件・設計・実装の各フェーズにバリデーションゲートを配置する。ギャップ分析、設計レビュー（GO/NO-GO 判定）、アーキテクチャ / QA / 実装の並列レビューにより、品質問題を早期に検出し手戻りを最小化する。
-- **ループ検出と監督制御** — plan→implement、review→fix などの反復パターンを自動検出する。閾値超過時にスーパーバイザーが介入して進捗の有無を判定し、非生産的なループを自動的にエスカレーションする。
-- **適応型バッチ実装** — タスク間の依存関係を分析し、逐次実行と並列実行を自動選択する。独立したタスクは複数ワーカーで並列処理される。
-- **プロバイダ非依存** — 同じピース定義が Claude / Codex 等の異なるプロバイダで動作する。
+takt-sdd uses [takt](https://github.com/nrslib/takt)'s state-machine-based workflow control to deterministically manage AI agent execution paths.
 
-## 前提条件
+- **Declarative Workflow Control** — Define AI agent execution order and transition conditions declaratively in pieces (YAML). While AI output itself is non-deterministic, "which step, in what order, under what conditions" is deterministically controlled by YAML rules. Workflows progress as state machines, not free-form chat.
+- **Faceted Prompting** — Separate prompts into 5 independent concerns (Persona / Policy / Instruction / Knowledge / Output Contract). Each facet is reusable and swappable, shareable across pieces. Eliminates duplication of monolithic prompts and improves maintainability.
+- **Multi-stage Validation** — Place validation gates at each phase: requirements, design, and implementation. Gap analysis, design review (GO/NO-GO decisions), and parallel architecture/QA/implementation reviews detect quality issues early and minimize rework.
+- **Loop Detection and Supervisory Control** — Automatically detect repetitive patterns like plan→implement and review→fix. When thresholds are exceeded, a supervisor intervenes to assess progress and automatically escalates unproductive loops.
+- **Adaptive Batch Implementation** — Analyze inter-task dependencies and automatically choose between sequential and parallel execution. Independent tasks are processed in parallel by multiple workers.
+- **Provider Agnostic** — The same piece definitions work across different providers such as Claude and Codex.
 
-- [takt](https://github.com/nrslib/takt) がインストール済みであること
+## Prerequisites
 
-## インストール
+- [takt](https://github.com/nrslib/takt) must be installed
 
-自分のプロジェクトに SDD ワークフローを導入するには、プロジェクトルートで以下を実行する：
+## Installation
+
+To add the SDD workflow to your project, run the following in your project root:
 
 ```bash
 npx create-takt-sdd
 ```
 
-日本語メッセージで実行する場合：
+For Japanese messages:
 
 ```bash
 npx create-takt-sdd --lang ja
 ```
 
-`.takt/` ディレクトリにピースとファセット群がインストールされ、`package.json` に npm scripts が追加される。
-既存の `.takt/` がある場合は `--force` で上書きできる。既存の `package.json` がある場合は npm scripts のみマージされる（既存のスクリプトは上書きしない）。
-
-## 概要
-
-SDD は以下のフェーズを順に実行する：
-
-| Phase | ピース | 内容 |
-|-------|--------|------|
-| 1 | `sdd-requirements` | EARS 形式による要件ドキュメント生成 |
-| 1.5 | `sdd-validate-gap` | 要件と既存コードベースのギャップ分析 |
-| 2 | `sdd-design` | 要件に基づく技術設計と発見ログの生成 |
-| 2.5 | `sdd-validate-design` | 設計の品質レビューと GO/NO-GO 判定, NO-GO時の設計の修正も含む |
-| 3 | `sdd-tasks` | 実装タスクリストの生成 |
-| 4 | `sdd-impl` | 適応型バッチ実装（逐次/並列ワーカー対応） |
-| 5 | `sdd-validate-impl` | アーキテクチャ・QA・実装の並列レビュー, NO-GO時の実装の修正も含む |
-
-フルオートピース `sdd` を使うと、Phase 1〜5 を自動遷移で一括実行できる。
-
-## 使い方
-
-### フルオート実行
-
-要件定義→ギャップ分析→設計→設計検証→実装→実装検証 を一括で実行します。
+To install a specific version or the latest release:
 
 ```bash
-npm run sdd -- "要件の説明..."
+npx create-takt-sdd --tag latest
+npx create-takt-sdd --tag 0.1.2
 ```
 
-### フェーズ別実行
+Pieces and facets are installed to the `.takt/` directory, and npm scripts are added to `package.json`.
+Use `--force` to overwrite an existing `.takt/`. When `package.json` already exists, only npm scripts are merged (existing scripts are not overwritten).
 
-各フェーズのワークフローを実行した後に、人間の介入を挟むことができます。
+## Overview
+
+SDD executes the following phases in order:
+
+| Phase | Piece | Description |
+|-------|-------|-------------|
+| 1 | `sdd-requirements` | Requirements document generation in EARS format |
+| 1.5 | `sdd-validate-gap` | Gap analysis between requirements and existing codebase |
+| 2 | `sdd-design` | Technical design and discovery log generation based on requirements |
+| 2.5 | `sdd-validate-design` | Design quality review with GO/NO-GO decision, including auto-fix on NO-GO |
+| 3 | `sdd-tasks` | Implementation task list generation |
+| 4 | `sdd-impl` | Adaptive batch implementation (sequential/parallel worker support) |
+| 5 | `sdd-validate-impl` | Parallel architecture, QA, and implementation review, including auto-fix on NO-GO |
+
+Use the full-auto piece `sdd` to run Phases 1–5 in a single automated sequence.
+
+## Usage
+
+### Full-Auto Execution
+
+Run requirements → gap analysis → design → design validation → implementation → implementation validation all at once.
 
 ```bash
-# Phase 1: 要件生成
-npm run sdd:requirements -- "要件の説明..."
-# .kiro/specs/{feature} の {feature} を確認すること
+npm run sdd -- "description of requirements..."
+```
 
-# Phase 1.5: ギャップ分析（既存コードがある場合のみ）
+### Phase-by-Phase Execution
+
+Run each phase workflow individually, allowing human intervention between phases.
+
+```bash
+# Phase 1: Requirements generation
+npm run sdd:requirements -- "description of requirements..."
+# Check the {feature} name in .kiro/specs/{feature}
+
+# Phase 1.5: Gap analysis (only when existing code exists)
 npm run sdd:validate-gap -- "feature={feature}"
 
-# Phase 2: 設計生成
+# Phase 2: Design generation
 npm run sdd:design -- "feature={feature}"
 
-# Phase 2.5: 設計検証（NO-GO時は自動修正→再検証）
+# Phase 2.5: Design validation (auto-fix → re-validate on NO-GO)
 npm run sdd:validate-design -- "feature={feature}"
 
-# Phase 3: タスク生成
+# Phase 3: Task generation
 npm run sdd:tasks -- "feature={feature}"
 
-# Phase 4: 実装
+# Phase 4: Implementation
 npm run sdd:impl -- "feature={feature}"
 
-# Phase 5: 実装検証（不合格時は自動修正→再検証）
+# Phase 5: Implementation validation (auto-fix → re-validate on failure)
 npm run sdd:validate-impl -- "feature={feature}"
 ```
 
 <details>
-<summary>takt コマンドを直接使う場合</summary>
+<summary>Using takt commands directly</summary>
 
 ```bash
-takt --pipeline --skip-git --create-worktree no -w sdd -t "要件の説明..."
-takt --pipeline --skip-git --create-worktree no -w sdd-requirements -t "要件の説明..."
+takt --pipeline --skip-git --create-worktree no -w sdd -t "description of requirements..."
+takt --pipeline --skip-git --create-worktree no -w sdd-requirements -t "description of requirements..."
 takt --pipeline --skip-git --create-worktree no -w sdd-validate-gap -t "feature={feature}"
 takt --pipeline --skip-git --create-worktree no -w sdd-design -t "feature={feature}"
 takt --pipeline --skip-git --create-worktree no -w sdd-validate-design -t "feature={feature}"
@@ -114,91 +123,91 @@ takt --pipeline --skip-git --create-worktree no -w sdd-impl -t "feature={feature
 takt --pipeline --skip-git --create-worktree no -w sdd-validate-impl -t "feature={feature}"
 ```
 
-対話モードの場合は `takt -w {ピース名}` で実行できます。
+For interactive mode, run `takt -w {piece-name}`.
 
 </details>
 
-### 出力ファイル
+### Output Files
 
-各フェーズの成果物は `.kiro/specs/{feature}/` に出力される。cc-sdd の仕様フォーマットと互換性がある。
+Artifacts from each phase are output to `.kiro/specs/{feature}/`. The format is compatible with Kiro specifications.
 
-| Phase | ファイル | 内容 |
-|-------|----------|------|
-| 1 | `requirements.md` | EARS 形式の要件ドキュメント |
-| 1.5 | `gap-analysis.md` | 要件と既存コードベースのギャップ分析 |
-| 2 | `design.md` | 技術設計（アーキテクチャ、コンポーネント、データモデル） |
-| 2 | `research.md` | 発見ログ（調査結果と設計判断の根拠） |
-| 2.5 | `design-review.md` | 設計レビュー結果（GO/NO-GO 判定） |
-| 3 | `tasks.md` | 実装タスクリスト（実装中に進捗が更新される） |
+| Phase | File | Description |
+|-------|------|-------------|
+| 1 | `requirements.md` | Requirements document in EARS format |
+| 1.5 | `gap-analysis.md` | Gap analysis between requirements and existing codebase |
+| 2 | `design.md` | Technical design (architecture, components, data model) |
+| 2 | `research.md` | Discovery log (research findings and design decision rationale) |
+| 2.5 | `design-review.md` | Design review results (GO/NO-GO decision) |
+| 3 | `tasks.md` | Implementation task list (progress updated during implementation) |
 
 
-## Steering（プロジェクトメモリ管理）
+## Steering (Project Memory Management)
 
-SDD ワークフローとは別に、`.kiro/steering/` をプロジェクトメモリとして管理するピースを提供する。
+Separate from the SDD workflow, pieces are provided to manage `.kiro/steering/` as project memory.
 
-| ピース | 内容 |
-|--------|------|
-| `steering` | コアsteeringファイル（product.md / tech.md / structure.md）の生成・同期 |
-| `steering-custom` | ドメイン固有のカスタムsteeringファイルの作成 |
+| Piece | Description |
+|-------|-------------|
+| `steering` | Generation and sync of core steering files (product.md / tech.md / structure.md) |
+| `steering-custom` | Creation of domain-specific custom steering files |
 
 ### steering
 
-コードベースを分析し、プロジェクトの目的・技術スタック・構造パターンを `.kiro/steering/` に記録する。初回実行時はブートストラップモード、以降はコードとの乖離を検出するシンクモードで動作する。
+Analyzes the codebase and records the project's purpose, tech stack, and structural patterns in `.kiro/steering/`. Runs in bootstrap mode on first execution, and in sync mode afterwards to detect drift from the code.
 
 ```bash
-npm run steering -- "steeringを同期"
+npm run steering -- "sync steering"
 ```
 
 ### steering-custom
 
-アーキテクチャ方針、API 標準、テスト戦略など、特定ドメインのsteeringファイルを作成する。`.takt/knowledge/steering-custom-template-files/` にテンプレートが用意されている。
+Creates steering files for specific domains such as architecture policies, API standards, and testing strategies. Templates are available in `.takt/knowledge/steering-custom-template-files/`.
 
 ```bash
 npm run steering:custom -- "architecture"
-# .takt/knowledge/steering-custom-template-files/{name}.mdの{name}を指定する
+# Specify the {name} from .takt/knowledge/steering-custom-template-files/{name}.md
 ```
 
-利用可能なテンプレート：
+Available templates:
 
-| テンプレート | 内容 |
-|-------------|------|
-| `architecture` | アーキテクチャスタイル（ヘキサゴナル、クリーンアーキテクチャ等）、レイヤー境界、依存ルール |
-| `api-standards` | エンドポイントパターン、リクエスト/レスポンス形式、バージョニング |
-| `testing` | テスト構成、テスト種別、カバレッジ |
-| `security` | 認証パターン、入力検証、シークレット管理 |
-| `database` | スキーマ設計、マイグレーション、クエリパターン |
-| `error-handling` | エラー型、ロギング、リトライ戦略 |
-| `authentication` | 認証フロー、権限管理、セッション管理 |
-| `deployment` | CI/CD、環境構成、ロールバック手順 |
+| Template | Description |
+|----------|-------------|
+| `architecture` | Architecture style (hexagonal, clean architecture, etc.), layer boundaries, dependency rules |
+| `api-standards` | Endpoint patterns, request/response formats, versioning |
+| `testing` | Test structure, test types, coverage |
+| `security` | Authentication patterns, input validation, secret management |
+| `database` | Schema design, migrations, query patterns |
+| `error-handling` | Error types, logging, retry strategies |
+| `authentication` | Authentication flows, authorization management, session management |
+| `deployment` | CI/CD, environment configuration, rollback procedures |
 
-#### グリーンフィールド対応（コードがまだないプロジェクト）
+#### Greenfield Support (Projects with No Existing Code)
 
-コードベースがゼロの状態でも、すべてのテンプレートでひな型を生成できる。テンプレートの構造をベースに、プレースホルダ（`[選択肢]`、`[理由]` 等）を含んだsteeringファイルが生成されるので、開発者が方針を記入して使う。
+Skeleton files can be generated from any template even when the codebase is empty. Steering files are generated based on the template structure with placeholders (`[choice]`, `[rationale]`, etc.) for developers to fill in.
 
-方針を事前に指定したい場合は、テンプレート名に続けて記述する：
+To specify policies upfront, add them after the template name:
 
 ```bash
-# アーキテクチャ方針を指定
-npm run steering:custom -- "architecture: ヘキサゴナルアーキテクチャ、アクターモデル"
+# Specify architecture policies
+npm run steering:custom -- "architecture: hexagonal architecture, actor model"
 
-# テスト戦略を指定
-npm run steering:custom -- "testing: Vitest、E2Eは Playwright、カバレッジ80%以上"
+# Specify testing strategy
+npm run steering:custom -- "testing: Vitest, E2E with Playwright, 80%+ coverage"
 
-# DB方針を指定
-npm run steering:custom -- "database: PostgreSQL、Prisma ORM、マイグレーションは自動"
+# Specify database policies
+npm run steering:custom -- "database: PostgreSQL, Prisma ORM, automated migrations"
 
-# 方針なしでひな型だけ生成（後で手動記入）
+# Generate skeleton only (fill in manually later)
 npm run steering:custom -- "testing"
 ```
 
-生成されたsteeringファイルは設計フェーズ（`sdd:design`, `sdd:validate-design` 等）で自動的に参照される。
+Generated steering files are automatically referenced during design phases (`sdd:design`, `sdd:validate-design`, etc.).
 
-## プロジェクト構造
+## Project Structure
 
 ```
 .takt/
-├── pieces/                  # ピース定義（ワークフロー YAML）
-│   ├── sdd.yaml             # フルオート（Phase 1〜5 一括）
+├── pieces/                  # Piece definitions (workflow YAML)
+│   ├── sdd.yaml             # Full-auto (Phases 1–5 combined)
 │   ├── sdd-requirements.yaml
 │   ├── sdd-design.yaml
 │   ├── sdd-tasks.yaml
@@ -206,23 +215,23 @@ npm run steering:custom -- "testing"
 │   ├── sdd-validate-gap.yaml
 │   ├── sdd-validate-design.yaml
 │   ├── sdd-validate-impl.yaml
-│   ├── steering.yaml            # プロジェクトメモリ管理（Bootstrap/Sync）
-│   └── steering-custom.yaml     # カスタムsteering作成
-├── personas/                # ペルソナファセット
-├── policies/                # ポリシーファセット
-├── instructions/            # インストラクションファセット
-├── knowledge/               # ナレッジファセット
-└── output-contracts/        # 出力契約ファセット
+│   ├── steering.yaml            # Project memory management (Bootstrap/Sync)
+│   └── steering-custom.yaml     # Custom steering creation
+├── personas/                # Persona facets
+├── policies/                # Policy facets
+├── instructions/            # Instruction facets
+├── knowledge/               # Knowledge facets
+└── output-contracts/        # Output contract facets
 references/
-├── takt/                    # takt 本体（submodule）
-└── okite-ai/                # AI ルール集（submodule）
+├── takt/                    # takt engine (submodule)
+└── okite-ai/                # AI rules collection (submodule)
 scripts/
-└── takt.sh                  # takt 実行ラッパー
+└── takt.sh                  # takt execution wrapper
 ```
 
-## 影響を受けたツール
+## Inspired By
 
-本プロジェクトは以下のプロジェクトにインスパイアされている：
+This project is inspired by the following projects:
 
-- [Kiro](https://github.com/kirodotdev/Kiro) - Amazon による SDD ベースの AI 開発環境
-- [cc-sdd](https://github.com/gotalab/cc-sdd) - 複数の AI コーディングエージェントに対応した SDD ツール
+- [Kiro](https://github.com/kirodotdev/Kiro) - Amazon's SDD-based AI development environment
+- [cc-sdd](https://github.com/gotalab/cc-sdd) - SDD tool supporting multiple AI coding agents
