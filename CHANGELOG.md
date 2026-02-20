@@ -1,3 +1,11 @@
+## [0.6.0](https://github.com/j5ik2o/takt-sdd/compare/v0.5.0...v0.6.0) (2026-02-20)
+
+
+### Features
+
+* **installer:** add manifest-based smart update for safe reinstallation ([93ad569](https://github.com/j5ik2o/takt-sdd/commit/93ad5694002022ee62ab4cfcfb1d348cbb8a4cd6))
+* **qgrep:** add initial implementation for CLI tool with regex-based file search ([0cae3ce](https://github.com/j5ik2o/takt-sdd/commit/0cae3ce62e5f80f5c57f316792c168d6c133ca48))
+
 ## [0.5.0](https://github.com/j5ik2o/takt-sdd/compare/v0.4.0...v0.5.0) (2026-02-20)
 
 
