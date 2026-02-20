@@ -52,8 +52,25 @@ npx create-takt-sdd --tag latest
 npx create-takt-sdd --tag 0.1.2
 ```
 
-Pieces and facets are installed to the `.takt/` directory, and npm scripts are added to `package.json`.
-Use `--force` to overwrite an existing `.takt/`. When `package.json` already exists, only npm scripts are merged (existing scripts are not overwritten).
+The installer sets up the following:
+
+- **`.takt/`** — Pieces (YAML workflows) and facets
+- **`.agent/skills/`** — TAKT skills (takt-analyze, takt-facet, takt-optimize, takt-piece)
+- **`.claude/skills/`, `.codex/skills/`** — Symlinks to `.agent/skills/` for Claude Code and Codex CLI
+- **`references/takt/`** — takt builtins and docs (pinned to the submodule commit tracked by the installer release)
+- **`package.json`** — npm scripts for each phase
+
+Options:
+
+| Option | Description |
+|--------|-------------|
+| `--force` | Overwrite existing `.takt/` directory |
+| `--without-skills` | Skip installing skills and takt references |
+| `--tag <version>` | Install a specific version (`latest`, `0.2.0`, etc.) |
+| `--lang <en\|ja>` | Message language (default: `en`) |
+| `--dry-run` | Preview files without writing |
+
+When `package.json` already exists, only npm scripts are merged (existing scripts are not overwritten).
 
 ## Overview
 
@@ -222,8 +239,15 @@ Generated steering files are automatically referenced during design phases (`sdd
 ├── instructions/            # Instruction facets
 ├── knowledge/               # Knowledge facets
 └── output-contracts/        # Output contract facets
+.agent/skills/               # TAKT skills (canonical location)
+├── takt-analyze/            # Piece/facet analysis and improvement suggestions
+├── takt-facet/              # Individual facet creation/editing
+├── takt-optimize/           # Workflow optimization
+└── takt-piece/              # Piece (workflow YAML) creation
+.claude/skills/              # Symlinks → .agent/skills/ (for Claude Code)
+.codex/skills/               # Symlinks → .agent/skills/ (for Codex CLI)
 references/
-├── takt/                    # takt engine (submodule)
+├── takt/                    # takt builtins and docs (submodule / installer)
 └── okite-ai/                # AI rules collection (submodule)
 scripts/
 └── takt.sh                  # takt execution wrapper

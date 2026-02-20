@@ -52,8 +52,25 @@ npx create-takt-sdd --tag latest
 npx create-takt-sdd --tag 0.1.2
 ```
 
-`.takt/` ディレクトリにピースとファセット群がインストールされ、`package.json` に npm scripts が追加される。
-既存の `.takt/` がある場合は `--force` で上書きできる。既存の `package.json` がある場合は npm scripts のみマージされる（既存のスクリプトは上書きしない）。
+インストーラは以下をセットアップする：
+
+- **`.takt/`** — ピース（YAML ワークフロー）とファセット群
+- **`.agent/skills/`** — TAKT スキル（takt-analyze, takt-facet, takt-optimize, takt-piece）
+- **`.claude/skills/`, `.codex/skills/`** — `.agent/skills/` へのシンボリックリンク（Claude Code / Codex CLI 用）
+- **`references/takt/`** — takt のビルトインとドキュメント（インストーラリリース時のサブモジュールコミットに固定）
+- **`package.json`** — 各フェーズの npm scripts
+
+オプション：
+
+| オプション | 内容 |
+|-----------|------|
+| `--force` | 既存の `.takt/` を上書き |
+| `--without-skills` | スキルと takt リファレンスのインストールをスキップ |
+| `--tag <version>` | 特定バージョンをインストール（`latest`, `0.2.0` 等） |
+| `--lang <en\|ja>` | メッセージ言語（デフォルト: `en`） |
+| `--dry-run` | ファイルを書き込まずにプレビュー |
+
+既存の `package.json` がある場合は npm scripts のみマージされる（既存のスクリプトは上書きしない）。
 
 ## 概要
 
@@ -222,8 +239,15 @@ npm run steering:custom -- "testing"
 ├── instructions/            # インストラクションファセット
 ├── knowledge/               # ナレッジファセット
 └── output-contracts/        # 出力契約ファセット
+.agent/skills/               # TAKT スキル（実体の配置場所）
+├── takt-analyze/            # ピース・ファセットの分析と改善提案
+├── takt-facet/              # 個別ファセットの作成・編集
+├── takt-optimize/           # ワークフローの最適化
+└── takt-piece/              # ピース（ワークフロー YAML）の作成
+.claude/skills/              # シンボリックリンク → .agent/skills/（Claude Code 用）
+.codex/skills/               # シンボリックリンク → .agent/skills/（Codex CLI 用）
 references/
-├── takt/                    # takt 本体（submodule）
+├── takt/                    # takt ビルトインとドキュメント（submodule / インストーラ）
 └── okite-ai/                # AI ルール集（submodule）
 scripts/
 └── takt.sh                  # takt 実行ラッパー
