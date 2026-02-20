@@ -29,4 +29,10 @@ for arg in "$@"; do
   prev="$arg"
 done
 
-exec takt "$@"
+# node_modules/.bin/takt があればローカル優先、なければグローバル
+LOCAL_TAKT="${REPO_ROOT}/node_modules/.bin/takt"
+if [[ -x "$LOCAL_TAKT" ]]; then
+  exec "$LOCAL_TAKT" "$@"
+else
+  exec takt "$@"
+fi
