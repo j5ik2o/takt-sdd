@@ -44,10 +44,6 @@ const SKILL_SYMLINK_TARGETS = [
   ".codex/skills",
 ];
 
-const SDD_DEV_DEPENDENCIES: Record<string, string> = {
-  "takt": "^0.20.0",
-};
-
 const SDD_SCRIPTS: Record<string, string> = {
   "sdd": "takt --pipeline --skip-git --create-worktree no -w sdd -t",
   "sdd:requirements": "takt --pipeline --skip-git --create-worktree no -w sdd-requirements -t",
@@ -362,6 +358,17 @@ export async function install(options: InstallOptions): Promise<void> {
       }
     }
 
+    // アーカイブの package.json から devDependencies を取得
+    const sddPkgPath = join(extractedDir, "package.json");
+    const sddDevDependencies: Record<string, string> = {};
+    if (existsSync(sddPkgPath)) {
+      const sddPkg = JSON.parse(readFileSync(sddPkgPath, "utf-8"));
+      const deps = sddPkg.devDependencies ?? {};
+      for (const [key, value] of Object.entries(deps)) {
+        sddDevDependencies[key] = value as string;
+      }
+    }
+
     // package.json に npm scripts と devDependencies を追加
     const pkgPath = join(options.cwd, "package.json");
     if (existsSync(pkgPath)) {
@@ -380,7 +387,7 @@ export async function install(options: InstallOptions): Promise<void> {
       pkg.scripts = scripts;
       const devDeps = pkg.devDependencies ?? {};
       const depsAdded: string[] = [];
-      for (const [key, value] of Object.entries(SDD_DEV_DEPENDENCIES)) {
+      for (const [key, value] of Object.entries(sddDevDependencies)) {
         if (devDeps[key] === undefined) {
           devDeps[key] = value;
           depsAdded.push(key);
@@ -401,7 +408,7 @@ export async function install(options: InstallOptions): Promise<void> {
       const pkg = {
         private: true,
         scripts: { ...SDD_SCRIPTS },
-        devDependencies: { ...SDD_DEV_DEPENDENCIES },
+        devDependencies: { ...sddDevDependencies },
       };
       writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
       info(msg.scriptsCreated);
