@@ -1,6 +1,6 @@
 # takt-sdd
 
-> **仕様を書け。あとは takt が届ける。**
+> **仕様を書け。あとは takt が確実に届ける。**
 
 [![npm version](https://img.shields.io/npm/v/create-takt-sdd)](https://www.npmjs.com/package/create-takt-sdd)
 [![Release](https://github.com/j5ik2o/takt-sdd/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/j5ik2o/takt-sdd/actions/workflows/release.yml)
