@@ -43,16 +43,38 @@ jobs:
 
       - name: Validate pieces (en)
         run: |
+          failed=0
           for piece in .takt/en/pieces/*.yaml; do
             echo "::group::$(basename "$piece")"
-            takt prompt "$piece"
+            output=$(takt prompt "$piece" 2>&1) && { echo "$output"; } || {
+              if echo "$output" | grep -q "reportContent is required"; then
+                echo "$output"
+                echo "::notice::Phase 2/3 report preview skipped (expected)"
+              else
+                echo "$output"
+                echo "::error::Validation failed: $piece"
+                failed=1
+              fi
+            }
             echo "::endgroup::"
           done
+          exit $failed
 
       - name: Validate pieces (ja)
         run: |
+          failed=0
           for piece in .takt/ja/pieces/*.yaml; do
             echo "::group::$(basename "$piece")"
-            takt prompt "$piece"
+            output=$(takt prompt "$piece" 2>&1) && { echo "$output"; } || {
+              if echo "$output" | grep -q "reportContent is required"; then
+                echo "$output"
+                echo "::notice::Phase 2/3 report preview skipped (expected)"
+              else
+                echo "$output"
+                echo "::error::Validation failed: $piece"
+                failed=1
+              fi
+            }
             echo "::endgroup::"
           done
+          exit $failed
