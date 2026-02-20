@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - "installer/v*"
-  workflow_dispatch:
 
 defaults:
   run:
