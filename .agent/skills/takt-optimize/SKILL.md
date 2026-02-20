@@ -7,7 +7,7 @@ description: >
   実行ログ（.takt/logs/*.jsonl）が提供された場合は、ルールマッチ分布・ループ頻度・
   ABORT率などの実データに基づく最適化も行う。
   takt-analyzeが「分析・レポート」に特化するのに対し、本スキルは「最適化の実行」に特化する。
-  ${OKITE_ROOT}/references/taktのエンジン仕様・スタイルガイドを基準とする。
+  references/taktのエンジン仕様・スタイルガイドを基準とする。
   トリガー：「ピースを最適化」「taktの高速化」「ワークフローを軽くしたい」
   「トークンを減らしたい」「ムーブメントを減らしたい」「takt optimize」
   「ワークフローの効率化」「ファセットを整理したい」「ピースをスリムにして」
@@ -21,15 +21,13 @@ description: >
 
 ## 参照資料
 
-> **`${OKITE_ROOT}` の解決**: okite-ai リポジトリのルートパス。okite-ai 直下では空文字、親プロジェクトのサブモジュールとして利用時は `.gitmodules` で確認（通常 `references/okite-ai`）。
-
 | 資料 | パス | 用途 |
 |------|------|------|
-| YAMLスキーマ | `${OKITE_ROOT}/references/takt/builtins/skill/references/yaml-schema.md` | ピース構造の検証基準 |
-| エンジン仕様 | `${OKITE_ROOT}/references/takt/builtins/skill/references/engine.md` | プロンプト構築・トークン消費の理解 |
-| スタイルガイド群 | `${OKITE_ROOT}/references/takt/builtins/ja/*_STYLE_GUIDE.md` | ファセットサイズ上限 |
-| ビルトインピース | `${OKITE_ROOT}/references/takt/builtins/ja/pieces/` | 最適化パターンの参照 |
-| ビルトインファセット | `${OKITE_ROOT}/references/takt/builtins/ja/{personas,policies,instructions,knowledge,output-contracts}/` | ビルトイン置換候補 |
+| YAMLスキーマ | `references/takt/builtins/skill/references/yaml-schema.md` | ピース構造の検証基準 |
+| エンジン仕様 | `references/takt/builtins/skill/references/engine.md` | プロンプト構築・トークン消費の理解 |
+| スタイルガイド群 | `references/takt/builtins/ja/*_STYLE_GUIDE.md` | ファセットサイズ上限 |
+| ビルトインピース | `references/takt/builtins/ja/pieces/` | 最適化パターンの参照 |
+| ビルトインファセット | `references/takt/builtins/ja/{personas,policies,instructions,knowledge,output-contracts}/` | ビルトイン置換候補 |
 
 ## takt-analyzeとの違い
 

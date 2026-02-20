@@ -19,6 +19,7 @@ function getInstallerVersion(): string {
 }
 
 const REPO = "j5ik2o/takt-sdd";
+const TAKT_REPO = "nrslib/takt";
 const TARGET_DIR = ".takt";
 const FACET_DIRS = [
   "pieces",
@@ -294,6 +295,53 @@ export async function install(options: InstallOptions): Promise<void> {
           symlinkSync(`../../.agent/skills/${skill}`, linkPath);
           info(msg.skillSymlinked(skill, target));
         }
+      }
+    }
+
+    // takt リファレンスのダウンロード（スキルが参照するbuiltins等）
+    if (!options.withoutSkills) {
+      const refsDir = join(options.cwd, "references", "takt");
+      if (!existsSync(join(refsDir, "builtins"))) {
+        info(msg.downloadingTaktRefs);
+        const taktTmpDir = mkdtempSync(join(tmpdir(), "takt-refs-"));
+        try {
+          const taktArchive = join(taktTmpDir, "takt.tar.gz");
+          const taktTarball = `https://github.com/${TAKT_REPO}/archive/refs/heads/main.tar.gz`;
+          await download(taktTarball, taktArchive);
+          execSync(`tar -xzf "${taktArchive}" -C "${taktTmpDir}"`, { stdio: "ignore" });
+
+          // takt-main/ ディレクトリを探す
+          const taktExtracted = readdirSync(taktTmpDir).find(
+            (d) => d.startsWith("takt-") && statSync(join(taktTmpDir, d)).isDirectory()
+          );
+          if (taktExtracted) {
+            const taktRoot = join(taktTmpDir, taktExtracted);
+            mkdirSync(refsDir, { recursive: true });
+
+            // builtins/ をコピー
+            const builtinsSrc = join(taktRoot, "builtins");
+            if (existsSync(builtinsSrc)) {
+              cpSync(builtinsSrc, join(refsDir, "builtins"), { recursive: true });
+            }
+
+            // docs/faceted-prompting.ja.md をコピー
+            const fpSrc = join(taktRoot, "docs", "faceted-prompting.ja.md");
+            if (existsSync(fpSrc)) {
+              mkdirSync(join(refsDir, "docs"), { recursive: true });
+              cpSync(fpSrc, join(refsDir, "docs", "faceted-prompting.ja.md"));
+            }
+
+            info(msg.taktRefsInstalled);
+          } else {
+            warn(msg.taktRefsError);
+          }
+        } catch {
+          warn(msg.taktRefsError);
+        } finally {
+          rmSync(taktTmpDir, { recursive: true, force: true });
+        }
+      } else {
+        info(msg.taktRefsSkipped);
       }
     }
 

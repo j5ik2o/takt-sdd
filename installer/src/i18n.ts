@@ -20,6 +20,10 @@ interface Messages {
   installingSkills: string;
   skillInstalled: (name: string) => string;
   skillSymlinked: (name: string, target: string) => string;
+  downloadingTaktRefs: string;
+  taktRefsInstalled: string;
+  taktRefsSkipped: string;
+  taktRefsError: string;
 }
 
 const en: Messages = {
@@ -44,6 +48,10 @@ const en: Messages = {
   installingSkills: "Installing takt skills to .agent/skills/...",
   skillInstalled: (name) => `Installed skill: ${name}`,
   skillSymlinked: (name, target) => `Symlinked ${target}/${name} -> .agent/skills/${name}`,
+  downloadingTaktRefs: "Downloading takt builtins to references/takt/...",
+  taktRefsInstalled: "Installed takt references (builtins, docs)",
+  taktRefsSkipped: "Takt references already exist, skipping",
+  taktRefsError: "Warning: Failed to download takt references. Skills may not find style guides.",
   helpText: `Usage: npx create-takt-sdd [options]
 
 Options:
@@ -92,6 +100,10 @@ const ja: Messages = {
   installingSkills: ".agent/skills/ に takt スキルをインストール中...",
   skillInstalled: (name) => `スキルをインストールしました: ${name}`,
   skillSymlinked: (name, target) => `シンボリックリンク作成: ${target}/${name} -> .agent/skills/${name}`,
+  downloadingTaktRefs: "references/takt/ に takt ビルトインをダウンロード中...",
+  taktRefsInstalled: "takt リファレンスをインストールしました（builtins, docs）",
+  taktRefsSkipped: "takt リファレンスは既に存在するためスキップしました",
+  taktRefsError: "警告: takt リファレンスのダウンロードに失敗しました。スキルがスタイルガイドを参照できない可能性があります。",
   helpText: `使い方: npx create-takt-sdd [オプション]
 
 オプション:
