@@ -21,7 +21,7 @@
     "type": "git",
     "url": "https://github.com/j5ik2o/takt-sdd"
   },
-  "license": "MIT",
+  "license": "(MIT OR Apache-2.0)",
   "engines": {
     "node": ">=18"
   },
