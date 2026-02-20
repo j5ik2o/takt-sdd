@@ -20,7 +20,7 @@ interface Messages {
   installingSkills: string;
   skillInstalled: (name: string) => string;
   skillSymlinked: (name: string, target: string) => string;
-  downloadingTaktRefs: string;
+  downloadingTaktRefs: (refsPath: string) => string;
   taktRefsInstalled: string;
   taktRefsSkipped: string;
   taktRefsError: string;
@@ -48,7 +48,7 @@ const en: Messages = {
   installingSkills: "Installing takt skills to .agent/skills/...",
   skillInstalled: (name) => `Installed skill: ${name}`,
   skillSymlinked: (name, target) => `Symlinked ${target}/${name} -> .agent/skills/${name}`,
-  downloadingTaktRefs: "Downloading takt builtins to references/takt/...",
+  downloadingTaktRefs: (refsPath) => `Downloading takt builtins to ${refsPath}/...`,
   taktRefsInstalled: "Installed takt references (builtins, docs)",
   taktRefsSkipped: "Takt references already exist, skipping",
   taktRefsError: "Warning: Failed to download takt references. Skills may not find style guides.",
@@ -60,6 +60,7 @@ Options:
   --force            Overwrite existing .takt/ directory
   --dry-run          Preview without writing files
   --without-skills   Skip installing takt skills to .agent/skills/
+  --refs-path <path> Path for takt references (default: references/takt)
   -h, --help         Show this help
   -v, --version      Show version`,
   usageExamples: `
@@ -100,7 +101,7 @@ const ja: Messages = {
   installingSkills: ".agent/skills/ に takt スキルをインストール中...",
   skillInstalled: (name) => `スキルをインストールしました: ${name}`,
   skillSymlinked: (name, target) => `シンボリックリンク作成: ${target}/${name} -> .agent/skills/${name}`,
-  downloadingTaktRefs: "references/takt/ に takt ビルトインをダウンロード中...",
+  downloadingTaktRefs: (refsPath) => `${refsPath}/ に takt ビルトインをダウンロード中...`,
   taktRefsInstalled: "takt リファレンスをインストールしました（builtins, docs）",
   taktRefsSkipped: "takt リファレンスは既に存在するためスキップしました",
   taktRefsError: "警告: takt リファレンスのダウンロードに失敗しました。スキルがスタイルガイドを参照できない可能性があります。",
@@ -112,6 +113,7 @@ const ja: Messages = {
   --force            既存の .takt/ を上書き
   --dry-run          プレビューのみ（ファイル書き込みなし）
   --without-skills   takt スキルのインストールをスキップ
+  --refs-path <path> takt リファレンスのパス（デフォルト: references/takt）
   -h, --help         ヘルプを表示
   -v, --version      バージョンを表示`,
   usageExamples: `

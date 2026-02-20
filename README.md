@@ -68,6 +68,7 @@ Options:
 |--------|-------------|
 | `--force` | Overwrite existing `.takt/` directory |
 | `--without-skills` | Skip installing skills and takt references |
+| `--refs-path <path>` | Path for takt references (default: `references/takt`) |
 | `--tag <version>` | Install a specific version (`latest`, `0.2.0`, etc.) |
 | `--lang <en\|ja>` | Facet and message language (default: `en`) |
 | `--dry-run` | Preview files without writing |
@@ -208,19 +209,25 @@ Available templates:
 
 Both `steering` and `steering-custom` support greenfield projects. Skeleton files can be generated even when the codebase is empty. Steering files are generated based on the template structure with placeholders (`[choice]`, `[rationale]`, etc.) for developers to fill in.
 
-To specify policies upfront, add them after the template name:
+To specify policies upfront, add them to the command:
 
 ```bash
-# Specify architecture policies
+# Generate core steering skeletons (product.md / tech.md / structure.md)
+npm run steering -- "generate steering"
+
+# Specify product direction and tech choices upfront
+npm run steering -- "REST API server with TypeScript, Express, PostgreSQL"
+
+# Custom steering: specify architecture policies
 npm run steering:custom -- "architecture: hexagonal architecture, actor model"
 
-# Specify testing strategy
+# Custom steering: specify testing strategy
 npm run steering:custom -- "testing: Vitest, E2E with Playwright, 80%+ coverage"
 
-# Specify database policies
+# Custom steering: specify database policies
 npm run steering:custom -- "database: PostgreSQL, Prisma ORM, automated migrations"
 
-# Generate skeleton only (fill in manually later)
+# Custom steering: generate skeleton only (fill in manually later)
 npm run steering:custom -- "testing"
 ```
 

@@ -68,6 +68,7 @@ npx create-takt-sdd --tag 0.1.2
 |-----------|------|
 | `--force` | 既存の `.takt/` を上書き |
 | `--without-skills` | スキルと takt リファレンスのインストールをスキップ |
+| `--refs-path <path>` | takt リファレンスのパス（デフォルト: `references/takt`） |
 | `--tag <version>` | 特定バージョンをインストール（`latest`, `0.2.0` 等） |
 | `--lang <en\|ja>` | ファセット・メッセージの言語（デフォルト: `en`） |
 | `--dry-run` | ファイルを書き込まずにプレビュー |
@@ -208,19 +209,25 @@ npm run steering:custom -- "architecture"
 
 `steering` と `steering-custom` の両方がグリーンフィールドプロジェクトに対応している。コードベースが空の状態でもひな型を生成できる。テンプレートの構造をベースに、プレースホルダ（`[選択肢]`、`[理由]` 等）を含んだsteeringファイルが生成されるので、開発者が方針を記入して使う。
 
-方針を事前に指定したい場合は、テンプレート名に続けて記述する：
+方針を事前に指定したい場合は、コマンドに続けて記述する：
 
 ```bash
-# アーキテクチャ方針を指定
+# コアsteering（product.md / tech.md / structure.md）のひな型を生成
+npm run steering -- "steeringを生成"
+
+# プロダクト方針・技術選定を事前指定
+npm run steering -- "TypeScript + Express のREST APIサーバー、PostgreSQL"
+
+# カスタムsteering: アーキテクチャ方針を指定
 npm run steering:custom -- "architecture: ヘキサゴナルアーキテクチャ、アクターモデル"
 
-# テスト戦略を指定
+# カスタムsteering: テスト戦略を指定
 npm run steering:custom -- "testing: Vitest、E2Eは Playwright、カバレッジ80%以上"
 
-# DB方針を指定
+# カスタムsteering: DB方針を指定
 npm run steering:custom -- "database: PostgreSQL、Prisma ORM、マイグレーションは自動"
 
-# 方針なしでひな型だけ生成（後で手動記入）
+# カスタムsteering: 方針なしでひな型だけ生成（後で手動記入）
 npm run steering:custom -- "testing"
 ```
 

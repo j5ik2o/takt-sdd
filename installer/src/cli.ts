@@ -17,6 +17,7 @@ interface ParsedArgs {
   version: boolean;
   tag: string | undefined;
   withoutSkills: boolean;
+  refsPath: string;
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
@@ -28,6 +29,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     version: false,
     tag: undefined,
     withoutSkills: false,
+    refsPath: "references/takt",
   };
 
   for (let i = 0; i < argv.length; i++) {
@@ -60,6 +62,15 @@ function parseArgs(argv: string[]): ParsedArgs {
       case "--without-skills":
         args.withoutSkills = true;
         break;
+      case "--refs-path": {
+        const value = argv[++i];
+        if (!value) {
+          console.error('Error: --refs-path requires a value (e.g. "references/takt")');
+          process.exit(1);
+        }
+        args.refsPath = value;
+        break;
+      }
       case "-h":
       case "--help":
         args.help = true;
@@ -100,6 +111,7 @@ async function main(): Promise<void> {
     dryRun: args.dryRun,
     tag: args.tag,
     withoutSkills: args.withoutSkills,
+    refsPath: args.refsPath,
     cwd: process.cwd(),
   });
 }

@@ -22,6 +22,7 @@ function getInstallerVersion(): string {
 const REPO = "j5ik2o/takt-sdd";
 const TAKT_REPO = "nrslib/takt";
 const TARGET_DIR = ".takt";
+const DEFAULT_REFS_PATH = "references/takt";
 const FACET_DIRS = [
   "pieces",
   "personas",
@@ -62,6 +63,7 @@ export interface InstallOptions {
   dryRun: boolean;
   tag: string | undefined;
   withoutSkills: boolean;
+  refsPath: string;
   cwd: string;
 }
 
@@ -236,6 +238,8 @@ export async function install(options: InstallOptions): Promise<void> {
             }
           }
         }
+        console.log(msg.dryRunItem(`${options.refsPath}/builtins/`));
+        console.log(msg.dryRunItem(`${options.refsPath}/docs/`));
       }
       console.log("");
       info(msg.dryRunSkipped);
@@ -273,6 +277,15 @@ export async function install(options: InstallOptions): Promise<void> {
           rmSync(skillDest, { recursive: true });
         }
         cpSync(skillSrc, skillDest, { recursive: true });
+        // SKILL.md 内の references/takt パスを置換
+        if (options.refsPath !== DEFAULT_REFS_PATH) {
+          const skillMd = join(skillDest, "SKILL.md");
+          if (existsSync(skillMd)) {
+            const content = readFileSync(skillMd, "utf-8");
+            const updated = content.replaceAll(DEFAULT_REFS_PATH, options.refsPath);
+            writeFileSync(skillMd, updated, "utf-8");
+          }
+        }
         info(msg.skillInstalled(skill));
       }
       // .claude/skills/ と .codex/skills/ にシンボリックリンクを作成
@@ -293,9 +306,9 @@ export async function install(options: InstallOptions): Promise<void> {
 
     // takt リファレンスのダウンロード（スキルが参照するbuiltins等）
     if (!options.withoutSkills) {
-      const refsDir = join(options.cwd, "references", "takt");
+      const refsDir = join(options.cwd, options.refsPath);
       if (!existsSync(join(refsDir, "builtins"))) {
-        info(msg.downloadingTaktRefs);
+        info(msg.downloadingTaktRefs(options.refsPath));
         const taktTmpDir = mkdtempSync(join(tmpdir(), "takt-refs-"));
         try {
           const taktArchive = join(taktTmpDir, "takt.tar.gz");
