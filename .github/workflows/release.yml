@@ -5,15 +5,15 @@ on:
     - cron: "0 0 * * 1" # Every Monday 00:00 UTC
   workflow_dispatch:
     inputs:
-      bump-override:
-        description: "Override bump type (empty = auto-detect from commits)"
+      dry_run:
+        description: 'Set true to preview the next version without creating commits, tags, or releases'
         required: false
-        type: choice
-        options:
-          - ""
-          - patch
-          - minor
-          - major
+        type: boolean
+        default: false
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -24,175 +24,74 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: true
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
 
-      - name: Detect last release tag
-        id: last-tag
-        run: |
-          # Find the most recent tag (either v* or installer/v*)
-          LAST_TAG=$(git tag -l 'v*' --sort=-creatordate | head -1)
-          LAST_INSTALLER_TAG=$(git tag -l 'installer/v*' --sort=-creatordate | head -1)
-
-          # Use whichever is more recent
-          if [ -n "$LAST_TAG" ] && [ -n "$LAST_INSTALLER_TAG" ]; then
-            TAG_DATE=$(git log -1 --format=%ct "$LAST_TAG" 2>/dev/null || echo 0)
-            INSTALLER_DATE=$(git log -1 --format=%ct "$LAST_INSTALLER_TAG" 2>/dev/null || echo 0)
-            if [ "$TAG_DATE" -ge "$INSTALLER_DATE" ]; then
-              REF="$LAST_TAG"
-            else
-              REF="$LAST_INSTALLER_TAG"
-            fi
-          elif [ -n "$LAST_TAG" ]; then
-            REF="$LAST_TAG"
-          elif [ -n "$LAST_INSTALLER_TAG" ]; then
-            REF="$LAST_INSTALLER_TAG"
-          else
-            REF=""
-          fi
-
-          echo "ref=${REF}" >> "$GITHUB_OUTPUT"
-          echo "Last release ref: ${REF:-'(none, first release)'}"
-
-      - name: Check for changes
-        id: changes
-        run: |
-          if [ -n "${{ steps.last-tag.outputs.ref }}" ]; then
-            COUNT=$(git rev-list --count "${{ steps.last-tag.outputs.ref }}..HEAD")
-          else
-            COUNT=$(git rev-list --count HEAD)
-          fi
-
-          if [ "$COUNT" -eq 0 ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "No commits since last release, skipping"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-            echo "${COUNT} commits since last release"
-          fi
-
-      - name: Analyze commits
-        if: steps.changes.outputs.skip == 'false'
-        id: analyze
-        run: |
-          if [ -n "${{ steps.last-tag.outputs.ref }}" ]; then
-            RANGE="${{ steps.last-tag.outputs.ref }}..HEAD"
-          else
-            RANGE="HEAD"
-          fi
-
-          HAS_BREAKING=false
-          HAS_FEAT=false
-          HAS_FIX=false
-
-          BREAKING_NOTES=""
-          FEAT_NOTES=""
-          FIX_NOTES=""
-          OTHER_NOTES=""
-
-          while IFS= read -r line; do
-            [ -z "$line" ] && continue
-            HASH="${line%% *}"
-            MSG="${line#* }"
-            SHORT="${HASH:0:7}"
-
-            if echo "$MSG" | grep -qiE '^[a-z]+(\(.+\))?!:' || echo "$MSG" | grep -qi 'BREAKING CHANGE'; then
-              HAS_BREAKING=true
-              BREAKING_NOTES="${BREAKING_NOTES}
-          - ${MSG} (${SHORT})"
-            elif echo "$MSG" | grep -qE '^feat(\(.+\))?:'; then
-              HAS_FEAT=true
-              FEAT_NOTES="${FEAT_NOTES}
-          - ${MSG} (${SHORT})"
-            elif echo "$MSG" | grep -qE '^fix(\(.+\))?:'; then
-              HAS_FIX=true
-              FIX_NOTES="${FIX_NOTES}
-          - ${MSG} (${SHORT})"
-            else
-              OTHER_NOTES="${OTHER_NOTES}
-          - ${MSG} (${SHORT})"
-            fi
-          done < <(git log ${RANGE} --pretty=format:"%H %s")
-
-          # Determine bump type
-          OVERRIDE="${{ inputs.bump-override }}"
-          if [ -n "$OVERRIDE" ]; then
-            BUMP="$OVERRIDE"
-            echo "Bump type: ${BUMP} (manual override)"
-          elif $HAS_BREAKING; then
-            BUMP="major"
-          elif $HAS_FEAT; then
-            BUMP="minor"
-          elif $HAS_FIX; then
-            BUMP="patch"
-          else
-            BUMP="patch"
-          fi
-
-          echo "bump=${BUMP}" >> "$GITHUB_OUTPUT"
-          echo "Bump type: ${BUMP}"
-
-          # Build release notes
-          {
-            echo 'notes<<NOTES_EOF'
-            if [ -n "$BREAKING_NOTES" ]; then
-              printf '## Breaking Changes\n%s\n\n' "$BREAKING_NOTES"
-            fi
-            if [ -n "$FEAT_NOTES" ]; then
-              printf '## Features\n%s\n\n' "$FEAT_NOTES"
-            fi
-            if [ -n "$FIX_NOTES" ]; then
-              printf '## Bug Fixes\n%s\n\n' "$FIX_NOTES"
-            fi
-            if [ -n "$OTHER_NOTES" ]; then
-              printf '## Other Changes\n%s\n\n' "$OTHER_NOTES"
-            fi
-            echo 'NOTES_EOF'
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Bump versions
-        if: steps.changes.outputs.skip == 'false'
-        id: bump
-        run: |
-          # Bump root package.json
-          cd "$GITHUB_WORKSPACE"
-          NEW_VERSION=$(npm version ${{ steps.analyze.outputs.bump }} --no-git-tag-version)
-          echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
-
-          # Bump installer/package.json to same version
-          cd "$GITHUB_WORKSPACE/installer"
-          npm version ${{ steps.analyze.outputs.bump }} --no-git-tag-version
-
-          echo "Bumped both to ${NEW_VERSION}"
-
-      - name: Commit, tag, and push
-        if: steps.changes.outputs.skip == 'false'
+      - name: Configure Git User
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json installer/package.json
-          git commit -m "chore: release ${{ steps.bump.outputs.version }}"
-          git tag "${{ steps.bump.outputs.version }}"
-          git tag "installer/${{ steps.bump.outputs.version }}"
-          git push origin HEAD --tags
+
+      - name: Generate Changelog and Bump Version
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v6
+        with:
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          git-message: 'chore: release {version}'
+          git-user-name: 'github-actions[bot]'
+          git-user-email: '41898282+github-actions[bot]@users.noreply.github.com'
+          preset: 'conventionalcommits'
+          tag-prefix: 'v'
+          output-file: 'CHANGELOG.md'
+          release-count: '0'
+          version-file: 'package.json,installer/package.json'
+          version-path: 'version'
+          skip-on-empty: 'true'
+          skip-commit: ${{ inputs.dry_run || false }}
+          skip-tag: ${{ inputs.dry_run || false }}
+          skip-git-pull: 'true'
+          skip-ci: 'false'
+          git-push: 'false'
+
+      - name: Push Changes
+        if: ${{ steps.changelog.outputs.skipped == 'false' && !(inputs.dry_run || false) }}
+        env:
+          PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:${PAT}@github.com/${{ github.repository }}.git
+          git push origin HEAD:${GITHUB_REF_NAME}
+          git push origin ${{ steps.changelog.outputs.tag }}
+
+      - name: Create installer tag
+        if: ${{ steps.changelog.outputs.skipped == 'false' && !(inputs.dry_run || false) }}
+        run: |
+          git tag "installer/${{ steps.changelog.outputs.tag }}"
+          git push origin "installer/${{ steps.changelog.outputs.tag }}"
 
       - name: Create GitHub Release (core)
-        if: steps.changes.outputs.skip == 'false'
+        if: ${{ steps.changelog.outputs.skipped == 'false' && !(inputs.dry_run || false) }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.changelog.outputs.tag }}
+          name: "takt-sdd ${{ steps.changelog.outputs.tag }}"
+          body: ${{ steps.changelog.outputs.clean_changelog }}
+          draft: false
+          prerelease: false
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create "${{ steps.bump.outputs.version }}" \
-            --title "takt-sdd ${{ steps.bump.outputs.version }}" \
-            --notes "${{ steps.analyze.outputs.notes }}"
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Create GitHub Release (installer)
-        if: steps.changes.outputs.skip == 'false'
+        if: ${{ steps.changelog.outputs.skipped == 'false' && !(inputs.dry_run || false) }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "installer/${{ steps.changelog.outputs.tag }}"
+          name: "create-takt-sdd ${{ steps.changelog.outputs.tag }}"
+          body: ${{ steps.changelog.outputs.clean_changelog }}
+          draft: false
+          prerelease: false
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create "installer/${{ steps.bump.outputs.version }}" \
-            --title "create-takt-sdd ${{ steps.bump.outputs.version }}" \
-            --notes "${{ steps.analyze.outputs.notes }}"
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
