@@ -1,3 +1,10 @@
+## [0.7.0](https://github.com/j5ik2o/takt-sdd/compare/v0.6.0...v0.7.0) (2026-02-21)
+
+
+### Features
+
+* **sdd:** remove parallel batch processing instructions and YAML configuration ([538dbf8](https://github.com/j5ik2o/takt-sdd/commit/538dbf8e4998e48cf810fd78f6f6421c33d35c11))
+
 ## [0.6.0](https://github.com/j5ik2o/takt-sdd/compare/v0.5.0...v0.6.0) (2026-02-20)
 
 
