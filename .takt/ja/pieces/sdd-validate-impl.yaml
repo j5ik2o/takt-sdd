@@ -10,11 +10,11 @@ max_movements: 15
 initial_movement: validate
 
 instructions:
-  validate-impl: ../instructions/validate-impl.md
-  fix-impl: ../instructions/fix-impl.md
+  validate-impl: ../facets/instructions/validate-impl.md
+  fix-impl: ../facets/instructions/fix-impl.md
 
 report_formats:
-  sdd-impl-validation: ../output-contracts/sdd-impl-validation.md
+  sdd-impl-validation: ../facets/output-contracts/sdd-impl-validation.md
 
 loop_monitors:
   - cycle:

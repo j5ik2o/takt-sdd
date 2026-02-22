@@ -24,14 +24,50 @@ const REPO = "j5ik2o/takt-sdd";
 const TAKT_REPO = "nrslib/takt";
 const TARGET_DIR = ".takt";
 const DEFAULT_REFS_PATH = "references/takt";
-const FACET_DIRS = [
-  "pieces",
+const PIECE_DIR = "pieces";
+const FACET_TYPES = [
   "personas",
   "policies",
   "instructions",
   "knowledge",
   "output-contracts",
 ];
+
+function srcFacetPath(facetType: string): string {
+  return `facets/${facetType}`;
+}
+
+function destFacetPath(facetType: string, layout: "modern" | "legacy"): string {
+  return layout === "modern" ? `facets/${facetType}` : facetType;
+}
+
+function detectLayout(): "modern" | "legacy" {
+  try {
+    const output = execSync("takt --version", {
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "ignore"],
+    }).trim();
+    const match = output.match(/(\d+)\.(\d+)\.(\d+)/);
+    if (match) {
+      const [, major, minor] = match.map(Number);
+      if (major > 0 || (major === 0 && minor >= 22)) return "modern";
+      return "legacy";
+    }
+  } catch { /* takt not installed */ }
+  return "modern";
+}
+
+function rewritePiecePathsForLegacy(piecesDir: string): void {
+  if (!existsSync(piecesDir)) return;
+  for (const file of readdirSync(piecesDir).filter(f => f.endsWith(".yaml"))) {
+    const filePath = join(piecesDir, file);
+    let content = readFileSync(filePath, "utf-8");
+    for (const type of FACET_TYPES) {
+      content = content.replaceAll(`../facets/${type}/`, `../${type}/`);
+    }
+    writeFileSync(filePath, content, "utf-8");
+  }
+}
 
 const TAKT_SKILLS = [
   "takt-analyze",
@@ -65,6 +101,7 @@ export interface InstallOptions {
   tag: string | undefined;
   withoutSkills: boolean;
   refsPath: string;
+  layout: "auto" | "modern" | "legacy";
   cwd: string;
 }
 
@@ -292,14 +329,26 @@ export async function install(options: InstallOptions): Promise<void> {
       errorExit(msg.archiveError);
     }
 
+    const resolvedLayout = options.layout === "auto" ? detectLayout() : options.layout;
+    info(msg.layoutDetected(resolvedLayout));
+
     // dry-run: ファイル一覧のみ表示
     if (options.dryRun) {
       info(msg.dryRunHeader);
-      for (const dir of FACET_DIRS) {
-        const srcDir = join(extractedTakt, options.lang, dir);
+      // pieces
+      const piecesSrcDry = join(extractedTakt, options.lang, PIECE_DIR);
+      if (existsSync(piecesSrcDry)) {
+        for (const file of collectFiles(piecesSrcDry, piecesSrcDry)) {
+          console.log(msg.dryRunItem(join(TARGET_DIR, PIECE_DIR, file)));
+        }
+      }
+      // facets
+      for (const facetType of FACET_TYPES) {
+        const srcDir = join(extractedTakt, options.lang, srcFacetPath(facetType));
         if (existsSync(srcDir)) {
-          for (const file of collectFiles(srcDir, join(extractedTakt, options.lang))) {
-            console.log(msg.dryRunItem(join(TARGET_DIR, file)));
+          const destPrefix = destFacetPath(facetType, resolvedLayout);
+          for (const file of collectFiles(srcDir, srcDir)) {
+            console.log(msg.dryRunItem(join(TARGET_DIR, destPrefix, file)));
           }
         }
       }
@@ -331,16 +380,39 @@ export async function install(options: InstallOptions): Promise<void> {
 
     const allFiles: Record<string, string> = {};
 
-    for (const dir of FACET_DIRS) {
-      const srcDir = join(extractedTakt, options.lang, dir);
+    // pieces（legacy時はsync前にソースのパスを書き換え）
+    const piecesSrc = join(extractedTakt, options.lang, PIECE_DIR);
+    if (existsSync(piecesSrc)) {
+      const piecesDest = join(targetPath, PIECE_DIR);
+      if (!isUpdate && existsSync(piecesDest)) {
+        rmSync(piecesDest, { recursive: true });
+      }
+      let effectiveSrc = piecesSrc;
+      if (resolvedLayout === "legacy") {
+        const legacyTmp = join(tmpDir, "legacy-pieces");
+        cpSync(piecesSrc, legacyTmp, { recursive: true });
+        rewritePiecePathsForLegacy(legacyTmp);
+        effectiveSrc = legacyTmp;
+      }
+      const result = syncDirectory(
+        effectiveSrc, piecesDest,
+        effectiveSrc, piecesDest,
+        isUpdate ? manifest : null, msg, options.cwd,
+      );
+      Object.assign(allFiles, result.files);
+    }
+
+    // facets
+    for (const facetType of FACET_TYPES) {
+      const srcDir = join(extractedTakt, options.lang, srcFacetPath(facetType));
       if (existsSync(srcDir)) {
-        const destDir = join(targetPath, dir);
+        const destDir = join(targetPath, destFacetPath(facetType, resolvedLayout));
         if (!isUpdate && existsSync(destDir)) {
           rmSync(destDir, { recursive: true });
         }
         const result = syncDirectory(
           srcDir, destDir,
-          join(extractedTakt, options.lang), targetPath,
+          srcDir, destDir,
           isUpdate ? manifest : null, msg, options.cwd,
         );
         Object.assign(allFiles, result.files);

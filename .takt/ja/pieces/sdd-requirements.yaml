@@ -10,16 +10,16 @@ max_movements: 10
 initial_movement: generate-requirements
 
 personas:
-  requirements-analyst: ../personas/requirements-analyst.md
+  requirements-analyst: ../facets/personas/requirements-analyst.md
 
 policies:
-  ears-format: ../policies/ears-format.md
+  ears-format: ../facets/policies/ears-format.md
 
 instructions:
-  generate-requirements: ../instructions/generate-requirements.md
+  generate-requirements: ../facets/instructions/generate-requirements.md
 
 report_formats:
-  sdd-requirements: ../output-contracts/sdd-requirements.md
+  sdd-requirements: ../facets/output-contracts/sdd-requirements.md
 
 movements:
   - name: generate-requirements

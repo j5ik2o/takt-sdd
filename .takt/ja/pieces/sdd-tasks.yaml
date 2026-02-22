@@ -10,13 +10,13 @@ max_movements: 10
 initial_movement: generate-tasks
 
 policies:
-  sdd-tasks: ../policies/sdd-tasks.md
+  sdd-tasks: ../facets/policies/sdd-tasks.md
 
 instructions:
-  generate-tasks: ../instructions/generate-tasks.md
+  generate-tasks: ../facets/instructions/generate-tasks.md
 
 report_formats:
-  sdd-tasks: ../output-contracts/sdd-tasks.md
+  sdd-tasks: ../facets/output-contracts/sdd-tasks.md
 
 movements:
   - name: generate-tasks
