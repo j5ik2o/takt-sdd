@@ -1,3 +1,12 @@
+## [0.8.0](https://github.com/j5ik2o/takt-sdd/compare/v0.7.0...v0.8.0) (2026-02-22)
+
+
+### Features
+
+* **installer:** recalculate file hashes for legacy layout and update manifest ([d60717b](https://github.com/j5ik2o/takt-sdd/commit/d60717b0e848018fbca2a1a51325b10dd9bcdbb3))
+* **installer:** rewrite piece paths for legacy layout before sync ([66ada40](https://github.com/j5ik2o/takt-sdd/commit/66ada405cbd62befe2233a37b0614b0be5b02fb8))
+* update facets layout and version to 0.7.0, add new documentation files ([63eb64d](https://github.com/j5ik2o/takt-sdd/commit/63eb64d90f07bdb6187aaa002cc0c02611316f6e))
+
 ## [0.7.0](https://github.com/j5ik2o/takt-sdd/compare/v0.6.0...v0.7.0) (2026-02-21)
 
 
