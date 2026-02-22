@@ -412,9 +412,17 @@ export async function install(options: InstallOptions): Promise<void> {
       }
     }
 
-    // legacy時: pieces内の相対パスを書き換え
+    // legacy時: pieces内の相対パスを書き換え、ハッシュを再計算
     if (resolvedLayout === "legacy") {
-      rewritePiecePathsForLegacy(join(targetPath, PIECE_DIR));
+      const piecesDest = join(targetPath, PIECE_DIR);
+      rewritePiecePathsForLegacy(piecesDest);
+      if (existsSync(piecesDest)) {
+        for (const file of collectFiles(piecesDest, piecesDest)) {
+          const filePath = join(piecesDest, file);
+          const manifestKey = relative(options.cwd, filePath).split("\\").join("/");
+          allFiles[manifestKey] = computeFileHash(filePath);
+        }
+      }
     }
 
     // .gitignore は takt が初回実行時に自動配置するため、インストーラでは生成しない
