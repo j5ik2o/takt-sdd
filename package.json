@@ -1,10 +1,10 @@
 {
   "name": "takt-sdd",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "description": "Spec-Driven Development workflow for takt",
   "devDependencies": {
-    "takt": "^0.20.1"
+    "takt": "^0.22.0"
   },
   "scripts": {
     "sdd": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd -t",

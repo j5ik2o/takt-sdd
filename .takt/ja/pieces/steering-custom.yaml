@@ -5,20 +5,20 @@ initial_movement: detect
 
 # --- カスタムファセット セクションマップ ---
 personas:
-  steering-analyst: ../personas/steering-analyst.md
+  steering-analyst: ../facets/personas/steering-analyst.md
 
 policies:
-  steering-principles: ../policies/steering-principles.md
+  steering-principles: ../facets/policies/steering-principles.md
 
 instructions:
-  detect: ../instructions/detect-steering-custom.md
-  generate: ../instructions/generate-steering-custom.md
+  detect: ../facets/instructions/detect-steering-custom.md
+  generate: ../facets/instructions/generate-steering-custom.md
 
 knowledge:
-  steering-custom-templates: ../knowledge/steering-custom-templates.md
+  steering-custom-templates: ../facets/knowledge/steering-custom-templates.md
 
 report_formats:
-  steering-custom: ../output-contracts/steering-custom.md
+  steering-custom: ../facets/output-contracts/steering-custom.md
 
 # --- Movement定義 ---
 movements:

@@ -5,22 +5,22 @@ initial_movement: detect
 
 # --- Custom Facet Section Map ---
 personas:
-  steering-analyst: ../personas/steering-analyst.md
+  steering-analyst: ../facets/personas/steering-analyst.md
 
 policies:
-  steering-principles: ../policies/steering-principles.md
+  steering-principles: ../facets/policies/steering-principles.md
 
 instructions:
-  detect: ../instructions/detect-steering.md
-  bootstrap: ../instructions/bootstrap-steering.md
-  sync: ../instructions/sync-steering.md
+  detect: ../facets/instructions/detect-steering.md
+  bootstrap: ../facets/instructions/bootstrap-steering.md
+  sync: ../facets/instructions/sync-steering.md
 
 knowledge:
-  steering-templates: ../knowledge/steering-templates.md
+  steering-templates: ../facets/knowledge/steering-templates.md
 
 report_formats:
-  steering-bootstrap: ../output-contracts/steering-bootstrap.md
-  steering-sync: ../output-contracts/steering-sync.md
+  steering-bootstrap: ../facets/output-contracts/steering-bootstrap.md
+  steering-sync: ../facets/output-contracts/steering-sync.md
 
 # --- Movement Definitions ---
 movements:

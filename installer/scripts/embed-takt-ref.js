@@ -15,7 +15,7 @@ const output = execSync("git submodule status references/takt", {
 }).trim();
 
 // Format: " <hash> references/takt (<describe>)" or "-<hash> references/takt" (not initialized)
-const match = output.match(/^[- ]?([0-9a-f]+)\s/);
+const match = output.match(/^[- +]?([0-9a-f]+)\s/);
 if (!match) {
   console.error(`Failed to parse submodule status: ${output}`);
   process.exit(1);
