@@ -380,16 +380,23 @@ export async function install(options: InstallOptions): Promise<void> {
 
     const allFiles: Record<string, string> = {};
 
-    // pieces
+    // pieces（legacy時はsync前にソースのパスを書き換え）
     const piecesSrc = join(extractedTakt, options.lang, PIECE_DIR);
     if (existsSync(piecesSrc)) {
       const piecesDest = join(targetPath, PIECE_DIR);
       if (!isUpdate && existsSync(piecesDest)) {
         rmSync(piecesDest, { recursive: true });
       }
+      let effectiveSrc = piecesSrc;
+      if (resolvedLayout === "legacy") {
+        const legacyTmp = join(tmpDir, "legacy-pieces");
+        cpSync(piecesSrc, legacyTmp, { recursive: true });
+        rewritePiecePathsForLegacy(legacyTmp);
+        effectiveSrc = legacyTmp;
+      }
       const result = syncDirectory(
-        piecesSrc, piecesDest,
-        piecesSrc, piecesDest,
+        effectiveSrc, piecesDest,
+        effectiveSrc, piecesDest,
         isUpdate ? manifest : null, msg, options.cwd,
       );
       Object.assign(allFiles, result.files);
@@ -409,19 +416,6 @@ export async function install(options: InstallOptions): Promise<void> {
           isUpdate ? manifest : null, msg, options.cwd,
         );
         Object.assign(allFiles, result.files);
-      }
-    }
-
-    // legacy時: pieces内の相対パスを書き換え、ハッシュを再計算
-    if (resolvedLayout === "legacy") {
-      const piecesDest = join(targetPath, PIECE_DIR);
-      rewritePiecePathsForLegacy(piecesDest);
-      if (existsSync(piecesDest)) {
-        for (const file of collectFiles(piecesDest, piecesDest)) {
-          const filePath = join(piecesDest, file);
-          const manifestKey = relative(options.cwd, filePath).split("\\").join("/");
-          allFiles[manifestKey] = computeFileHash(filePath);
-        }
       }
     }
 
