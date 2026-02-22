@@ -10,19 +10,19 @@ max_movements: 15
 initial_movement: validate-design
 
 policies:
-  sdd-design-review: ../policies/sdd-design-review.md
-  sdd-design: ../policies/sdd-design.md
+  sdd-design-review: ../facets/policies/sdd-design-review.md
+  sdd-design: ../facets/policies/sdd-design.md
 
 instructions:
-  validate-design: ../instructions/validate-design.md
-  fix-design: ../instructions/fix-design.md
+  validate-design: ../facets/instructions/validate-design.md
+  fix-design: ../facets/instructions/fix-design.md
 
 knowledge:
-  design-discovery: ../knowledge/design-discovery.md
+  design-discovery: ../facets/knowledge/design-discovery.md
 
 report_formats:
-  sdd-design-review: ../output-contracts/sdd-design-review.md
-  sdd-design: ../output-contracts/sdd-design.md
+  sdd-design-review: ../facets/output-contracts/sdd-design-review.md
+  sdd-design: ../facets/output-contracts/sdd-design.md
 
 loop_monitors:
   - cycle:

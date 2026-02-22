@@ -10,17 +10,17 @@ max_movements: 15
 initial_movement: generate-design
 
 policies:
-  sdd-design: ../policies/sdd-design.md
+  sdd-design: ../facets/policies/sdd-design.md
 
 instructions:
-  generate-design: ../instructions/generate-design.md
+  generate-design: ../facets/instructions/generate-design.md
 
 knowledge:
-  design-discovery: ../knowledge/design-discovery.md
+  design-discovery: ../facets/knowledge/design-discovery.md
 
 report_formats:
-  sdd-design: ../output-contracts/sdd-design.md
-  sdd-research: ../output-contracts/sdd-research.md
+  sdd-design: ../facets/output-contracts/sdd-design.md
+  sdd-research: ../facets/output-contracts/sdd-research.md
 
 movements:
   - name: generate-design

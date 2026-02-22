@@ -11,8 +11,8 @@ initial_movement: plan
 
 # --- カスタムファセット セクションマップ ---
 instructions:
-  plan: ../instructions/impl-plan.md
-  implement: ../instructions/impl-execute.md
+  plan: ../facets/instructions/impl-plan.md
+  implement: ../facets/instructions/impl-execute.md
 
 # --- ループ監視 ---
 loop_monitors:

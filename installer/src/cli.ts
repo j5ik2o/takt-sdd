@@ -9,6 +9,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const packageRoot = resolve(__dirname, "..");
 
+type Layout = "auto" | "modern" | "legacy";
+
+function isLayout(value: string): value is Layout {
+  return value === "auto" || value === "modern" || value === "legacy";
+}
+
 interface ParsedArgs {
   lang: Lang;
   force: boolean;
@@ -18,6 +24,7 @@ interface ParsedArgs {
   tag: string | undefined;
   withoutSkills: boolean;
   refsPath: string;
+  layout: Layout;
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
@@ -30,6 +37,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     tag: undefined,
     withoutSkills: false,
     refsPath: "references/takt",
+    layout: "auto" as Layout,
   };
 
   for (let i = 0; i < argv.length; i++) {
@@ -69,6 +77,15 @@ function parseArgs(argv: string[]): ParsedArgs {
           process.exit(1);
         }
         args.refsPath = value;
+        break;
+      }
+      case "--layout": {
+        const value = argv[++i];
+        if (!value || !isLayout(value)) {
+          console.error(`Error: --layout requires "auto", "modern", or "legacy". Got: ${value ?? "(empty)"}`);
+          process.exit(1);
+        }
+        args.layout = value;
         break;
       }
       case "-h":
@@ -112,6 +129,7 @@ async function main(): Promise<void> {
     tag: args.tag,
     withoutSkills: args.withoutSkills,
     refsPath: args.refsPath,
+    layout: args.layout,
     cwd: process.cwd(),
   });
 }

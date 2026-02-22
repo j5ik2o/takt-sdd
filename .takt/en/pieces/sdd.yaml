@@ -11,36 +11,36 @@ initial_movement: generate-requirements
 
 # --- Custom Facet Section Map ---
 personas:
-  requirements-analyst: ../personas/requirements-analyst.md
+  requirements-analyst: ../facets/personas/requirements-analyst.md
 
 policies:
-  ears-format: ../policies/ears-format.md
-  sdd-design: ../policies/sdd-design.md
-  sdd-gap-analysis: ../policies/sdd-gap-analysis.md
-  sdd-design-review: ../policies/sdd-design-review.md
-  sdd-tasks: ../policies/sdd-tasks.md
+  ears-format: ../facets/policies/ears-format.md
+  sdd-design: ../facets/policies/sdd-design.md
+  sdd-gap-analysis: ../facets/policies/sdd-gap-analysis.md
+  sdd-design-review: ../facets/policies/sdd-design-review.md
+  sdd-tasks: ../facets/policies/sdd-tasks.md
 
 instructions:
-  generate-requirements: ../instructions/generate-requirements.md
-  validate-gap: ../instructions/validate-gap.md
-  generate-design: ../instructions/generate-design.md
-  validate-design: ../instructions/validate-design.md
-  generate-tasks: ../instructions/generate-tasks.md
-  validate-impl: ../instructions/validate-impl.md
-  plan: ../instructions/impl-plan.md
-  implement: ../instructions/impl-execute.md
+  generate-requirements: ../facets/instructions/generate-requirements.md
+  validate-gap: ../facets/instructions/validate-gap.md
+  generate-design: ../facets/instructions/generate-design.md
+  validate-design: ../facets/instructions/validate-design.md
+  generate-tasks: ../facets/instructions/generate-tasks.md
+  validate-impl: ../facets/instructions/validate-impl.md
+  plan: ../facets/instructions/impl-plan.md
+  implement: ../facets/instructions/impl-execute.md
 
 knowledge:
-  design-discovery: ../knowledge/design-discovery.md
+  design-discovery: ../facets/knowledge/design-discovery.md
 
 report_formats:
-  sdd-requirements: ../output-contracts/sdd-requirements.md
-  sdd-gap-analysis: ../output-contracts/sdd-gap-analysis.md
-  sdd-design: ../output-contracts/sdd-design.md
-  sdd-research: ../output-contracts/sdd-research.md
-  sdd-design-review: ../output-contracts/sdd-design-review.md
-  sdd-tasks: ../output-contracts/sdd-tasks.md
-  sdd-impl-validation: ../output-contracts/sdd-impl-validation.md
+  sdd-requirements: ../facets/output-contracts/sdd-requirements.md
+  sdd-gap-analysis: ../facets/output-contracts/sdd-gap-analysis.md
+  sdd-design: ../facets/output-contracts/sdd-design.md
+  sdd-research: ../facets/output-contracts/sdd-research.md
+  sdd-design-review: ../facets/output-contracts/sdd-design-review.md
+  sdd-tasks: ../facets/output-contracts/sdd-tasks.md
+  sdd-impl-validation: ../facets/output-contracts/sdd-impl-validation.md
 
 # --- Loop Monitors ---
 loop_monitors:

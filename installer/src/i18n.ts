@@ -27,6 +27,7 @@ interface Messages {
   taktRefsInstalled: string;
   taktRefsSkipped: string;
   taktRefsError: string;
+  layoutDetected: (layout: string) => string;
   fileAdded: (path: string) => string;
   fileUpdated: (path: string) => string;
   fileSkippedCustomized: (path: string) => string;
@@ -61,6 +62,7 @@ const en: Messages = {
   taktRefsInstalled: "Installed takt references (builtins, docs)",
   taktRefsSkipped: "Takt references already exist, skipping",
   taktRefsError: "Warning: Failed to download takt references. Skills may not find style guides.",
+  layoutDetected: (layout) => `Using ${layout} layout`,
   fileAdded: (path) => `Added: ${path}`,
   fileUpdated: (path) => `Updated: ${path}`,
   fileSkippedCustomized: (path) => `Skipped (customized): ${path}`,
@@ -73,6 +75,7 @@ Options:
   --force            Overwrite existing .takt/ directory (ignored if manifest exists)
   --dry-run          Preview without writing files
   --without-skills   Skip installing takt skills to .agent/skills/
+  --layout <mode>    Directory layout: auto, modern, legacy (default: auto)
   --refs-path <path> Path for takt references (default: references/takt)
   -h, --help         Show this help
   -v, --version      Show version`,
@@ -120,6 +123,7 @@ const ja: Messages = {
   taktRefsInstalled: "takt リファレンスをインストールしました（builtins, docs）",
   taktRefsSkipped: "takt リファレンスは既に存在するためスキップしました",
   taktRefsError: "警告: takt リファレンスのダウンロードに失敗しました。スキルがスタイルガイドを参照できない可能性があります。",
+  layoutDetected: (layout) => `${layout} レイアウトを使用します`,
   fileAdded: (path) => `追加: ${path}`,
   fileUpdated: (path) => `更新: ${path}`,
   fileSkippedCustomized: (path) => `スキップ（カスタマイズ済み）: ${path}`,
@@ -132,6 +136,7 @@ const ja: Messages = {
   --force            既存の .takt/ を上書き（マニフェストがある場合は無視）
   --dry-run          プレビューのみ（ファイル書き込みなし）
   --without-skills   takt スキルのインストールをスキップ
+  --layout <mode>    ディレクトリレイアウト: auto, modern, legacy（デフォルト: auto）
   --refs-path <path> takt リファレンスのパス（デフォルト: references/takt）
   -h, --help         ヘルプを表示
   -v, --version      バージョンを表示`,

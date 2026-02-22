@@ -10,13 +10,13 @@ max_movements: 10
 initial_movement: validate-gap
 
 policies:
-  sdd-gap-analysis: ../policies/sdd-gap-analysis.md
+  sdd-gap-analysis: ../facets/policies/sdd-gap-analysis.md
 
 instructions:
-  validate-gap: ../instructions/validate-gap.md
+  validate-gap: ../facets/instructions/validate-gap.md
 
 report_formats:
-  sdd-gap-analysis: ../output-contracts/sdd-gap-analysis.md
+  sdd-gap-analysis: ../facets/output-contracts/sdd-gap-analysis.md
 
 movements:
   - name: validate-gap
