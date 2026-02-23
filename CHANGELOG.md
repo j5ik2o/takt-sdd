@@ -1,3 +1,11 @@
+## [0.9.0](https://github.com/j5ik2o/takt-sdd/compare/v0.8.0...v0.9.0) (2026-02-23)
+
+
+### Features
+
+* **installer:** add takt-task to TAKT_SKILLS list ([65c8f0e](https://github.com/j5ik2o/takt-sdd/commit/65c8f0e7ad62361d8869818be0997acaa4913770))
+* **skills:** add TAKT Task Creator skill for task generation and metadata management ([95c9e3c](https://github.com/j5ik2o/takt-sdd/commit/95c9e3c134928be3a3793fd4f1afddbdda7b11c0))
+
 ## [0.8.0](https://github.com/j5ik2o/takt-sdd/compare/v0.7.0...v0.8.0) (2026-02-22)
 
 
