@@ -78,9 +78,9 @@ validate_order_md() {
   fi
 
   # 3. ## 目的 セクション（内容必須）
-  if grep -qF "## 目的" "$file"; then
+  if grep -qE "^## 目的[[:space:]]*$" "$file"; then
     local mokuteki
-    mokuteki=$(awk '/^## 目的/{flag=1; next} /^## /{flag=0} flag && NF' "$file" | head -1)
+    mokuteki=$(awk '/^## 目的[[:space:]]*$/{flag=1; next} /^## /{flag=0} flag && NF' "$file" | head -1)
     if [[ -n "$mokuteki" ]]; then
       ok "## 目的: 内容あり"
     else
@@ -91,9 +91,9 @@ validate_order_md() {
   fi
 
   # 4. ## 要件 セクション（- [ ] チェックボックス必須）
-  if grep -qF "## 要件" "$file"; then
+  if grep -qE "^## 要件[[:space:]]*$" "$file"; then
     local yoken_count
-    yoken_count=$(awk '/^## 要件/{flag=1; next} /^## /{flag=0} flag' "$file" \
+    yoken_count=$(awk '/^## 要件[[:space:]]*$/{flag=1; next} /^## /{flag=0} flag' "$file" \
       | grep -cE "^- \[[ xX]\]" || true)
     if [[ "$yoken_count" -ge 1 ]]; then
       ok "## 要件: ${yoken_count}件（チェックボックスあり）"
@@ -105,9 +105,9 @@ validate_order_md() {
   fi
 
   # 5. ## 受け入れ基準 セクション（項目必須）
-  if grep -qF "## 受け入れ基準" "$file"; then
+  if grep -qE "^## 受け入れ基準[[:space:]]*$" "$file"; then
     local criteria_count
-    criteria_count=$(awk '/^## 受け入れ基準/{flag=1; next} /^## /{flag=0} flag' "$file" \
+    criteria_count=$(awk '/^## 受け入れ基準[[:space:]]*$/{flag=1; next} /^## /{flag=0} flag' "$file" \
       | grep -cE "^- " || true)
     if [[ "$criteria_count" -ge 1 ]]; then
       ok "## 受け入れ基準: ${criteria_count}件"
