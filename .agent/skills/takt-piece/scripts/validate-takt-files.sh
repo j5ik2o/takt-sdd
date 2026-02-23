@@ -46,8 +46,12 @@ info()  { if [[ "$QUIET" == false ]]; then echo "$*"; fi; }
 normalize_path() {
   local base_dir="$1"
   local rel_path="$2"
-  python3 -c "import os; print(os.path.normpath(os.path.join('$base_dir', '$rel_path')))" 2>/dev/null \
+  # 引数を sys.argv 経由で渡し Python コードインジェクションを防ぐ
+  python3 - "$base_dir" "$rel_path" 2>/dev/null <<'PYEOF' \
     || echo "${base_dir}/${rel_path}"
+import os, sys
+print(os.path.normpath(os.path.join(sys.argv[1], sys.argv[2])))
+PYEOF
 }
 
 # ──────────────────────────────────────
@@ -141,8 +145,11 @@ validate_piece() {
   ok "movements: ${movement_count} 件"
 
   # initial_movement が movements 内に存在するか
+  # grep -F で固定文字列マッチし regex インジェクションを防ぐ
   if [[ -n "$initial_movement" ]]; then
-    if grep -qE "^  - name:[[:space:]]+${initial_movement}[[:space:]]*$" "$file"; then
+    if grep -E "^  - name:[[:space:]]+" "$file" \
+        | sed 's/^  - name:[[:space:]]*//' \
+        | grep -qxF "$initial_movement"; then
       ok "initial_movement '${initial_movement}' → movement 存在確認"
     else
       error "initial_movement '${initial_movement}' が movements に定義されていません"
