@@ -344,3 +344,17 @@ movements:
 ## 注意事項
 {最適化による動作変更の可能性がある場合に記載}
 ```
+
+## バリデーション
+
+作成・編集したファイルは `validate-takt-files.sh` で機械的に検証できる:
+
+```bash
+bash .agent/skills/takt-optimize/scripts/validate-takt-files.sh
+```
+
+検証項目:
+- **ピース YAML**: 必須フィールド（`name`/`initial_movement`/`movements`）、`initial_movement` の movement 参照、ファセットファイル参照の実在
+- **ファセット .md**: 空チェック、persona/policy/knowledge は `# 見出し` 必須、instruction/output-contract は内容存在
+
+オプション `--pieces` / `--facets` で対象を絞り込み可能。
