@@ -272,3 +272,17 @@ loop_monitors:
 - [ ] 全ムーブメントの `rules.next` が有効な遷移先（他のムーブメント名 or COMPLETE/ABORT）
 - [ ] parallel ムーブメントの親ルールが `all()` / `any()` を使用
 - [ ] parallel サブステップのルールに `next` がない（親が制御）
+
+## バリデーション
+
+作成・編集したファイルは `validate-takt-files.sh` で機械的に検証できる:
+
+```bash
+bash .agent/skills/takt-piece/scripts/validate-takt-files.sh
+```
+
+検証項目:
+- **ピース YAML**: 必須フィールド（`name`/`initial_movement`/`movements`）、`initial_movement` の movement 参照、ファセットファイル参照の実在
+- **ファセット .md**: 空チェック、persona/policy/knowledge は `# 見出し` 必須、instruction/output-contract は内容存在
+
+オプション `--pieces` / `--facets` で対象を絞り込み可能。

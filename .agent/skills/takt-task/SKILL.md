@@ -24,6 +24,7 @@ taktのタスク管理に関する資料は `references/takt/` にある。必�
 | TaskRecordスキーマ | `references/takt/src/infra/task/schema.ts` | フィールド定義・バリデーション |
 | タスク形式仕様 | `references/takt/builtins/project/tasks/TASK-FORMAT` | task_dir形式の詳細 |
 | スキーマ詳細 | このスキルの `references/task-schema.md` | フィールド一覧・ステータス遷移 |
+| バリデーションスクリプト | このスキルの `validate-order-md.sh` | order.md の構造検証 |
 
 **重要**: TaskRecordのステータス遷移ルールは厳密にバリデーションされる。`references/task-schema.md` を読んで不変条件を把握する。
 
@@ -164,6 +165,21 @@ tasks:
 - [ ] `content`, `content_file`, `task_dir` のいずれか1つのみ指定されているか
 - [ ] `piece` 名が既存のピース（ビルトインまたはカスタム）と一致するか
 - [ ] 既存タスクの `tasks.yaml` 全体構造が壊れていないか
+
+#### order.md 構造バリデーション
+
+`validate-order-md.sh` を実行して order.md の構造を機械的に検証できる:
+
+```bash
+bash .agent/skills/takt-task/scripts/validate-order-md.sh
+```
+
+検証項目:
+- slug フォーマット（`YYYYMMDD-HHmmss-xxxxxx`）
+- `## 目的` セクションの存在と内容
+- `## 要件` セクションの `- [ ]` チェックボックスアイテム（1件以上）
+- `## 受け入れ基準` セクションの項目（1件以上）
+- `tasks.yaml` の `task_dir` → `order.md` 存在クロスチェック
 
 ### ステータス遷移チェック（既存タスク編集時）
 

@@ -1,0 +1,1 @@
+../../takt-piece/scripts/validate-takt-files.sh

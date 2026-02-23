@@ -1,0 +1,87 @@
+name: BugBot → GitHub Issue
+
+on:
+  pull_request_review_comment:
+    types: [created]
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  create-issue:
+    # BugBot のコメントのみ対象
+    # issue_comment は PR 上のコメントのみ（通常 Issue は除外）
+    if: |
+      github.event.comment.user.login == 'cursor[bot]' &&
+      (
+        github.event_name == 'pull_request_review_comment' ||
+        github.event.issue.pull_request != null
+      )
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolve PR URL and number
+        id: pr
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request_review_comment" ]]; then
+            echo "url=${{ github.event.pull_request.html_url }}" >> "$GITHUB_OUTPUT"
+            echo "number=${{ github.event.pull_request.number }}"  >> "$GITHUB_OUTPUT"
+          else
+            echo "url=${{ github.event.issue.html_url }}"  >> "$GITHUB_OUTPUT"
+            echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Extract issue title from BugBot comment
+        id: title
+        env:
+          BODY: ${{ github.event.comment.body }}
+        run: |
+          # 空行をスキップして最初の行を取得（最大80文字）
+          title=$(printf '%s' "$BODY" | grep -m1 -v '^[[:space:]]*$' | sed 's/^#*[[:space:]]*//' | cut -c1-80)
+          # タイトルが空の場合はデフォルト値
+          echo "title=${title:-BugBot detected an issue}" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure "bug" label exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create bug \
+            --repo "${{ github.repository }}" \
+            --color d73a4a \
+            --description "Something isn't working" \
+            2>/dev/null || true
+
+      - name: Build issue body
+        env:
+          PR_URL: ${{ steps.pr.outputs.url }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_URL: ${{ github.event.comment.html_url }}
+        run: |
+          # --body-file を使いコマンドインジェクションを防ぐ
+          {
+            echo "> **BugBot が PR #${PR_NUMBER} で検出したバグ**"
+            echo "> ${PR_URL}"
+            echo ""
+            echo "---"
+            echo ""
+            printf '%s\n' "${COMMENT_BODY}"
+            echo ""
+            echo "---"
+            echo ""
+            echo "**元コメント**: ${COMMENT_URL}"
+          } > /tmp/issue-body.md
+
+      - name: Create GitHub Issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUG_TITLE: ${{ steps.title.outputs.title }}
+        run: |
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "🐛 [BugBot] ${BUG_TITLE}" \
+            --body-file /tmp/issue-body.md \
+            --label "bug"
