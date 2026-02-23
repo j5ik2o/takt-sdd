@@ -14,7 +14,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 TASKS_DIR="${REPO_ROOT}/.takt/tasks"
 TASKS_YAML="${REPO_ROOT}/.takt/tasks.yaml"
 
@@ -170,7 +170,10 @@ main() {
     info "ℹ️  .takt/tasks/ ディレクトリが存在しません（タスクがまだ作成されていません）"
     info ""
     info "────────────────────────────────────────"
-    echo "合計: 0 ファイル | エラー: 0 | 警告: 0"
+    echo "合計: 0 ファイル | エラー: ${ERRORS} | 警告: ${WARNINGS}"
+    if [[ "$ERRORS" -gt 0 ]]; then
+      exit 1
+    fi
     exit 0
   fi
 
