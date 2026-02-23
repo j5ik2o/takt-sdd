@@ -132,7 +132,7 @@ check_tasks_yaml() {
 
   # task_dir 行をシンプルにgrep抽出（フラットなYAML構造前提）
   local task_dirs
-  task_dirs=$(grep -E "^\s+task_dir:" "$TASKS_YAML" \
+  task_dirs=$(grep -E "^[[:space:]]+task_dir:" "$TASKS_YAML" \
     | sed "s/.*task_dir:[[:space:]]*//" \
     | tr -d '"' \
     | tr -d "'" \
@@ -178,10 +178,10 @@ main() {
   fi
 
   local found=0
-  while IFS= read -r -d '' file; do
+  while IFS= read -r file; do
     validate_order_md "$file"
     found=$((found + 1))
-  done < <(find "$TASKS_DIR" -maxdepth 2 -name "order.md" -print0 2>/dev/null | sort -z)
+  done < <(find "$TASKS_DIR" -maxdepth 2 -name "order.md" -print 2>/dev/null | sort)
 
   info ""
   info "────────────────────────────────────────"

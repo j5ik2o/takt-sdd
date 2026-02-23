@@ -200,10 +200,10 @@ main() {
         [[ -d "$facet_type_dir" ]] || continue
         local facet_type
         facet_type=$(basename "$facet_type_dir")
-        while IFS= read -r -d '' file; do
+        while IFS= read -r file; do
           validate_facet "$file" "$facet_type"
           facet_count=$((facet_count + 1))
-        done < <(find "$facet_type_dir" -maxdepth 2 -name "*.md" -print0 2>/dev/null | sort -z)
+        done < <(find "$facet_type_dir" -maxdepth 2 -name "*.md" -print 2>/dev/null | sort)
       done
     done
   fi
@@ -213,10 +213,10 @@ main() {
     info ""
     info "=== ピース (.yaml) チェック ==="
 
-    while IFS= read -r -d '' file; do
+    while IFS= read -r file; do
       validate_piece "$file"
       piece_count=$((piece_count + 1))
-    done < <(find "${TAKT_DIR}" -path "*/pieces/*.yaml" -print0 2>/dev/null | sort -z)
+    done < <(find "${TAKT_DIR}" -path "*/pieces/*.yaml" -print 2>/dev/null | sort)
 
     if [[ "$piece_count" -eq 0 ]]; then
       info "  ピースファイルが見つかりませんでした"
