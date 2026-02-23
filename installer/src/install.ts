@@ -74,6 +74,7 @@ const TAKT_SKILLS = [
   "takt-facet",
   "takt-optimize",
   "takt-piece",
+  "takt-task",
 ];
 
 const SKILL_SYMLINK_TARGETS = [
