@@ -1,3 +1,22 @@
+## [0.10.0](https://github.com/j5ik2o/takt-sdd/compare/v0.9.0...v0.10.0) (2026-02-23)
+
+
+### Features
+
+* **ci:** BugBot PRコメントをGitHub Issueに自動起票するワークフローを追加 ([baaa5f8](https://github.com/j5ik2o/takt-sdd/commit/baaa5f854daa2ba70cc7636f716f9c69c5d12cbb))
+* **takt-piece/facet/optimize:** add validate-takt-files.sh ([57f0169](https://github.com/j5ik2o/takt-sdd/commit/57f016958ce56c65e25de4e2e6a4778399aaae97))
+* **takt-task:** add order.md validation script ([d015d40](https://github.com/j5ik2o/takt-sdd/commit/d015d40290a6635df092cdab1c9022534caa1d27))
+
+
+### Bug Fixes
+
+* **ci:** BugBot→Issue ワークフローのセキュリティ・誤発火バグを修正 ([7c77055](https://github.com/j5ik2o/takt-sdd/commit/7c770555404fe6ef2aa0206372f6452183965d27))
+* **takt-task:** correct path to `validate-order-md.sh` in SKILL.md and directory structure ([0fb1524](https://github.com/j5ik2o/takt-sdd/commit/0fb152498d7dce969a71baa892b5fa4d444300cc))
+* **takt-task:** correct script path and improve validation output ([376fd2d](https://github.com/j5ik2o/takt-sdd/commit/376fd2da10f7c8f6be2ecb139a29d1a86da17794))
+* **takt-task:** improve validation for section headers and field extraction ([93ce082](https://github.com/j5ik2o/takt-sdd/commit/93ce082db7cf103b4958362499e6070b0de84d52))
+* **validate:** BSD/macOS互換性とPOSIX ERE準拠の修正 ([3259327](https://github.com/j5ik2o/takt-sdd/commit/325932758f33efb17ca98f7f00a28e33813df131))
+* **validate:** コードインジェクション・regexインジェクション脆弱性を修正 ([e135383](https://github.com/j5ik2o/takt-sdd/commit/e135383edbcfad20ddf6450a37869e56804fb869))
+
 ## [0.9.0](https://github.com/j5ik2o/takt-sdd/compare/v0.8.0...v0.9.0) (2026-02-23)
 
 

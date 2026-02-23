@@ -1,6 +1,6 @@
 {
   "name": "create-takt-sdd",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Installer for takt-sdd: Spec-Driven Development workflow for takt",
   "type": "module",
   "bin": {
