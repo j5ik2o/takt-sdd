@@ -1,3 +1,11 @@
+## [0.10.1](https://github.com/j5ik2o/takt-sdd/compare/v0.10.0...v0.10.1) (2026-02-25)
+
+
+### Bug Fixes
+
+* align loop monitor healthy transitions with cycle head ([9b29629](https://github.com/j5ik2o/takt-sdd/commit/9b29629a3f7c6b3a49c0a5d52f05f029317d9e60))
+* update takt skills and add workflow validators ([b21d813](https://github.com/j5ik2o/takt-sdd/commit/b21d8130b7863458f0c1e4b683d2c86a496878ef))
+
 ## [0.10.0](https://github.com/j5ik2o/takt-sdd/compare/v0.9.0...v0.10.0) (2026-02-23)
 
 
