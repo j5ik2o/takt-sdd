@@ -177,6 +177,101 @@ validate_piece() {
       fi
     done <<< "$facet_refs"
   fi
+
+  # loop_monitors の整合性チェック
+  local loop_check
+  loop_check=$(ruby - "$file" <<'RUBY'
+require "yaml"
+
+file = ARGV[0]
+doc = YAML.load_file(file)
+movements = doc["movements"] || []
+loop_monitors = doc["loop_monitors"] || []
+
+movement_reports = Hash.new { |h, k| h[k] = [] }
+
+report_names = lambda do |movement_node|
+  report_entries = movement_node.dig("output_contracts", "report") || []
+  report_entries.filter_map do |entry|
+    name = entry.is_a?(Hash) ? entry["name"] : nil
+    name unless name.nil? || name.empty?
+  end
+end
+
+movements.each do |movement|
+  next unless movement.is_a?(Hash)
+  name = movement["name"]
+  next unless name && !name.empty?
+  movement_reports[name].concat(report_names.call(movement))
+
+  parallel = movement["parallel"] || []
+  parallel.each do |substep|
+    sub_name = substep.is_a?(Hash) ? substep["name"] : nil
+    next unless sub_name && !sub_name.empty?
+    sub_reports = report_names.call(substep)
+    movement_reports[sub_name].concat(sub_reports)
+    movement_reports[name].concat(sub_reports)
+    movement_reports[sub_name].uniq!
+  end
+  movement_reports[name].uniq!
+end
+
+loop_monitors.each_with_index do |monitor, idx|
+  next unless monitor.is_a?(Hash)
+  cycle = monitor["cycle"] || []
+  cycle = [] unless cycle.is_a?(Array)
+  cycle = cycle.map(&:to_s)
+  first = cycle[0]
+
+  cycle.each do |movement_name|
+    unless movement_reports.key?(movement_name) || movements.any? { |m| m.is_a?(Hash) && m["name"].to_s == movement_name }
+      puts "ERROR|loop_monitors[#{idx}]: cycle に未定義 movement '#{movement_name}' があります"
+    end
+  end
+
+  rules = monitor.dig("judge", "rules") || []
+  healthy_rule = rules.find do |r|
+    next false unless r.is_a?(Hash)
+    condition = r["condition"].to_s
+    condition.include?("健全") || condition.downcase.include?("healthy")
+  end
+
+  if healthy_rule
+    healthy_next = healthy_rule["next"].to_s
+    if first && !first.empty? && healthy_next != first
+      puts "ERROR|loop_monitors[#{idx}]: 健全時 next='#{healthy_next}' が cycle 先頭 '#{first}' と不一致です"
+    end
+  else
+    puts "WARN|loop_monitors[#{idx}]: 健全条件（condition に 健全/healthy を含むルール）が見つかりません"
+  end
+
+  template = monitor.dig("judge", "instruction_template").to_s
+  report_refs = template.scan(/\{report:([^}]+)\}/).flatten.uniq
+  allowed_reports = cycle.flat_map { |movement_name| movement_reports[movement_name] }.compact.uniq
+
+  report_refs.each do |report_name|
+    unless allowed_reports.include?(report_name)
+      puts "ERROR|loop_monitors[#{idx}]: report '#{report_name}' は cycle 内 movement 生成物ではありません"
+    end
+  end
+end
+RUBY
+)
+
+  if [[ -n "$loop_check" ]]; then
+    while IFS= read -r line; do
+      [[ -z "$line" ]] && continue
+      local level
+      level=$(echo "$line" | cut -d'|' -f1)
+      local msg
+      msg=$(echo "$line" | cut -d'|' -f2-)
+      if [[ "$level" == "ERROR" ]]; then
+        error "$msg"
+      else
+        warn "$msg"
+      fi
+    done <<< "$loop_check"
+  fi
 }
 
 # ──────────────────────────────────────

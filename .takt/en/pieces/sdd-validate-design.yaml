@@ -42,7 +42,7 @@ loop_monitors:
         - Are the same findings being repeated?
       rules:
         - condition: Healthy (progress being made)
-          next: fix-design
+          next: validate-design
         - condition: Unproductive (no improvement)
           next: ABORT
 

@@ -181,6 +181,20 @@ bash .agent/skills/takt-task/scripts/validate-order-md.sh
 - `## 受け入れ基準` セクションの項目（1件以上）
 - `tasks.yaml` の `task_dir` → `order.md` 存在クロスチェック
 
+#### ピース変更時の追加ゲート（必須）
+
+このタスクで `.takt/pieces/*.yaml` を編集した場合は、完了判定前に以下を必ず実行する。
+
+```bash
+bash .agent/skills/takt-piece/scripts/validate-takt-files.sh --pieces
+```
+
+追加で、次の2点を確認する:
+- loop monitor の健全時 `next` が `cycle` 先頭ノードと一致
+- loop monitor の `{report:...}` 参照が cycle 内 movement 生成物に限定されている
+
+上記のどちらかが満たせない場合、そのタスクは `completed` にしない。
+
 ### ステータス遷移チェック（既存タスク編集時）
 
 | 遷移 | 有効 |

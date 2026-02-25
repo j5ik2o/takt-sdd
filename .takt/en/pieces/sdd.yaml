@@ -105,7 +105,7 @@ loop_monitors:
         - Are the same findings being repeated?
       rules:
         - condition: Healthy (progress being made)
-          next: fix
+          next: reviewers
         - condition: Unproductive (no improvement)
           next: supervise
 

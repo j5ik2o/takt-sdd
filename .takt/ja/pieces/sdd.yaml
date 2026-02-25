@@ -105,7 +105,7 @@ loop_monitors:
         - 同じ指摘が繰り返されていないか
       rules:
         - condition: 健全（進捗あり）
-          next: fix
+          next: reviewers
         - condition: 非生産的（改善なし）
           next: supervise
 
