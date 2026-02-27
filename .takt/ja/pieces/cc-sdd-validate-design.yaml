@@ -18,7 +18,7 @@ instructions:
   fix-design: ../facets/instructions/cc-sdd-fix-design.md
 
 knowledge:
-  design-discovery: ../facets/knowledge/design-discovery.md
+  cc-sdd-design-discovery: ../facets/knowledge/cc-sdd-design-discovery.md
 
 report_formats:
   cc-sdd-design-review: ../facets/output-contracts/cc-sdd-design-review.md
@@ -75,7 +75,7 @@ movements:
     policy: cc-sdd-design
     knowledge:
       - architecture
-      - design-discovery
+      - cc-sdd-design-discovery
     allowed_tools:
       - Read
       - Glob

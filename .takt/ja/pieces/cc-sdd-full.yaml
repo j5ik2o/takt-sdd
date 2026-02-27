@@ -11,10 +11,10 @@ initial_movement: generate-requirements
 
 # --- カスタムファセット セクションマップ ---
 personas:
-  requirements-analyst: ../facets/personas/requirements-analyst.md
+  cc-sdd-requirements-analyst: ../facets/personas/cc-sdd-requirements-analyst.md
 
 policies:
-  ears-format: ../facets/policies/ears-format.md
+  cc-sdd-ears-format: ../facets/policies/cc-sdd-ears-format.md
   cc-sdd-design: ../facets/policies/cc-sdd-design.md
   cc-sdd-gap-analysis: ../facets/policies/cc-sdd-gap-analysis.md
   cc-sdd-design-review: ../facets/policies/cc-sdd-design-review.md
@@ -28,10 +28,10 @@ instructions:
   generate-tasks: ../facets/instructions/cc-sdd-generate-tasks.md
   validate-impl: ../facets/instructions/cc-sdd-validate-impl.md
   plan: ../facets/instructions/cc-sdd-impl-plan.md
-  implement: ../facets/instructions/impl-execute.md
+  implement: ../facets/instructions/cc-sdd-impl-execute.md
 
 knowledge:
-  design-discovery: ../facets/knowledge/design-discovery.md
+  cc-sdd-design-discovery: ../facets/knowledge/cc-sdd-design-discovery.md
 
 report_formats:
   cc-sdd-requirements: ../facets/output-contracts/cc-sdd-requirements.md
@@ -114,8 +114,8 @@ movements:
   # ===== Phase 1: 要件生成 =====
   - name: generate-requirements
     edit: true
-    persona: requirements-analyst
-    policy: ears-format
+    persona: cc-sdd-requirements-analyst
+    policy: cc-sdd-ears-format
     allowed_tools:
       - Read
       - Glob
@@ -175,7 +175,7 @@ movements:
     policy: cc-sdd-design
     knowledge:
       - architecture
-      - design-discovery
+      - cc-sdd-design-discovery
     allowed_tools:
       - Read
       - Glob
