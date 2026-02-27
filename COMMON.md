@@ -27,7 +27,7 @@
 sdd-requirements → sdd-validate-gap → sdd-design → sdd-validate-design → sdd-tasks → sdd-impl → sdd-validate-impl
 ```
 
-フルオートピース `sdd` で全フェーズを一括実行できる。各フェーズは `npm run sdd:{phase} -- "..."` で個別実行も可能。
+フルオートピース `sdd-full` で全フェーズを一括実行できる。各フェーズは `npm run sdd:{phase} -- "..."` で個別実行も可能。
 
 ## インストーラの仕組み
 

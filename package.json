@@ -7,7 +7,7 @@
     "takt": "^0.22.0"
   },
   "scripts": {
-    "sdd": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd -t",
+    "sdd:full": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd-full -t",
     "sdd:requirements": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd-requirements -t",
     "sdd:validate-gap": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd-validate-gap -t",
     "sdd:design": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd-design -t",

@@ -90,7 +90,7 @@ SDD executes the following phases in order:
 | 4 | `sdd-impl` | Adaptive batch implementation (sequential/parallel worker support) |
 | 5 | `sdd-validate-impl` | Parallel architecture, QA, and implementation review, including auto-fix on NO-GO |
 
-Use the full-auto piece `sdd` to run Phases 1–5 in a single automated sequence.
+Use the full-auto piece `sdd-full` to run Phases 1–5 in a single automated sequence.
 
 ## Usage
 
@@ -99,7 +99,7 @@ Use the full-auto piece `sdd` to run Phases 1–5 in a single automated sequence
 Run requirements → gap analysis → design → design validation → implementation → implementation validation all at once.
 
 ```bash
-npm run sdd -- "description of requirements..."
+npm run sdd:full -- "description of requirements..."
 ```
 
 ### Phase-by-Phase Execution
