@@ -98,7 +98,7 @@ Options:
     npm run opsx:propose -- "change-name"
     npm run opsx:apply -- "change-name"
     npm run opsx:archive -- "change-name"
-    npm run opsx:explore -- "topic to explore"`,
+    npm run opsx:explore`,
 };
 
 const ja: Messages = {
@@ -166,7 +166,7 @@ const ja: Messages = {
     npm run opsx:propose -- "change-name"
     npm run opsx:apply -- "change-name"
     npm run opsx:archive -- "change-name"
-    npm run opsx:explore -- "探索したいトピック"`,
+    npm run opsx:explore`,
 };
 
 const messages: Record<Lang, Messages> = { en, ja };

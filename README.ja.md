@@ -234,6 +234,59 @@ npm run steering:custom -- "testing"
 
 生成されたsteeringファイルは設計フェーズ（`sdd:design`, `sdd:validate-design` 等）で自動的に参照される。
 
+## OpenSpec ワークフロー
+
+SDD ワークフローとは別に、OpenSpec ベースの変更管理ワークフローを提供する。提案 → 実装 → アーカイブの各フェーズで構造化された変更を管理する。
+
+| ピース | 内容 |
+|--------|------|
+| `opsx-propose` | 変更を作成し、全アーティファクト（提案書、設計書、タスク）を生成 |
+| `opsx-apply` | 変更のタスクを実装 |
+| `opsx-archive` | 完了した変更をアーカイブ |
+| `opsx-full` | propose → apply → archive を一括自動実行 |
+| `opsx-explore` | 対話的な探索と思考（読み取り専用、full には含まれない） |
+
+### フルオート実行
+
+```bash
+npm run opsx:full -- "変更の説明"
+```
+
+### フェーズ別実行
+
+```bash
+# 変更を作成しアーティファクトを生成
+npm run opsx:propose -- "change-name"
+
+# タスクを実装
+npm run opsx:apply -- "change-name"
+
+# 完了した変更をアーカイブ
+npm run opsx:archive -- "change-name"
+
+# 対話的な探索（独立した思考モード）
+npm run opsx:explore
+```
+
+### OpenSpec 設定
+
+`openspec/config.yaml` でスキーマとオプションのプロジェクトコンテキストを定義する：
+
+```yaml
+schema: spec-driven
+
+# オプション: アーティファクト作成時にAIに提示するプロジェクトコンテキスト
+# context: |
+#   技術スタック: TypeScript, React, Node.js
+
+# オプション: アーティファクト単位のルール
+# rules:
+#   proposal:
+#     - 提案書は500語以内にする
+```
+
+変更は `openspec/changes/<name>/` に保存され、`openspec/changes/archive/` にアーカイブされる。
+
 ## プロジェクト構造
 
 ```
@@ -263,7 +316,8 @@ references/
 ├── takt/                    # takt ビルトインとドキュメント（submodule / インストーラ）
 └── okite-ai/                # AI ルール集（submodule）
 scripts/
-└── takt.sh                  # takt 実行ラッパー
+├── takt.sh                  # takt 実行ラッパー
+└── opsx-cli.sh              # OpenSpec CLI（変更管理）
 ```
 
 ## 影響を受けたツール

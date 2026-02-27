@@ -97,7 +97,7 @@ const SDD_SCRIPTS: Record<string, string> = {
   "opsx:propose": "takt --pipeline --skip-git --create-worktree no -w opsx-propose -t",
   "opsx:apply": "takt --pipeline --skip-git --create-worktree no -w opsx-apply -t",
   "opsx:archive": "takt --pipeline --skip-git --create-worktree no -w opsx-archive -t",
-  "opsx:explore": "takt --pipeline --skip-git --create-worktree no -w opsx-explore -t",
+  "opsx:explore": "takt --skip-git --create-worktree no -w opsx-explore",
 };
 
 export interface InstallOptions {
