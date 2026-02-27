@@ -1,0 +1,34 @@
+name: opsx-explore
+description: OpenSpec Explore - アイデアの思考、問題の調査、要件の明確化
+piece_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_movements: 30
+initial_movement: explore
+
+personas:
+  opsx-explorer: ../facets/personas/opsx-explorer.md
+
+instructions:
+  explore: ../facets/instructions/opsx-explore.md
+
+movements:
+  - name: explore
+    edit: false
+    persona: opsx-explorer
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+      - WebSearch
+      - WebFetch
+    instruction: explore
+    rules:
+      - condition: 探索完了またはユーザーが満足
+        next: COMPLETE
+      - condition: ユーザーが探索の終了を要求
+        next: COMPLETE

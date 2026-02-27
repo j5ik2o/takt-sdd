@@ -82,15 +82,15 @@ SDD executes the following phases in order:
 
 | Phase | Piece | Description |
 |-------|-------|-------------|
-| 1 | `sdd-requirements` | Requirements document generation in EARS format |
-| 1.5 | `sdd-validate-gap` | Gap analysis between requirements and existing codebase |
-| 2 | `sdd-design` | Technical design and discovery log generation based on requirements |
-| 2.5 | `sdd-validate-design` | Design quality review with GO/NO-GO decision, including auto-fix on NO-GO |
-| 3 | `sdd-tasks` | Implementation task list generation |
-| 4 | `sdd-impl` | Adaptive batch implementation (sequential/parallel worker support) |
-| 5 | `sdd-validate-impl` | Parallel architecture, QA, and implementation review, including auto-fix on NO-GO |
+| 1 | `cc-sdd-requirements` | Requirements document generation in EARS format |
+| 1.5 | `cc-sdd-validate-gap` | Gap analysis between requirements and existing codebase |
+| 2 | `cc-sdd-design` | Technical design and discovery log generation based on requirements |
+| 2.5 | `cc-sdd-validate-design` | Design quality review with GO/NO-GO decision, including auto-fix on NO-GO |
+| 3 | `cc-sdd-tasks` | Implementation task list generation |
+| 4 | `cc-sdd-impl` | Adaptive batch implementation (sequential/parallel worker support) |
+| 5 | `cc-sdd-validate-impl` | Parallel architecture, QA, and implementation review, including auto-fix on NO-GO |
 
-Use the full-auto piece `sdd-full` to run Phases 1–5 in a single automated sequence.
+Use the full-auto piece `cc-sdd-full` to run Phases 1–5 in a single automated sequence.
 
 ## Usage
 
@@ -99,7 +99,7 @@ Use the full-auto piece `sdd-full` to run Phases 1–5 in a single automated seq
 Run requirements → gap analysis → design → design validation → implementation → implementation validation all at once.
 
 ```bash
-npm run sdd:full -- "description of requirements..."
+npm run cc-sdd:full -- "description of requirements..."
 ```
 
 ### Phase-by-Phase Execution
@@ -108,40 +108,40 @@ Run each phase workflow individually, allowing human intervention between phases
 
 ```bash
 # Phase 1: Requirements generation
-npm run sdd:requirements -- "description of requirements..."
+npm run cc-sdd:requirements -- "description of requirements..."
 # Check the {feature} name in .kiro/specs/{feature}
 
 # Phase 1.5: Gap analysis (only when existing code exists)
-npm run sdd:validate-gap -- "feature={feature}"
+npm run cc-sdd:validate-gap -- "feature={feature}"
 
 # Phase 2: Design generation
-npm run sdd:design -- "feature={feature}"
+npm run cc-sdd:design -- "feature={feature}"
 
 # Phase 2.5: Design validation (auto-fix → re-validate on NO-GO)
-npm run sdd:validate-design -- "feature={feature}"
+npm run cc-sdd:validate-design -- "feature={feature}"
 
 # Phase 3: Task generation
-npm run sdd:tasks -- "feature={feature}"
+npm run cc-sdd:tasks -- "feature={feature}"
 
 # Phase 4: Implementation
-npm run sdd:impl -- "feature={feature}"
+npm run cc-sdd:impl -- "feature={feature}"
 
 # Phase 5: Implementation validation (auto-fix → re-validate on failure)
-npm run sdd:validate-impl -- "feature={feature}"
+npm run cc-sdd:validate-impl -- "feature={feature}"
 ```
 
 <details>
 <summary>Using takt commands directly</summary>
 
 ```bash
-takt --pipeline --skip-git --create-worktree no -w sdd -t "description of requirements..."
-takt --pipeline --skip-git --create-worktree no -w sdd-requirements -t "description of requirements..."
-takt --pipeline --skip-git --create-worktree no -w sdd-validate-gap -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w sdd-design -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w sdd-validate-design -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w sdd-tasks -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w sdd-impl -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w sdd-validate-impl -t "feature={feature}"
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-full -t "description of requirements..."
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-requirements -t "description of requirements..."
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-validate-gap -t "feature={feature}"
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-design -t "feature={feature}"
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-validate-design -t "feature={feature}"
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-tasks -t "feature={feature}"
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-impl -t "feature={feature}"
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-validate-impl -t "feature={feature}"
 ```
 
 For interactive mode, run `takt -w {piece-name}`.

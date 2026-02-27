@@ -7,15 +7,20 @@
     "takt": "^0.26.0"
   },
   "scripts": {
-    "sdd:full": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd-full -t",
-    "sdd:requirements": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd-requirements -t",
-    "sdd:validate-gap": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd-validate-gap -t",
-    "sdd:design": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd-design -t",
-    "sdd:validate-design": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd-validate-design -t",
-    "sdd:tasks": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd-tasks -t",
-    "sdd:impl": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd-impl -t",
-    "sdd:validate-impl": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd-validate-impl -t",
-    "steering": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w steering -t",
-    "steering:custom": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w steering-custom -t"
+    "cc-sdd:full": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w cc-sdd-full -t",
+    "cc-sdd:requirements": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w cc-sdd-requirements -t",
+    "cc-sdd:validate-gap": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w cc-sdd-validate-gap -t",
+    "cc-sdd:design": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w cc-sdd-design -t",
+    "cc-sdd:validate-design": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w cc-sdd-validate-design -t",
+    "cc-sdd:tasks": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w cc-sdd-tasks -t",
+    "cc-sdd:impl": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w cc-sdd-impl -t",
+    "cc-sdd:validate-impl": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w cc-sdd-validate-impl -t",
+    "cc-sdd:steering": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w cc-sdd-steering -t",
+    "cc-sdd:steering-custom": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w cc-sdd-steering-custom -t",
+    "opsx:full": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w opsx-full -t",
+    "opsx:propose": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w opsx-propose -t",
+    "opsx:apply": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w opsx-apply -t",
+    "opsx:archive": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w opsx-archive -t",
+    "opsx:explore": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w opsx-explore -t"
   }
 }

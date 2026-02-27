@@ -1,0 +1,96 @@
+name: cc-sdd-steering
+description: .kiro/steering/ をプロジェクトメモリとして管理する（ブートストラップ＆同期）
+max_movements: 10
+initial_movement: detect
+
+# --- カスタムファセット セクションマップ ---
+personas:
+  cc-sdd-steering-analyst: ../facets/personas/cc-sdd-steering-analyst.md
+
+policies:
+  cc-sdd-steering-principles: ../facets/policies/cc-sdd-steering-principles.md
+
+instructions:
+  detect: ../facets/instructions/cc-sdd-detect-steering.md
+  bootstrap: ../facets/instructions/cc-sdd-bootstrap-steering.md
+  sync: ../facets/instructions/cc-sdd-sync-steering.md
+
+knowledge:
+  cc-sdd-steering-templates: ../facets/knowledge/cc-sdd-steering-templates.md
+
+report_formats:
+  cc-sdd-steering-bootstrap: ../facets/output-contracts/cc-sdd-steering-bootstrap.md
+  cc-sdd-steering-sync: ../facets/output-contracts/cc-sdd-steering-sync.md
+
+# --- Movement定義 ---
+movements:
+  # ===== シナリオ検出 =====
+  - name: detect
+    edit: false
+    persona: cc-sdd-steering-analyst
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+    instruction: detect
+    rules:
+      - condition: Bootstrapモード（.kiro/steeringが存在しない、またはコアファイルが欠けている）
+        next: bootstrap
+      - condition: Syncモード（全コアファイルが存在する）
+        next: sync
+
+  # ===== ブートストラップ =====
+  - name: bootstrap
+    edit: true
+    persona: cc-sdd-steering-analyst
+    policy: cc-sdd-steering-principles
+    knowledge: cc-sdd-steering-templates
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Write
+      - Bash
+    required_permission_mode: edit
+    instruction: bootstrap
+    output_contracts:
+      report:
+        - name: cc-sdd-steering-report.md
+          format: cc-sdd-steering-bootstrap
+    rules:
+      - condition: cc-sdd-steeringファイル生成完了
+        next: COMPLETE
+      - condition: テンプレート読み込み失敗等、回復不能なエラーで生成不可
+        next: ABORT
+        appendix: |
+          原因:
+          - {問題点}
+
+  # ===== 同期 =====
+  - name: sync
+    edit: true
+    persona: cc-sdd-steering-analyst
+    policy: cc-sdd-steering-principles
+    knowledge: cc-sdd-steering-templates
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Write
+      - Bash
+    required_permission_mode: edit
+    instruction: sync
+    output_contracts:
+      report:
+        - name: cc-sdd-steering-report.md
+          format: cc-sdd-steering-sync
+    rules:
+      - condition: 同期完了、更新あり
+        next: COMPLETE
+      - condition: 同期完了、更新なし（乖離なし）
+        next: COMPLETE
+      - condition: 分析中にエラー、判断不可
+        next: ABORT
+        appendix: |
+          原因:
+          - {問題点}

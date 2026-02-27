@@ -1,0 +1,46 @@
+name: opsx-propose
+description: OpenSpec Propose - Create a change and generate all artifacts
+piece_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_movements: 10
+initial_movement: propose
+
+personas:
+  opsx-proposer: ../facets/personas/opsx-proposer.md
+
+instructions:
+  propose: ../facets/instructions/opsx-propose.md
+
+report_formats:
+  opsx-propose-summary: ../facets/output-contracts/opsx-propose-summary.md
+
+movements:
+  - name: propose
+    edit: true
+    persona: opsx-proposer
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    instruction: propose
+    output_contracts:
+      report:
+        - name: propose-summary.md
+          format: opsx-propose-summary
+    rules:
+      - condition: All artifacts created successfully
+        next: COMPLETE
+      - condition: Failed to create change or artifacts
+        next: ABORT
+        appendix: |
+          Reason:
+          - {failure_reason}

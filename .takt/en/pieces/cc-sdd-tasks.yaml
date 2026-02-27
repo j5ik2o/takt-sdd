@@ -1,0 +1,43 @@
+name: cc-sdd-tasks
+description: SDD Phase 3 - Generates implementation task list based on requirements and design
+piece_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_movements: 10
+initial_movement: generate-tasks
+
+policies:
+  cc-sdd-tasks: ../facets/policies/cc-sdd-tasks.md
+
+instructions:
+  generate-tasks: ../facets/instructions/cc-sdd-generate-tasks.md
+
+report_formats:
+  cc-sdd-tasks: ../facets/output-contracts/cc-sdd-tasks.md
+
+movements:
+  - name: generate-tasks
+    edit: true
+    persona: planner
+    policy: cc-sdd-tasks
+    knowledge: architecture
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Write
+      - Bash
+    required_permission_mode: edit
+    instruction: generate-tasks
+    output_contracts:
+      report:
+        - name: tasks.md
+          format: cc-sdd-tasks
+    rules:
+      - condition: Task decomposition complete, all requirements covered
+        next: COMPLETE
+      - condition: Requirements or design not found
+        next: ABORT

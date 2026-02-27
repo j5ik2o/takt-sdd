@@ -1,0 +1,96 @@
+name: cc-sdd-steering
+description: Manages .kiro/steering/ as project memory (bootstrap & sync)
+max_movements: 10
+initial_movement: detect
+
+# --- Custom Facet Section Map ---
+personas:
+  cc-sdd-steering-analyst: ../facets/personas/cc-sdd-steering-analyst.md
+
+policies:
+  cc-sdd-steering-principles: ../facets/policies/cc-sdd-steering-principles.md
+
+instructions:
+  detect: ../facets/instructions/cc-sdd-detect-steering.md
+  bootstrap: ../facets/instructions/cc-sdd-bootstrap-steering.md
+  sync: ../facets/instructions/cc-sdd-sync-steering.md
+
+knowledge:
+  cc-sdd-steering-templates: ../facets/knowledge/cc-sdd-steering-templates.md
+
+report_formats:
+  cc-sdd-steering-bootstrap: ../facets/output-contracts/cc-sdd-steering-bootstrap.md
+  cc-sdd-steering-sync: ../facets/output-contracts/cc-sdd-steering-sync.md
+
+# --- Movement Definitions ---
+movements:
+  # ===== Scenario Detection =====
+  - name: detect
+    edit: false
+    persona: cc-sdd-steering-analyst
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+    instruction: detect
+    rules:
+      - condition: Bootstrap mode (.kiro/steering does not exist or core files are missing)
+        next: bootstrap
+      - condition: Sync mode (all core files exist)
+        next: sync
+
+  # ===== Bootstrap =====
+  - name: bootstrap
+    edit: true
+    persona: cc-sdd-steering-analyst
+    policy: cc-sdd-steering-principles
+    knowledge: cc-sdd-steering-templates
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Write
+      - Bash
+    required_permission_mode: edit
+    instruction: bootstrap
+    output_contracts:
+      report:
+        - name: cc-sdd-steering-report.md
+          format: cc-sdd-steering-bootstrap
+    rules:
+      - condition: Steering files generated successfully
+        next: COMPLETE
+      - condition: Unrecoverable error such as template loading failure, unable to generate
+        next: ABORT
+        appendix: |
+          Reason:
+          - {issue}
+
+  # ===== Sync =====
+  - name: sync
+    edit: true
+    persona: cc-sdd-steering-analyst
+    policy: cc-sdd-steering-principles
+    knowledge: cc-sdd-steering-templates
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Write
+      - Bash
+    required_permission_mode: edit
+    instruction: sync
+    output_contracts:
+      report:
+        - name: cc-sdd-steering-report.md
+          format: cc-sdd-steering-sync
+    rules:
+      - condition: Sync complete, updates applied
+        next: COMPLETE
+      - condition: Sync complete, no updates needed (no divergence)
+        next: COMPLETE
+      - condition: Error during analysis, unable to determine
+        next: ABORT
+        appendix: |
+          Reason:
+          - {issue}

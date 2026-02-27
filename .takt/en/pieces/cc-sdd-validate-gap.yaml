@@ -1,0 +1,45 @@
+name: cc-sdd-validate-gap
+description: SDD (Optional) - Gap analysis between requirements and existing codebase
+piece_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_movements: 10
+initial_movement: validate-gap
+
+policies:
+  cc-sdd-gap-analysis: ../facets/policies/cc-sdd-gap-analysis.md
+
+instructions:
+  validate-gap: ../facets/instructions/cc-sdd-validate-gap.md
+
+report_formats:
+  cc-sdd-gap-analysis: ../facets/output-contracts/cc-sdd-gap-analysis.md
+
+movements:
+  - name: validate-gap
+    edit: true
+    persona: planner
+    policy: cc-sdd-gap-analysis
+    knowledge: architecture
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    instruction: validate-gap
+    output_contracts:
+      report:
+        - name: gap-analysis.md
+          format: cc-sdd-gap-analysis
+    rules:
+      - condition: Analysis complete, recommendations available
+        next: COMPLETE
+      - condition: Requirements not found
+        next: ABORT

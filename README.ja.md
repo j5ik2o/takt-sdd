@@ -82,15 +82,15 @@ SDD は以下のフェーズを順に実行する：
 
 | Phase | ピース | 内容 |
 |-------|--------|------|
-| 1 | `sdd-requirements` | EARS 形式による要件ドキュメント生成 |
-| 1.5 | `sdd-validate-gap` | 要件と既存コードベースのギャップ分析 |
-| 2 | `sdd-design` | 要件に基づく技術設計と発見ログの生成 |
-| 2.5 | `sdd-validate-design` | 設計の品質レビューと GO/NO-GO 判定, NO-GO時の設計の修正も含む |
-| 3 | `sdd-tasks` | 実装タスクリストの生成 |
-| 4 | `sdd-impl` | 適応型バッチ実装（逐次/並列ワーカー対応） |
-| 5 | `sdd-validate-impl` | アーキテクチャ・QA・実装の並列レビュー, NO-GO時の実装の修正も含む |
+| 1 | `cc-sdd-requirements` | EARS 形式による要件ドキュメント生成 |
+| 1.5 | `cc-sdd-validate-gap` | 要件と既存コードベースのギャップ分析 |
+| 2 | `cc-sdd-design` | 要件に基づく技術設計と発見ログの生成 |
+| 2.5 | `cc-sdd-validate-design` | 設計の品質レビューと GO/NO-GO 判定, NO-GO時の設計の修正も含む |
+| 3 | `cc-sdd-tasks` | 実装タスクリストの生成 |
+| 4 | `cc-sdd-impl` | 適応型バッチ実装（逐次/並列ワーカー対応） |
+| 5 | `cc-sdd-validate-impl` | アーキテクチャ・QA・実装の並列レビュー, NO-GO時の実装の修正も含む |
 
-フルオートピース `sdd-full` を使うと、Phase 1〜5 を自動遷移で一括実行できる。
+フルオートピース `cc-sdd-full` を使うと、Phase 1〜5 を自動遷移で一括実行できる。
 
 ## 使い方
 
@@ -99,7 +99,7 @@ SDD は以下のフェーズを順に実行する：
 要件定義→ギャップ分析→設計→設計検証→実装→実装検証 を一括で実行する。
 
 ```bash
-npm run sdd:full -- "要件の説明..."
+npm run cc-sdd:full -- "要件の説明..."
 ```
 
 ### フェーズ別実行
@@ -108,40 +108,40 @@ npm run sdd:full -- "要件の説明..."
 
 ```bash
 # Phase 1: 要件生成
-npm run sdd:requirements -- "要件の説明..."
+npm run cc-sdd:requirements -- "要件の説明..."
 # .kiro/specs/{feature} の {feature} を確認すること
 
 # Phase 1.5: ギャップ分析（既存コードがある場合のみ）
-npm run sdd:validate-gap -- "feature={feature}"
+npm run cc-sdd:validate-gap -- "feature={feature}"
 
 # Phase 2: 設計生成
-npm run sdd:design -- "feature={feature}"
+npm run cc-sdd:design -- "feature={feature}"
 
 # Phase 2.5: 設計検証（NO-GO時は自動修正→再検証）
-npm run sdd:validate-design -- "feature={feature}"
+npm run cc-sdd:validate-design -- "feature={feature}"
 
 # Phase 3: タスク生成
-npm run sdd:tasks -- "feature={feature}"
+npm run cc-sdd:tasks -- "feature={feature}"
 
 # Phase 4: 実装
-npm run sdd:impl -- "feature={feature}"
+npm run cc-sdd:impl -- "feature={feature}"
 
 # Phase 5: 実装検証（不合格時は自動修正→再検証）
-npm run sdd:validate-impl -- "feature={feature}"
+npm run cc-sdd:validate-impl -- "feature={feature}"
 ```
 
 <details>
 <summary>takt コマンドを直接使う場合</summary>
 
 ```bash
-takt --pipeline --skip-git --create-worktree no -w sdd-full -t "要件の説明..."
-takt --pipeline --skip-git --create-worktree no -w sdd-requirements -t "要件の説明..."
-takt --pipeline --skip-git --create-worktree no -w sdd-validate-gap -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w sdd-design -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w sdd-validate-design -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w sdd-tasks -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w sdd-impl -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w sdd-validate-impl -t "feature={feature}"
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-full -t "要件の説明..."
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-requirements -t "要件の説明..."
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-validate-gap -t "feature={feature}"
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-design -t "feature={feature}"
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-validate-design -t "feature={feature}"
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-tasks -t "feature={feature}"
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-impl -t "feature={feature}"
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-validate-impl -t "feature={feature}"
 ```
 
 対話モードの場合は `takt -w {ピース名}` で実行できる。
