@@ -2,17 +2,22 @@ Create a new OpenSpec change and generate all required artifacts in one step.
 
 **What to do:**
 
-1. Identify the change name from the task description
+1. Check for exploration memos
+   - Look in `openspec/explorations/` for relevant memo files
+   - If memos exist, read them to incorporate prior exploration insights into the artifacts
+   - Use findings, decisions, and suggested next steps as input context
+
+2. Identify the change name from the task description
    - If the task contains a kebab-case name, use it directly
    - Otherwise, derive a kebab-case name from the description (e.g., "add user authentication" -> `add-user-auth`)
 
-2. Create the change directory
+3. Create the change directory
    ```bash
    bash scripts/opsx-cli.sh new change "<name>"
    ```
    This creates a scaffolded change at `openspec/changes/<name>/` with `.openspec.yaml`.
 
-3. Get the artifact build order
+4. Get the artifact build order
    ```bash
    bash scripts/opsx-cli.sh status --change "<name>" --json
    ```
@@ -20,7 +25,7 @@ Create a new OpenSpec change and generate all required artifacts in one step.
    - `applyRequires`: array of artifact IDs needed before implementation
    - `artifacts`: list of all artifacts with their status and dependencies
 
-4. Create artifacts in sequence until apply-ready
+5. Create artifacts in sequence until apply-ready
 
    Loop through artifacts in dependency order (artifacts with no pending dependencies first):
 
@@ -44,7 +49,7 @@ Create a new OpenSpec change and generate all required artifacts in one step.
       - Check if every artifact ID in `applyRequires` has `status: "done"` in the artifacts array
       - Stop when all `applyRequires` artifacts are done
 
-5. Show final status
+6. Show final status
    ```bash
    bash scripts/opsx-cli.sh status --change "<name>"
    ```
