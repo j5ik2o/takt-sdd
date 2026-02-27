@@ -4,15 +4,17 @@
 
 **やること:**
 1. タスクから対象feature名を特定する
-2. `.kiro/specs/{feature}/requirements.md` を読み込む
-3. `.kiro/specs/{feature}/design.md` を読み込む
-4. `.kiro/specs/{feature}/research.md` があれば読み込む
-5. 設計コンポーネントを実装タスクに分解する:
+2. `.kiro/specs/{feature}/spec.json` を読み込み、`approvals.design.generated` が `true` であることを確認する。そうでなければ、設計が未生成である旨のメッセージでABORTする
+3. `.kiro/specs/{feature}/requirements.md` を読み込む
+4. `.kiro/specs/{feature}/design.md` を読み込む
+5. `.kiro/specs/{feature}/research.md` があれば読み込む
+6. 設計コンポーネントを実装タスクに分解する:
    - 全要件がタスクにマッピングされることを確認
    - 設計コンポーネントが全てカバーされることを確認
    - タスク間の依存関係を分析する
-6. 並列実行可能なタスクに `(P)` マーカーを付与する
-7. 成果物を保存する
+7. 並列実行可能なタスクに `(P)` マーカーを付与する
+8. 成果物を `.kiro/specs/{feature}/tasks.md` に保存する
+9. `.kiro/specs/{feature}/spec.json` を更新する: `phase` を `"tasks-generated"` に、`approvals.tasks.generated` を `true` に、`approvals.design.approved` を `true` に、`ready_for_implementation` を `true` に設定し、`updated_at` を更新する
 
 **成果物の保存先:**
 - `.kiro/specs/{feature}/tasks.md`

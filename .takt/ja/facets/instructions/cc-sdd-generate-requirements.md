@@ -5,13 +5,17 @@
 **やること:**
 1. タスクから対象feature名を特定する
 2. `.kiro/steering/` ディレクトリが存在すれば全ファイルを読み込み、プロジェクトコンテキストを把握する
-3. `.kiro/specs/` 配下に対象featureのディレクトリが存在するか確認する
-4. 既存コードベースを調査し、対象featureに関する既存実装の有無を判定する
-5. タスクの説明を分析し、機能要件・非機能要件を抽出する
-6. 各要件にEARS形式の受け入れ条件を作成する
-7. 正常系・異常系・境界条件を網羅する
-8. 要件間の依存関係を特定する
-9. 成果物を `.kiro/specs/{feature}/requirements.md` に保存する
+3. `.kiro/specs/` 配下に対象featureのディレクトリが存在するか確認する（なければ作成）
+4. `.kiro/specs/{feature}/spec.json` を確認する:
+   - 存在しない場合: 初期値で作成する — `feature_name` = feature名, `created_at` / `updated_at` = 現在のISO 8601タイムスタンプ, `language` = `"ja"`, `phase` = `"initialized"`, `approvals.requirements` / `approvals.design` / `approvals.tasks` 各 = `{ "generated": false, "approved": false }`, `ready_for_implementation` = `false`
+   - 存在する場合: `phase` が `"initialized"` または `"requirements-generated"` であることを確認する。それ以外の場合はABORT
+5. 既存コードベースを調査し、対象featureに関する既存実装の有無を判定する
+6. タスクの説明を分析し、機能要件・非機能要件を抽出する
+7. 各要件にEARS形式の受け入れ条件を作成する
+8. 正常系・異常系・境界条件を網羅する
+9. 要件間の依存関係を特定する
+10. 成果物を `.kiro/specs/{feature}/requirements.md` に保存する
+11. `.kiro/specs/{feature}/spec.json` を更新する: `phase` を `"requirements-generated"` に、`approvals.requirements.generated` を `true` に設定し、`updated_at` を更新する
 
 **成果物の保存先:**
 - ディレクトリ: `.kiro/specs/{feature}/`（存在しなければ作成）

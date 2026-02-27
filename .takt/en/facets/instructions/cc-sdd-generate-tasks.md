@@ -4,15 +4,17 @@ Generate an implementation task list based on the requirements and design.
 
 **What to do:**
 1. Identify the target feature name from the task
-2. Read `.kiro/specs/{feature}/requirements.md`
-3. Read `.kiro/specs/{feature}/design.md`
-4. If `.kiro/specs/{feature}/research.md` exists, read it
-5. Decompose design components into implementation tasks:
+2. Read `.kiro/specs/{feature}/spec.json` and verify `approvals.design.generated` is `true`; otherwise ABORT with a message that design has not been generated
+3. Read `.kiro/specs/{feature}/requirements.md`
+4. Read `.kiro/specs/{feature}/design.md`
+5. If `.kiro/specs/{feature}/research.md` exists, read it
+6. Decompose design components into implementation tasks:
    - Verify that all requirements are mapped to tasks
    - Verify that all design components are covered
    - Analyze dependencies between tasks
-6. Add `(P)` markers to tasks that can be executed in parallel
-7. Save the artifact
+7. Add `(P)` markers to tasks that can be executed in parallel
+8. Save the artifact to `.kiro/specs/{feature}/tasks.md`
+9. Update `.kiro/specs/{feature}/spec.json`: set `phase` to `"tasks-generated"`, `approvals.tasks.generated` to `true`, `approvals.design.approved` to `true`, `ready_for_implementation` to `true`, update `updated_at`
 
 **Artifact destination:**
 - `.kiro/specs/{feature}/tasks.md`

@@ -4,23 +4,24 @@
 
 **やること:**
 1. タスクから対象feature名を特定する
-2. `.kiro/specs/{feature}/requirements.md` を読み込む
-3. `.kiro/steering/` が存在すれば全ファイルを読み込む
-4. 現状を調査する:
+2. `.kiro/specs/{feature}/spec.json` を読み込み、`approvals.requirements.generated` が `true` であることを確認する。そうでなければ、要件が未生成である旨のメッセージでABORTする
+3. `.kiro/specs/{feature}/requirements.md` を読み込む
+4. `.kiro/steering/` が存在すれば全ファイルを読み込む
+5. 現状を調査する:
    - ドメイン関連のファイル・モジュール・ディレクトリ構成を把握する
    - 再利用可能なコンポーネントを特定する
    - アーキテクチャパターン・規約を抽出する
    - 統合サーフェスを特定する
-5. 要件の実現可能性を分析する:
+6. 要件の実現可能性を分析する:
    - 技術的ニーズをリストアップする
    - ギャップと制約を特定する
    - 複雑さのシグナルを記録する
-6. 実装アプローチを評価する:
+7. 実装アプローチを評価する:
    - A: 既存拡張 — メリット・デメリット
    - B: 新規作成 — メリット・デメリット
    - C: ハイブリッド — メリット・デメリット
-7. 工数（S/M/L/XL）とリスク（High/Medium/Low）を見積もる
-8. 成果物を `.kiro/specs/{feature}/gap-analysis.md` に保存する
+8. 工数（S/M/L/XL）とリスク（High/Medium/Low）を見積もる
+9. 成果物を `.kiro/specs/{feature}/gap-analysis.md` に保存する
 
 **成果物の保存先:**
 - `.kiro/specs/{feature}/gap-analysis.md`

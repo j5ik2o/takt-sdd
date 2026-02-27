@@ -4,22 +4,24 @@
 
 **やること:**
 1. タスクから対象feature名を特定する
-2. `.kiro/specs/{feature}/requirements.md` を読み込む
-3. `.kiro/specs/{feature}/gap-analysis.md` が存在すれば読み込み、ギャップ分析の結果を設計に反映する（推奨アプローチ・工数/リスク見積もりは `design.md` に、要調査項目は `research.md` に反映）
-4. `.kiro/steering/` が存在すれば全ファイルを読み込む
-5. 発見プロセスを実施する:
+2. `.kiro/specs/{feature}/spec.json` を読み込み、`approvals.requirements.generated` が `true` であることを確認する。そうでなければ、要件が未生成である旨のメッセージでABORTする
+3. `.kiro/specs/{feature}/requirements.md` を読み込む
+4. `.kiro/specs/{feature}/gap-analysis.md` が存在すれば読み込み、ギャップ分析の結果を設計に反映する（推奨アプローチ・工数/リスク見積もりは `design.md` に、要調査項目は `research.md` に反映）
+5. `.kiro/steering/` が存在すれば全ファイルを読み込む
+6. 発見プロセスを実施する:
    - 既存コードベースの関連箇所を調査する
    - 統合ポイント・既存パターンを特定する
    - 必要に応じて外部ドキュメント・APIリファレンスを確認する
-6. 発見結果を `research.md` に記録する
-7. 技術設計を生成する:
+7. 発見結果を `research.md` に記録する
+8. 技術設計を生成する:
    - アーキテクチャ概要
    - コンポーネントとインターフェース定義
    - データモデル
    - 要件トレーサビリティ表
    - エラー処理戦略
    - テスト戦略
-8. 成果物を保存する
+9. 成果物を保存する
+10. `.kiro/specs/{feature}/spec.json` を更新する: `phase` を `"design-generated"` に、`approvals.design.generated` を `true` に、`approvals.requirements.approved` を `true` に設定し、`updated_at` を更新する
 
 **成果物の保存先:**
 - `.kiro/specs/{feature}/design.md`
