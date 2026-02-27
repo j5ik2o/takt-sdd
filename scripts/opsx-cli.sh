@@ -86,17 +86,6 @@ change_dir() {
   echo "${OPENSPEC_DIR}/changes/${name}"
 }
 
-# Read config.yaml fields
-read_config_field() {
-  local field="$1"
-  local config_file="${OPENSPEC_DIR}/config.yaml"
-  if [[ ! -f "$config_file" ]]; then
-    return
-  fi
-  # Simple single-line field extraction (e.g., "schema: spec-driven")
-  grep -E "^${field}:" "$config_file" 2>/dev/null | sed "s/^${field}:[[:space:]]*//" || true
-}
-
 read_config_block() {
   local field="$1"
   local config_file="${OPENSPEC_DIR}/config.yaml"

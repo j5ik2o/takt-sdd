@@ -1,5 +1,5 @@
 name: cc-sdd-steering
-description: .kiro/cc-sdd-steering/ をプロジェクトメモリとして管理する（ブートストラップ＆同期）
+description: .kiro/steering/ をプロジェクトメモリとして管理する（ブートストラップ＆同期）
 max_movements: 10
 initial_movement: detect
 
@@ -34,7 +34,7 @@ movements:
       - Grep
     instruction: detect
     rules:
-      - condition: Bootstrapモード（cc-sdd-steeringが存在しない、またはコアファイルが欠けている）
+      - condition: Bootstrapモード（.kiro/steeringが存在しない、またはコアファイルが欠けている）
         next: bootstrap
       - condition: Syncモード（全コアファイルが存在する）
         next: sync

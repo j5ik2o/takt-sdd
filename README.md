@@ -134,7 +134,7 @@ npm run cc-sdd:validate-impl -- "feature={feature}"
 <summary>Using takt commands directly</summary>
 
 ```bash
-takt --pipeline --skip-git --create-worktree no -w sdd -t "description of requirements..."
+takt --pipeline --skip-git --create-worktree no -w cc-sdd-full -t "description of requirements..."
 takt --pipeline --skip-git --create-worktree no -w cc-sdd-requirements -t "description of requirements..."
 takt --pipeline --skip-git --create-worktree no -w cc-sdd-validate-gap -t "feature={feature}"
 takt --pipeline --skip-git --create-worktree no -w cc-sdd-design -t "feature={feature}"
