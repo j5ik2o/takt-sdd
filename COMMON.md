@@ -18,8 +18,9 @@
 | `references/takt/` | takt ビルトインとドキュメント（参照専用） |
 | `references/okite-ai/` | AI ルール集（参照専用） |
 | `installer/` | `npx create-takt-sdd` のインストーラ本体（TypeScript） |
-| `.kiro/specs/` | SDD の出力先（requirements.md / design.md / tasks.md 等） |
+| `.kiro/specs/` | CC-SDD の出力先（requirements.md / design.md / tasks.md 等） |
 | `.kiro/steering/` | プロジェクトメモリ（product.md / tech.md / structure.md 等） |
+| `openspec/` | OpenSpec の設定・変更ディレクトリ |
 
 ## SDD フェーズ
 
@@ -28,6 +29,14 @@ cc-sdd-requirements → cc-sdd-validate-gap → cc-sdd-design → cc-sdd-validat
 ```
 
 フルオートピース `cc-sdd-full` で全フェーズを一括実行できる。各フェーズは `npm run cc-sdd:{phase} -- "..."` で個別実行も可能。
+
+## OpenSpec ワークフロー
+
+```
+opsx-propose → opsx-apply → opsx-archive
+```
+
+フルオートピース `opsx-full` で全フェーズを一括実行できる。各フェーズは `npm run opsx:{phase} -- "..."` で個別実行も可能。
 
 ## インストーラの仕組み
 

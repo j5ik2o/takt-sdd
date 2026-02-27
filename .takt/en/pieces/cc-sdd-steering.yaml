@@ -11,9 +11,9 @@ policies:
   cc-sdd-steering-principles: ../facets/policies/cc-sdd-steering-principles.md
 
 instructions:
-  detect: ../facets/instructions/detect-cc-sdd-steering.md
-  bootstrap: ../facets/instructions/bootstrap-cc-sdd-steering.md
-  sync: ../facets/instructions/sync-cc-sdd-steering.md
+  detect: ../facets/instructions/cc-sdd-detect-steering.md
+  bootstrap: ../facets/instructions/cc-sdd-bootstrap-steering.md
+  sync: ../facets/instructions/cc-sdd-sync-steering.md
 
 knowledge:
   cc-sdd-steering-templates: ../facets/knowledge/cc-sdd-steering-templates.md

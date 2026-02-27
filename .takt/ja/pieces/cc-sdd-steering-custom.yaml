@@ -11,8 +11,8 @@ policies:
   cc-sdd-steering-principles: ../facets/policies/cc-sdd-steering-principles.md
 
 instructions:
-  detect: ../facets/instructions/detect-cc-sdd-steering-custom.md
-  generate: ../facets/instructions/generate-cc-sdd-steering-custom.md
+  detect: ../facets/instructions/cc-sdd-detect-steering-custom.md
+  generate: ../facets/instructions/cc-sdd-generate-steering-custom.md
 
 knowledge:
   cc-sdd-steering-custom-templates: ../facets/knowledge/cc-sdd-steering-custom-templates.md
