@@ -76,7 +76,7 @@ Options:
 
 When `package.json` already exists, only npm scripts are merged (existing scripts are not overwritten).
 
-## Overview
+## Kiro Workflow
 
 SDD executes the following phases in order:
 
@@ -91,8 +91,6 @@ SDD executes the following phases in order:
 | 5 | `cc-sdd-validate-impl` | Parallel architecture, QA, and implementation review, including auto-fix on NO-GO |
 
 Use the full-auto piece `cc-sdd-full` to run Phases 1–5 in a single automated sequence.
-
-## Usage
 
 ### Full-Auto Execution
 
