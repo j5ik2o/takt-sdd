@@ -379,8 +379,8 @@ cmd_instructions_apply() {
     state="blocked"
   else
     # Count tasks
-    total=$(grep -c '^\- \[[ x]\]' "$tasks_file" 2>/dev/null || echo "0")
-    complete=$(grep -c '^\- \[x\]' "$tasks_file" 2>/dev/null || echo "0")
+    total=$(grep -c '^\- \[[ x]\]' "$tasks_file" 2>/dev/null || true)
+    complete=$(grep -c '^\- \[x\]' "$tasks_file" 2>/dev/null || true)
     local remaining=$((total - complete))
 
     if [[ "$remaining" -eq 0 ]] && [[ "$total" -gt 0 ]]; then
