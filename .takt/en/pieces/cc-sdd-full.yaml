@@ -27,6 +27,7 @@ instructions:
   validate-design: ../facets/instructions/cc-sdd-validate-design.md
   generate-tasks: ../facets/instructions/cc-sdd-generate-tasks.md
   validate-impl: ../facets/instructions/cc-sdd-validate-impl.md
+  fix-impl: ../facets/instructions/cc-sdd-fix-impl.md
   plan: ../facets/instructions/cc-sdd-impl-plan.md
   implement: ../facets/instructions/cc-sdd-impl-execute.md
 
@@ -106,6 +107,27 @@ loop_monitors:
       rules:
         - condition: Healthy (progress being made)
           next: reviewers
+        - condition: Unproductive (no improvement)
+          next: validate-impl
+
+  - cycle:
+      - validate-impl
+      - fix-impl
+    threshold: 3
+    judge:
+      persona: supervisor
+      instruction_template: |
+        The validate-impl/fix-impl cycle has repeated {cycle_count} times.
+
+        **Reports to reference:**
+        - Implementation validation: {report:07-impl-validation.md}
+
+        **Evaluation criteria:**
+        - Are new issues being discovered and fixed in each cycle?
+        - Are the same findings being repeated?
+      rules:
+        - condition: Healthy (progress being made)
+          next: validate-impl
         - condition: Unproductive (no improvement)
           next: supervise
 
@@ -428,28 +450,10 @@ movements:
           - condition: approved
           - condition: needs_fix
 
-      - name: impl-validation
-        edit: false
-        persona: supervisor
-        policy: review
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Bash
-        instruction: validate-impl
-        output_contracts:
-          report:
-            - name: 07-impl-validation.md
-              format: cc-sdd-impl-validation
-        rules:
-          - condition: Validation passed
-          - condition: Validation failed
-
     rules:
-      - condition: all("approved", "approved", "Validation passed")
-        next: supervise
-      - condition: any("needs_fix", "Validation failed")
+      - condition: all("approved", "approved")
+        next: validate-impl
+      - condition: any("needs_fix")
         next: fix
 
   - name: fix
@@ -479,6 +483,55 @@ movements:
         next: reviewers
       - condition: Unable to determine, insufficient information
         next: plan
+
+  # ===== Phase 6: Implementation Validation =====
+  - name: validate-impl
+    edit: false
+    persona: supervisor
+    policy: review
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+    instruction: validate-impl
+    output_contracts:
+      report:
+        - name: 07-impl-validation.md
+          format: cc-sdd-impl-validation
+    rules:
+      - condition: Validation passed
+        next: supervise
+      - condition: Validation failed
+        next: fix-impl
+
+  - name: fix-impl
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+    session: refresh
+    knowledge:
+      - backend
+      - architecture
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Edit
+      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    pass_previous_response: false
+    instruction: fix-impl
+    rules:
+      - condition: Fixes complete
+        next: validate-impl
+      - condition: Unable to determine, insufficient information
+        next: supervise
 
   # ===== Final Verification =====
   - name: supervise
