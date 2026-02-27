@@ -4,7 +4,7 @@
   "private": true,
   "description": "Spec-Driven Development workflow for takt",
   "devDependencies": {
-    "takt": "^0.22.0"
+    "takt": "^0.26.0"
   },
   "scripts": {
     "sdd:full": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w sdd-full -t",
