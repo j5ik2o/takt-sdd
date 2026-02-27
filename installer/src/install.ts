@@ -93,6 +93,11 @@ const SDD_SCRIPTS: Record<string, string> = {
   "cc-sdd:validate-impl": "takt --pipeline --skip-git --create-worktree no -w cc-sdd-validate-impl -t",
   "cc-sdd:steering": "takt --pipeline --skip-git --create-worktree no -w cc-sdd-steering -t",
   "cc-sdd:steering-custom": "takt --pipeline --skip-git --create-worktree no -w cc-sdd-steering-custom -t",
+  "opsx:full": "takt --pipeline --skip-git --create-worktree no -w opsx-full -t",
+  "opsx:propose": "takt --pipeline --skip-git --create-worktree no -w opsx-propose -t",
+  "opsx:apply": "takt --pipeline --skip-git --create-worktree no -w opsx-apply -t",
+  "opsx:archive": "takt --pipeline --skip-git --create-worktree no -w opsx-archive -t",
+  "opsx:explore": "takt --pipeline --skip-git --create-worktree no -w opsx-explore -t",
 };
 
 export interface InstallOptions {

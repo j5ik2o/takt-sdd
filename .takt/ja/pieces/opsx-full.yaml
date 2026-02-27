@@ -1,0 +1,110 @@
+name: opsx-full
+description: OpenSpec フルワークフロー - 提案、実装、アーカイブを一括実行
+piece_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_movements: 50
+initial_movement: propose
+
+# --- カスタムファセットセクションマップ ---
+personas:
+  opsx-proposer: ../facets/personas/opsx-proposer.md
+  opsx-implementer: ../facets/personas/opsx-implementer.md
+  opsx-archiver: ../facets/personas/opsx-archiver.md
+
+instructions:
+  propose: ../facets/instructions/opsx-propose.md
+  apply: ../facets/instructions/opsx-apply.md
+  archive: ../facets/instructions/opsx-archive.md
+
+report_formats:
+  opsx-propose-summary: ../facets/output-contracts/opsx-propose-summary.md
+  opsx-apply-summary: ../facets/output-contracts/opsx-apply-summary.md
+  opsx-archive-summary: ../facets/output-contracts/opsx-archive-summary.md
+
+# --- ムーブメント定義 ---
+movements:
+  # ===== フェーズ1: 提案 =====
+  - name: propose
+    edit: true
+    persona: opsx-proposer
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    instruction: propose
+    output_contracts:
+      report:
+        - name: propose-summary.md
+          format: opsx-propose-summary
+    rules:
+      - condition: すべてのアーティファクトが正常に作成された
+        next: apply
+      - condition: 変更またはアーティファクトの作成に失敗
+        next: ABORT
+        appendix: |
+          理由:
+          - {failure_reason}
+
+  # ===== フェーズ2: 実装 =====
+  - name: apply
+    edit: true
+    persona: opsx-implementer
+    session: refresh
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Write
+      - Edit
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    instruction: apply
+    output_contracts:
+      report:
+        - name: apply-summary.md
+          format: opsx-apply-summary
+    rules:
+      - condition: すべてのタスクが正常に完了
+        next: archive
+      - condition: ブロックまたは続行不可
+        next: ABORT
+        appendix: |
+          理由:
+          - {failure_reason}
+
+  # ===== フェーズ3: アーカイブ =====
+  - name: archive
+    edit: true
+    persona: opsx-archiver
+    session: refresh
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Write
+      - Bash
+    required_permission_mode: edit
+    instruction: archive
+    output_contracts:
+      report:
+        - name: archive-summary.md
+          format: opsx-archive-summary
+    rules:
+      - condition: アーカイブが正常に完了
+        next: COMPLETE
+      - condition: アーカイブに失敗
+        next: ABORT
+        appendix: |
+          理由:
+          - {failure_reason}

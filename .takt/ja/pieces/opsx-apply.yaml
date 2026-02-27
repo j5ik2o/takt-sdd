@@ -1,0 +1,47 @@
+name: opsx-apply
+description: OpenSpec Apply - 変更からタスクを実装
+piece_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_movements: 30
+initial_movement: apply
+
+personas:
+  opsx-implementer: ../facets/personas/opsx-implementer.md
+
+instructions:
+  apply: ../facets/instructions/opsx-apply.md
+
+report_formats:
+  opsx-apply-summary: ../facets/output-contracts/opsx-apply-summary.md
+
+movements:
+  - name: apply
+    edit: true
+    persona: opsx-implementer
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Write
+      - Edit
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    instruction: apply
+    output_contracts:
+      report:
+        - name: apply-summary.md
+          format: opsx-apply-summary
+    rules:
+      - condition: すべてのタスクが正常に完了
+        next: COMPLETE
+      - condition: ブロックまたは続行不可
+        next: ABORT
+        appendix: |
+          理由:
+          - {failure_reason}
