@@ -484,12 +484,14 @@ cmd_list() {
 
   if [[ "$json_mode" == "true" ]]; then
     local json="["
-    local first=true
-    for name in "${changes[@]}"; do
-      if [[ "$first" != "true" ]]; then json="${json},"; fi
-      json="${json}\"${name}\""
-      first=false
-    done
+    if [[ ${#changes[@]} -gt 0 ]]; then
+      local first=true
+      for name in "${changes[@]}"; do
+        if [[ "$first" != "true" ]]; then json="${json},"; fi
+        json="${json}\"${name}\""
+        first=false
+      done
+    fi
     json="${json}]"
     printf '{"changes":%s}\n' "$json"
   else
