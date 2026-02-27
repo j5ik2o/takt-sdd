@@ -1,0 +1,62 @@
+name: takt-upgrade
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: takt-upgrade
+  cancel-in-progress: true
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Upgrade takt
+        run: npx -y npm-check-updates -u --filter takt --packageFile package.json
+
+      - name: Detect changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure Git User
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit changes
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git add package.json
+          git commit -m "chore(deps): bump takt version"
+
+      - name: Push changes
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:${PAT}@github.com/${{ github.repository }}.git
+          git push origin HEAD:${GITHUB_REF_NAME}
