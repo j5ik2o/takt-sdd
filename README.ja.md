@@ -76,7 +76,7 @@ npx create-takt-sdd --tag 0.1.2
 
 既存の `package.json` がある場合は npm scripts のみマージされる（既存のスクリプトは上書きしない）。
 
-## Kiro ワークフロー
+## Kiro 互換ワークフロー
 
 SDD は以下のフェーズを順に実行する：
 
@@ -166,8 +166,8 @@ SDD ワークフローとは別に、`.kiro/steering/` をプロジェクトメ�
 
 | ピース | 内容 |
 |--------|------|
-| `steering` | コアsteeringファイル（product.md / tech.md / structure.md）の生成・同期 |
-| `steering-custom` | ドメイン固有のカスタムsteeringファイルの作成 |
+| `cc-sdd-steering` | コアsteeringファイル（product.md / tech.md / structure.md）の生成・同期 |
+| `cc-sdd-steering-custom` | ドメイン固有のカスタムsteeringファイルの作成 |
 
 ### steering
 
@@ -176,10 +176,10 @@ SDD ワークフローとは別に、`.kiro/steering/` をプロジェクトメ�
 コードがまだないグリーンフィールドプロジェクトでは、プレースホルダ付きのひな型が生成されるので、開発者が方針を記入して使う。
 
 ```bash
-npm run steering -- "steeringを同期"
+npm run cc-sdd:steering -- "steeringを同期"
 
 # グリーンフィールド: プロダクト方針・技術選定を事前指定
-npm run steering -- "TypeScript + Express のREST APIサーバー、PostgreSQL"
+npm run cc-sdd:steering -- "TypeScript + Express のREST APIサーバー、PostgreSQL"
 ```
 
 ### steering-custom
@@ -187,7 +187,7 @@ npm run steering -- "TypeScript + Express のREST APIサーバー、PostgreSQL"
 アーキテクチャ方針、API 標準、テスト戦略など、特定ドメインのsteeringファイルを作成する。`.takt/knowledge/steering-custom-template-files/` にテンプレートが用意されている。
 
 ```bash
-npm run steering:custom -- "architecture"
+npm run cc-sdd:steering:custom -- "architecture"
 # .takt/knowledge/steering-custom-template-files/{name}.mdの{name}を指定する
 ```
 
@@ -206,33 +206,33 @@ npm run steering:custom -- "architecture"
 
 #### グリーンフィールド対応（コードがまだないプロジェクト）
 
-`steering` と `steering-custom` の両方がグリーンフィールドプロジェクトに対応している。コードベースが空の状態でもひな型を生成できる。テンプレートの構造をベースに、プレースホルダ（`[選択肢]`、`[理由]` 等）を含んだsteeringファイルが生成されるので、開発者が方針を記入して使う。
+`cc-sdd:steering` と `cc-sdd:steering-custom` の両方がグリーンフィールドプロジェクトに対応している。コードベースが空の状態でもひな型を生成できる。テンプレートの構造をベースに、プレースホルダ（`[選択肢]`、`[理由]` 等）を含んだsteeringファイルが生成されるので、開発者が方針を記入して使う。
 
 方針を事前に指定したい場合は、コマンドに続けて記述する：
 
 ```bash
 # コアsteering（product.md / tech.md / structure.md）のひな型を生成
-npm run steering -- "steeringを生成"
+npm run cc-sdd:steering -- "steeringを生成"
 
 # プロダクト方針・技術選定を事前指定
-npm run steering -- "TypeScript + Express のREST APIサーバー、PostgreSQL"
+npm run cc-sdd:steering -- "TypeScript + Express のREST APIサーバー、PostgreSQL"
 
 # カスタムsteering: アーキテクチャ方針を指定
-npm run steering:custom -- "architecture: ヘキサゴナルアーキテクチャ、アクターモデル"
+npm run cc-sdd:steering:custom -- "architecture: ヘキサゴナルアーキテクチャ、アクターモデル"
 
 # カスタムsteering: テスト戦略を指定
-npm run steering:custom -- "testing: Vitest、E2Eは Playwright、カバレッジ80%以上"
+npm run cc-sdd:steering:custom -- "testing: Vitest、E2Eは Playwright、カバレッジ80%以上"
 
 # カスタムsteering: DB方針を指定
-npm run steering:custom -- "database: PostgreSQL、Prisma ORM、マイグレーションは自動"
+npm run cc-sdd:steering:custom -- "database: PostgreSQL、Prisma ORM、マイグレーションは自動"
 
 # カスタムsteering: 方針なしでひな型だけ生成（後で手動記入）
-npm run steering:custom -- "testing"
+npm run cc-sdd:steering:custom -- "testing"
 ```
 
 生成されたsteeringファイルは設計フェーズ（`sdd:design`, `sdd:validate-design` 等）で自動的に参照される。
 
-## OpenSpec ワークフロー
+## OpenSpec 互換ワークフロー
 
 SDD ワークフローとは別に、OpenSpec ベースの変更管理ワークフローを提供する。提案 → 実装 → アーカイブの各フェーズで構造化された変更を管理する。
 
