@@ -234,6 +234,59 @@ npm run steering:custom -- "testing"
 
 Generated steering files are automatically referenced during design phases (`sdd:design`, `sdd:validate-design`, etc.).
 
+## OpenSpec Workflow
+
+Separate from the SDD workflow, an OpenSpec-based change management workflow is provided. This workflow manages structured changes through proposal → implementation → archival phases.
+
+| Piece | Description |
+|-------|-------------|
+| `opsx-propose` | Create a change and generate all artifacts (proposal, design, tasks) |
+| `opsx-apply` | Implement tasks from a change |
+| `opsx-archive` | Archive a completed change |
+| `opsx-full` | Run propose → apply → archive in one automated sequence |
+| `opsx-explore` | Interactive exploration and thinking (read-only, not included in full) |
+
+### Full-Auto Execution
+
+```bash
+npm run opsx:full -- "description of change"
+```
+
+### Phase-by-Phase Execution
+
+```bash
+# Create a change and generate artifacts
+npm run opsx:propose -- "change-name"
+
+# Implement tasks
+npm run opsx:apply -- "change-name"
+
+# Archive completed change
+npm run opsx:archive -- "change-name"
+
+# Interactive exploration (independent, thinking-only mode)
+npm run opsx:explore
+```
+
+### OpenSpec Configuration
+
+The `openspec/config.yaml` file defines the schema and optional project context:
+
+```yaml
+schema: spec-driven
+
+# Optional: project context shown to AI when creating artifacts
+# context: |
+#   Tech stack: TypeScript, React, Node.js
+
+# Optional: per-artifact rules
+# rules:
+#   proposal:
+#     - Keep proposals under 500 words
+```
+
+Changes are stored in `openspec/changes/<name>/` and archived to `openspec/changes/archive/`.
+
 ## Project Structure
 
 ```
@@ -263,7 +316,8 @@ references/
 ├── takt/                    # takt builtins and docs (submodule / installer)
 └── okite-ai/                # AI rules collection (submodule)
 scripts/
-└── takt.sh                  # takt execution wrapper
+├── takt.sh                  # takt execution wrapper
+└── opsx-cli.sh              # OpenSpec CLI (change management)
 ```
 
 ## Inspired By

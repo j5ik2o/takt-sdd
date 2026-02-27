@@ -21,6 +21,6 @@
     "opsx:propose": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w opsx-propose -t",
     "opsx:apply": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w opsx-apply -t",
     "opsx:archive": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w opsx-archive -t",
-    "opsx:explore": "scripts/takt.sh --pipeline --skip-git --create-worktree no -w opsx-explore -t"
+    "opsx:explore": "scripts/takt.sh --skip-git --create-worktree no -w opsx-explore"
   }
 }
