@@ -1,47 +1,217 @@
 name: opsx-apply
-description: OpenSpec Apply - 変更からタスクを実装
+description: OpenSpec Apply - バッチ実装とレビューによる変更タスクの実装
 piece_config:
   provider_options:
     codex:
       network_access: true
     opencode:
       network_access: true
-max_movements: 30
-initial_movement: apply
+max_movements: 50
+initial_movement: plan
 
-personas:
-  opsx-implementer: ../facets/personas/opsx-implementer.md
-
+# --- カスタムファセット セクションマップ ---
 instructions:
-  apply: ../facets/instructions/opsx-apply.md
+  plan: ../facets/instructions/opsx-apply-plan.md
+  implement: ../facets/instructions/opsx-apply-execute.md
 
 report_formats:
   opsx-apply-summary: ../facets/output-contracts/opsx-apply-summary.md
 
+# --- ループ監視 ---
+loop_monitors:
+  - cycle:
+      - plan
+      - implement
+    threshold: 5
+    judge:
+      persona: supervisor
+      instruction_template: |
+        plan と implement のバッチループが {cycle_count} 回繰り返されました。
+
+        **参照するレポート:**
+        - バッチ計画: {report:00-plan.md}
+        - 実装スコープ: {report:coder-scope.md}
+
+        **判断基準:**
+        - 各サイクルで新しいタスクが完了しているか
+        - タスクのチェック数が増えているか
+      rules:
+        - condition: 健全（進捗あり）
+          next: plan
+        - condition: 非生産的（改善なし）
+          next: ai_review
+
+  - cycle:
+      - ai_review
+      - ai_fix
+    threshold: 3
+    judge:
+      persona: supervisor
+      instruction_template: |
+        ai_review と ai_fix のループが {cycle_count} 回繰り返されました。
+
+        **参照するレポート:**
+        - AIレビュー結果: {report:04-ai-review.md}
+
+        **判断基準:**
+        - 各サイクルで新しい問題が発見・修正されているか
+        - 同じ指摘が繰り返されていないか
+      rules:
+        - condition: 健全（進捗あり）
+          next: ai_review
+        - condition: 非生産的（改善なし）
+          next: supervise
+
+# --- Movement定義 ---
 movements:
-  - name: apply
-    edit: true
-    persona: opsx-implementer
+  # ===== スケジューラー: タスク流動を見てバッチ決定 =====
+  - name: plan
+    edit: false
+    persona: planner
+    knowledge: architecture
     allowed_tools:
       - Read
       - Glob
       - Grep
-      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    instruction: plan
+    output_contracts:
+      report:
+        - name: 00-plan.md
+          format: plan
+    rules:
+      - condition: 未着手タスクあり
+        next: implement
+      - condition: 全タスク完了
+        next: ai_review
+      - condition: tasks.mdが存在しない、またはブロック状態
+        next: ABORT
+        appendix: |
+          tasks.md が見つからないかブロック状態です。
+          opsx-propose ピースを先に実行してください。
+      - condition: 要件が不明確、情報不足
+        next: ABORT
+        appendix: |
+          確認事項:
+          - {質問1}
+          - {質問2}
+
+  # ===== 逐次実装: バッチ内タスクのみ実装 =====
+  - name: implement
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+    session: refresh
+    knowledge:
+      - backend
+      - architecture
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
       - Edit
+      - Write
       - Bash
       - WebSearch
       - WebFetch
     required_permission_mode: edit
-    instruction: apply
+    instruction: implement
     output_contracts:
       report:
+        - name: coder-scope.md
+          format: coder-scope
+        - name: coder-decisions.md
+          format: coder-decisions
+    rules:
+      - condition: バッチの実装完了
+        next: plan
+      - condition: 実装中に問題発生、計画の見直しが必要
+        next: plan
+      - condition: 判断できない、情報不足
+        next: plan
+
+  # ===== AIレビュー =====
+  - name: ai_review
+    edit: false
+    persona: ai-antipattern-reviewer
+    policy:
+      - review
+      - ai-antipattern
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - WebSearch
+      - WebFetch
+    instruction: ai-review
+    output_contracts:
+      report:
+        - name: 04-ai-review.md
+          format: ai-review
+    rules:
+      - condition: AI特有の問題なし
+        next: supervise
+      - condition: AI特有の問題あり
+        next: ai_fix
+
+  # ===== AI問題修正 =====
+  - name: ai_fix
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+    session: refresh
+    knowledge:
+      - backend
+      - architecture
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Edit
+      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    pass_previous_response: false
+    instruction: ai-fix
+    rules:
+      - condition: AI問題の修正完了
+        next: ai_review
+      - condition: 修正不要（指摘対象ファイル/仕様の確認済み）
+        next: supervise
+      - condition: 判断できない、情報不足
+        next: supervise
+
+  # ===== 最終検証 =====
+  - name: supervise
+    edit: false
+    persona: supervisor
+    policy: review
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+      - WebSearch
+      - WebFetch
+    pass_previous_response: false
+    instruction: supervise
+    output_contracts:
+      report:
+        - name: supervisor-validation.md
+          format: supervisor-validation
         - name: apply-summary.md
           format: opsx-apply-summary
+          use_judge: false
     rules:
-      - condition: すべてのタスクが正常に完了
+      - condition: すべて問題なし
         next: COMPLETE
-      - condition: ブロックまたは続行不可
-        next: ABORT
-        appendix: |
-          理由:
-          - {failure_reason}
+      - condition: 要求未達成、テスト失敗、ビルドエラー
+        next: plan
