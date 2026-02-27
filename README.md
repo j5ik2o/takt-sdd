@@ -76,7 +76,7 @@ Options:
 
 When `package.json` already exists, only npm scripts are merged (existing scripts are not overwritten).
 
-## Kiro Workflow
+## Kiro Compatibility Workflow
 
 SDD executes the following phases in order:
 
@@ -166,8 +166,8 @@ Separate from the SDD workflow, pieces are provided to manage `.kiro/steering/` 
 
 | Piece | Description |
 |-------|-------------|
-| `steering` | Generation and sync of core steering files (product.md / tech.md / structure.md) |
-| `steering-custom` | Creation of domain-specific custom steering files |
+| `cc-sdd-steering` | Generation and sync of core steering files (product.md / tech.md / structure.md) |
+| `cc-sdd-steering-custom` | Creation of domain-specific custom steering files |
 
 ### steering
 
@@ -176,10 +176,10 @@ Analyzes the codebase and records the project's purpose, tech stack, and structu
 For greenfield projects (no existing code), skeleton files with placeholders are generated so developers can fill in their decisions.
 
 ```bash
-npm run steering -- "sync steering"
+npm run cc-sdd:steering -- "sync steering"
 
 # Greenfield: specify product direction and tech choices upfront
-npm run steering -- "REST API server with TypeScript, Express, PostgreSQL"
+npm run cc-sdd:steering -- "REST API server with TypeScript, Express, PostgreSQL"
 ```
 
 ### steering-custom
@@ -187,7 +187,7 @@ npm run steering -- "REST API server with TypeScript, Express, PostgreSQL"
 Creates steering files for specific domains such as architecture policies, API standards, and testing strategies. Templates are available in `.takt/knowledge/steering-custom-template-files/`.
 
 ```bash
-npm run steering:custom -- "architecture"
+npm run cc-sdd:steering:custom -- "architecture"
 # Specify the {name} from .takt/knowledge/steering-custom-template-files/{name}.md
 ```
 
@@ -206,33 +206,33 @@ Available templates:
 
 #### Greenfield Support (Projects with No Existing Code)
 
-Both `steering` and `steering-custom` support greenfield projects. Skeleton files can be generated even when the codebase is empty. Steering files are generated based on the template structure with placeholders (`[choice]`, `[rationale]`, etc.) for developers to fill in.
+Both `cc-sdd:steering` and `cc-sdd:steering-custom` support greenfield projects. Skeleton files can be generated even when the codebase is empty. Steering files are generated based on the template structure with placeholders (`[choice]`, `[rationale]`, etc.) for developers to fill in.
 
 To specify policies upfront, add them to the command:
 
 ```bash
 # Generate core steering skeletons (product.md / tech.md / structure.md)
-npm run steering -- "generate steering"
+npm run cc-sdd:steering -- "generate steering"
 
 # Specify product direction and tech choices upfront
-npm run steering -- "REST API server with TypeScript, Express, PostgreSQL"
+npm run cc-sdd:steering -- "REST API server with TypeScript, Express, PostgreSQL"
 
 # Custom steering: specify architecture policies
-npm run steering:custom -- "architecture: hexagonal architecture, actor model"
+npm run cc-sdd:steering:custom -- "architecture: hexagonal architecture, actor model"
 
 # Custom steering: specify testing strategy
-npm run steering:custom -- "testing: Vitest, E2E with Playwright, 80%+ coverage"
+npm run cc-sdd:steering:custom -- "testing: Vitest, E2E with Playwright, 80%+ coverage"
 
 # Custom steering: specify database policies
-npm run steering:custom -- "database: PostgreSQL, Prisma ORM, automated migrations"
+npm run cc-sdd:steering:custom -- "database: PostgreSQL, Prisma ORM, automated migrations"
 
 # Custom steering: generate skeleton only (fill in manually later)
-npm run steering:custom -- "testing"
+npm run cc-sdd:steering:custom -- "testing"
 ```
 
 Generated steering files are automatically referenced during design phases (`sdd:design`, `sdd:validate-design`, etc.).
 
-## OpenSpec Workflow
+## OpenSpec Compatibility Workflow
 
 Separate from the SDD workflow, an OpenSpec-based change management workflow is provided. This workflow manages structured changes through proposal → implementation → archival phases.
 
