@@ -1,7 +1,7 @@
 カスタムsteeringファイルを生成せよ。
 
 **やること:**
-1. テンプレートが存在する場合は `.takt/knowledge/steering-custom-template-files/{name}.md` を読み込む
+1. テンプレートが存在する場合は `.takt/knowledge/cc-sdd-steering-custom-template-files/{name}.md` を読み込む
 2. コードベースが存在する場合はJITで分析し、対象ドメインに関連するパターンを抽出する:
    - 関連ファイルを検索する
    - 既存の実装パターンを読み取る

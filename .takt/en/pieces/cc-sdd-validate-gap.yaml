@@ -1,5 +1,5 @@
-name: sdd-validate-gap
-description: SDD（オプション）- 要件と既存コードベースのギャップ分析
+name: cc-sdd-validate-gap
+description: SDD (Optional) - Gap analysis between requirements and existing codebase
 piece_config:
   provider_options:
     codex:
@@ -10,19 +10,19 @@ max_movements: 10
 initial_movement: validate-gap
 
 policies:
-  sdd-gap-analysis: ../facets/policies/sdd-gap-analysis.md
+  cc-sdd-gap-analysis: ../facets/policies/cc-sdd-gap-analysis.md
 
 instructions:
-  validate-gap: ../facets/instructions/validate-gap.md
+  validate-gap: ../facets/instructions/cc-sdd-validate-gap.md
 
 report_formats:
-  sdd-gap-analysis: ../facets/output-contracts/sdd-gap-analysis.md
+  cc-sdd-gap-analysis: ../facets/output-contracts/cc-sdd-gap-analysis.md
 
 movements:
   - name: validate-gap
     edit: true
     persona: planner
-    policy: sdd-gap-analysis
+    policy: cc-sdd-gap-analysis
     knowledge: architecture
     allowed_tools:
       - Read
@@ -37,9 +37,9 @@ movements:
     output_contracts:
       report:
         - name: gap-analysis.md
-          format: sdd-gap-analysis
+          format: cc-sdd-gap-analysis
     rules:
-      - condition: 分析完了、推奨事項あり
+      - condition: Analysis complete, recommendations available
         next: COMPLETE
-      - condition: 要件が見つからない
+      - condition: Requirements not found
         next: ABORT

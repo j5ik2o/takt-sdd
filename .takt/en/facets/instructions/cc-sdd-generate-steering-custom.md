@@ -1,7 +1,7 @@
 Generate a custom steering file.
 
 **What to do:**
-1. If a template exists, read `.takt/knowledge/steering-custom-template-files/{name}.md`
+1. If a template exists, read `.takt/knowledge/cc-sdd-steering-custom-template-files/{name}.md`
 2. If a codebase exists, analyze it using JIT to extract patterns related to the target domain:
    - Search for related files
    - Read existing implementation patterns

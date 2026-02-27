@@ -100,9 +100,9 @@ steeringファイル生成時に参照するテンプレート構造。
 
 ## テンプレートの保存場所
 
-テンプレートファイルは `.takt/knowledge/steering-template-files/` に格納される:
+テンプレートファイルは `.takt/knowledge/cc-sdd-steering-template-files/` に格納される:
 - `product.md` - プロダクト概要テンプレート
 - `tech.md` - 技術スタックテンプレート
 - `structure.md` - プロジェクト構造テンプレート
 
-カスタムステアリングテンプレートは `.takt/knowledge/steering-custom-template-files/` に格納される。
+カスタムステアリングテンプレートは `.takt/knowledge/cc-sdd-steering-custom-template-files/` に格納される。

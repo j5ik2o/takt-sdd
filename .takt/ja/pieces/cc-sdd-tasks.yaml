@@ -1,4 +1,4 @@
-name: sdd-tasks
+name: cc-sdd-tasks
 description: SDD Phase 3 - 要件と設計に基づく実装タスクリストを生成する
 piece_config:
   provider_options:
@@ -10,19 +10,19 @@ max_movements: 10
 initial_movement: generate-tasks
 
 policies:
-  sdd-tasks: ../facets/policies/sdd-tasks.md
+  cc-sdd-tasks: ../facets/policies/cc-sdd-tasks.md
 
 instructions:
-  generate-tasks: ../facets/instructions/generate-tasks.md
+  generate-tasks: ../facets/instructions/cc-sdd-generate-tasks.md
 
 report_formats:
-  sdd-tasks: ../facets/output-contracts/sdd-tasks.md
+  cc-sdd-tasks: ../facets/output-contracts/cc-sdd-tasks.md
 
 movements:
   - name: generate-tasks
     edit: true
     persona: planner
-    policy: sdd-tasks
+    policy: cc-sdd-tasks
     knowledge: architecture
     allowed_tools:
       - Read
@@ -35,7 +35,7 @@ movements:
     output_contracts:
       report:
         - name: tasks.md
-          format: sdd-tasks
+          format: cc-sdd-tasks
     rules:
       - condition: タスク分解完了、全要件カバー
         next: COMPLETE

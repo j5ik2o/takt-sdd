@@ -2,7 +2,7 @@
 
 **やること:**
 1. ユーザーの入力からカスタムsteeringのドメイン/トピックを特定する
-2. `.takt/knowledge/steering-custom-template-files/` に対応するテンプレートが存在するか確認する
+2. `.takt/knowledge/cc-sdd-steering-custom-template-files/` に対応するテンプレートが存在するか確認する
 3. `.kiro/steering/` に同名のファイルが既に存在するか確認する
 4. 判定結果をレポートする
 

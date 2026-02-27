@@ -4,7 +4,7 @@ Template information referenced when generating custom steering files.
 
 ## Template List
 
-Templates are stored in `.takt/knowledge/steering-custom-template-files/`.
+Templates are stored in `.takt/knowledge/cc-sdd-steering-custom-template-files/`.
 
 | Template | Domain | Main Content |
 |-------------|---------|---------|

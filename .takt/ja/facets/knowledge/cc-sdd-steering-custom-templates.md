@@ -4,7 +4,7 @@
 
 ## テンプレート一覧
 
-テンプレートは `.takt/knowledge/steering-custom-template-files/` に格納される。
+テンプレートは `.takt/knowledge/cc-sdd-steering-custom-template-files/` に格納される。
 
 | テンプレート | ドメイン | 主な内容 |
 |-------------|---------|---------|

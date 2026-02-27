@@ -1,31 +1,31 @@
-name: steering-custom
-description: Creates custom steering documents (API standards, test strategy, security, etc.)
+name: cc-sdd-steering-custom
+description: Creates custom cc-sdd-steering documents (API standards, test strategy, security, etc.)
 max_movements: 10
 initial_movement: detect
 
 # --- Custom Facet Section Map ---
 personas:
-  steering-analyst: ../facets/personas/steering-analyst.md
+  cc-sdd-steering-analyst: ../facets/personas/cc-sdd-steering-analyst.md
 
 policies:
-  steering-principles: ../facets/policies/steering-principles.md
+  cc-sdd-steering-principles: ../facets/policies/cc-sdd-steering-principles.md
 
 instructions:
-  detect: ../facets/instructions/detect-steering-custom.md
-  generate: ../facets/instructions/generate-steering-custom.md
+  detect: ../facets/instructions/detect-cc-sdd-steering-custom.md
+  generate: ../facets/instructions/generate-cc-sdd-steering-custom.md
 
 knowledge:
-  steering-custom-templates: ../facets/knowledge/steering-custom-templates.md
+  cc-sdd-steering-custom-templates: ../facets/knowledge/cc-sdd-steering-custom-templates.md
 
 report_formats:
-  steering-custom: ../facets/output-contracts/steering-custom.md
+  cc-sdd-steering-custom: ../facets/output-contracts/cc-sdd-steering-custom.md
 
 # --- Movement Definitions ---
 movements:
   # ===== Target Detection =====
   - name: detect
     edit: false
-    persona: steering-analyst
+    persona: cc-sdd-steering-analyst
     allowed_tools:
       - Read
       - Glob
@@ -43,9 +43,9 @@ movements:
   # ===== Custom Steering Generation =====
   - name: generate
     edit: true
-    persona: steering-analyst
-    policy: steering-principles
-    knowledge: steering-custom-templates
+    persona: cc-sdd-steering-analyst
+    policy: cc-sdd-steering-principles
+    knowledge: cc-sdd-steering-custom-templates
     allowed_tools:
       - Read
       - Glob
@@ -56,10 +56,10 @@ movements:
     instruction: generate
     output_contracts:
       report:
-        - name: steering-custom-report.md
-          format: steering-custom
+        - name: cc-sdd-steering-custom-report.md
+          format: cc-sdd-steering-custom
     rules:
-      - condition: Custom steering file generated successfully
+      - condition: Custom cc-sdd-steering file generated successfully
         next: COMPLETE
       - condition: Insufficient codebase information, unable to generate
         next: ABORT

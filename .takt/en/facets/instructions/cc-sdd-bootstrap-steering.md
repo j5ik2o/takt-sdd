@@ -1,7 +1,7 @@
 Analyze the codebase and generate initial steering files in `.kiro/steering/`.
 
 **What to do:**
-1. Load templates from `.takt/knowledge/steering-template-files/`
+1. Load templates from `.takt/knowledge/cc-sdd-steering-template-files/`
 2. Check whether a codebase exists (source files, README, package.json, Cargo.toml, etc.)
 3. If a codebase exists, analyze it using JIT (fetch when needed):
    - Investigate the source file structure

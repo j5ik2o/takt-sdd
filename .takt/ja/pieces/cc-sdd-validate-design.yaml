@@ -1,4 +1,4 @@
-name: sdd-validate-design
+name: cc-sdd-validate-design
 description: SDD（オプション）- 技術設計の品質レビューとGO/NO-GO判定。NO-GO時は自動修正→再検証ループ
 piece_config:
   provider_options:
@@ -10,19 +10,19 @@ max_movements: 15
 initial_movement: validate-design
 
 policies:
-  sdd-design-review: ../facets/policies/sdd-design-review.md
-  sdd-design: ../facets/policies/sdd-design.md
+  cc-sdd-design-review: ../facets/policies/cc-sdd-design-review.md
+  cc-sdd-design: ../facets/policies/cc-sdd-design.md
 
 instructions:
-  validate-design: ../facets/instructions/validate-design.md
-  fix-design: ../facets/instructions/fix-design.md
+  validate-design: ../facets/instructions/cc-sdd-validate-design.md
+  fix-design: ../facets/instructions/cc-sdd-fix-design.md
 
 knowledge:
   design-discovery: ../facets/knowledge/design-discovery.md
 
 report_formats:
-  sdd-design-review: ../facets/output-contracts/sdd-design-review.md
-  sdd-design: ../facets/output-contracts/sdd-design.md
+  cc-sdd-design-review: ../facets/output-contracts/cc-sdd-design-review.md
+  cc-sdd-design: ../facets/output-contracts/cc-sdd-design.md
 
 loop_monitors:
   - cycle:
@@ -50,7 +50,7 @@ movements:
   - name: validate-design
     edit: false
     persona: architecture-reviewer
-    policy: sdd-design-review
+    policy: cc-sdd-design-review
     knowledge: architecture
     allowed_tools:
       - Read
@@ -60,7 +60,7 @@ movements:
     output_contracts:
       report:
         - name: design-review.md
-          format: sdd-design-review
+          format: cc-sdd-design-review
     rules:
       - condition: GO（設計品質十分）
         next: COMPLETE
@@ -72,7 +72,7 @@ movements:
   - name: fix-design
     edit: true
     persona: planner
-    policy: sdd-design
+    policy: cc-sdd-design
     knowledge:
       - architecture
       - design-discovery
@@ -90,7 +90,7 @@ movements:
     output_contracts:
       report:
         - name: design.md
-          format: sdd-design
+          format: cc-sdd-design
     rules:
       - condition: 修正完了
         next: validate-design

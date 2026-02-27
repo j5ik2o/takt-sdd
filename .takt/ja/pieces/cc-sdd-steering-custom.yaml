@@ -1,31 +1,31 @@
-name: steering-custom
-description: カスタムsteeringドキュメントを作成する（API標準、テスト戦略、セキュリティ等）
+name: cc-sdd-steering-custom
+description: カスタムcc-sdd-steeringドキュメントを作成する（API標準、テスト戦略、セキュリティ等）
 max_movements: 10
 initial_movement: detect
 
 # --- カスタムファセット セクションマップ ---
 personas:
-  steering-analyst: ../facets/personas/steering-analyst.md
+  cc-sdd-steering-analyst: ../facets/personas/cc-sdd-steering-analyst.md
 
 policies:
-  steering-principles: ../facets/policies/steering-principles.md
+  cc-sdd-steering-principles: ../facets/policies/cc-sdd-steering-principles.md
 
 instructions:
-  detect: ../facets/instructions/detect-steering-custom.md
-  generate: ../facets/instructions/generate-steering-custom.md
+  detect: ../facets/instructions/detect-cc-sdd-steering-custom.md
+  generate: ../facets/instructions/generate-cc-sdd-steering-custom.md
 
 knowledge:
-  steering-custom-templates: ../facets/knowledge/steering-custom-templates.md
+  cc-sdd-steering-custom-templates: ../facets/knowledge/cc-sdd-steering-custom-templates.md
 
 report_formats:
-  steering-custom: ../facets/output-contracts/steering-custom.md
+  cc-sdd-steering-custom: ../facets/output-contracts/cc-sdd-steering-custom.md
 
 # --- Movement定義 ---
 movements:
   # ===== 対象検出 =====
   - name: detect
     edit: false
-    persona: steering-analyst
+    persona: cc-sdd-steering-analyst
     allowed_tools:
       - Read
       - Glob
@@ -40,12 +40,12 @@ movements:
           確認事項:
           - {不明点}
 
-  # ===== カスタムsteering生成 =====
+  # ===== カスタムcc-sdd-steering生成 =====
   - name: generate
     edit: true
-    persona: steering-analyst
-    policy: steering-principles
-    knowledge: steering-custom-templates
+    persona: cc-sdd-steering-analyst
+    policy: cc-sdd-steering-principles
+    knowledge: cc-sdd-steering-custom-templates
     allowed_tools:
       - Read
       - Glob
@@ -56,10 +56,10 @@ movements:
     instruction: generate
     output_contracts:
       report:
-        - name: steering-custom-report.md
-          format: steering-custom
+        - name: cc-sdd-steering-custom-report.md
+          format: cc-sdd-steering-custom
     rules:
-      - condition: カスタムsteeringファイル生成完了
+      - condition: カスタムcc-sdd-steeringファイル生成完了
         next: COMPLETE
       - condition: コードベースの情報が不足、生成不可
         next: ABORT

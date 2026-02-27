@@ -1,5 +1,5 @@
-name: sdd-impl
-description: SDD Phase 4 - Executes adaptive batch implementation based on tasks
+name: cc-sdd-impl
+description: SDD Phase 4 - タスクに基づく適応型バッチ実装を実行する
 piece_config:
   provider_options:
     codex:
@@ -9,12 +9,12 @@ piece_config:
 max_movements: 50
 initial_movement: plan
 
-# --- Custom Facet Section Map ---
+# --- カスタムファセット セクションマップ ---
 instructions:
-  plan: ../facets/instructions/impl-plan.md
+  plan: ../facets/instructions/cc-sdd-impl-plan.md
   implement: ../facets/instructions/impl-execute.md
 
-# --- Loop Monitors ---
+# --- ループ監視 ---
 loop_monitors:
   - cycle:
       - plan
@@ -23,19 +23,19 @@ loop_monitors:
     judge:
       persona: supervisor
       instruction_template: |
-        The plan-implement batch loop has repeated {cycle_count} times.
+        plan と implement のバッチループが {cycle_count} 回繰り返されました。
 
-        **Reports to reference:**
-        - Batch plan: {report:00-plan.md}
-        - Implementation scope: {report:coder-scope.md}
+        **参照するレポート:**
+        - バッチ計画: {report:00-plan.md}
+        - 実装スコープ: {report:coder-scope.md}
 
-        **Evaluation criteria:**
-        - Are new tasks being completed in each cycle?
-        - Is the check count in tasks.md increasing?
+        **判断基準:**
+        - 各サイクルで新しいタスクが完了しているか
+        - tasks.md のチェック数が増えているか
       rules:
-        - condition: Healthy (progress being made)
+        - condition: 健全（進捗あり）
           next: plan
-        - condition: Unproductive (no improvement)
+        - condition: 非生産的（改善なし）
           next: ai_review
 
   - cycle:
@@ -45,23 +45,23 @@ loop_monitors:
     judge:
       persona: supervisor
       instruction_template: |
-        The ai_review-ai_fix loop has repeated {cycle_count} times.
+        ai_review と ai_fix のループが {cycle_count} 回繰り返されました。
 
-        **Reports to reference:**
-        - AI review results: {report:04-ai-review.md}
+        **参照するレポート:**
+        - AIレビュー結果: {report:04-ai-review.md}
 
-        **Evaluation criteria:**
-        - Are new issues being discovered and fixed in each cycle?
-        - Are the same findings being repeated?
+        **判断基準:**
+        - 各サイクルで新しい問題が発見・修正されているか
+        - 同じ指摘が繰り返されていないか
       rules:
-        - condition: Healthy (progress being made)
+        - condition: 健全（進捗あり）
           next: ai_review
-        - condition: Unproductive (no improvement)
+        - condition: 非生産的（改善なし）
           next: supervise
 
-# --- Movement Definitions ---
+# --- Movement定義 ---
 movements:
-  # ===== Scheduler: Determines batches based on task flow =====
+  # ===== スケジューラー: タスク流動を見てバッチ決定 =====
   - name: plan
     edit: false
     persona: planner
@@ -79,23 +79,23 @@ movements:
         - name: 00-plan.md
           format: plan
     rules:
-      - condition: Unstarted sequential tasks available
+      - condition: 未着手の逐次タスクあり
         next: implement
-      - condition: All tasks complete
+      - condition: 全タスク完了
         next: ai_review
-      - condition: tasks.md does not exist or is empty
+      - condition: tasks.mdが存在しない、または空
         next: ABORT
         appendix: |
-          tasks.md was not found or is empty.
-          Please run the sdd-tasks piece first.
-      - condition: Requirements unclear, insufficient information
+          tasks.md が見つからないか空です。
+          cc-sdd-tasks ピースを先に実行してください。
+      - condition: 要件が不明確、情報不足
         next: ABORT
         appendix: |
-          Items to clarify:
-          - {question_1}
-          - {question_2}
+          確認事項:
+          - {質問1}
+          - {質問2}
 
-  # ===== Sequential implementation: Implements only tasks within the batch =====
+  # ===== 逐次実装: バッチ内タスクのみ実装 =====
   - name: implement
     edit: true
     persona: coder
@@ -124,14 +124,14 @@ movements:
         - name: coder-decisions.md
           format: coder-decisions
     rules:
-      - condition: Batch implementation complete
+      - condition: バッチの実装完了
         next: plan
-      - condition: Issue encountered during implementation, plan revision needed
+      - condition: 実装中に問題発生、計画の見直しが必要
         next: plan
-      - condition: Unable to determine, insufficient information
+      - condition: 判断できない、情報不足
         next: plan
 
-  # ===== AI Review =====
+  # ===== AIレビュー =====
   - name: ai_review
     edit: false
     persona: ai-antipattern-reviewer
@@ -150,12 +150,12 @@ movements:
         - name: 04-ai-review.md
           format: ai-review
     rules:
-      - condition: No AI-specific issues found
+      - condition: AI特有の問題なし
         next: supervise
-      - condition: AI-specific issues found
+      - condition: AI特有の問題あり
         next: ai_fix
 
-  # ===== AI Issue Fixes =====
+  # ===== AI問題修正 =====
   - name: ai_fix
     edit: true
     persona: coder
@@ -179,14 +179,14 @@ movements:
     pass_previous_response: false
     instruction: ai-fix
     rules:
-      - condition: AI issue fixes complete
+      - condition: AI問題の修正完了
         next: ai_review
-      - condition: No fix needed (target files/specs verified)
+      - condition: 修正不要（指摘対象ファイル/仕様の確認済み）
         next: supervise
-      - condition: Unable to determine, insufficient information
+      - condition: 判断できない、情報不足
         next: supervise
 
-  # ===== Final Verification =====
+  # ===== 最終検証 =====
   - name: supervise
     edit: false
     persona: supervisor
@@ -208,7 +208,7 @@ movements:
           format: summary
           use_judge: false
     rules:
-      - condition: All checks passed
+      - condition: すべて問題なし
         next: COMPLETE
-      - condition: Requirements unmet, tests failing, build errors
+      - condition: 要求未達成、テスト失敗、ビルドエラー
         next: plan

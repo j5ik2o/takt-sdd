@@ -1,7 +1,7 @@
 コードベースを分析し、`.kiro/steering/` に初期steeringファイルを生成せよ。
 
 **やること:**
-1. `.takt/knowledge/steering-template-files/` からテンプレートを読み込む
+1. `.takt/knowledge/cc-sdd-steering-template-files/` からテンプレートを読み込む
 2. コードベースが存在するか確認する（ソースファイル、README、package.json、Cargo.toml等）
 3. コードベースが存在する場合はJIT（必要時に取得）で分析する:
    - ソースファイルの構成を調査

@@ -24,10 +24,10 @@
 ## SDD フェーズ
 
 ```
-sdd-requirements → sdd-validate-gap → sdd-design → sdd-validate-design → sdd-tasks → sdd-impl → sdd-validate-impl
+cc-sdd-requirements → cc-sdd-validate-gap → cc-sdd-design → cc-sdd-validate-design → cc-sdd-tasks → cc-sdd-impl → cc-sdd-validate-impl
 ```
 
-フルオートピース `sdd-full` で全フェーズを一括実行できる。各フェーズは `npm run sdd:{phase} -- "..."` で個別実行も可能。
+フルオートピース `cc-sdd-full` で全フェーズを一括実行できる。各フェーズは `npm run cc-sdd:{phase} -- "..."` で個別実行も可能。
 
 ## インストーラの仕組み
 

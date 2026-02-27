@@ -1,5 +1,5 @@
-name: sdd-requirements
-description: SDD Phase 1 - Generates requirements document in EARS format
+name: cc-sdd-requirements
+description: SDD Phase 1 - EARS形式の要件ドキュメントを生成する
 piece_config:
   provider_options:
     codex:
@@ -16,10 +16,10 @@ policies:
   ears-format: ../facets/policies/ears-format.md
 
 instructions:
-  generate-requirements: ../facets/instructions/generate-requirements.md
+  generate-requirements: ../facets/instructions/cc-sdd-generate-requirements.md
 
 report_formats:
-  sdd-requirements: ../facets/output-contracts/sdd-requirements.md
+  cc-sdd-requirements: ../facets/output-contracts/cc-sdd-requirements.md
 
 movements:
   - name: generate-requirements
@@ -39,13 +39,13 @@ movements:
     output_contracts:
       report:
         - name: requirements.md
-          format: sdd-requirements
+          format: cc-sdd-requirements
     rules:
-      - condition: Requirements are clear and complete
+      - condition: 要件が明確で完全
         next: COMPLETE
-      - condition: Insufficient information, requirements unclear
+      - condition: 情報不足、要件が不明確
         next: ABORT
         appendix: |
-          Items to clarify:
-          - {unclear_point_1}
-          - {unclear_point_2}
+          確認事項:
+          - {不明点1}
+          - {不明点2}

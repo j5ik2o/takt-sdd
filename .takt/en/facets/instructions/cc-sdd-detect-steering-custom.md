@@ -2,7 +2,7 @@ Identify the target for custom steering creation and check whether a template ex
 
 **What to do:**
 1. Identify the custom steering domain/topic from the user's input
-2. Check whether a corresponding template exists in `.takt/knowledge/steering-custom-template-files/`
+2. Check whether a corresponding template exists in `.takt/knowledge/cc-sdd-steering-custom-template-files/`
 3. Check whether a file with the same name already exists in `.kiro/steering/`
 4. Report the determination results
 

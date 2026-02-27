@@ -1,5 +1,5 @@
-name: sdd-validate-impl
-description: SDD Phase 5 - 実装が要件・設計・タスクに合致しているかを検証する。不合格時は自動修正→再検証ループ
+name: cc-sdd-validate-impl
+description: SDD Phase 5 - Validates that implementation conforms to requirements, design, and tasks. On failure, auto-fix and re-validate loop
 piece_config:
   provider_options:
     codex:
@@ -10,11 +10,11 @@ max_movements: 15
 initial_movement: validate
 
 instructions:
-  validate-impl: ../facets/instructions/validate-impl.md
-  fix-impl: ../facets/instructions/fix-impl.md
+  validate-impl: ../facets/instructions/cc-sdd-validate-impl.md
+  fix-impl: ../facets/instructions/cc-sdd-fix-impl.md
 
 report_formats:
-  sdd-impl-validation: ../facets/output-contracts/sdd-impl-validation.md
+  cc-sdd-impl-validation: ../facets/output-contracts/cc-sdd-impl-validation.md
 
 loop_monitors:
   - cycle:
@@ -24,20 +24,20 @@ loop_monitors:
     judge:
       persona: supervisor
       instruction_template: |
-        検証・修正サイクルが {cycle_count} 回繰り返されました。
+        The validate-fix cycle has repeated {cycle_count} times.
 
-        **参照するレポート:**
-        - アーキテクチャレビュー: {report:05-architect-review.md}
-        - QAレビュー: {report:06-qa-review.md}
-        - 実装検証: {report:07-impl-validation.md}
+        **Reports to reference:**
+        - Architecture review: {report:05-architect-review.md}
+        - QA review: {report:06-qa-review.md}
+        - Implementation validation: {report:07-impl-validation.md}
 
-        **判断基準:**
-        - 各サイクルで新しい問題が発見・修正されているか
-        - 同じ指摘が繰り返されていないか
+        **Evaluation criteria:**
+        - Are new issues being discovered and fixed in each cycle?
+        - Are the same findings being repeated?
       rules:
-        - condition: 健全（進捗あり）
+        - condition: Healthy (progress being made)
           next: validate
-        - condition: 非生産的（改善なし）
+        - condition: Unproductive (no improvement)
           next: ABORT
 
 movements:
@@ -99,15 +99,15 @@ movements:
         output_contracts:
           report:
             - name: 07-impl-validation.md
-              format: sdd-impl-validation
+              format: cc-sdd-impl-validation
         rules:
-          - condition: 検証合格
-          - condition: 検証不合格
+          - condition: Validation passed
+          - condition: Validation failed
 
     rules:
-      - condition: all("approved", "approved", "検証合格")
+      - condition: all("approved", "approved", "Validation passed")
         next: COMPLETE
-      - condition: any("needs_fix", "検証不合格")
+      - condition: any("needs_fix", "Validation failed")
         next: fix-impl
 
   - name: fix-impl
@@ -132,7 +132,7 @@ movements:
     pass_previous_response: false
     instruction: fix-impl
     rules:
-      - condition: 修正完了
+      - condition: Fixes complete
         next: validate
-      - condition: 判断できない、情報不足
+      - condition: Unable to determine, insufficient information
         next: ABORT

@@ -83,15 +83,15 @@ Options:
   Installed to: .takt/
 
   Usage:
-    npm run sdd:full -- "description of requirements"
+    npm run cc-sdd:full -- "description of requirements"
 
   Run individual phases:
-    npm run sdd:requirements -- "description of requirements"
-    npm run sdd:design -- "feature={feature}"
-    npm run sdd:validate-design -- "feature={feature}"
-    npm run sdd:tasks -- "feature={feature}"
-    npm run sdd:impl -- "feature={feature}"
-    npm run sdd:validate-impl -- "feature={feature}"`,
+    npm run cc-sdd:requirements -- "description of requirements"
+    npm run cc-sdd:design -- "feature={feature}"
+    npm run cc-sdd:validate-design -- "feature={feature}"
+    npm run cc-sdd:tasks -- "feature={feature}"
+    npm run cc-sdd:impl -- "feature={feature}"
+    npm run cc-sdd:validate-impl -- "feature={feature}"`,
 };
 
 const ja: Messages = {
@@ -144,15 +144,15 @@ const ja: Messages = {
   インストール先: .takt/
 
   使い方:
-    npm run sdd:full -- "要件の説明"
+    npm run cc-sdd:full -- "要件の説明"
 
   各フェーズの個別実行:
-    npm run sdd:requirements -- "要件の説明"
-    npm run sdd:design -- "feature={feature}"
-    npm run sdd:validate-design -- "feature={feature}"
-    npm run sdd:tasks -- "feature={feature}"
-    npm run sdd:impl -- "feature={feature}"
-    npm run sdd:validate-impl -- "feature={feature}"`,
+    npm run cc-sdd:requirements -- "要件の説明"
+    npm run cc-sdd:design -- "feature={feature}"
+    npm run cc-sdd:validate-design -- "feature={feature}"
+    npm run cc-sdd:tasks -- "feature={feature}"
+    npm run cc-sdd:impl -- "feature={feature}"
+    npm run cc-sdd:validate-impl -- "feature={feature}"`,
 };
 
 const messages: Record<Lang, Messages> = { en, ja };

@@ -100,9 +100,9 @@ Template structures referenced when generating steering files.
 
 ## Template Storage Location
 
-Template files are stored in `.takt/knowledge/steering-template-files/`:
+Template files are stored in `.takt/knowledge/cc-sdd-steering-template-files/`:
 - `product.md` - Product overview template
 - `tech.md` - Technology stack template
 - `structure.md` - Project structure template
 
-Custom steering templates are stored in `.takt/knowledge/steering-custom-template-files/`.
+Custom steering templates are stored in `.takt/knowledge/cc-sdd-steering-custom-template-files/`.

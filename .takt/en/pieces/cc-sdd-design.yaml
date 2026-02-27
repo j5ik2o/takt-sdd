@@ -1,4 +1,4 @@
-name: sdd-design
+name: cc-sdd-design
 description: SDD Phase 2 - Generates technical design and discovery log based on requirements
 piece_config:
   provider_options:
@@ -10,23 +10,23 @@ max_movements: 15
 initial_movement: generate-design
 
 policies:
-  sdd-design: ../facets/policies/sdd-design.md
+  cc-sdd-design: ../facets/policies/cc-sdd-design.md
 
 instructions:
-  generate-design: ../facets/instructions/generate-design.md
+  generate-design: ../facets/instructions/cc-sdd-generate-design.md
 
 knowledge:
   design-discovery: ../facets/knowledge/design-discovery.md
 
 report_formats:
-  sdd-design: ../facets/output-contracts/sdd-design.md
-  sdd-research: ../facets/output-contracts/sdd-research.md
+  cc-sdd-design: ../facets/output-contracts/cc-sdd-design.md
+  cc-sdd-research: ../facets/output-contracts/cc-sdd-research.md
 
 movements:
   - name: generate-design
     edit: true
     persona: planner
-    policy: sdd-design
+    policy: cc-sdd-design
     knowledge:
       - architecture
       - design-discovery
@@ -43,9 +43,9 @@ movements:
     output_contracts:
       report:
         - name: design.md
-          format: sdd-design
+          format: cc-sdd-design
         - name: research.md
-          format: sdd-research
+          format: cc-sdd-research
     rules:
       - condition: Design complete, discovery log recorded
         next: COMPLETE
