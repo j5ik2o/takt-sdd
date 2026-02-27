@@ -83,7 +83,7 @@ const SKILL_SYMLINK_TARGETS = [
 ];
 
 const SDD_SCRIPTS: Record<string, string> = {
-  "sdd": "takt --pipeline --skip-git --create-worktree no -w sdd -t",
+  "sdd:full": "takt --pipeline --skip-git --create-worktree no -w sdd-full -t",
   "sdd:requirements": "takt --pipeline --skip-git --create-worktree no -w sdd-requirements -t",
   "sdd:validate-gap": "takt --pipeline --skip-git --create-worktree no -w sdd-validate-gap -t",
   "sdd:design": "takt --pipeline --skip-git --create-worktree no -w sdd-design -t",

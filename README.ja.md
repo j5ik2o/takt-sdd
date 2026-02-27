@@ -90,7 +90,7 @@ SDD は以下のフェーズを順に実行する：
 | 4 | `sdd-impl` | 適応型バッチ実装（逐次/並列ワーカー対応） |
 | 5 | `sdd-validate-impl` | アーキテクチャ・QA・実装の並列レビュー, NO-GO時の実装の修正も含む |
 
-フルオートピース `sdd` を使うと、Phase 1〜5 を自動遷移で一括実行できる。
+フルオートピース `sdd-full` を使うと、Phase 1〜5 を自動遷移で一括実行できる。
 
 ## 使い方
 
@@ -99,7 +99,7 @@ SDD は以下のフェーズを順に実行する：
 要件定義→ギャップ分析→設計→設計検証→実装→実装検証 を一括で実行する。
 
 ```bash
-npm run sdd -- "要件の説明..."
+npm run sdd:full -- "要件の説明..."
 ```
 
 ### フェーズ別実行
@@ -134,7 +134,7 @@ npm run sdd:validate-impl -- "feature={feature}"
 <summary>takt コマンドを直接使う場合</summary>
 
 ```bash
-takt --pipeline --skip-git --create-worktree no -w sdd -t "要件の説明..."
+takt --pipeline --skip-git --create-worktree no -w sdd-full -t "要件の説明..."
 takt --pipeline --skip-git --create-worktree no -w sdd-requirements -t "要件の説明..."
 takt --pipeline --skip-git --create-worktree no -w sdd-validate-gap -t "feature={feature}"
 takt --pipeline --skip-git --create-worktree no -w sdd-design -t "feature={feature}"

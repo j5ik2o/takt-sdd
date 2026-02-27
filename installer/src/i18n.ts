@@ -83,7 +83,7 @@ Options:
   Installed to: .takt/
 
   Usage:
-    npm run sdd -- "description of requirements"
+    npm run sdd:full -- "description of requirements"
 
   Run individual phases:
     npm run sdd:requirements -- "description of requirements"
@@ -144,7 +144,7 @@ const ja: Messages = {
   インストール先: .takt/
 
   使い方:
-    npm run sdd -- "要件の説明"
+    npm run sdd:full -- "要件の説明"
 
   各フェーズの個別実行:
     npm run sdd:requirements -- "要件の説明"
