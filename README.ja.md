@@ -324,3 +324,4 @@ scripts/
 
 - [Kiro](https://github.com/kirodotdev/Kiro) - Amazon による SDD ベースの AI 開発環境
 - [cc-sdd](https://github.com/gotalab/cc-sdd) - 複数の AI コーディングエージェントに対応した SDD ツール
+- [OpenSpec](https://github.com/Fission-AI/OpenSpec) - AI コーディングアシスタント向け軽量 SDD フレームワーク

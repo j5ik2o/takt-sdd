@@ -324,3 +324,4 @@ This project is inspired by the following projects:
 
 - [Kiro](https://github.com/kirodotdev/Kiro) - Amazon's SDD-based AI development environment
 - [cc-sdd](https://github.com/gotalab/cc-sdd) - SDD tool supporting multiple AI coding agents
+- [OpenSpec](https://github.com/Fission-AI/OpenSpec) - Lightweight spec-driven framework for AI coding assistants
