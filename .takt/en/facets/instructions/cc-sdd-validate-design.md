@@ -4,18 +4,19 @@ Conduct a quality review of the technical design document and make a GO/NO-GO de
 
 **What to do:**
 1. Identify the target feature name from the task
-2. Read `.kiro/specs/{feature}/requirements.md`
-3. Read `.kiro/specs/{feature}/design.md`
-4. If `.kiro/steering/` exists, read all files
-5. Conduct the review:
+2. Read `.kiro/specs/{feature}/spec.json` and verify `approvals.design.generated` is `true`; otherwise ABORT with a message that design has not been generated
+3. Read `.kiro/specs/{feature}/requirements.md`
+4. Read `.kiro/specs/{feature}/design.md`
+5. If `.kiro/steering/` exists, read all files
+6. Conduct the review:
    - Verify consistency with the existing architecture
    - Verify design coherence and standards compliance
    - Evaluate extensibility and maintainability
    - Verify type safety and interface design
-6. Narrow critical issues to a maximum of 3
-7. For each issue, provide linkage to requirement IDs and evidence from the design document
-8. Acknowledge 1-2 strengths as well
-9. Make a GO/NO-GO determination
+7. Narrow critical issues to a maximum of 3
+8. For each issue, provide linkage to requirement IDs and evidence from the design document
+9. Acknowledge 1-2 strengths as well
+10. Make a GO/NO-GO determination
 
 **Required output (include these headings)**
 

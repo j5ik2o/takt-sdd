@@ -10,10 +10,10 @@ max_movements: 10
 initial_movement: generate-requirements
 
 personas:
-  requirements-analyst: ../facets/personas/requirements-analyst.md
+  cc-sdd-requirements-analyst: ../facets/personas/cc-sdd-requirements-analyst.md
 
 policies:
-  ears-format: ../facets/policies/ears-format.md
+  cc-sdd-ears-format: ../facets/policies/cc-sdd-ears-format.md
 
 instructions:
   generate-requirements: ../facets/instructions/cc-sdd-generate-requirements.md
@@ -24,8 +24,8 @@ report_formats:
 movements:
   - name: generate-requirements
     edit: true
-    persona: requirements-analyst
-    policy: ears-format
+    persona: cc-sdd-requirements-analyst
+    policy: cc-sdd-ears-format
     allowed_tools:
       - Read
       - Glob

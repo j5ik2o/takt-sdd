@@ -4,23 +4,24 @@ Analyze the gap between requirements and the existing codebase to inform the imp
 
 **What to do:**
 1. Identify the target feature name from the task
-2. Read `.kiro/specs/{feature}/requirements.md`
-3. If `.kiro/steering/` exists, read all files
-4. Investigate the current state:
+2. Read `.kiro/specs/{feature}/spec.json` and verify `approvals.requirements.generated` is `true`; otherwise ABORT with a message that requirements have not been generated
+3. Read `.kiro/specs/{feature}/requirements.md`
+4. If `.kiro/steering/` exists, read all files
+5. Investigate the current state:
    - Understand the domain-related files, modules, and directory structure
    - Identify reusable components
    - Extract architecture patterns and conventions
    - Identify integration surfaces
-5. Analyze requirements feasibility:
+6. Analyze requirements feasibility:
    - List technical needs
    - Identify gaps and constraints
    - Record complexity signals
-6. Evaluate implementation approaches:
+7. Evaluate implementation approaches:
    - A: Extend existing -- pros and cons
    - B: Build new -- pros and cons
    - C: Hybrid -- pros and cons
-7. Estimate effort (S/M/L/XL) and risk (High/Medium/Low)
-8. Save the artifact to `.kiro/specs/{feature}/gap-analysis.md`
+8. Estimate effort (S/M/L/XL) and risk (High/Medium/Low)
+9. Save the artifact to `.kiro/specs/{feature}/gap-analysis.md`
 
 **Artifact destination:**
 - `.kiro/specs/{feature}/gap-analysis.md`

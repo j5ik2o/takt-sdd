@@ -11,10 +11,10 @@ initial_movement: generate-requirements
 
 # --- カスタムファセット セクションマップ ---
 personas:
-  requirements-analyst: ../facets/personas/requirements-analyst.md
+  cc-sdd-requirements-analyst: ../facets/personas/cc-sdd-requirements-analyst.md
 
 policies:
-  ears-format: ../facets/policies/ears-format.md
+  cc-sdd-ears-format: ../facets/policies/cc-sdd-ears-format.md
   cc-sdd-design: ../facets/policies/cc-sdd-design.md
   cc-sdd-gap-analysis: ../facets/policies/cc-sdd-gap-analysis.md
   cc-sdd-design-review: ../facets/policies/cc-sdd-design-review.md
@@ -27,11 +27,12 @@ instructions:
   validate-design: ../facets/instructions/cc-sdd-validate-design.md
   generate-tasks: ../facets/instructions/cc-sdd-generate-tasks.md
   validate-impl: ../facets/instructions/cc-sdd-validate-impl.md
+  fix-impl: ../facets/instructions/cc-sdd-fix-impl.md
   plan: ../facets/instructions/cc-sdd-impl-plan.md
-  implement: ../facets/instructions/impl-execute.md
+  implement: ../facets/instructions/cc-sdd-impl-execute.md
 
 knowledge:
-  design-discovery: ../facets/knowledge/design-discovery.md
+  cc-sdd-design-discovery: ../facets/knowledge/cc-sdd-design-discovery.md
 
 report_formats:
   cc-sdd-requirements: ../facets/output-contracts/cc-sdd-requirements.md
@@ -107,6 +108,27 @@ loop_monitors:
         - condition: 健全（進捗あり）
           next: reviewers
         - condition: 非生産的（改善なし）
+          next: validate-impl
+
+  - cycle:
+      - validate-impl
+      - fix-impl
+    threshold: 3
+    judge:
+      persona: supervisor
+      instruction_template: |
+        検証・修正サイクルが {cycle_count} 回繰り返されました。
+
+        **参照するレポート:**
+        - 実装検証: {report:07-impl-validation.md}
+
+        **判断基準:**
+        - 各サイクルで新しい問題が発見・修正されているか
+        - 同じ指摘が繰り返されていないか
+      rules:
+        - condition: 健全（進捗あり）
+          next: validate-impl
+        - condition: 非生産的（改善なし）
           next: supervise
 
 # --- Movement定義 ---
@@ -114,8 +136,8 @@ movements:
   # ===== Phase 1: 要件生成 =====
   - name: generate-requirements
     edit: true
-    persona: requirements-analyst
-    policy: ears-format
+    persona: cc-sdd-requirements-analyst
+    policy: cc-sdd-ears-format
     allowed_tools:
       - Read
       - Glob
@@ -175,7 +197,7 @@ movements:
     policy: cc-sdd-design
     knowledge:
       - architecture
-      - design-discovery
+      - cc-sdd-design-discovery
     allowed_tools:
       - Read
       - Glob
@@ -428,28 +450,10 @@ movements:
           - condition: approved
           - condition: needs_fix
 
-      - name: impl-validation
-        edit: false
-        persona: supervisor
-        policy: review
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Bash
-        instruction: validate-impl
-        output_contracts:
-          report:
-            - name: 07-impl-validation.md
-              format: cc-sdd-impl-validation
-        rules:
-          - condition: 検証合格
-          - condition: 検証不合格
-
     rules:
-      - condition: all("approved", "approved", "検証合格")
-        next: supervise
-      - condition: any("needs_fix", "検証不合格")
+      - condition: all("approved", "approved")
+        next: validate-impl
+      - condition: any("needs_fix")
         next: fix
 
   - name: fix
@@ -479,6 +483,55 @@ movements:
         next: reviewers
       - condition: 判断できない、情報不足
         next: plan
+
+  # ===== Phase 6: 実装検証 =====
+  - name: validate-impl
+    edit: false
+    persona: supervisor
+    policy: review
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+    instruction: validate-impl
+    output_contracts:
+      report:
+        - name: 07-impl-validation.md
+          format: cc-sdd-impl-validation
+    rules:
+      - condition: 検証合格
+        next: supervise
+      - condition: 検証不合格
+        next: fix-impl
+
+  - name: fix-impl
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+    session: refresh
+    knowledge:
+      - backend
+      - architecture
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Edit
+      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    pass_previous_response: false
+    instruction: fix-impl
+    rules:
+      - condition: 修正完了
+        next: validate-impl
+      - condition: 判断できない、情報不足
+        next: supervise
 
   # ===== 最終検証 =====
   - name: supervise

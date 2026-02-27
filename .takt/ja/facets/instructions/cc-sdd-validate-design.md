@@ -4,18 +4,19 @@
 
 **やること:**
 1. タスクから対象feature名を特定する
-2. `.kiro/specs/{feature}/requirements.md` を読み込む
-3. `.kiro/specs/{feature}/design.md` を読み込む
-4. `.kiro/steering/` が存在すれば全ファイルを読み込む
-5. レビューを実施する:
+2. `.kiro/specs/{feature}/spec.json` を読み込み、`approvals.design.generated` が `true` であることを確認する。そうでなければ、設計が未生成である旨のメッセージでABORTする
+3. `.kiro/specs/{feature}/requirements.md` を読み込む
+4. `.kiro/specs/{feature}/design.md` を読み込む
+5. `.kiro/steering/` が存在すれば全ファイルを読み込む
+6. レビューを実施する:
    - 既存アーキテクチャとの整合性を確認する
    - 設計の一貫性と標準への準拠を確認する
    - 拡張性・保守性を評価する
    - 型安全性・インターフェース設計を確認する
-6. 重大な問題は最大3件に絞る
-7. 各問題に要件IDとの紐づけ、設計ドキュメントのエビデンスを付ける
-8. 強みも1-2点認める
-9. GO/NO-GO判定を行う
+7. 重大な問題は最大3件に絞る
+8. 各問題に要件IDとの紐づけ、設計ドキュメントのエビデンスを付ける
+9. 強みも1-2点認める
+10. GO/NO-GO判定を行う
 
 **必須出力（見出しを含める）**
 

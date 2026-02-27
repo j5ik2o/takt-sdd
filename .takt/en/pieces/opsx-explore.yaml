@@ -14,6 +14,10 @@ personas:
 
 instructions:
   explore: ../facets/instructions/opsx-explore.md
+  capture: ../facets/instructions/opsx-capture.md
+
+report_formats:
+  opsx-exploration-memo: ../facets/output-contracts/opsx-exploration-memo.md
 
 movements:
   - name: explore
@@ -29,6 +33,24 @@ movements:
     instruction: explore
     rules:
       - condition: Exploration complete or user satisfied
-        next: COMPLETE
+        next: capture
       - condition: User requests to end exploration
+        next: capture
+
+  - name: capture
+    edit: true
+    persona: opsx-explorer
+    allowed_tools:
+      - Read
+      - Write
+      - Bash
+    instruction: capture
+    output_contracts:
+      report:
+        - name: opsx-exploration-memo.md
+          format: opsx-exploration-memo
+    rules:
+      - condition: Memo written successfully
+        next: COMPLETE
+      - condition: No significant insights to capture
         next: COMPLETE

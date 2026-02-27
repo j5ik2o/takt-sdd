@@ -6,13 +6,16 @@ piece_config:
       network_access: true
     opencode:
       network_access: true
-max_movements: 50
+max_movements: 80
 initial_movement: plan
 
 # --- カスタムファセット セクションマップ ---
 instructions:
   plan: ../facets/instructions/cc-sdd-impl-plan.md
-  implement: ../facets/instructions/impl-execute.md
+  implement: ../facets/instructions/cc-sdd-impl-execute.md
+
+report_formats:
+  cc-sdd-impl-validation: ../facets/output-contracts/cc-sdd-impl-validation.md
 
 # --- ループ監視 ---
 loop_monitors:
@@ -56,6 +59,28 @@ loop_monitors:
       rules:
         - condition: 健全（進捗あり）
           next: ai_review
+        - condition: 非生産的（改善なし）
+          next: reviewers
+
+  - cycle:
+      - reviewers
+      - fix
+    threshold: 3
+    judge:
+      persona: supervisor
+      instruction_template: |
+        レビュー・修正サイクルが {cycle_count} 回繰り返されました。
+
+        **参照するレポート:**
+        - アーキテクチャレビュー: {report:05-architect-review.md}
+        - QAレビュー: {report:06-qa-review.md}
+
+        **判断基準:**
+        - 各サイクルで新しい問題が発見・修正されているか
+        - 同じ指摘が繰り返されていないか
+      rules:
+        - condition: 健全（進捗あり）
+          next: reviewers
         - condition: 非生産的（改善なし）
           next: supervise
 
@@ -151,7 +176,7 @@ movements:
           format: ai-review
     rules:
       - condition: AI特有の問題なし
-        next: supervise
+        next: reviewers
       - condition: AI特有の問題あり
         next: ai_fix
 
@@ -182,9 +207,122 @@ movements:
       - condition: AI問題の修正完了
         next: ai_review
       - condition: 修正不要（指摘対象ファイル/仕様の確認済み）
-        next: supervise
+        next: ai_no_fix
       - condition: 判断できない、情報不足
+        next: ai_no_fix
+
+  - name: ai_no_fix
+    edit: false
+    persona: architecture-reviewer
+    policy: review
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+    instruction: arbitrate
+    rules:
+      - condition: ai_reviewの指摘が妥当（修正すべき）
+        next: ai_fix
+      - condition: ai_fixの判断が妥当（修正不要）
+        next: reviewers
+
+  # ===== レビュー =====
+  - name: reviewers
+    parallel:
+      - name: arch-review
+        edit: false
+        persona: architecture-reviewer
+        policy: review
+        knowledge:
+          - architecture
+          - backend
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - WebSearch
+          - WebFetch
+        instruction: review-arch
+        output_contracts:
+          report:
+            - name: 05-architect-review.md
+              format: architecture-review
+        rules:
+          - condition: approved
+          - condition: needs_fix
+
+      - name: qa-review
+        edit: false
+        persona: qa-reviewer
+        policy:
+          - review
+          - qa
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - WebSearch
+          - WebFetch
+        instruction: review-qa
+        output_contracts:
+          report:
+            - name: 06-qa-review.md
+              format: qa-review
+        rules:
+          - condition: approved
+          - condition: needs_fix
+
+      - name: impl-validation
+        edit: false
+        persona: supervisor
+        policy: review
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+        instruction: validate-impl
+        output_contracts:
+          report:
+            - name: 07-impl-validation.md
+              format: cc-sdd-impl-validation
+        rules:
+          - condition: 検証合格
+          - condition: 検証不合格
+
+    rules:
+      - condition: all("approved", "approved", "検証合格")
         next: supervise
+      - condition: any("needs_fix", "検証不合格")
+        next: fix
+
+  - name: fix
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+    session: refresh
+    knowledge:
+      - backend
+      - architecture
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Edit
+      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    pass_previous_response: false
+    instruction: fix
+    rules:
+      - condition: 修正完了
+        next: reviewers
+      - condition: 判断できない、情報不足
+        next: plan
 
   # ===== 最終検証 =====
   - name: supervise

@@ -16,7 +16,7 @@ instructions:
   generate-design: ../facets/instructions/cc-sdd-generate-design.md
 
 knowledge:
-  design-discovery: ../facets/knowledge/design-discovery.md
+  cc-sdd-design-discovery: ../facets/knowledge/cc-sdd-design-discovery.md
 
 report_formats:
   cc-sdd-design: ../facets/output-contracts/cc-sdd-design.md
@@ -29,7 +29,7 @@ movements:
     policy: cc-sdd-design
     knowledge:
       - architecture
-      - design-discovery
+      - cc-sdd-design-discovery
     allowed_tools:
       - Read
       - Glob
