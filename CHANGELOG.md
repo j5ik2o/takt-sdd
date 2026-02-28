@@ -1,3 +1,25 @@
+## [0.11.0](https://github.com/j5ik2o/takt-sdd/compare/v0.10.1...v0.11.0) (2026-02-28)
+
+
+### Features
+
+* add capture movement to opsx-explore for exploration memo output ([28024bb](https://github.com/j5ik2o/takt-sdd/commit/28024bb0ee011386dce098d6681e1575f46de107))
+* add opsx workflow pieces and replace openspec CLI with opsx-cli.sh ([a2d0666](https://github.com/j5ik2o/takt-sdd/commit/a2d0666c20f39f7f3343abb8a40ce3d30fa812b8))
+* add opsx-explore piece for interactive thinking and investigation ([aede6bd](https://github.com/j5ik2o/takt-sdd/commit/aede6bd5b25d786db54aa54c1983d1961a3d12f5))
+* add parallel reviewers and arbitration to cc-sdd-impl ([20a5cad](https://github.com/j5ik2o/takt-sdd/commit/20a5cad10028c41acdeca3bc6cc61d56c6bd2d60))
+* add qcount test project skeleton for OpenSpec workflow testing ([bcd79f7](https://github.com/j5ik2o/takt-sdd/commit/bcd79f7846c838bae9580d961616a7f84c173a9a))
+* add spec.json check and update handling to cc-sdd instruction facets ([ec9f26e](https://github.com/j5ik2o/takt-sdd/commit/ec9f26e51c5930403c5af10adaa08072552700d0))
+* add standalone validate-impl phase to cc-sdd-full ([568cc70](https://github.com/j5ik2o/takt-sdd/commit/568cc70f6fe3520d06b886713136385e891595c9))
+* redesign opsx-apply with batch execution and review pipeline ([530e680](https://github.com/j5ik2o/takt-sdd/commit/530e6807de3976c0b138af103aa2af163c7200cf))
+
+
+### Bug Fixes
+
+* address review findings - stale piece name, wrong dir path, dead code ([a59c2b4](https://github.com/j5ik2o/takt-sdd/commit/a59c2b4f31f504ceddcacd335ceef41da8831987))
+* guard empty changes array in cmd_list JSON path for bash < 4.4 ([f3fd07c](https://github.com/j5ik2o/takt-sdd/commit/f3fd07c94b2dbecf350c0c83527b87b94ac36bfb))
+* update cc-sdd steering facet paths and add openspec section to COMMON.md ([508c1f2](https://github.com/j5ik2o/takt-sdd/commit/508c1f221f1de33a5aa29160d1b3f8891f746c83))
+* use || true instead of || echo "0" for grep -c in opsx-cli.sh ([faec7b8](https://github.com/j5ik2o/takt-sdd/commit/faec7b8ad9c4eb97680f8799bc50e44d1faba185))
+
 ## [0.10.1](https://github.com/j5ik2o/takt-sdd/compare/v0.10.0...v0.10.1) (2026-02-25)
 
 
