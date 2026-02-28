@@ -146,6 +146,9 @@ movements:
 | `session: refresh` | 実装系ムーブメントで新規セッション開始 |
 | `pass_previous_response: false` | レビュー結果を直接読ませたくない場合 |
 | `required_permission_mode` | edit権限が必要な場合に `edit` を指定 |
+| `edit: false` + ビルド操作 | `edit: false` のムーブメントは読み取り専用サンドボックスで動作するため、コンパイル・ビルドを伴うコマンド（`cargo check` 等）を実行させてはいけない。インストラクションに「## やらないこと」セクションで明示的に禁止する |
+| CI実行責任の配置 | ビルドを伴うCIは `edit: true` の `fix`/`implement` ムーブメントで実行しレポートに記録する。`supervise` 等の `edit: false` ムーブメントはレポート証跡の確認のみ行い、CI自身は実行しない |
+| `supervise` の失敗遷移 | 修正で解決できる問題なら `fix` へ遷移させる。`plan` は根本的な設計変更が必要な場合のみ。`supervise → plan` の安易な遷移はループの原因になる |
 
 #### ルール設計
 
