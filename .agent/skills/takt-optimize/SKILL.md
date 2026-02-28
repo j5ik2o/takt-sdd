@@ -142,9 +142,12 @@ movements:
 | threshold調整 | 閾値が高すぎる/低すぎる場合に適正値を提案 |
 | ABORT条件追加 | 失敗時のABORT遷移がない場合に追加 |
 | max_movements調整 | ムーブメント数に対してmax_movementsが過大/過小な場合に調整 |
+| supervise失敗遷移の修正 | `supervise` 失敗時に `plan` へ遷移するルールを `fix` に変更する。`supervise → plan` ループは高コストで非生産的になりやすい |
+| edit=false ビルド禁止の追記 | `edit: false` のムーブメントが参照するインストラクションに「ビルドコマンドを実行しないこと」の禁止セクション（`## やらないこと`）を追加する |
 
 **threshold推奨値:**
 - review→fix サイクル: 3回
+- supervise→fix サイクル: 3回
 - implement→test サイクル: 2回
 
 ### 6. 並列化提案
