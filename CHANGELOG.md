@@ -1,3 +1,10 @@
+## [0.12.0](https://github.com/j5ik2o/takt-sdd/compare/v0.11.0...v0.12.0) (2026-03-02)
+
+
+### Features
+
+* add edit=false/supervise/CI責任配置に関するチェック項目と設計ガイドラインをSKILL.mdに追加 ([99a67dd](https://github.com/j5ik2o/takt-sdd/commit/99a67ddd2f00e37286e1e2e06c3758259f8dbd74))
+
 ## [0.11.0](https://github.com/j5ik2o/takt-sdd/compare/v0.10.1...v0.11.0) (2026-02-28)
 
 
