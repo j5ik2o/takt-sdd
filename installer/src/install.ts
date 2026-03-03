@@ -132,11 +132,13 @@ function fetchJson(url: string): Promise<string> {
           if (res.statusCode === 301 || res.statusCode === 302) {
             const location = res.headers.location;
             if (location) {
+              res.resume();
               request(location);
               return;
             }
           }
           if (res.statusCode !== 200) {
+            res.resume();
             reject(new Error(`Fetch failed: HTTP ${res.statusCode}`));
             return;
           }
@@ -180,11 +182,13 @@ function download(url: string, dest: string): Promise<void> {
           if (res.statusCode === 301 || res.statusCode === 302) {
             const location = res.headers.location;
             if (location) {
+              res.resume();
               request(location);
               return;
             }
           }
           if (res.statusCode !== 200) {
+            res.resume();
             reject(new Error(`Download failed: HTTP ${res.statusCode}`));
             return;
           }
@@ -368,7 +372,7 @@ export async function install(options: InstallOptions): Promise<void> {
               console.log(msg.dryRunItem(join(".agents", "skills", file)));
             }
             for (const target of SKILL_SYMLINK_TARGETS) {
-              console.log(msg.dryRunItem(`${target}/${skill} -> ../../.agent/skills/${skill}`));
+              console.log(msg.dryRunItem(`${target}/${skill} -> ../../.agents/skills/${skill}`));
             }
           }
         }
@@ -486,7 +490,7 @@ export async function install(options: InstallOptions): Promise<void> {
           if (existsSync(linkPath)) {
             rmSync(linkPath, { recursive: true });
           }
-          symlinkSync(`../../.agent/skills/${skill}`, linkPath);
+          symlinkSync(`../../.agents/skills/${skill}`, linkPath);
           info(msg.skillSymlinked(skill, target));
         }
       }
