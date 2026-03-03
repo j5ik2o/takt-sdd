@@ -76,6 +76,20 @@ npx create-takt-sdd --tag 0.1.2
 
 既存の `package.json` がある場合は npm scripts のみマージされる（既存のスクリプトは上書きしない）。
 
+### スキルの個別追加
+
+TAKT スキルは `npx skills add` で個別にインストールすることもできる：
+
+```bash
+npx skills add j5ik2o/takt-sdd@takt-analyze
+npx skills add j5ik2o/takt-sdd@takt-facet
+npx skills add j5ik2o/takt-sdd@takt-optimize
+npx skills add j5ik2o/takt-sdd@takt-piece
+npx skills add j5ik2o/takt-sdd@takt-task
+```
+
+スキルは `.agents/skills/` にインストールされ、`.claude/skills/` と `.codex/skills/` にシンボリックリンクが作成される。
+
 ## Kiro 互換ワークフロー
 
 SDD は以下のフェーズを順に実行する：

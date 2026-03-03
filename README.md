@@ -76,6 +76,20 @@ Options:
 
 When `package.json` already exists, only npm scripts are merged (existing scripts are not overwritten).
 
+### Adding Individual Skills
+
+TAKT skills can also be installed individually using `npx skills add`:
+
+```bash
+npx skills add j5ik2o/takt-sdd@takt-analyze
+npx skills add j5ik2o/takt-sdd@takt-facet
+npx skills add j5ik2o/takt-sdd@takt-optimize
+npx skills add j5ik2o/takt-sdd@takt-piece
+npx skills add j5ik2o/takt-sdd@takt-task
+```
+
+Skills are installed to `.agents/skills/` with symlinks created in `.claude/skills/` and `.codex/skills/`.
+
 ## Kiro Compatibility Workflow
 
 SDD executes the following phases in order:
