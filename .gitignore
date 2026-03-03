@@ -224,10 +224,10 @@ dist
 
 /.mcp.json
 
-/.agent/*
-!/.agent/skills/
-/.agent/skills/*
-!/.agent/skills/takt-*/
+/.agents/*
+!/.agents/skills/
+/.agents/skills/*
+!/.agents/skills/takt-*/
 /.claude/
 /.codex/
 /.gemini/
