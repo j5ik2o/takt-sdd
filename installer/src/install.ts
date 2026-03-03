@@ -360,12 +360,12 @@ export async function install(options: InstallOptions): Promise<void> {
       }
       if (!options.withoutSkills) {
         for (const skill of TAKT_SKILLS) {
-          const skillSrc = join(extractedDir, ".agent", "skills", skill);
+          const skillSrc = join(extractedDir, ".agents", "skills", skill);
           if (existsSync(skillSrc)) {
-            for (const file of collectFiles(skillSrc, join(extractedDir, ".agent", "skills"))) {
+            for (const file of collectFiles(skillSrc, join(extractedDir, ".agents", "skills"))) {
               // Skip language-specific SKILL files (only SKILL.md is installed)
               if (file.endsWith("SKILL.ja.md") || file.endsWith("SKILL.en.md")) continue;
-              console.log(msg.dryRunItem(join(".agent", "skills", file)));
+              console.log(msg.dryRunItem(join(".agents", "skills", file)));
             }
             for (const target of SKILL_SYMLINK_TARGETS) {
               console.log(msg.dryRunItem(`${target}/${skill} -> ../../.agent/skills/${skill}`));
@@ -428,8 +428,8 @@ export async function install(options: InstallOptions): Promise<void> {
     // .gitignore は takt が初回実行時に自動配置するため、インストーラでは生成しない
 
     // takt スキルのインストール
-    const agentSkillsDir = join(options.cwd, ".agent", "skills");
-    const extractedSkillsDir = join(extractedDir, ".agent", "skills");
+    const agentSkillsDir = join(options.cwd, ".agents", "skills");
+    const extractedSkillsDir = join(extractedDir, ".agents", "skills");
     if (!options.withoutSkills && existsSync(extractedSkillsDir)) {
       info(msg.installingSkills);
       mkdirSync(agentSkillsDir, { recursive: true });
