@@ -284,7 +284,7 @@ TAKTの5種類のファセットファイルを個別に作成・編集する。
 作成・編集したファイルは `validate-takt-files.sh` で機械的に検証できる:
 
 ```bash
-bash .agent/skills/takt-facet/scripts/validate-takt-files.sh
+bash .agents/skills/takt-facet/scripts/validate-takt-files.sh
 ```
 
 検証項目:

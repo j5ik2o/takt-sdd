@@ -171,7 +171,7 @@ tasks:
 `validate-order-md.sh` を実行して order.md の構造を機械的に検証できる:
 
 ```bash
-bash .agent/skills/takt-task/scripts/validate-order-md.sh
+bash .agents/skills/takt-task/scripts/validate-order-md.sh
 ```
 
 検証項目:
@@ -186,7 +186,7 @@ bash .agent/skills/takt-task/scripts/validate-order-md.sh
 このタスクで `.takt/pieces/*.yaml` を編集した場合は、完了判定前に以下を必ず実行する。
 
 ```bash
-bash .agent/skills/takt-piece/scripts/validate-takt-files.sh --pieces
+bash .agents/skills/takt-piece/scripts/validate-takt-files.sh --pieces
 ```
 
 追加で、次の2点を確認する:

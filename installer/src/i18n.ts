@@ -55,9 +55,9 @@ const en: Messages = {
   scriptsCreated: "Created package.json with npm scripts and devDependencies",
   depsAdded: (keys) => `Added devDependencies: ${keys.join(", ")}`,
   depsUpdated: (keys) => `Updated devDependencies: ${keys.join(", ")}`,
-  installingSkills: "Installing takt skills to .agent/skills/...",
+  installingSkills: "Installing takt skills to .agents/skills/...",
   skillInstalled: (name) => `Installed skill: ${name}`,
-  skillSymlinked: (name, target) => `Symlinked ${target}/${name} -> .agent/skills/${name}`,
+  skillSymlinked: (name, target) => `Symlinked ${target}/${name} -> .agents/skills/${name}`,
   downloadingTaktRefs: (refsPath) => `Downloading takt builtins to ${refsPath}/...`,
   taktRefsInstalled: "Installed takt references (builtins, docs)",
   taktRefsSkipped: "Takt references already exist, skipping",
@@ -74,7 +74,7 @@ Options:
   --lang <en|ja>     Message language (default: en)
   --force            Overwrite existing .takt/ directory (ignored if manifest exists)
   --dry-run          Preview without writing files
-  --without-skills   Skip installing takt skills to .agent/skills/
+  --without-skills   Skip installing takt skills to .agents/skills/
   --layout <mode>    Directory layout: auto, modern, legacy (default: auto)
   --refs-path <path> Path for takt references (default: references/takt)
   -h, --help         Show this help
@@ -123,9 +123,9 @@ const ja: Messages = {
   scriptsCreated: "npm scripts と devDependencies 付きの package.json を作成しました",
   depsAdded: (keys) => `devDependencies を追加しました: ${keys.join(", ")}`,
   depsUpdated: (keys) => `devDependencies を更新しました: ${keys.join(", ")}`,
-  installingSkills: ".agent/skills/ に takt スキルをインストール中...",
+  installingSkills: ".agents/skills/ に takt スキルをインストール中...",
   skillInstalled: (name) => `スキルをインストールしました: ${name}`,
-  skillSymlinked: (name, target) => `シンボリックリンク作成: ${target}/${name} -> .agent/skills/${name}`,
+  skillSymlinked: (name, target) => `シンボリックリンク作成: ${target}/${name} -> .agents/skills/${name}`,
   downloadingTaktRefs: (refsPath) => `${refsPath}/ に takt ビルトインをダウンロード中...`,
   taktRefsInstalled: "takt リファレンスをインストールしました（builtins, docs）",
   taktRefsSkipped: "takt リファレンスは既に存在するためスキップしました",
