@@ -3,11 +3,14 @@ name: takt-analyze
 description: >
   既存のTAKTピースとファセットを分析し、改善提案を行うスキル。ピースYAMLの構造検証、
   ファセット間の整合性チェック、スタイルガイド準拠の確認、未使用ファセットの検出、
-  ルール設計の最適化提案を実施する。references/taktのスタイルガイド・エンジン仕様を
-  基準として分析する。
+  ルール設計の最適化提案を実施する。実行ログ（.takt/logs/*.jsonl）が存在する場合は
+  ログベース診断分析も行い、ルール評価効率・ループホットスポット・ABORT率等を報告する。
+  references/taktのスタイルガイド・エンジン仕様を基準として分析する。
   トリガー：「ピースを分析」「taktの設定を確認」「ファセットの品質チェック」
   「ピースのレビュー」「takt analyze」「ワークフローの改善提案」
   「ピースの整合性チェック」「taktの問題を見つけて」
+  「ログを分析」「実行ログの診断」「taktのログを見て」「ルール評価の統計」
+  「ai_fallbackの頻度」「ループの検出」
 ---
 
 # TAKT Analyzer
@@ -25,6 +28,18 @@ description: >
 | スタイルガイド群 | `references/takt/builtins/ja/*_STYLE_GUIDE.md` | ファセット品質基準 |
 | ビルトインピース | `references/takt/builtins/ja/pieces/` | 構造パターンの参照 |
 | ビルトインファセット | `references/takt/builtins/ja/{personas,policies,instructions,knowledge,output-contracts}/` | ファセット品質の参照 |
+| ログ型定義 | `references/takt/src/shared/utils/types.ts` | NDJSONレコード型の参照 |
+| ルール評価 | `references/takt/src/core/piece/evaluation/RuleEvaluator.ts` | matchedRuleMethod の仕組み |
+
+## takt-optimize との違い
+
+| 観点 | takt-analyze | takt-optimize |
+|------|-------------|---------------|
+| 目的 | 問題検出・診断とレポート | 最適化の実行 |
+| 出力 | 分析レポート（Markdown） | 最適化済みファイル群 |
+| 変更 | なし（読み取り専用） | ファイルを直接編集・生成 |
+| 入力 | ピースYAML + ファセット + **実行ログ** | 同左 |
+| 判断 | 問題の重大度分類 | コスト/品質のトレードオフ判断 |
 
 ## 分析カテゴリ
 
@@ -114,17 +129,116 @@ description: >
 2. 類似度が高い場合はビルトインへの置き換えを提案
 3. ビルトインのbare name参照とセクションマップ参照の混在を検出
 
+### 6. ログベース診断分析
+
+実行ログ（`.takt/logs/*.jsonl`）を解析し、動的な問題を検出する。ログがない場合はスキップする。
+
+#### a) ログの場所と形式
+
+- `.takt/logs/{sessionId}.jsonl`（NDJSON形式: 1行1JSONオブジェクト）
+- `.takt/logs/latest.json` で最新セッションIDを参照
+
+**NDJSONレコード型一覧:**
+
+| type | 内容 |
+|------|------|
+| `piece_start` | ピース実行の開始 |
+| `step_start` | ムーブメント（ステップ）の開始 |
+| `step_complete` | ムーブメント完了（`matchedRuleIndex`, `matchedRuleMethod` を含む） |
+| `phase_start` | フェーズの開始 |
+| `phase_complete` | フェーズ完了（`error` フィールドあり） |
+| `piece_complete` | ピース実行の正常完了（`iterations` を含む） |
+| `piece_abort` | ピース実行の中断（`reason` を含む） |
+| `interactive_start` / `interactive_end` | インタラクティブモードの開始・終了 |
+
+> 各レコード型の詳細フィールドは `references/takt/src/shared/utils/types.ts` を参照。
+
+#### b) matchedRuleMethod
+
+`step_complete` レコードの `matchedRuleMethod` は、ルール評価エンジンがどの手法でルールをマッチさせたかを示す。
+
+**評価順序（フォールバックチェーン）:**
+
+```
+1. aggregate     → all()/any() による並列サブステップ集約
+2. phase3_tag    → Phase 3 出力からのタグ検出
+3. phase1_tag    → Phase 1 出力からのタグ検出（フォールバック）
+4. ai_judge      → ai() 条件のみをAI判定
+5. ai_judge_fallback → 全条件をAI判定（最終フォールバック）
+```
+
+**手法別の特性:**
+
+| method | コスト | 信頼性 | 説明 |
+|--------|--------|--------|------|
+| `aggregate` | なし | 高 | 並列サブステップの完了状態で判定 |
+| `phase3_tag` | なし | 高 | 出力テンプレートのタグで確定的に判定 |
+| `phase1_tag` | なし | 中 | エージェント応答からタグ検出 |
+| `ai_judge` | API 1回 | 中 | `ai()` 条件のみをAI判定 |
+| `ai_judge_fallback` | API 1回 | 低 | 全条件をAI判定（タグ検出失敗時） |
+| `auto_select` | なし | 高 | ルールが1つのみの場合の自動選択 |
+| `structured_output` | なし | 高 | 構造化出力による判定 |
+
+> `ai_judge_fallback` の頻度が高い場合、output-contract にタグ出力指示を追加すべき。
+
+#### c) 診断分析項目
+
+| 分析 | 方法 | 重大度判定基準 |
+|------|------|---------------|
+| ループホットスポット | 同一ステップの `step_start` 出現回数を集計 | 閾値超え=Warning、`loop_monitor` 未設定=Critical |
+| デッドルール | `matchedRuleIndex` の分布でマッチ0回のルールを検出 | Critical（到達不能コード） |
+| ルール評価効率 | `matchedRuleMethod` の分布を集計。`ai_judge_fallback` の割合に注目 | >50%=Warning、>80%=Critical |
+| ABORT率 | `piece_abort` / `piece_complete` の比率 | >30%=Warning、>50%=Critical |
+| フェーズ別エラー | `phase_complete` の `error` フィールドを集計 | 同一フェーズで繰り返しエラー=Warning |
+| イテレーション効率 | `piece_complete.iterations` vs `max_movements` | 常に上限近く=Warning |
+
+#### d) 複数ログの統合分析ガイド
+
+- **3回以上**: パターン確認に十分。統計的な傾向を報告する
+- **1回**: 参考情報として扱い、静的分析を優先する
+
+#### e) ログ診断レポート例
+
+```markdown
+## ログ診断結果
+
+### 分析対象
+- セッション数: 5
+- 期間: 2026-03-01 〜 2026-03-04
+
+### ルール評価効率
+| ムーブメント | phase3_tag | ai_judge | ai_judge_fallback | 改善優先度 |
+|------------|-----------|---------|-------------------|----------|
+| ai_review  | 20%       | 13%     | 67%               | 高       |
+| supervise  | 80%       | 20%     | 0%                | -        |
+
+### ループホットスポット
+| サイクル | 最大連続回数 | loop_monitor | 状態 |
+|---------|------------|-------------|------|
+| review→fix | 6 | threshold: 3 | OK |
+| implement→test | 4 | なし | Warning: loop_monitor未設定 |
+
+### ABORT分析
+- 成功: 4/5 (80%)
+- ABORT: 1/5 (20%) - reason: "max_movements exceeded"
+```
+
 ## ワークフロー
 
 ### Step 1: 対象の特定
 
-分析対象のピースYAMLを特定する。
+分析対象のピースYAMLを特定し、実行ログの有無を確認する。
 
 ```
 探索順序:
 1. ユーザー指定のパス
 2. ~/.takt/pieces/ 内のカスタムピース
 3. .takt/pieces/ 内のプロジェクトピース
+
+ログ確認:
+- .takt/logs/ ディレクトリの存在確認
+- ログあり → 静的分析 + ログ診断
+- ログなし → 静的分析のみ（従来通り）
 ```
 
 ### Step 2: ピースYAML解析
@@ -139,6 +253,13 @@ description: >
 ### Step 3: ファセット読み込みと品質チェック
 
 セクションマップとビルトイン参照から全ファセットを読み込み、スタイルガイドに照合する。
+
+### Step 3.5: ログ読み込みと診断（ログがある場合のみ）
+
+1. `.takt/logs/latest.json` から最新セッションIDを取得
+2. 対象の `.jsonl` ファイルを読み込み、NDJSONレコードを解析
+3. カテゴリ6の診断分析項目に従い、各指標を算出
+4. 複数ログがある場合は統合分析を実施
 
 ### Step 4: 分離分析
 
@@ -168,4 +289,7 @@ description: >
 
 ## ビルトイン活用の提案
 {カスタムファセットのビルトイン置き換え提案}
+
+## ログ診断結果（ログ提供時のみ）
+{ログベース診断のサマリー}
 ```

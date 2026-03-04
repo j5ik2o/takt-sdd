@@ -4,20 +4,18 @@ description: >
   既存のTAKTワークフロー（ピースYAML・ファセット群）を最適化するスキル。
   トークン消費削減、ムーブメント統合、ルール簡素化、ファセット再利用促進、
   ループ制御の改善、並列化の提案を実施し、最適化後のファイルを直接生成する。
-  実行ログ（.takt/logs/*.jsonl）が提供された場合は、ルールマッチ分布・ループ頻度・
-  ABORT率などの実データに基づく最適化も行う。
-  takt-analyzeが「分析・レポート」に特化するのに対し、本スキルは「最適化の実行」に特化する。
+  takt-analyzeの診断結果（静的分析・ログ診断）を入力として活用できる。
+  本スキルは「最適化の実行」のみを担い、診断・分析はtakt-analyzeに委譲する。
   references/taktのエンジン仕様・スタイルガイドを基準とする。
   トリガー：「ピースを最適化」「taktの高速化」「ワークフローを軽くしたい」
   「トークンを減らしたい」「ムーブメントを減らしたい」「takt optimize」
   「ワークフローの効率化」「ファセットを整理したい」「ピースをスリムにして」
   「taktのコスト削減」「ワークフローをシンプルにしたい」
-  「ログから最適化」「実行ログを分析して最適化」「taktのログを見て改善」
 ---
 
 # TAKT Optimizer
 
-既存のTAKTワークフローを分析し、最適化を実行する。
+既存のTAKTワークフローの最適化を実行する。診断・分析は takt-analyze が担う。
 
 > **前提 takt バージョン**: v0.29.0
 
@@ -35,10 +33,14 @@ description: >
 
 | 観点 | takt-analyze | takt-optimize |
 |------|-------------|---------------|
-| 目的 | 問題検出とレポート | 最適化の実行 |
+| 目的 | 問題検出・診断とレポート | 最適化の実行 |
 | 出力 | 分析レポート（Markdown） | 最適化済みファイル群 |
 | 変更 | なし（読み取り専用） | ファイルを直接編集・生成 |
+| 入力 | ピースYAML + ファセット + 実行ログ | ピースYAML + ファセット + **takt-analyzeの診断結果** |
 | 判断 | 問題の重大度分類 | コスト/品質のトレードオフ判断 |
+| ログ分析 | 自ら実行し診断レポートを生成 | takt-analyzeの診断結果を活用 |
+
+> **推奨フロー**: `takt-analyze`（診断）→ その結果をもとに `takt-optimize`（最適化実行）
 
 ## 最適化カテゴリ
 
@@ -191,64 +193,22 @@ movements:
       next: fix
 ```
 
-### 7. ログベース最適化
+### 7. ログ診断結果に基づく最適化
 
-実行ログ（`.takt/logs/{sessionId}.jsonl`）を分析し、実データに基づく最適化を行う。
+takt-analyze のログ診断結果を入力として、実データに基づく最適化を実行する。
 
-**ログの場所:**
-- セッションログ: `.takt/logs/{sessionId}.jsonl`（NDJSON形式）
-- 最新セッション: `.takt/logs/latest.json` で参照可能
+> **前提**: ログの読み込み・解析・診断は takt-analyze が担当する。本カテゴリでは診断結果を受けて「何を変更するか」のみを扱う。
 
-**NDJSONレコード型:**
+**診断結果 → 最適化アクション:**
 
-| レコード | 主要フィールド | 最適化への活用 |
-|---------|--------------|---------------|
-| `piece_start` | `task`, `pieceName`, `startTime` | 実行パターンの特定 |
-| `step_start` | `step`, `persona`, `iteration` | ムーブメント実行頻度 |
-| `step_complete` | `step`, `status`, `matchedRuleIndex`, `matchedRuleMethod` | ルールマッチ分析 |
-| `phase_start` | `step`, `phase`(1/2/3), `phaseName` | フェーズ別分析 |
-| `phase_complete` | `step`, `phase`, `status`, `content`, `error` | フェーズ別ボトルネック |
-| `piece_complete` | `iterations`, `endTime` | 総イテレーション数 |
-| `piece_abort` | `iterations`, `reason`, `endTime` | 失敗パターン分析 |
-
-**分析項目と最適化:**
-
-| 分析 | 方法 | 最適化アクション |
-|------|------|----------------|
-| ループホットスポット | 同一ステップの`step_start`出現回数を集計 | loop_monitorのthreshold調整、ルール条件の見直し |
-| デッドルール検出 | `matchedRuleIndex`の分布を集計し、一度もマッチしないルールを特定 | 到達不能ルールの除去 |
-| ai_fallback頻度 | `matchedRuleMethod`が`ai_judge_fallback`の割合 | タグベースルールへの書き換え（コスト削減・信頼性向上） |
-| ABORT率 | `piece_abort`/`piece_complete`の比率 | ABORT原因の`reason`を分析しフロー改善 |
-| フェーズ別エラー | `phase_complete`の`error`フィールド | エラー頻発フェーズの特定と改善 |
-| イテレーション効率 | `piece_complete.iterations` vs `max_movements` | max_movementsの適正値算出 |
-
-**matchedRuleMethod の値と意味:**
-
-| 値 | 意味 | 最適化観点 |
-|----|------|-----------|
-| `phase3_tag` | Phase 3のタグ判定で決定 | 理想的（低コスト） |
-| `phase1_tag` | Phase 1出力のタグで決定 | 良好（Phase 3不要の可能性） |
-| `aggregate` | parallel親のall()/any()で決定 | 正常 |
-| `ai_judge` | ai()条件のAI判定で決定 | 許容（タグ化を検討） |
-| `ai_judge_fallback` | 全条件をAI判定（最終手段） | 要改善（タグが出力されていない） |
-| `auto_select` | 自動選択 | 正常 |
-
-**ログ分析例:**
-
-```
-# 3回の実行ログを分析した結果:
-ステップ "ai_review" の matchedRuleMethod 分布:
-  phase3_tag: 1回 (33%)
-  ai_judge_fallback: 2回 (67%)
-→ 提案: ステータスタグが安定して出力されていない。
-  インストラクションのタグ出力指示を強化するか、ルール条件テキストを簡潔にする。
-```
-
-**複数ログの統合分析:**
-
-複数のセッションログが提供された場合、統計的に信頼性の高い最適化を提案する。
-- 3回以上の実行データ: パターンの確認に十分
-- 1回の実行データ: 参考情報として扱い、静的分析を優先
+| takt-analyze の診断 | 最適化アクション |
+|-------------------|----------------|
+| ループホットスポット（Warning/Critical） | `loop_monitor` の `threshold` 調整、ルール条件の見直し |
+| デッドルール（Critical） | 到達不能ルールの除去 |
+| ルール評価効率が低い（`ai_judge_fallback` 高頻度） | タグベースルールへの書き換え、output-contract にタグ出力指示を追加 |
+| ABORT率が高い | ABORT原因の `reason` に応じたフロー改善（`max_movements` 調整、ABORT条件の追加） |
+| フェーズ別エラーの繰り返し | エラー頻発フェーズのインストラクション・ペルソナの改善 |
+| イテレーション効率が低い | `max_movements` の適正値算出、ムーブメント統合の検討 |
 
 ## ワークフロー
 
@@ -267,7 +227,7 @@ movements:
 - ピースYAML全体
 - セクションマップの全ファセットファイル
 - ビルトインファセット（比較用）
-- 実行ログ（ユーザーが提供した場合）: `.takt/logs/*.jsonl`
+- takt-analyze の診断レポート（提供された場合）
 
 ### Step 2: 最適化プラン作成
 
@@ -278,7 +238,7 @@ movements:
 
 ## 分析ソース
 - 静的分析: ピースYAML + ファセット{N}件
-- ログ分析: {N}セッション（提供された場合）
+- takt-analyze診断: {診断レポートの要約}（提供された場合）
 
 ## 推定効果
 - トークン削減: 約{N}%
@@ -290,7 +250,7 @@ movements:
 |---|---------|------|------|------|--------|
 | 1 | トークン削減 | persona/coder | 120行→80行に圧縮 | 静的 | 低 |
 | 2 | ビルトイン置換 | persona/my-reviewer | → architecture-reviewer | 静的 | 低 |
-| 3 | ルール簡素化 | ai_review | ai_fallback 67% → タグ化 | ログ | 低 |
+| 3 | ルール簡素化 | ai_review | ai_fallback 67% → タグ化 | 診断 | 低 |
 | 4 | 並列化 | arch-review + qa-review | 逐次→並列 | 静的 | 中 |
 ```
 
