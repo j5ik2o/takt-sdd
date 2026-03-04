@@ -6,7 +6,7 @@ piece_config:
       network_access: true
     opencode:
       network_access: true
-max_movements: 50
+max_movements: 80
 initial_movement: plan
 
 # --- Custom Facet Section Map ---
@@ -16,6 +16,7 @@ instructions:
 
 report_formats:
   opsx-apply-summary: ../facets/output-contracts/opsx-apply-summary.md
+  opsx-apply-impl-validation: ../facets/output-contracts/cc-sdd-impl-validation.md
 
 # --- Loop Monitors ---
 loop_monitors:
@@ -59,6 +60,28 @@ loop_monitors:
       rules:
         - condition: Healthy (progress being made)
           next: ai_review
+        - condition: Unproductive (no improvement)
+          next: reviewers
+
+  - cycle:
+      - reviewers
+      - fix
+    threshold: 3
+    judge:
+      persona: supervisor
+      instruction_template: |
+        The review-fix cycle has repeated {cycle_count} times.
+
+        **Reports to reference:**
+        - Architecture review: {report:05-architect-review.md}
+        - QA review: {report:06-qa-review.md}
+
+        **Judgment criteria:**
+        - Are new issues being found and fixed in each cycle?
+        - Are the same issues being raised repeatedly?
+      rules:
+        - condition: Healthy (progress being made)
+          next: reviewers
         - condition: Unproductive (no improvement)
           next: supervise
 
@@ -154,7 +177,7 @@ movements:
           format: ai-review
     rules:
       - condition: No AI-specific issues found
-        next: supervise
+        next: reviewers
       - condition: AI-specific issues found
         next: ai_fix
 
@@ -185,9 +208,122 @@ movements:
       - condition: AI issue fix complete
         next: ai_review
       - condition: Fix not needed (target file/spec verified)
-        next: supervise
+        next: ai_no_fix
       - condition: Unable to determine, insufficient information
+        next: ai_no_fix
+
+  - name: ai_no_fix
+    edit: false
+    persona: architecture-reviewer
+    policy: review
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+    instruction: arbitrate
+    rules:
+      - condition: ai_review findings are valid (should fix)
+        next: ai_fix
+      - condition: ai_fix judgment is valid (no fix needed)
+        next: reviewers
+
+  # ===== Review =====
+  - name: reviewers
+    parallel:
+      - name: arch-review
+        edit: false
+        persona: architecture-reviewer
+        policy: review
+        knowledge:
+          - architecture
+          - backend
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - WebSearch
+          - WebFetch
+        instruction: review-arch
+        output_contracts:
+          report:
+            - name: 05-architect-review.md
+              format: architecture-review
+        rules:
+          - condition: approved
+          - condition: needs_fix
+
+      - name: qa-review
+        edit: false
+        persona: qa-reviewer
+        policy:
+          - review
+          - qa
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - WebSearch
+          - WebFetch
+        instruction: review-qa
+        output_contracts:
+          report:
+            - name: 06-qa-review.md
+              format: qa-review
+        rules:
+          - condition: approved
+          - condition: needs_fix
+
+      - name: impl-validation
+        edit: false
+        persona: supervisor
+        policy: review
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+        instruction: validate-impl
+        output_contracts:
+          report:
+            - name: 07-impl-validation.md
+              format: opsx-apply-impl-validation
+        rules:
+          - condition: Validation passed
+          - condition: Validation failed
+
+    rules:
+      - condition: all("approved", "approved", "Validation passed")
         next: supervise
+      - condition: any("needs_fix", "Validation failed")
+        next: fix
+
+  - name: fix
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+    session: refresh
+    knowledge:
+      - backend
+      - architecture
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Edit
+      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    pass_previous_response: false
+    instruction: fix
+    rules:
+      - condition: Fixes complete
+        next: reviewers
+      - condition: Unable to determine, insufficient information
+        next: plan
 
   # ===== Final Validation =====
   - name: supervise
