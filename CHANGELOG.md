@@ -1,3 +1,17 @@
+## [0.13.0](https://github.com/j5ik2o/takt-sdd/compare/v0.12.0...v0.13.0) (2026-03-04)
+
+
+### Features
+
+* add parallel execution strategy guidance to takt-task skill ([2c2afcf](https://github.com/j5ik2o/takt-sdd/commit/2c2afcf066dc623045cee9c7f1a65cbe7cb543a0))
+* add takt-skill-updater skill ([e36121d](https://github.com/j5ik2o/takt-sdd/commit/e36121d10aac0cd4beed610d48ea923ae302c4db))
+
+
+### Bug Fixes
+
+* correct symlink paths and drain HTTP responses in installer ([4b42559](https://github.com/j5ik2o/takt-sdd/commit/4b42559c08fea21c051d2ffafdd08b65c1b638bb))
+* update stale `.agent/` paths to `.agents/` in i18n messages ([7697528](https://github.com/j5ik2o/takt-sdd/commit/7697528511c170540f552c2368a652d40dc2f073)), closes [#26](https://github.com/j5ik2o/takt-sdd/issues/26) [#27](https://github.com/j5ik2o/takt-sdd/issues/27)
+
 ## [0.12.0](https://github.com/j5ik2o/takt-sdd/compare/v0.11.0...v0.12.0) (2026-03-02)
 
 
