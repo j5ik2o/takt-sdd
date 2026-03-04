@@ -1,29 +1,97 @@
 name: opsx-full
-description: OpenSpec Full Workflow - Propose, Apply, and Archive in one run
+description: OpenSpec Full Workflow - Propose, implement, review, and archive in one run
 piece_config:
   provider_options:
     codex:
       network_access: true
     opencode:
       network_access: true
-max_movements: 50
+max_movements: 100
 initial_movement: propose
 
 # --- Custom Facet Section Map ---
 personas:
   opsx-proposer: ../facets/personas/opsx-proposer.md
-  opsx-implementer: ../facets/personas/opsx-implementer.md
   opsx-archiver: ../facets/personas/opsx-archiver.md
 
 instructions:
   propose: ../facets/instructions/opsx-propose.md
-  apply: ../facets/instructions/opsx-apply.md
+  plan: ../facets/instructions/opsx-apply-plan.md
+  implement: ../facets/instructions/opsx-apply-execute.md
   archive: ../facets/instructions/opsx-archive.md
 
 report_formats:
   opsx-propose-summary: ../facets/output-contracts/opsx-propose-summary.md
   opsx-apply-summary: ../facets/output-contracts/opsx-apply-summary.md
+  opsx-apply-impl-validation: ../facets/output-contracts/cc-sdd-impl-validation.md
   opsx-archive-summary: ../facets/output-contracts/opsx-archive-summary.md
+
+# --- Loop Monitors ---
+loop_monitors:
+  - cycle:
+      - plan
+      - implement
+    threshold: 5
+    judge:
+      persona: supervisor
+      instruction_template: |
+        The plan-implement batch loop has repeated {cycle_count} times.
+
+        **Reports to reference:**
+        - Batch plan: {report:00-plan.md}
+        - Implementation scope: {report:coder-scope.md}
+
+        **Judgment criteria:**
+        - Are new tasks being completed in each cycle?
+        - Is the task checkbox count increasing?
+      rules:
+        - condition: Healthy (progress being made)
+          next: plan
+        - condition: Unproductive (no improvement)
+          next: ai_review
+
+  - cycle:
+      - ai_review
+      - ai_fix
+    threshold: 3
+    judge:
+      persona: supervisor
+      instruction_template: |
+        The ai_review-ai_fix loop has repeated {cycle_count} times.
+
+        **Reports to reference:**
+        - AI review results: {report:04-ai-review.md}
+
+        **Judgment criteria:**
+        - Are new issues being found and fixed in each cycle?
+        - Are the same issues being raised repeatedly?
+      rules:
+        - condition: Healthy (progress being made)
+          next: ai_review
+        - condition: Unproductive (no improvement)
+          next: reviewers
+
+  - cycle:
+      - reviewers
+      - fix
+    threshold: 3
+    judge:
+      persona: supervisor
+      instruction_template: |
+        The review-fix cycle has repeated {cycle_count} times.
+
+        **Reports to reference:**
+        - Architecture review: {report:05-architect-review.md}
+        - QA review: {report:06-qa-review.md}
+
+        **Judgment criteria:**
+        - Are new issues being found and fixed in each cycle?
+        - Are the same issues being raised repeatedly?
+      rules:
+        - condition: Healthy (progress being made)
+          next: reviewers
+        - condition: Unproductive (no improvement)
+          next: supervise
 
 # --- Movement Definitions ---
 movements:
@@ -47,41 +115,276 @@ movements:
           format: opsx-propose-summary
     rules:
       - condition: All artifacts created successfully
-        next: apply
+        next: plan
       - condition: Failed to create change or artifacts
         next: ABORT
         appendix: |
           Reason:
           - {failure_reason}
 
-  # ===== Phase 2: Apply =====
-  - name: apply
-    edit: true
-    persona: opsx-implementer
-    session: refresh
+  # ===== Phase 2: Adaptive Batch Implementation =====
+  - name: plan
+    edit: false
+    persona: planner
+    knowledge: architecture
     allowed_tools:
       - Read
       - Glob
       - Grep
-      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    instruction: plan
+    output_contracts:
+      report:
+        - name: 00-plan.md
+          format: plan
+    rules:
+      - condition: Incomplete tasks exist
+        next: implement
+      - condition: All tasks complete
+        next: ai_review
+      - condition: tasks.md does not exist or is blocked
+        next: ABORT
+        appendix: |
+          tasks.md not found or blocked.
+          Run opsx-propose first to generate tasks.
+      - condition: Requirements unclear, insufficient information
+        next: ABORT
+        appendix: |
+          Clarification needed:
+          - {question1}
+          - {question2}
+
+  - name: implement
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+    session: refresh
+    knowledge:
+      - backend
+      - architecture
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
       - Edit
+      - Write
       - Bash
       - WebSearch
       - WebFetch
     required_permission_mode: edit
-    instruction: apply
+    instruction: implement
     output_contracts:
       report:
+        - name: coder-scope.md
+          format: coder-scope
+        - name: coder-decisions.md
+          format: coder-decisions
+    rules:
+      - condition: Batch implementation complete
+        next: plan
+      - condition: Problem occurred during implementation, plan revision needed
+        next: plan
+      - condition: Unable to determine, insufficient information
+        next: plan
+
+  # ===== AI Review =====
+  - name: ai_review
+    edit: false
+    persona: ai-antipattern-reviewer
+    policy:
+      - review
+      - ai-antipattern
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - WebSearch
+      - WebFetch
+    instruction: ai-review
+    output_contracts:
+      report:
+        - name: 04-ai-review.md
+          format: ai-review
+    rules:
+      - condition: No AI-specific issues found
+        next: reviewers
+      - condition: AI-specific issues found
+        next: ai_fix
+
+  # ===== AI Issue Fix =====
+  - name: ai_fix
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+    session: refresh
+    knowledge:
+      - backend
+      - architecture
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Edit
+      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    pass_previous_response: false
+    instruction: ai-fix
+    rules:
+      - condition: AI issue fix complete
+        next: ai_review
+      - condition: Fix not needed (target file/spec verified)
+        next: ai_no_fix
+      - condition: Unable to determine, insufficient information
+        next: ai_no_fix
+
+  - name: ai_no_fix
+    edit: false
+    persona: architecture-reviewer
+    policy: review
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+    instruction: arbitrate
+    rules:
+      - condition: ai_review findings are valid (should fix)
+        next: ai_fix
+      - condition: ai_fix judgment is valid (no fix needed)
+        next: reviewers
+
+  # ===== Review =====
+  - name: reviewers
+    parallel:
+      - name: arch-review
+        edit: false
+        persona: architecture-reviewer
+        policy: review
+        knowledge:
+          - architecture
+          - backend
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - WebSearch
+          - WebFetch
+        instruction: review-arch
+        output_contracts:
+          report:
+            - name: 05-architect-review.md
+              format: architecture-review
+        rules:
+          - condition: approved
+          - condition: needs_fix
+
+      - name: qa-review
+        edit: false
+        persona: qa-reviewer
+        policy:
+          - review
+          - qa
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - WebSearch
+          - WebFetch
+        instruction: review-qa
+        output_contracts:
+          report:
+            - name: 06-qa-review.md
+              format: qa-review
+        rules:
+          - condition: approved
+          - condition: needs_fix
+
+      - name: impl-validation
+        edit: false
+        persona: supervisor
+        policy: review
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+        instruction: validate-impl
+        output_contracts:
+          report:
+            - name: 07-impl-validation.md
+              format: opsx-apply-impl-validation
+        rules:
+          - condition: Validation passed
+          - condition: Validation failed
+
+    rules:
+      - condition: all("approved", "approved", "Validation passed")
+        next: supervise
+      - condition: any("needs_fix", "Validation failed")
+        next: fix
+
+  - name: fix
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+    session: refresh
+    knowledge:
+      - backend
+      - architecture
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Edit
+      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    pass_previous_response: false
+    instruction: fix
+    rules:
+      - condition: Fixes complete
+        next: reviewers
+      - condition: Unable to determine, insufficient information
+        next: plan
+
+  # ===== Final Validation =====
+  - name: supervise
+    edit: false
+    persona: supervisor
+    policy: review
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+      - WebSearch
+      - WebFetch
+    pass_previous_response: false
+    instruction: supervise
+    output_contracts:
+      report:
+        - name: supervisor-validation.md
+          format: supervisor-validation
         - name: apply-summary.md
           format: opsx-apply-summary
+          use_judge: false
     rules:
-      - condition: All tasks completed successfully
+      - condition: All clear
         next: archive
-      - condition: Blocked or unable to continue
-        next: ABORT
-        appendix: |
-          Reason:
-          - {failure_reason}
+      - condition: Requirements not met, test failures, build errors
+        next: plan
 
   # ===== Phase 3: Archive =====
   - name: archive
