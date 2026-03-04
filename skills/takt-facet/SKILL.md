@@ -14,6 +14,8 @@ description: >
 
 TAKTの5種類のファセットファイルを個別に作成・編集する。
 
+> **前提 takt バージョン**: v0.29.0
+
 ## 参照資料
 
 ファセット作成時は `references/takt/builtins/ja/` の資料を参照する。
