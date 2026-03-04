@@ -1,3 +1,11 @@
+## [0.14.0](https://github.com/j5ik2o/takt-sdd/compare/v0.13.0...v0.14.0) (2026-03-04)
+
+
+### Features
+
+* add log-based diagnostic analysis to takt-analyze and enforce SRP with takt-optimize ([b8975f3](https://github.com/j5ik2o/takt-sdd/commit/b8975f39ae995b205ff97303596a8df50c3d20e2))
+* reviewersをcc-sdd-impl/fullからopsx-apply/fullに移動 ([4b588ac](https://github.com/j5ik2o/takt-sdd/commit/4b588ac937556374f19a4e0f8b0092d5a293a773))
+
 ## [0.13.0](https://github.com/j5ik2o/takt-sdd/compare/v0.12.0...v0.13.0) (2026-03-04)
 
 
