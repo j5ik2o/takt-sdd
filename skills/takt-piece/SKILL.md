@@ -14,7 +14,7 @@ description: >
 
 TAKTピース（ワークフローYAML）とその関連ファセットファイルを作成する。
 
-> **前提 takt バージョン**: v0.29.0
+> **前提 takt バージョン**: v0.30.0
 
 ## 参照資料
 
@@ -91,6 +91,15 @@ movements:
     persona: planner          # ビルトイン参照（bare name）
     knowledge: architecture
     instruction: plan
+    provider_options:          # v0.30.0: ツール制限はプロバイダ別に指定
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+          - WebSearch
+          - WebFetch
     output_contracts:
       report:
         - name: 00-plan.md
@@ -155,6 +164,7 @@ movements:
 | `pass_previous_response: false` | レビュー結果を直接読ませたくない場合 |
 | `required_permission_mode` | edit権限が必要な場合に `edit` を指定 |
 | `quality_gates` | ムーブメント単位の完了基準（AI指示）。例: `["All tests pass", "No lint errors"]` |
+| `provider_options` | プロバイダ固有設定。`allowed_tools` は `provider_options.claude.allowed_tools` に配置する（v0.30.0〜） |
 | `edit: false` + ビルド操作 | `edit: false` のムーブメントは読み取り専用サンドボックスで動作するため、コンパイル・ビルドを伴うコマンド（`cargo check` 等）を実行させてはいけない。インストラクションに「## やらないこと」セクションで明示的に禁止する |
 | CI実行責任の配置 | ビルドを伴うCIは `edit: true` の `fix`/`implement` ムーブメントで実行しレポートに記録する。`supervise` 等の `edit: false` ムーブメントはレポート証跡の確認のみ行い、CI自身は実行しない |
 | `supervise` の失敗遷移 | 修正で解決できる問題なら `fix` へ遷移させる。`plan` は根本的な設計変更が必要な場合のみ。`supervise → plan` の安易な遷移はループの原因になる |
@@ -259,19 +269,32 @@ movements:
 
 ```yaml
 loop_monitors:
-  - cycle: [review, fix]
+  # AI修正ループ監視
+  - cycle: [ai_review, ai_fix]
+    threshold: 5
+    judge:
+      persona: supervisor
+      instruction_template: loop-monitor-ai-fix    # v0.30.0: ビルトインテンプレート参照
+      rules:
+        - condition: 健全（進捗あり）
+          next: ai_review
+        - condition: 非生産的（改善なし）
+          next: ABORT
+
+  # レビュアー修正ループ監視
+  - cycle: [reviewers, fix]
     threshold: 3
     judge:
       persona: supervisor
-      instruction_template: |
-        {cycle_count} 回のループが発生。進捗の有無を判断してください。
-        レポート: {report:review-report.md}
+      instruction_template: loop-monitor-reviewers-fix  # v0.30.0: 新規ビルトインテンプレート
       rules:
-        - condition: 健全（進捗あり）
-          next: review
-        - condition: 非生産的（改善なし）
-          next: supervise
+        - condition: 健全（指摘数が減少、修正が反映されている）
+          next: reviewers
+        - condition: 非生産的（同じ指摘が繰り返される）
+          next: ABORT
 ```
+
+**注意（v0.30.0）**: `instruction_template` にはビルトインファセット名を指定することを推奨する。これにより一貫性と保守性が向上する。インラインテキストも引き続き使用可能だが、ビルトインに同等のテンプレートがある場合は参照名を優先する。カスタムテンプレートが必要な場合は、`instructions` セクションマップにカスタムファセットを登録し、そのキー名を指定する。
 
 #### Loop Monitor 安全ルール
 

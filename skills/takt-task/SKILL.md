@@ -14,7 +14,7 @@ description: >
 
 TAKTのtasks.yamlエントリとタスクディレクトリ（order.md）を作成・編集する。
 
-> **前提 takt バージョン**: v0.29.0
+> **前提 takt バージョン**: v0.30.0
 
 ## 参照資料
 
@@ -398,6 +398,8 @@ bash .agents/skills/takt-piece/scripts/validate-takt-files.sh --pieces
 | running → completed | YES |
 | running → failed | YES |
 | running → exceeded | YES（max_movements超過時） |
+| running → pr_failed | YES（PR作成失敗時） |
 | pending → completed | NO（runningを経由する必要あり） |
 | completed → pending | NO（新規タスクとして再作成） |
 | exceeded → pending | NO（新規タスクとして再作成） |
+| pr_failed → pending | NO（新規タスクとして再作成） |

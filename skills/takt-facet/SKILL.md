@@ -14,7 +14,7 @@ description: >
 
 TAKTの5種類のファセットファイルを個別に作成・編集する。
 
-> **前提 takt バージョン**: v0.29.0
+> **前提 takt バージョン**: v0.30.0
 
 ## 参照資料
 
@@ -64,7 +64,7 @@ TAKTの5種類のファセットファイルを個別に作成・編集する。
 |-----------|-------------|
 | Persona | coder, planner, architecture-reviewer, qa-reviewer, supervisor, security-reviewer |
 | Policy | coding, review, testing, qa, ai-antipattern |
-| Instruction | plan, implement, review-arch, review-qa, supervise, fix |
+| Instruction | plan, implement, review-arch, review-qa, supervise, fix, loop-monitor-ai-fix, loop-monitor-reviewers-fix |
 | Knowledge | architecture, backend, cqrs-es, frontend, security |
 | Output Contract | plan, architecture-review, ai-review, summary, validation |
 
@@ -226,6 +226,20 @@ TAKTの5種類のファセットファイルを個別に作成・編集する。
 - APPROVE → サマリーのみ（5行以内）
 - REJECT → 問題点を表形式で（30行以内）
 ````
+
+**レビュー出力契約の追加構造（v0.30.0〜）**:
+
+レビュー系出力契約では、イテレーション間の指摘追跡のため以下のセクション構成を使用する:
+
+| セクション | 内容 |
+|-----------|------|
+| `## 今回の指摘（new）` | 今回新規に発見された指摘。`finding_id`, `family_tag` 付き |
+| `## 継続指摘（persists）` | 前回から修正されずに残っている指摘 |
+| `## 解消済み（resolved）` | 前回指摘されたが今回解消された項目 |
+| `## 再開指摘（reopened）` | 一度解消されたが再発した指摘 |
+
+- `family_tag`: 関連する指摘をイテレーション間でグルーピングするタグ
+- REJECT判定条件: `new`、`persists`、または `reopened` が1件以上
 
 **サイズ目安**: 10-25行（上限30行、認知負荷軽減ルール除く）
 

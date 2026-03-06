@@ -17,7 +17,7 @@ description: >
 
 既存のTAKTワークフローの最適化を実行する。診断・分析は takt-analyze が担う。
 
-> **前提 takt バージョン**: v0.29.0
+> **前提 takt バージョン**: v0.30.0
 
 ## 参照資料
 
@@ -143,6 +143,7 @@ movements:
 | 最適化 | 内容 |
 |--------|------|
 | loop_monitors追加 | review→fixサイクルにloop_monitorがない場合に追加 |
+| instruction_templateテンプレート参照化 | インラインテキストのinstruction_templateをビルトインファセット参照に置換（v0.30.0〜） |
 | threshold調整 | 閾値が高すぎる/低すぎる場合に適正値を提案 |
 | ABORT条件追加 | 失敗時のABORT遷移がない場合に追加 |
 | max_movements調整 | ムーブメント数に対してmax_movementsが過大/過小な場合に調整 |
