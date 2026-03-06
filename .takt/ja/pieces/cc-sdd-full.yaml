@@ -116,14 +116,16 @@ movements:
     edit: true
     persona: cc-sdd-requirements-analyst
     policy: cc-sdd-ears-format
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Write
-      - Bash
-      - WebSearch
-      - WebFetch
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
     required_permission_mode: edit
     instruction: generate-requirements
     output_contracts:
@@ -148,14 +150,16 @@ movements:
     persona: planner
     policy: cc-sdd-gap-analysis
     knowledge: architecture
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Write
-      - Bash
-      - WebSearch
-      - WebFetch
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
     required_permission_mode: edit
     instruction: validate-gap
     output_contracts:
@@ -176,14 +180,16 @@ movements:
     knowledge:
       - architecture
       - cc-sdd-design-discovery
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Write
-      - Bash
-      - WebSearch
-      - WebFetch
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
     required_permission_mode: edit
     instruction: generate-design
     output_contracts:
@@ -204,10 +210,12 @@ movements:
     persona: architecture-reviewer
     policy: cc-sdd-design-review
     knowledge: architecture
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
     instruction: validate-design
     output_contracts:
       report:
@@ -225,12 +233,14 @@ movements:
     persona: planner
     policy: cc-sdd-tasks
     knowledge: architecture
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Write
-      - Bash
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
     required_permission_mode: edit
     instruction: generate-tasks
     output_contracts:
@@ -249,13 +259,15 @@ movements:
     edit: false
     persona: planner
     knowledge: architecture
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Bash
-      - WebSearch
-      - WebFetch
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+          - WebSearch
+          - WebFetch
     instruction: plan
     output_contracts:
       report:
@@ -289,15 +301,17 @@ movements:
     knowledge:
       - backend
       - architecture
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Edit
-      - Write
-      - Bash
-      - WebSearch
-      - WebFetch
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
     required_permission_mode: edit
     instruction: implement
     output_contracts:
@@ -320,12 +334,14 @@ movements:
     policy:
       - review
       - ai-antipattern
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - WebSearch
-      - WebFetch
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - WebSearch
+          - WebFetch
     instruction: ai-review
     output_contracts:
       report:
@@ -347,15 +363,17 @@ movements:
     knowledge:
       - backend
       - architecture
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Edit
-      - Write
-      - Bash
-      - WebSearch
-      - WebFetch
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
     required_permission_mode: edit
     pass_previous_response: false
     instruction: ai-fix
@@ -372,11 +390,13 @@ movements:
     edit: false
     persona: supervisor
     policy: review
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Bash
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
     instruction: validate-impl
     output_contracts:
       report:
@@ -398,15 +418,17 @@ movements:
     knowledge:
       - backend
       - architecture
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Edit
-      - Write
-      - Bash
-      - WebSearch
-      - WebFetch
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
     required_permission_mode: edit
     pass_previous_response: false
     instruction: fix-impl
@@ -421,13 +443,15 @@ movements:
     edit: false
     persona: supervisor
     policy: review
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Bash
-      - WebSearch
-      - WebFetch
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+          - WebSearch
+          - WebFetch
     pass_previous_response: false
     instruction: supervise
     output_contracts:

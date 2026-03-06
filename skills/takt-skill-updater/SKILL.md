@@ -13,7 +13,7 @@ description: >
 
 references/taktサブモジュール更新後に、takt-*スキル群を最新バージョンに追従させる。
 
-> **前提 takt バージョン**: v0.29.0
+> **前提 takt バージョン**: v0.30.0
 
 ## 対象スキル
 
@@ -186,6 +186,17 @@ chore: update takt-* skills for takt v{バージョン}
 ## 過去の更新履歴
 
 今後の更新時に参照できるよう、主要な変更をここに記録する。
+
+### v0.29.0 → v0.30.0（2026-03-06）
+
+| スキル | 変更内容 |
+|--------|---------|
+| 全スキル | `前提 takt バージョン: v0.30.0` に更新 |
+| takt-task | `pr_failed` ステータス（6番目の終端状態）追加。PR作成失敗を `failed` と分離。`failure` は任意（`failed` と異なり必須ではない） |
+| takt-piece | `allowed_tools` → `provider_options.claude.allowed_tools` に移動。Loop monitor の `instruction_template` がビルトインファセット参照に変更（`loop-monitor-ai-fix`, `loop-monitor-reviewers-fix`）。設計判断ガイドに `provider_options` 追加 |
+| takt-facet | ビルトイン Instruction に `loop-monitor-ai-fix`, `loop-monitor-reviewers-fix` 追加。レビュー出力契約に `family_tag`/`new`/`persists`/`resolved`/`reopened` セクション構造追加 |
+| takt-analyze | `provider_options` 構造チェック項目追加。`*-provider-events.jsonl`（別ファイル）と `trace.md` のログ記述追加。`observability` → `logging` リネーム反映 |
+| takt-optimize | `instruction_template` テンプレート参照化の最適化項目追加 |
 
 ### v0.22.0 → v0.29.0（2026-03-04）
 

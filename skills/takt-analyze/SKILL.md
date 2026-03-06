@@ -17,7 +17,7 @@ description: >
 
 既存のTAKTピースとファセットを分析し、問題点の検出と改善提案を行う。
 
-> **前提 takt バージョン**: v0.29.0
+> **前提 takt バージョン**: v0.30.0
 
 ## 参照資料
 
@@ -61,6 +61,7 @@ description: >
 | edit=false + ビルド操作 | `edit: false` のムーブメントのインストラクションがビルドコマンド（`cargo check` 等）の禁止を明示しているか。読み取り専用サンドボックスでビルドは `Operation not permitted` で失敗する | Warning |
 | supervise失敗の遷移先 | `supervise` の失敗ルールが `plan` に遷移していないか。修正可能な問題は `fix` へ遷移すべきで、`supervise → plan` は根本設計変更が必要な場合のみ | Warning |
 | CI実行の責任配置 | `supervise`/`ai_review` 等の `edit: false` ムーブメントのインストラクションがCIの直接実行を禁止し、`fix`/`implement` のレポート証跡確認のみを求めているか | Warning |
+| provider_options構造 | `allowed_tools` が `provider_options.claude.allowed_tools` に配置されているか（v0.30.0〜） | Warning |
 | edit権限 | `edit: true`のムーブメントに適切な`required_permission_mode`があるか | Info |
 | session設定 | 実装系ムーブメントに`session: refresh`があるか | Info |
 
@@ -152,6 +153,15 @@ description: >
 | `interactive_start` / `interactive_end` | インタラクティブモードの開始・終了 |
 
 > 各レコード型の詳細フィールドは `references/takt/src/shared/utils/types.ts` を参照。
+
+**別ファイルのログ（v0.30.0〜）:**
+
+| ファイル | 形式 | 内容 | 設定 |
+|---------|------|------|------|
+| `{sessionId}-provider-events.jsonl` | NDJSON | プロバイダAPIイベント（トークン数、レイテンシ等） | `logging.provider_events: true` |
+| `trace.md` | Markdown | 実行トレースレポート（フェーズ・ムーブメント実行履歴） | `logging.trace: true` |
+
+> これらはセッションNDJSONとは別ファイルに出力される。設定は `~/.takt/config.yaml` の `logging` セクションで制御する（v0.30.0 で `observability` → `logging` にリネーム）。
 
 #### b) matchedRuleMethod
 

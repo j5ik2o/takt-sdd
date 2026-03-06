@@ -22,12 +22,14 @@ movements:
   - name: archive
     edit: true
     persona: opsx-archiver
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Write
-      - Bash
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
     required_permission_mode: edit
     instruction: archive
     output_contracts:

@@ -7,7 +7,7 @@
 | フィールド | 型 | 必須 | デフォルト | 説明 |
 |-----------|------|------|---------|------|
 | `name` | string | YES | - | タスク識別名（AI自動生成、一意） |
-| `status` | enum | YES | - | `pending` / `running` / `completed` / `failed` / `exceeded` |
+| `status` | enum | YES | - | `pending` / `running` / `completed` / `failed` / `exceeded` / `pr_failed` |
 | `piece` | string | - | - | 実行ピース名（例: `default`, `dual`） |
 | `task_dir` | string | ※ | - | タスクディレクトリパス（`.takt/tasks/{slug}` 形式） |
 | `content` | string | ※ | - | インラインタスク本文（レガシー） |
@@ -50,17 +50,18 @@ failure:
 ```
 pending ──→ running ──→ completed
                 ├──→ failed
-                └──→ exceeded
+                ├──→ exceeded
+                └──→ pr_failed
 ```
 
-| フィールド | pending | running | completed | failed | exceeded |
-|----------|---------|---------|-----------|--------|----------|
-| started_at | **null** | 必須 | 必須 | 必須 | 必須 |
-| completed_at | **null** | **null** | 必須 | 必須 | 必須 |
-| owner_pid | **null** | 任意 | **null** | **null** | **null** |
-| failure | **null** | **null** | **null** | 必須 | **null** |
-| exceeded_max_movements | - | - | - | - | 必須※ |
-| exceeded_current_iteration | - | - | - | - | 必須※ |
+| フィールド | pending | running | completed | failed | exceeded | pr_failed |
+|----------|---------|---------|-----------|--------|----------|-----------|
+| started_at | **null** | 必須 | 必須 | 必須 | 必須 | 必須 |
+| completed_at | **null** | **null** | 必須 | 必須 | 必須 | 必須 |
+| owner_pid | **null** | 任意 | **null** | **null** | **null** | **null** |
+| failure | **null** | **null** | **null** | 必須 | **null** | 任意 |
+| exceeded_max_movements | - | - | - | - | 必須※ | - |
+| exceeded_current_iteration | - | - | - | - | 必須※ | - |
 
 **※ `exceeded_max_movements` と `exceeded_current_iteration` は両方同時に設定するか、両方省略する。**
 

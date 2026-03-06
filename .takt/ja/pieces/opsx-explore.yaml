@@ -23,13 +23,15 @@ movements:
   - name: explore
     edit: false
     persona: opsx-explorer
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Bash
-      - WebSearch
-      - WebFetch
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+          - WebSearch
+          - WebFetch
     instruction: explore
     rules:
       - condition: 探索完了またはユーザーが満足
@@ -40,10 +42,12 @@ movements:
   - name: capture
     edit: true
     persona: opsx-explorer
-    allowed_tools:
-      - Read
-      - Write
-      - Bash
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Write
+          - Bash
     instruction: capture
     output_contracts:
       report:
