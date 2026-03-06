@@ -50,12 +50,14 @@ movements:
         knowledge:
           - architecture
           - backend
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - WebSearch
-          - WebFetch
+        provider_options:
+          claude:
+            allowed_tools:
+              - Read
+              - Glob
+              - Grep
+              - WebSearch
+              - WebFetch
         instruction: review-arch
         output_contracts:
           report:
@@ -71,12 +73,14 @@ movements:
         policy:
           - review
           - qa
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - WebSearch
-          - WebFetch
+        provider_options:
+          claude:
+            allowed_tools:
+              - Read
+              - Glob
+              - Grep
+              - WebSearch
+              - WebFetch
         instruction: review-qa
         output_contracts:
           report:
@@ -90,11 +94,13 @@ movements:
         edit: false
         persona: supervisor
         policy: review
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Bash
+        provider_options:
+          claude:
+            allowed_tools:
+              - Read
+              - Glob
+              - Grep
+              - Bash
         instruction: validate-impl
         output_contracts:
           report:
@@ -119,15 +125,17 @@ movements:
     knowledge:
       - backend
       - architecture
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Edit
-      - Write
-      - Bash
-      - WebSearch
-      - WebFetch
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
     required_permission_mode: edit
     pass_previous_response: false
     instruction: fix-impl

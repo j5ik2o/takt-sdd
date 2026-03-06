@@ -26,10 +26,12 @@ movements:
   - name: detect
     edit: false
     persona: cc-sdd-steering-analyst
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
     instruction: detect
     rules:
       - condition: Target topic identified (template available or from scratch)
@@ -46,12 +48,14 @@ movements:
     persona: cc-sdd-steering-analyst
     policy: cc-sdd-steering-principles
     knowledge: cc-sdd-steering-custom-templates
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Write
-      - Bash
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
     required_permission_mode: edit
     instruction: generate
     output_contracts:

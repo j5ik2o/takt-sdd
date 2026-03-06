@@ -30,14 +30,16 @@ movements:
     knowledge:
       - architecture
       - cc-sdd-design-discovery
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Write
-      - Bash
-      - WebSearch
-      - WebFetch
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
     required_permission_mode: edit
     instruction: generate-design
     output_contracts:

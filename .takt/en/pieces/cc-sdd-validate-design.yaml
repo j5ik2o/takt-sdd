@@ -52,10 +52,12 @@ movements:
     persona: architecture-reviewer
     policy: cc-sdd-design-review
     knowledge: architecture
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
     instruction: validate-design
     output_contracts:
       report:
@@ -76,14 +78,16 @@ movements:
     knowledge:
       - architecture
       - cc-sdd-design-discovery
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Write
-      - Bash
-      - WebSearch
-      - WebFetch
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
     required_permission_mode: edit
     pass_previous_response: false
     instruction: fix-design

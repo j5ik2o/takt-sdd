@@ -26,14 +26,16 @@ movements:
     edit: true
     persona: cc-sdd-requirements-analyst
     policy: cc-sdd-ears-format
-    allowed_tools:
-      - Read
-      - Glob
-      - Grep
-      - Write
-      - Bash
-      - WebSearch
-      - WebFetch
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
     required_permission_mode: edit
     instruction: generate-requirements
     output_contracts:
