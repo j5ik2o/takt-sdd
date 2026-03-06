@@ -1,0 +1,58 @@
+{
+  "skill_name": "takt-piece",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Rustのバックエンドプロジェクト用に、コードレビューと修正のサイクルを含むピースを作って。plan→implement→review→fixのループで、reviewでOKならCOMPLETE、修正が必要ならfixしてもう一度reviewへ。ピースとファセットは ~/.takt/ 以下に配置して。",
+      "expected_output": "plan→implement→review→fix→review のループ構成を持つピースYAMLが生成される。review は edit: false（Bash等のビルド系ツール不可）、implement/fix は edit: true + session: refresh。ビルトインファセットが最大限活用される。",
+      "files": [],
+      "expectations": [
+        "生成されたピースYAMLに name, initial_movement, movements の必須フィールドが存在する",
+        "initial_movement の値が movements 配列内のいずれかの name と一致する",
+        "review ムーブメントの edit が false に設定されている",
+        "fix ムーブメントの edit が true に設定されている",
+        "allowed_tools が provider_options.claude.allowed_tools の形式で記述されている（v0.30.0形式）",
+        "review の rules に fix への遷移と COMPLETE への遷移の両方が含まれている",
+        "fix の rules に review への遷移が含まれている",
+        "セクションマップで参照されているファセットファイルパスが実際に作成されている",
+        "review ムーブメントの allowed_tools に Bash が含まれていない（edit:false のため読み取り専用サンドボックスでビルドコマンドは実行不可）",
+        "implement および fix ムーブメントに session: refresh が設定されている",
+        "カスタムペルソナが5つ以下（ビルトイン planner/coder/architecture-reviewer 等を活用すべき）",
+        "implement ムーブメントが存在する（plan→review→fixではなくplan→implement→review→fix構成）"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "フルスタック（React + Go）のプロジェクト向けに、plan→implement→並列レビュー（アーキテクチャ、フロントエンド、セキュリティ）→fix→supervise の構成でピースを作りたい。レビューとfixのループは3回で打ち切り。ピースとファセットは ~/.takt/ 以下に。",
+      "expected_output": "parallel ムーブメントで3つのレビュアーが並列実行され、all/any によるルール集約、loop_monitors による3回閾値のループ監視が設定されたピースYAMLが生成される。",
+      "files": [],
+      "expectations": [
+        "reviewers（または類似名）ムーブメントが parallel 構造を持ち、3つのサブムーブメントを含む",
+        "parallel の親ルールが all() または any() 集約関数を使用している",
+        "parallel サブムーブメントの rules に next フィールドが含まれていない",
+        "loop_monitors が定義され、threshold が 3 に設定されている",
+        "loop_monitors の健全時 next が cycle の先頭ノードと一致する",
+        "allowed_tools が provider_options.claude.allowed_tools 形式で記述されている（v0.30.0形式）",
+        "implement ムーブメントに session: refresh が設定されている",
+        "全ムーブメントの rules.next が有効な遷移先（他のムーブメント名 or COMPLETE/ABORT）を指している",
+        "parallel サブムーブメント（レビュー系）の allowed_tools に Bash が含まれていない",
+        "loop_monitors の instruction_template がビルトインテンプレート名を参照している（インラインテキストではない）"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "ドキュメント生成用のピースを作りたい。ユーザーの要件をヒアリングして、Markdown形式のドキュメントを生成し、レビューして完了。シンプルに3ステップでいい。ビルトインのファセットで済むならカスタムは作らないで。出力先は ~/.takt/。",
+      "expected_output": "3ステップ構成のシンプルなピースが生成される。ビルトインのペルソナやポリシーが最大限活用され、カスタムファセットは必要最低限に抑えられる。",
+      "files": [],
+      "expectations": [
+        "movements が正確に3つ定義されている",
+        "ビルトインペルソナ（planner, coder 等）が使用されており、不要なカスタムペルソナが作られていない",
+        "output_contracts にレポート定義が含まれている（ドキュメント出力用）",
+        "allowed_tools が provider_options.claude.allowed_tools 形式で記述されている（v0.30.0形式）",
+        "validate-takt-files.sh による検証でエラーが出ない（スクリプトが利用可能な場合）",
+        "カスタムファセットの総数が6つ以下（ビルトイン活用で最小限に抑えられている）",
+        "edit: false のムーブメントの allowed_tools に Bash が含まれていない"
+      ]
+    }
+  ]
+}
