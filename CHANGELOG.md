@@ -1,3 +1,19 @@
+## [0.15.0](https://github.com/j5ik2o/takt-sdd/compare/v0.14.0...v0.15.0) (2026-03-09)
+
+
+### Features
+
+* add detailed requirements review process and tooling ([ce6836c](https://github.com/j5ik2o/takt-sdd/commit/ce6836c2b8da90ae4cbb14578d3679ba5d8fa880))
+* add Serena configuration for qcount project ([2500ac8](https://github.com/j5ik2o/takt-sdd/commit/2500ac86c849c3eafc54a68e488a68321010f251))
+* add takt-task skill for creating TAKT `tasks.yaml` and task directories ([b2a24a6](https://github.com/j5ik2o/takt-sdd/commit/b2a24a641d6bd08e5c6730043e1c7c9837d6a24b))
+* **takt-piece:** improve skill with discriminating assertions and edit:false safety ([1599ed7](https://github.com/j5ik2o/takt-sdd/commit/1599ed78f767a6ef35298bfdeff1be242ce36fc8))
+* update all takt-* skills to support takt v0.30.0 changes ([48b367e](https://github.com/j5ik2o/takt-sdd/commit/48b367e4219e3f6899176a01132a1787524b74c0))
+
+
+### Bug Fixes
+
+* regenerate package-lock.json to lock takt at v0.30.0 ([117d592](https://github.com/j5ik2o/takt-sdd/commit/117d5920b16ee1cd7c00822074e809162c655318))
+
 ## [0.14.0](https://github.com/j5ik2o/takt-sdd/compare/v0.13.0...v0.14.0) (2026-03-04)
 
 
