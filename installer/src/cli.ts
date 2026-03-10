@@ -23,7 +23,6 @@ interface ParsedArgs {
   version: boolean;
   tag: string | undefined;
   withoutSkills: boolean;
-  refsPath: string;
   layout: Layout;
 }
 
@@ -36,7 +35,6 @@ function parseArgs(argv: string[]): ParsedArgs {
     version: false,
     tag: undefined,
     withoutSkills: false,
-    refsPath: "references/takt",
     layout: "auto" as Layout,
   };
 
@@ -70,15 +68,6 @@ function parseArgs(argv: string[]): ParsedArgs {
       case "--without-skills":
         args.withoutSkills = true;
         break;
-      case "--refs-path": {
-        const value = argv[++i];
-        if (!value) {
-          console.error('Error: --refs-path requires a value (e.g. "references/takt")');
-          process.exit(1);
-        }
-        args.refsPath = value;
-        break;
-      }
       case "--layout": {
         const value = argv[++i];
         if (!value || !isLayout(value)) {
@@ -128,7 +117,6 @@ async function main(): Promise<void> {
     dryRun: args.dryRun,
     tag: args.tag,
     withoutSkills: args.withoutSkills,
-    refsPath: args.refsPath,
     layout: args.layout,
     cwd: process.cwd(),
   });

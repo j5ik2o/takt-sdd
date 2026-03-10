@@ -58,18 +58,15 @@ npx create-takt-sdd --tag 0.1.2
 The installer sets up the following:
 
 - **`.takt/`** — Pieces (YAML workflows) and facets in the selected language (`--lang`)
-- **`.agent/skills/`** — TAKT skills (takt-analyze, takt-facet, takt-optimize, takt-piece)
-- **`.claude/skills/`, `.codex/skills/`** — Symlinks to `.agent/skills/` for Claude Code and Codex CLI
-- **`references/takt/`** — takt builtins and docs (pinned to the submodule commit tracked by the installer release)
 - **`package.json`** — npm scripts for each phase + takt as devDependency
+- **External TAKT skills** — Installed from `j5ik2o/ai-tools` via `npx skills add` unless `--without-skills` is specified
 
 Options:
 
 | Option | Description |
 |--------|-------------|
 | `--force` | Overwrite existing `.takt/` directory |
-| `--without-skills` | Skip installing skills and takt references |
-| `--refs-path <path>` | Path for takt references (default: `references/takt`) |
+| `--without-skills` | Skip installing external TAKT skills via `npx skills add` |
 | `--tag <version>` | Install a specific version (`latest`, `0.2.0`, etc.) |
 | `--lang <en\|ja>` | Facet and message language (default: `en`) |
 | `--dry-run` | Preview files without writing |
@@ -78,17 +75,17 @@ When `package.json` already exists, only npm scripts are merged (existing script
 
 ### Adding Individual Skills
 
-TAKT skills can also be installed individually using `npx skills add`:
+TAKT skills now live in [`j5ik2o/ai-tools`](https://github.com/j5ik2o/ai-tools). You can install them individually using `npx skills add`:
 
 ```bash
-npx skills add j5ik2o/takt-sdd@takt-analyze
-npx skills add j5ik2o/takt-sdd@takt-facet
-npx skills add j5ik2o/takt-sdd@takt-optimize
-npx skills add j5ik2o/takt-sdd@takt-piece
-npx skills add j5ik2o/takt-sdd@takt-task
+npx -y skills add j5ik2o/ai-tools --skill takt-analyzer
+npx -y skills add j5ik2o/ai-tools --skill takt-facet-builder
+npx -y skills add j5ik2o/ai-tools --skill takt-optimizer
+npx -y skills add j5ik2o/ai-tools --skill takt-piece-builder
+npx -y skills add j5ik2o/ai-tools --skill takt-task-builder
 ```
 
-Skills are installed to `.agents/skills/` with symlinks created in `.claude/skills/` and `.codex/skills/`.
+`create-takt-sdd` runs the same installation flow internally by default and only warns if external skill installation fails.
 
 ## Kiro Compatibility Workflow
 
@@ -317,15 +314,7 @@ Changes are stored in `openspec/changes/<name>/` and archived to `openspec/chang
     ├── instructions/        # インストラクションファセット
     ├── knowledge/           # ナレッジファセット
     └── output-contracts/    # 出力契約ファセット
-.agent/skills/               # TAKT skills (canonical location)
-├── takt-analyze/            # Piece/facet analysis and improvement suggestions
-├── takt-facet/              # Individual facet creation/editing
-├── takt-optimize/           # Workflow optimization
-└── takt-piece/              # Piece (workflow YAML) creation
-.claude/skills/              # Symlinks → .agent/skills/ (for Claude Code)
-.codex/skills/               # Symlinks → .agent/skills/ (for Codex CLI)
 references/
-├── takt/                    # takt builtins and docs (submodule / installer)
 └── okite-ai/                # AI rules collection (submodule)
 scripts/
 ├── takt.sh                  # takt execution wrapper

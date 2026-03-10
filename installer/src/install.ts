@@ -1,15 +1,13 @@
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import type { IncomingMessage } from "node:http";
 import https from "node:https";
-import { createWriteStream } from "node:fs";
-import { mkdtempSync } from "node:fs";
+import { createWriteStream, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Lang, getMessages } from "./i18n.js";
-import { TAKT_REF_HASH } from "./generated/takt-ref.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -21,9 +19,7 @@ function getInstallerVersion(): string {
 }
 
 const REPO = "j5ik2o/takt-sdd";
-const TAKT_REPO = "nrslib/takt";
 const TARGET_DIR = ".takt";
-const DEFAULT_REFS_PATH = "references/takt";
 const PIECE_DIR = "pieces";
 const FACET_TYPES = [
   "personas",
@@ -31,6 +27,15 @@ const FACET_TYPES = [
   "instructions",
   "knowledge",
   "output-contracts",
+];
+const EXTERNAL_SKILL_SOURCE = "j5ik2o/ai-tools";
+const EXTERNAL_TAKT_SKILLS = [
+  "takt-analyzer",
+  "takt-facet-builder",
+  "takt-optimizer",
+  "takt-piece-builder",
+  "takt-skill-updater",
+  "takt-task-builder",
 ];
 
 function srcFacetPath(facetType: string): string {
@@ -59,7 +64,7 @@ function detectLayout(): "modern" | "legacy" {
 
 function rewritePiecePathsForLegacy(piecesDir: string): void {
   if (!existsSync(piecesDir)) return;
-  for (const file of readdirSync(piecesDir).filter(f => f.endsWith(".yaml"))) {
+  for (const file of readdirSync(piecesDir).filter((f) => f.endsWith(".yaml"))) {
     const filePath = join(piecesDir, file);
     let content = readFileSync(filePath, "utf-8");
     for (const type of FACET_TYPES) {
@@ -68,19 +73,6 @@ function rewritePiecePathsForLegacy(piecesDir: string): void {
     writeFileSync(filePath, content, "utf-8");
   }
 }
-
-const TAKT_SKILLS = [
-  "takt-analyze",
-  "takt-facet",
-  "takt-optimize",
-  "takt-piece",
-  "takt-task",
-];
-
-const SKILL_SYMLINK_TARGETS = [
-  ".claude/skills",
-  ".codex/skills",
-];
 
 const SDD_SCRIPTS: Record<string, string> = {
   "cc-sdd:full": "takt --pipeline --skip-git --create-worktree no -w cc-sdd-full -t",
@@ -106,7 +98,6 @@ export interface InstallOptions {
   dryRun: boolean;
   tag: string | undefined;
   withoutSkills: boolean;
-  refsPath: string;
   layout: "auto" | "modern" | "legacy";
   cwd: string;
 }
@@ -169,7 +160,6 @@ function resolveTag(tagOption: string | undefined, installerVersion: string): st
   if (tagOption === "latest") {
     return fetchLatestTag();
   }
-  // Accept both "v0.1.0" and "0.1.0"
   return tagOption.startsWith("v") ? tagOption : `v${tagOption}`;
 }
 
@@ -221,7 +211,6 @@ interface Manifest {
   readonly version: string;
   readonly installedAt: string;
   readonly lang: Lang;
-  readonly taktRefHash: string;
   readonly files: Readonly<Record<string, string>>;
 }
 
@@ -266,28 +255,23 @@ function syncDirectory(
     files[manifestKey] = srcHash;
 
     if (!existsSync(destPath)) {
-      // New file — copy
       mkdirSync(dirname(destPath), { recursive: true });
       cpSync(srcPath, destPath);
       info(msg.fileAdded(manifestKey));
     } else if (manifest !== null) {
       const recordedHash = manifest.files[manifestKey];
       if (recordedHash === undefined) {
-        // File exists but not in manifest (pre-manifest environment)
         warn(msg.fileSkippedCustomized(manifestKey));
       } else {
         const currentHash = computeFileHash(destPath);
         if (currentHash === recordedHash) {
-          // User has not modified — safe to overwrite
           cpSync(srcPath, destPath);
           info(msg.fileUpdated(manifestKey));
         } else {
-          // User has customized — skip
           warn(msg.fileSkippedCustomized(manifestKey));
         }
       }
     } else {
-      // No manifest, fresh install or force — overwrite
       cpSync(srcPath, destPath);
     }
   }
@@ -295,19 +279,41 @@ function syncDirectory(
   return { files };
 }
 
+function skillInstallCommand(skill: string): string {
+  return `npx -y skills add ${EXTERNAL_SKILL_SOURCE} --skill ${skill}`;
+}
+
+function installExternalSkills(
+  cwd: string,
+  msg: ReturnType<typeof getMessages>,
+): void {
+  info(msg.installingSkills(EXTERNAL_SKILL_SOURCE));
+  for (const skill of EXTERNAL_TAKT_SKILLS) {
+    const command = skillInstallCommand(skill);
+    info(msg.skillInstalling(skill, EXTERNAL_SKILL_SOURCE));
+    try {
+      execSync(command, {
+        cwd,
+        stdio: "inherit",
+      });
+      info(msg.skillInstalled(skill));
+    } catch {
+      warn(msg.skillInstallFailed(skill, EXTERNAL_SKILL_SOURCE));
+    }
+  }
+}
+
 export async function install(options: InstallOptions): Promise<void> {
   const msg = getMessages(options.lang);
   const targetPath = join(options.cwd, TARGET_DIR);
   const manifestPath = join(targetPath, MANIFEST_FILE);
 
-  // tar の存在チェック
   try {
     execSync("which tar", { stdio: "ignore" });
   } catch {
     errorExit(msg.tarNotFound);
   }
 
-  // マニフェスト読み込み＆モード判定
   const manifest = loadManifest(manifestPath);
   const isUpdate = manifest !== null;
   const piecesExist = existsSync(join(targetPath, "pieces"));
@@ -316,7 +322,6 @@ export async function install(options: InstallOptions): Promise<void> {
     errorExit(msg.existsError("npx create-takt-sdd"));
   }
 
-  // ダウンロード
   info(msg.downloading);
 
   const tmpDir = mkdtempSync(join(tmpdir(), "takt-sdd-"));
@@ -342,17 +347,14 @@ export async function install(options: InstallOptions): Promise<void> {
     const resolvedLayout = options.layout === "auto" ? detectLayout() : options.layout;
     info(msg.layoutDetected(resolvedLayout));
 
-    // dry-run: ファイル一覧のみ表示
     if (options.dryRun) {
       info(msg.dryRunHeader);
-      // pieces
       const piecesSrcDry = join(extractedTakt, options.lang, PIECE_DIR);
       if (existsSync(piecesSrcDry)) {
         for (const file of collectFiles(piecesSrcDry, piecesSrcDry)) {
           console.log(msg.dryRunItem(join(TARGET_DIR, PIECE_DIR, file)));
         }
       }
-      // facets
       for (const facetType of FACET_TYPES) {
         const srcDir = join(extractedTakt, options.lang, srcFacetPath(facetType));
         if (existsSync(srcDir)) {
@@ -363,34 +365,20 @@ export async function install(options: InstallOptions): Promise<void> {
         }
       }
       if (!options.withoutSkills) {
-        for (const skill of TAKT_SKILLS) {
-          const skillSrc = join(extractedDir, ".agents", "skills", skill);
-          if (existsSync(skillSrc)) {
-            for (const file of collectFiles(skillSrc, join(extractedDir, ".agents", "skills"))) {
-              // Skip language-specific SKILL files (only SKILL.md is installed)
-              if (file.endsWith("SKILL.ja.md") || file.endsWith("SKILL.en.md")) continue;
-              console.log(msg.dryRunItem(join(".agents", "skills", file)));
-            }
-            for (const target of SKILL_SYMLINK_TARGETS) {
-              console.log(msg.dryRunItem(`${target}/${skill} -> ../../.agents/skills/${skill}`));
-            }
-          }
+        for (const skill of EXTERNAL_TAKT_SKILLS) {
+          console.log(msg.dryRunItem(skillInstallCommand(skill)));
         }
-        console.log(msg.dryRunItem(`${options.refsPath}/builtins/`));
-        console.log(msg.dryRunItem(`${options.refsPath}/docs/`));
       }
       console.log("");
       info(msg.dryRunSkipped);
       return;
     }
 
-    // インストール / アップデート
     info(isUpdate ? msg.updating : msg.installing);
     mkdirSync(targetPath, { recursive: true });
 
     const allFiles: Record<string, string> = {};
 
-    // pieces（legacy時はsync前にソースのパスを書き換え）
     const piecesSrc = join(extractedTakt, options.lang, PIECE_DIR);
     if (existsSync(piecesSrc)) {
       const piecesDest = join(targetPath, PIECE_DIR);
@@ -412,7 +400,6 @@ export async function install(options: InstallOptions): Promise<void> {
       Object.assign(allFiles, result.files);
     }
 
-    // facets
     for (const facetType of FACET_TYPES) {
       const srcDir = join(extractedTakt, options.lang, srcFacetPath(facetType));
       if (existsSync(srcDir)) {
@@ -429,162 +416,10 @@ export async function install(options: InstallOptions): Promise<void> {
       }
     }
 
-    // .gitignore は takt が初回実行時に自動配置するため、インストーラでは生成しない
-
-    // takt スキルのインストール
-    const agentSkillsDir = join(options.cwd, ".agents", "skills");
-    const extractedSkillsDir = join(extractedDir, ".agents", "skills");
-    if (!options.withoutSkills && existsSync(extractedSkillsDir)) {
-      info(msg.installingSkills);
-      mkdirSync(agentSkillsDir, { recursive: true });
-      for (const skill of TAKT_SKILLS) {
-        const skillSrc = join(extractedSkillsDir, skill);
-        if (!existsSync(skillSrc)) continue;
-
-        // Prepare a temp copy with language selection applied
-        const skillTmp = join(tmpDir, "skill-prep", skill);
-        if (existsSync(skillTmp)) rmSync(skillTmp, { recursive: true });
-        cpSync(skillSrc, skillTmp, { recursive: true });
-
-        // Select SKILL.md based on language
-        const skillLangMd = join(skillTmp, `SKILL.${options.lang}.md`);
-        const skillMdPath = join(skillTmp, "SKILL.md");
-        if (existsSync(skillLangMd)) {
-          cpSync(skillLangMd, skillMdPath);
-        }
-        // Remove language-specific SKILL files from temp
-        for (const l of ["ja", "en"] as const) {
-          const langFile = join(skillTmp, `SKILL.${l}.md`);
-          if (existsSync(langFile)) {
-            rmSync(langFile);
-          }
-        }
-        // SKILL.md 内の references/takt パスを置換
-        if (options.refsPath !== DEFAULT_REFS_PATH) {
-          if (existsSync(skillMdPath)) {
-            const content = readFileSync(skillMdPath, "utf-8");
-            const updated = content.replaceAll(DEFAULT_REFS_PATH, options.refsPath);
-            writeFileSync(skillMdPath, updated, "utf-8");
-          }
-        }
-
-        const skillDest = join(agentSkillsDir, skill);
-        if (!isUpdate && existsSync(skillDest)) {
-          rmSync(skillDest, { recursive: true });
-        }
-        const result = syncDirectory(
-          skillTmp, skillDest,
-          skillTmp, skillDest,
-          isUpdate ? manifest : null, msg, options.cwd,
-        );
-        Object.assign(allFiles, result.files);
-        info(msg.skillInstalled(skill));
-      }
-      // .claude/skills/ と .codex/skills/ にシンボリックリンクを作成
-      for (const target of SKILL_SYMLINK_TARGETS) {
-        const targetDir = join(options.cwd, target);
-        mkdirSync(targetDir, { recursive: true });
-        for (const skill of TAKT_SKILLS) {
-          if (!existsSync(join(agentSkillsDir, skill))) continue;
-          const linkPath = join(targetDir, skill);
-          if (existsSync(linkPath)) {
-            rmSync(linkPath, { recursive: true });
-          }
-          symlinkSync(`../../.agents/skills/${skill}`, linkPath);
-          info(msg.skillSymlinked(skill, target));
-        }
-      }
-    }
-
-    // takt リファレンスのダウンロード（スキルが参照するbuiltins等）
     if (!options.withoutSkills) {
-      const refsDir = join(options.cwd, options.refsPath);
-      const needsRefDownload = isUpdate
-        ? manifest.taktRefHash !== TAKT_REF_HASH
-        : !existsSync(join(refsDir, "builtins"));
-      if (needsRefDownload) {
-        info(msg.downloadingTaktRefs(options.refsPath));
-        const taktTmpDir = mkdtempSync(join(tmpdir(), "takt-refs-"));
-        try {
-          const taktArchive = join(taktTmpDir, "takt.tar.gz");
-          const taktTarball = `https://github.com/${TAKT_REPO}/archive/${TAKT_REF_HASH}.tar.gz`;
-          await download(taktTarball, taktArchive);
-          execSync(`tar -xzf "${taktArchive}" -C "${taktTmpDir}"`, { stdio: "ignore" });
-
-          // takt-{hash}/ ディレクトリを探す
-          const taktExtracted = readdirSync(taktTmpDir).find(
-            (d) => d.startsWith("takt-") && statSync(join(taktTmpDir, d)).isDirectory()
-          );
-          if (taktExtracted) {
-            const taktRoot = join(taktTmpDir, taktExtracted);
-            mkdirSync(refsDir, { recursive: true });
-
-            // builtins/ を syncDirectory でコピー
-            const builtinsSrc = join(taktRoot, "builtins");
-            if (existsSync(builtinsSrc)) {
-              const builtinsDest = join(refsDir, "builtins");
-              const result = syncDirectory(
-                builtinsSrc, builtinsDest,
-                builtinsSrc, builtinsDest,
-                isUpdate ? manifest : null, msg, options.cwd,
-              );
-              Object.assign(allFiles, result.files);
-            }
-
-            // docs/faceted-prompting.ja.md をコピー
-            const fpSrc = join(taktRoot, "docs", "faceted-prompting.ja.md");
-            if (existsSync(fpSrc)) {
-              const docsDir = join(refsDir, "docs");
-              mkdirSync(docsDir, { recursive: true });
-              const fpDest = join(docsDir, "faceted-prompting.ja.md");
-              const fpKey = relative(options.cwd, fpDest).split("\\").join("/");
-              const fpHash = computeFileHash(fpSrc);
-
-              if (!existsSync(fpDest)) {
-                cpSync(fpSrc, fpDest);
-                info(msg.fileAdded(fpKey));
-              } else if (isUpdate) {
-                const recordedHash = manifest.files[fpKey];
-                if (recordedHash === undefined) {
-                  warn(msg.fileSkippedCustomized(fpKey));
-                } else {
-                  const currentHash = computeFileHash(fpDest);
-                  if (currentHash === recordedHash) {
-                    cpSync(fpSrc, fpDest);
-                    info(msg.fileUpdated(fpKey));
-                  } else {
-                    warn(msg.fileSkippedCustomized(fpKey));
-                  }
-                }
-              } else {
-                cpSync(fpSrc, fpDest);
-              }
-              allFiles[fpKey] = fpHash;
-            }
-
-            info(msg.taktRefsInstalled);
-          } else {
-            warn(msg.taktRefsError);
-          }
-        } catch {
-          warn(msg.taktRefsError);
-        } finally {
-          rmSync(taktTmpDir, { recursive: true, force: true });
-        }
-      } else {
-        info(msg.taktRefsSkipped);
-        // Preserve existing file hashes from manifest for refs
-        if (isUpdate) {
-          for (const [key, hash] of Object.entries(manifest.files)) {
-            if (key.startsWith(options.refsPath)) {
-              allFiles[key] = hash;
-            }
-          }
-        }
-      }
+      installExternalSkills(options.cwd, msg);
     }
 
-    // アーカイブの package.json から devDependencies を取得
     const sddPkgPath = join(extractedDir, "package.json");
     const sddDevDependencies: Record<string, string> = {};
     if (existsSync(sddPkgPath)) {
@@ -595,7 +430,6 @@ export async function install(options: InstallOptions): Promise<void> {
       }
     }
 
-    // package.json に npm scripts と devDependencies を追加
     const pkgPath = join(options.cwd, "package.json");
     if (existsSync(pkgPath)) {
       const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
@@ -647,12 +481,10 @@ export async function install(options: InstallOptions): Promise<void> {
       info(msg.scriptsCreated);
     }
 
-    // マニフェスト書き込み
     const newManifest: Manifest = {
       version: version,
       installedAt: new Date().toISOString(),
       lang: options.lang,
-      taktRefHash: TAKT_REF_HASH,
       files: allFiles,
     };
     writeFileSync(manifestPath, JSON.stringify(newManifest, null, 2) + "\n", "utf-8");

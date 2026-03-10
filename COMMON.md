@@ -13,9 +13,6 @@
 |------|------|
 | `.takt/{ja,en}/pieces/` | SDD ワークフローの YAML（ピース定義） |
 | `.takt/{ja,en}/facets/` | Persona / Policy / Instruction / Knowledge / Output-Contract |
-| `.agent/skills/` | takt スキルの実体（takt-analyze, takt-facet, takt-optimize, takt-piece, takt-task） |
-| `.claude/skills/`, `.codex/skills/` | `.agent/skills/` へのシンボリックリンク |
-| `references/takt/` | takt ビルトインとドキュメント（参照専用） |
 | `references/okite-ai/` | AI ルール集（参照専用） |
 | `installer/` | `npx create-takt-sdd` のインストーラ本体（TypeScript） |
 | `.kiro/specs/` | CC-SDD の出力先（requirements.md / design.md / tasks.md 等） |
@@ -40,8 +37,8 @@ opsx-propose → opsx-apply → opsx-archive
 
 ## インストーラの仕組み
 
-- `installer/src/install.ts` が本体。`TAKT_SKILLS` 配列に列挙したスキルを `.agent/skills/` にコピーし、`.claude/skills/` と `.codex/skills/` にシンボリックリンクを作成する。
-- スキルディレクトリ内のファイルは `syncDirectory` で再帰的にコピーされる。
+- `installer/src/install.ts` が本体。`.takt/` のピースとファセットを配置し、必要に応じて `npx -y skills add j5ik2o/ai-tools --skill ...` を内部実行して外部配布の TAKT スキルを導入する。
+- `--without-skills` を指定した場合、外部 TAKT スキル導入はスキップされる。
 
 # 基本原則
 
