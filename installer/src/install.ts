@@ -75,21 +75,21 @@ function rewritePiecePathsForLegacy(piecesDir: string): void {
 }
 
 const SDD_SCRIPTS: Record<string, string> = {
-  "cc-sdd:full": "takt --pipeline --skip-git --create-worktree no -w cc-sdd-full -t",
-  "cc-sdd:requirements": "takt --pipeline --skip-git --create-worktree no -w cc-sdd-requirements -t",
-  "cc-sdd:validate-gap": "takt --pipeline --skip-git --create-worktree no -w cc-sdd-validate-gap -t",
-  "cc-sdd:design": "takt --pipeline --skip-git --create-worktree no -w cc-sdd-design -t",
-  "cc-sdd:validate-design": "takt --pipeline --skip-git --create-worktree no -w cc-sdd-validate-design -t",
-  "cc-sdd:tasks": "takt --pipeline --skip-git --create-worktree no -w cc-sdd-tasks -t",
-  "cc-sdd:impl": "takt --pipeline --skip-git --create-worktree no -w cc-sdd-impl -t",
-  "cc-sdd:validate-impl": "takt --pipeline --skip-git --create-worktree no -w cc-sdd-validate-impl -t",
-  "cc-sdd:steering": "takt --pipeline --skip-git --create-worktree no -w cc-sdd-steering -t",
-  "cc-sdd:steering-custom": "takt --pipeline --skip-git --create-worktree no -w cc-sdd-steering-custom -t",
-  "opsx:full": "takt --pipeline --skip-git --create-worktree no -w opsx-full -t",
-  "opsx:propose": "takt --pipeline --skip-git --create-worktree no -w opsx-propose -t",
-  "opsx:apply": "takt --pipeline --skip-git --create-worktree no -w opsx-apply -t",
-  "opsx:archive": "takt --pipeline --skip-git --create-worktree no -w opsx-archive -t",
-  "opsx:explore": "takt --skip-git --create-worktree no -w opsx-explore",
+  "cc-sdd:full": "takt --pipeline --skip-git -w cc-sdd-full -t",
+  "cc-sdd:requirements": "takt --pipeline --skip-git -w cc-sdd-requirements -t",
+  "cc-sdd:validate-gap": "takt --pipeline --skip-git -w cc-sdd-validate-gap -t",
+  "cc-sdd:design": "takt --pipeline --skip-git -w cc-sdd-design -t",
+  "cc-sdd:validate-design": "takt --pipeline --skip-git -w cc-sdd-validate-design -t",
+  "cc-sdd:tasks": "takt --pipeline --skip-git -w cc-sdd-tasks -t",
+  "cc-sdd:impl": "takt --pipeline --skip-git -w cc-sdd-impl -t",
+  "cc-sdd:validate-impl": "takt --pipeline --skip-git -w cc-sdd-validate-impl -t",
+  "cc-sdd:steering": "takt --pipeline --skip-git -w cc-sdd-steering -t",
+  "cc-sdd:steering-custom": "takt --pipeline --skip-git -w cc-sdd-steering-custom -t",
+  "opsx:full": "takt --pipeline --skip-git -w opsx-full -t",
+  "opsx:propose": "takt --pipeline --skip-git -w opsx-propose -t",
+  "opsx:apply": "takt --pipeline --skip-git -w opsx-apply -t",
+  "opsx:archive": "takt --pipeline --skip-git -w opsx-archive -t",
+  "opsx:explore": "takt --skip-git -w opsx-explore",
 };
 
 export interface InstallOptions {

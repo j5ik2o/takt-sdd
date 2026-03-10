@@ -12,5 +12,4 @@ echo ""
   --piece sdd-design \
   --task "feature=qgrep" \
   --pipeline \
-  --skip-git \
-  --create-worktree no
+  --skip-git
