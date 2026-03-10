@@ -12,5 +12,4 @@ echo ""
   --pipeline \
   -w opsx-apply \
   --skip-git \
-  --create-worktree no \
   --task "qcount-design"

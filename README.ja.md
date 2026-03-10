@@ -143,14 +143,14 @@ npm run cc-sdd:validate-impl -- "feature={feature}"
 <summary>takt コマンドを直接使う場合</summary>
 
 ```bash
-takt --pipeline --skip-git --create-worktree no -w cc-sdd-full -t "要件の説明..."
-takt --pipeline --skip-git --create-worktree no -w cc-sdd-requirements -t "要件の説明..."
-takt --pipeline --skip-git --create-worktree no -w cc-sdd-validate-gap -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w cc-sdd-design -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w cc-sdd-validate-design -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w cc-sdd-tasks -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w cc-sdd-impl -t "feature={feature}"
-takt --pipeline --skip-git --create-worktree no -w cc-sdd-validate-impl -t "feature={feature}"
+takt --pipeline --skip-git -w cc-sdd-full -t "要件の説明..."
+takt --pipeline --skip-git -w cc-sdd-requirements -t "要件の説明..."
+takt --pipeline --skip-git -w cc-sdd-validate-gap -t "feature={feature}"
+takt --pipeline --skip-git -w cc-sdd-design -t "feature={feature}"
+takt --pipeline --skip-git -w cc-sdd-validate-design -t "feature={feature}"
+takt --pipeline --skip-git -w cc-sdd-tasks -t "feature={feature}"
+takt --pipeline --skip-git -w cc-sdd-impl -t "feature={feature}"
+takt --pipeline --skip-git -w cc-sdd-validate-impl -t "feature={feature}"
 ```
 
 対話モードの場合は `takt -w {ピース名}` で実行できる。

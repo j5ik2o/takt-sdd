@@ -12,5 +12,4 @@ echo ""
   --pipeline \
   -w opsx-propose \
   --skip-git \
-  --create-worktree no \
   --task "qcount-design.md"
