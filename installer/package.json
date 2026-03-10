@@ -7,7 +7,7 @@
     "create-takt-sdd": "./dist/cli.js"
   },
   "scripts": {
-    "build": "node scripts/embed-takt-ref.js && tsc && node scripts/add-shebang.js",
+    "build": "tsc && node scripts/add-shebang.js",
     "prepare": "npm run build"
   },
   "keywords": [

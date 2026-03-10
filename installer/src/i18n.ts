@@ -20,13 +20,10 @@ interface Messages {
   scriptsCreated: string;
   depsAdded: (keys: string[]) => string;
   depsUpdated: (keys: string[]) => string;
-  installingSkills: string;
+  installingSkills: (source: string) => string;
+  skillInstalling: (name: string, source: string) => string;
   skillInstalled: (name: string) => string;
-  skillSymlinked: (name: string, target: string) => string;
-  downloadingTaktRefs: (refsPath: string) => string;
-  taktRefsInstalled: string;
-  taktRefsSkipped: string;
-  taktRefsError: string;
+  skillInstallFailed: (name: string, source: string) => string;
   layoutDetected: (layout: string) => string;
   fileAdded: (path: string) => string;
   fileUpdated: (path: string) => string;
@@ -55,13 +52,10 @@ const en: Messages = {
   scriptsCreated: "Created package.json with npm scripts and devDependencies",
   depsAdded: (keys) => `Added devDependencies: ${keys.join(", ")}`,
   depsUpdated: (keys) => `Updated devDependencies: ${keys.join(", ")}`,
-  installingSkills: "Installing takt skills to .agents/skills/...",
+  installingSkills: (source) => `Installing TAKT skills from ${source}...`,
+  skillInstalling: (name, source) => `Installing external skill ${name} from ${source}`,
   skillInstalled: (name) => `Installed skill: ${name}`,
-  skillSymlinked: (name, target) => `Symlinked ${target}/${name} -> .agents/skills/${name}`,
-  downloadingTaktRefs: (refsPath) => `Downloading takt builtins to ${refsPath}/...`,
-  taktRefsInstalled: "Installed takt references (builtins, docs)",
-  taktRefsSkipped: "Takt references already exist, skipping",
-  taktRefsError: "Warning: Failed to download takt references. Skills may not find style guides.",
+  skillInstallFailed: (name, source) => `Warning: Failed to install ${name} from ${source}. Continuing without it.`,
   layoutDetected: (layout) => `Using ${layout} layout`,
   fileAdded: (path) => `Added: ${path}`,
   fileUpdated: (path) => `Updated: ${path}`,
@@ -74,9 +68,8 @@ Options:
   --lang <en|ja>     Message language (default: en)
   --force            Overwrite existing .takt/ directory (ignored if manifest exists)
   --dry-run          Preview without writing files
-  --without-skills   Skip installing takt skills to .agents/skills/
+  --without-skills   Skip installing TAKT skills via external skills add
   --layout <mode>    Directory layout: auto, modern, legacy (default: auto)
-  --refs-path <path> Path for takt references (default: references/takt)
   -h, --help         Show this help
   -v, --version      Show version`,
   usageExamples: `
@@ -123,13 +116,10 @@ const ja: Messages = {
   scriptsCreated: "npm scripts と devDependencies 付きの package.json を作成しました",
   depsAdded: (keys) => `devDependencies を追加しました: ${keys.join(", ")}`,
   depsUpdated: (keys) => `devDependencies を更新しました: ${keys.join(", ")}`,
-  installingSkills: ".agents/skills/ に takt スキルをインストール中...",
+  installingSkills: (source) => `${source} から TAKT スキルをインストール中...`,
+  skillInstalling: (name, source) => `${source} から外部スキルをインストール中: ${name}`,
   skillInstalled: (name) => `スキルをインストールしました: ${name}`,
-  skillSymlinked: (name, target) => `シンボリックリンク作成: ${target}/${name} -> .agents/skills/${name}`,
-  downloadingTaktRefs: (refsPath) => `${refsPath}/ に takt ビルトインをダウンロード中...`,
-  taktRefsInstalled: "takt リファレンスをインストールしました（builtins, docs）",
-  taktRefsSkipped: "takt リファレンスは既に存在するためスキップしました",
-  taktRefsError: "警告: takt リファレンスのダウンロードに失敗しました。スキルがスタイルガイドを参照できない可能性があります。",
+  skillInstallFailed: (name, source) => `警告: ${source} から ${name} のインストールに失敗しました。このスキルなしで継続します。`,
   layoutDetected: (layout) => `${layout} レイアウトを使用します`,
   fileAdded: (path) => `追加: ${path}`,
   fileUpdated: (path) => `更新: ${path}`,
@@ -142,9 +132,8 @@ const ja: Messages = {
   --lang <en|ja>     メッセージ言語 (デフォルト: en)
   --force            既存の .takt/ を上書き（マニフェストがある場合は無視）
   --dry-run          プレビューのみ（ファイル書き込みなし）
-  --without-skills   takt スキルのインストールをスキップ
+  --without-skills   external skills add による TAKT スキル導入をスキップ
   --layout <mode>    ディレクトリレイアウト: auto, modern, legacy（デフォルト: auto）
-  --refs-path <path> takt リファレンスのパス（デフォルト: references/takt）
   -h, --help         ヘルプを表示
   -v, --version      バージョンを表示`,
   usageExamples: `
