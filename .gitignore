@@ -209,19 +209,23 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-/.agents/
-/.claude/
-/.codex*/
-/.gemini/
-/.cursor/
-/.opencode/
+/.claude/settings.local.json
+
+/.codex*/cache/
+/.codex*/log/
+/.codex*/auth.json
+/.codex*/history.jsonl
+/.codex*/models_cache.json
+/.codex*/.personality_migration
+/.codex*/shell_snapshots/
+/.codex*/sessions/
+/.codex*/state*.sqlite*
+/.codex*/tmp/
+/.codex*/version.json
+/.codex*/skills/.system
+/.codex*/logs*
 
 /.serena/
-
-/.mcp.json
-
-/.kiro/
-/openspec/
 
 /scripts/run-*.sh
 /scripts/generate-agents-md.sh
