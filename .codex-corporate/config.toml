@@ -1,17 +1,31 @@
 model = "gpt-5.4"
 model_reasoning_effort = "high"
-hide_agent_reasoning = true
+model_reasoning_summary = "detailed"
+hide_agent_reasoning = false
+show_raw_agent_reasoning = true
 network_access = true
 web_search = "live"
 personality = "pragmatic"
+developer_instructions = """
+実装を開始する場合、Planモードで提示した計画内容を、mdファイルへ書き出すこと。
+計画が存在しない場合はこの指示は無視して構わない。
+"""
+service_tier = "fast"
+model_context_window= 1000000
+model_auto_compact_token_limit = 950000
 
 [features]
+multi_agent = true
 rmcp_client = true
-skills = true
 unified_exec = true
-apps = false
 shell_snapshot = true
 steer = true
+js_repl = false
+prevent_idle_sleep = true
+
+[agents]
+max_threads = 4
+max_depth = 1
 
 [mcp_servers.serena]
 command = "zsh"
