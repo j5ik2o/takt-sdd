@@ -1,0 +1,4 @@
+.cargo/
+.rustup/
+.local/
+.cache/
