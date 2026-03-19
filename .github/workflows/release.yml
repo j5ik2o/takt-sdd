@@ -63,6 +63,7 @@ jobs:
           PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
           git remote set-url origin https://x-access-token:${PAT}@github.com/${{ github.repository }}.git
+          git pull --rebase origin ${GITHUB_REF_NAME}
           git push origin HEAD:${GITHUB_REF_NAME}
           git push origin ${{ steps.changelog.outputs.tag }}
 
