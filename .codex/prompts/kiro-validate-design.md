@@ -1,0 +1,1 @@
+../../references/okite-ai/.codex/prompts/kiro-validate-design.md

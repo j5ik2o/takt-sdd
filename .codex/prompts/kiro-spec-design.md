@@ -1,0 +1,1 @@
+../../references/okite-ai/.codex/prompts/kiro-spec-design.md

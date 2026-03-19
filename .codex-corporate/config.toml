@@ -1,0 +1,26 @@
+model = "gpt-5.4"
+model_reasoning_effort = "medium"
+hide_agent_reasoning = true
+network_access = true
+web_search = "live"
+personality = "pragmatic"
+
+[features]
+rmcp_client = true
+skills = true
+unified_exec = true
+shell_snapshot = true
+steer = true
+js_repl = true
+multi_agent = true
+prevent_idle_sleep = true
+
+[mcp_servers.serena]
+command = "uvx"
+args = ["--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server", "--context", "codex", "--project", ".", "--enable-web-dashboard", "false"]
+
+[tui]
+status_line = ["current-dir", "git-branch"]
+
+[projects."/Users/j5ik2o/Sources/j5ik2o.github.com/j5ik2o/takt-sdd"]
+trust_level = "trusted"
