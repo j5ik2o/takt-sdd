@@ -59,14 +59,12 @@ npx create-takt-sdd --tag 0.1.2
 
 - **`.takt/`** — 選択言語（`--lang`）のピース（YAML ワークフロー）とファセット群
 - **`package.json`** — 各フェーズの npm scripts + takt を devDependency に追加
-- **外部 TAKT スキル** — `--without-skills` を指定しない限り `j5ik2o/ai-tools` から `npx skills add` で導入
 
 オプション：
 
 | オプション | 内容 |
 |-----------|------|
 | `--force` | 既存の `.takt/` を上書き |
-| `--without-skills` | `npx skills add` による外部 TAKT スキル導入をスキップ |
 | `--tag <version>` | 特定バージョンをインストール（`latest`, `0.2.0` 等） |
 | `--lang <en\|ja>` | ファセット・メッセージの言語（デフォルト: `en`） |
 | `--dry-run` | ファイルを書き込まずにプレビュー |
@@ -84,8 +82,6 @@ npx -y skills add j5ik2o/ai-tools --skill takt-optimizer
 npx -y skills add j5ik2o/ai-tools --skill takt-piece-builder
 npx -y skills add j5ik2o/ai-tools --skill takt-task-builder
 ```
-
-`create-takt-sdd` もデフォルトで同じ導入フローを内部実行し、外部スキル導入に失敗しても warning を出して継続する。
 
 ## Kiro 互換ワークフロー
 

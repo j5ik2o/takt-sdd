@@ -22,7 +22,6 @@ interface ParsedArgs {
   help: boolean;
   version: boolean;
   tag: string | undefined;
-  withoutSkills: boolean;
   layout: Layout;
 }
 
@@ -34,7 +33,6 @@ function parseArgs(argv: string[]): ParsedArgs {
     help: false,
     version: false,
     tag: undefined,
-    withoutSkills: false,
     layout: "auto" as Layout,
   };
 
@@ -64,9 +62,6 @@ function parseArgs(argv: string[]): ParsedArgs {
         break;
       case "--dry-run":
         args.dryRun = true;
-        break;
-      case "--without-skills":
-        args.withoutSkills = true;
         break;
       case "--layout": {
         const value = argv[++i];
@@ -116,7 +111,6 @@ async function main(): Promise<void> {
     force: args.force,
     dryRun: args.dryRun,
     tag: args.tag,
-    withoutSkills: args.withoutSkills,
     layout: args.layout,
     cwd: process.cwd(),
   });
