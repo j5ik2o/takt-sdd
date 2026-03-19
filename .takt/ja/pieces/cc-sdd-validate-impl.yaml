@@ -12,6 +12,7 @@ initial_movement: validate
 instructions:
   validate-impl: ../facets/instructions/cc-sdd-validate-impl.md
   fix-impl: ../facets/instructions/cc-sdd-fix-impl.md
+  cc-sdd-validate-impl-fix-loop-judge: ../facets/instructions/cc-sdd-validate-impl-fix-loop-judge.md
 
 report_formats:
   cc-sdd-impl-validation: ../facets/output-contracts/cc-sdd-impl-validation.md
@@ -23,17 +24,7 @@ loop_monitors:
     threshold: 3
     judge:
       persona: supervisor
-      instruction_template: |
-        検証・修正サイクルが {cycle_count} 回繰り返されました。
-
-        **参照するレポート:**
-        - アーキテクチャレビュー: {report:05-architect-review.md}
-        - QAレビュー: {report:06-qa-review.md}
-        - 実装検証: {report:07-impl-validation.md}
-
-        **判断基準:**
-        - 各サイクルで新しい問題が発見・修正されているか
-        - 同じ指摘が繰り返されていないか
+      instruction: cc-sdd-validate-impl-fix-loop-judge
       rules:
         - condition: 健全（進捗あり）
           next: validate

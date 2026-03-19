@@ -12,6 +12,7 @@ initial_movement: validate
 instructions:
   validate-impl: ../facets/instructions/cc-sdd-validate-impl.md
   fix-impl: ../facets/instructions/cc-sdd-fix-impl.md
+  cc-sdd-validate-impl-fix-loop-judge: ../facets/instructions/cc-sdd-validate-impl-fix-loop-judge.md
 
 report_formats:
   cc-sdd-impl-validation: ../facets/output-contracts/cc-sdd-impl-validation.md
@@ -23,17 +24,7 @@ loop_monitors:
     threshold: 3
     judge:
       persona: supervisor
-      instruction_template: |
-        The validate-fix cycle has repeated {cycle_count} times.
-
-        **Reports to reference:**
-        - Architecture review: {report:05-architect-review.md}
-        - QA review: {report:06-qa-review.md}
-        - Implementation validation: {report:07-impl-validation.md}
-
-        **Evaluation criteria:**
-        - Are new issues being discovered and fixed in each cycle?
-        - Are the same findings being repeated?
+      instruction: cc-sdd-validate-impl-fix-loop-judge
       rules:
         - condition: Healthy (progress being made)
           next: validate

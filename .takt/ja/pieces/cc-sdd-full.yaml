@@ -30,6 +30,9 @@ instructions:
   fix-impl: ../facets/instructions/cc-sdd-fix-impl.md
   plan: ../facets/instructions/cc-sdd-impl-plan.md
   implement: ../facets/instructions/cc-sdd-impl-execute.md
+  batch-plan-implement-loop-judge: ../facets/instructions/batch-plan-implement-loop-judge.md
+  ai-review-fix-loop-judge: ../facets/instructions/ai-review-fix-loop-judge.md
+  cc-sdd-full-validate-impl-fix-loop-judge: ../facets/instructions/cc-sdd-full-validate-impl-fix-loop-judge.md
 
 knowledge:
   cc-sdd-design-discovery: ../facets/knowledge/cc-sdd-design-discovery.md
@@ -51,16 +54,7 @@ loop_monitors:
     threshold: 5
     judge:
       persona: supervisor
-      instruction_template: |
-        plan と implement のバッチループが {cycle_count} 回繰り返されました。
-
-        **参照するレポート:**
-        - バッチ計画: {report:00-plan.md}
-        - 実装スコープ: {report:coder-scope.md}
-
-        **判断基準:**
-        - 各サイクルで新しいタスクが完了しているか
-        - tasks.md のチェック数が増えているか
+      instruction: batch-plan-implement-loop-judge
       rules:
         - condition: 健全（進捗あり）
           next: plan
@@ -73,15 +67,7 @@ loop_monitors:
     threshold: 3
     judge:
       persona: supervisor
-      instruction_template: |
-        ai_review と ai_fix のループが {cycle_count} 回繰り返されました。
-
-        **参照するレポート:**
-        - AIレビュー結果: {report:04-ai-review.md}
-
-        **判断基準:**
-        - 各サイクルで新しい問題が発見・修正されているか
-        - 同じ指摘が繰り返されていないか
+      instruction: ai-review-fix-loop-judge
       rules:
         - condition: 健全（進捗あり）
           next: ai_review
@@ -94,15 +80,7 @@ loop_monitors:
     threshold: 3
     judge:
       persona: supervisor
-      instruction_template: |
-        検証・修正サイクルが {cycle_count} 回繰り返されました。
-
-        **参照するレポート:**
-        - 実装検証: {report:07-impl-validation.md}
-
-        **判断基準:**
-        - 各サイクルで新しい問題が発見・修正されているか
-        - 同じ指摘が繰り返されていないか
+      instruction: cc-sdd-full-validate-impl-fix-loop-judge
       rules:
         - condition: 健全（進捗あり）
           next: validate-impl

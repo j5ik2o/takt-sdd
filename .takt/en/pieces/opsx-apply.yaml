@@ -13,6 +13,9 @@ initial_movement: plan
 instructions:
   plan: ../facets/instructions/opsx-apply-plan.md
   implement: ../facets/instructions/opsx-apply-execute.md
+  batch-plan-implement-loop-judge: ../facets/instructions/batch-plan-implement-loop-judge.md
+  ai-review-fix-loop-judge: ../facets/instructions/ai-review-fix-loop-judge.md
+  opsx-review-fix-loop-judge: ../facets/instructions/opsx-review-fix-loop-judge.md
 
 report_formats:
   opsx-apply-summary: ../facets/output-contracts/opsx-apply-summary.md
@@ -26,16 +29,7 @@ loop_monitors:
     threshold: 5
     judge:
       persona: supervisor
-      instruction_template: |
-        The plan-implement batch loop has repeated {cycle_count} times.
-
-        **Reports to reference:**
-        - Batch plan: {report:00-plan.md}
-        - Implementation scope: {report:coder-scope.md}
-
-        **Judgment criteria:**
-        - Are new tasks being completed in each cycle?
-        - Is the task checkbox count increasing?
+      instruction: batch-plan-implement-loop-judge
       rules:
         - condition: Healthy (progress being made)
           next: plan
@@ -48,15 +42,7 @@ loop_monitors:
     threshold: 3
     judge:
       persona: supervisor
-      instruction_template: |
-        The ai_review-ai_fix loop has repeated {cycle_count} times.
-
-        **Reports to reference:**
-        - AI review results: {report:04-ai-review.md}
-
-        **Judgment criteria:**
-        - Are new issues being found and fixed in each cycle?
-        - Are the same issues being raised repeatedly?
+      instruction: ai-review-fix-loop-judge
       rules:
         - condition: Healthy (progress being made)
           next: ai_review
@@ -69,16 +55,7 @@ loop_monitors:
     threshold: 3
     judge:
       persona: supervisor
-      instruction_template: |
-        The review-fix cycle has repeated {cycle_count} times.
-
-        **Reports to reference:**
-        - Architecture review: {report:05-architect-review.md}
-        - QA review: {report:06-qa-review.md}
-
-        **Judgment criteria:**
-        - Are new issues being found and fixed in each cycle?
-        - Are the same issues being raised repeatedly?
+      instruction: opsx-review-fix-loop-judge
       rules:
         - condition: Healthy (progress being made)
           next: reviewers
