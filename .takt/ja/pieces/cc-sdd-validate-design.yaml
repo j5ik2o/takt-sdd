@@ -16,6 +16,7 @@ policies:
 instructions:
   validate-design: ../facets/instructions/cc-sdd-validate-design.md
   fix-design: ../facets/instructions/cc-sdd-fix-design.md
+  cc-sdd-design-review-fix-loop-judge: ../facets/instructions/cc-sdd-design-review-fix-loop-judge.md
 
 knowledge:
   cc-sdd-design-discovery: ../facets/knowledge/cc-sdd-design-discovery.md
@@ -31,15 +32,7 @@ loop_monitors:
     threshold: 3
     judge:
       persona: supervisor
-      instruction_template: |
-        設計レビュー・修正サイクルが {cycle_count} 回繰り返されました。
-
-        **参照するレポート:**
-        - 設計レビュー: {report:design-review.md}
-
-        **判断基準:**
-        - 各サイクルで新しい問題が発見・修正されているか
-        - 同じ指摘が繰り返されていないか
+      instruction: cc-sdd-design-review-fix-loop-judge
       rules:
         - condition: 健全（進捗あり）
           next: validate-design

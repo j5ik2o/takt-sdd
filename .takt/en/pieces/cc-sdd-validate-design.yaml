@@ -16,6 +16,7 @@ policies:
 instructions:
   validate-design: ../facets/instructions/cc-sdd-validate-design.md
   fix-design: ../facets/instructions/cc-sdd-fix-design.md
+  cc-sdd-design-review-fix-loop-judge: ../facets/instructions/cc-sdd-design-review-fix-loop-judge.md
 
 knowledge:
   cc-sdd-design-discovery: ../facets/knowledge/cc-sdd-design-discovery.md
@@ -31,15 +32,7 @@ loop_monitors:
     threshold: 3
     judge:
       persona: supervisor
-      instruction_template: |
-        The design review-fix cycle has repeated {cycle_count} times.
-
-        **Reports to reference:**
-        - Design review: {report:design-review.md}
-
-        **Evaluation criteria:**
-        - Are new issues being discovered and fixed in each cycle?
-        - Are the same findings being repeated?
+      instruction: cc-sdd-design-review-fix-loop-judge
       rules:
         - condition: Healthy (progress being made)
           next: validate-design
