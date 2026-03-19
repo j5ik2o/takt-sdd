@@ -1,0 +1,5 @@
+[tools]
+node = "20"
+python = "3"
+"npm:@fission-ai/openspec" = "1.2.0"
+"npm:happy-coder" = "0.13.0"
