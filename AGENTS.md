@@ -37,8 +37,8 @@ opsx-propose → opsx-apply → opsx-archive
 
 ## インストーラの仕組み
 
-- `installer/src/install.ts` が本体。`.takt/` のピースとファセットを配置し、必要に応じて `npx -y skills add j5ik2o/ai-tools --skill ...` を内部実行して外部配布の TAKT スキルを導入する。
-- `--without-skills` を指定した場合、外部 TAKT スキル導入はスキップされる。
+- `installer/src/install.ts` が本体。`.takt/` のピースとファセットを配置し、`package.json` に必要な scripts と `takt` の devDependency を追加する。
+- TAKT スキルは別リポジトリで提供しており、必要に応じて個別に導入する。
 
 # 基本原則
 
@@ -651,4 +651,3 @@ function processLargeData(items) {
 - ナビゲーション性の向上（ファイル名 = 型名）
 - 責任の明確化（ファイル肥大化 = 設計の問題）
 - Git履歴の追跡容易性
-

@@ -28,16 +28,6 @@ const FACET_TYPES = [
   "knowledge",
   "output-contracts",
 ];
-const EXTERNAL_SKILL_SOURCE = "j5ik2o/ai-tools";
-const EXTERNAL_TAKT_SKILLS = [
-  "takt-analyzer",
-  "takt-facet-builder",
-  "takt-optimizer",
-  "takt-piece-builder",
-  "takt-skill-updater",
-  "takt-task-builder",
-];
-
 function srcFacetPath(facetType: string): string {
   return `facets/${facetType}`;
 }
@@ -97,7 +87,6 @@ export interface InstallOptions {
   force: boolean;
   dryRun: boolean;
   tag: string | undefined;
-  withoutSkills: boolean;
   layout: "auto" | "modern" | "legacy";
   cwd: string;
 }
@@ -279,30 +268,6 @@ function syncDirectory(
   return { files };
 }
 
-function skillInstallCommand(skill: string): string {
-  return `npx -y skills add ${EXTERNAL_SKILL_SOURCE} --skill ${skill}`;
-}
-
-function installExternalSkills(
-  cwd: string,
-  msg: ReturnType<typeof getMessages>,
-): void {
-  info(msg.installingSkills(EXTERNAL_SKILL_SOURCE));
-  for (const skill of EXTERNAL_TAKT_SKILLS) {
-    const command = skillInstallCommand(skill);
-    info(msg.skillInstalling(skill, EXTERNAL_SKILL_SOURCE));
-    try {
-      execSync(command, {
-        cwd,
-        stdio: "inherit",
-      });
-      info(msg.skillInstalled(skill));
-    } catch {
-      warn(msg.skillInstallFailed(skill, EXTERNAL_SKILL_SOURCE));
-    }
-  }
-}
-
 export async function install(options: InstallOptions): Promise<void> {
   const msg = getMessages(options.lang);
   const targetPath = join(options.cwd, TARGET_DIR);
@@ -364,11 +329,6 @@ export async function install(options: InstallOptions): Promise<void> {
           }
         }
       }
-      if (!options.withoutSkills) {
-        for (const skill of EXTERNAL_TAKT_SKILLS) {
-          console.log(msg.dryRunItem(skillInstallCommand(skill)));
-        }
-      }
       console.log("");
       info(msg.dryRunSkipped);
       return;
@@ -414,10 +374,6 @@ export async function install(options: InstallOptions): Promise<void> {
         );
         Object.assign(allFiles, result.files);
       }
-    }
-
-    if (!options.withoutSkills) {
-      installExternalSkills(options.cwd, msg);
     }
 
     const sddPkgPath = join(extractedDir, "package.json");

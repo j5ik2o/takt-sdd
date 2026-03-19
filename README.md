@@ -59,14 +59,12 @@ The installer sets up the following:
 
 - **`.takt/`** — Pieces (YAML workflows) and facets in the selected language (`--lang`)
 - **`package.json`** — npm scripts for each phase + takt as devDependency
-- **External TAKT skills** — Installed from `j5ik2o/ai-tools` via `npx skills add` unless `--without-skills` is specified
 
 Options:
 
 | Option | Description |
 |--------|-------------|
 | `--force` | Overwrite existing `.takt/` directory |
-| `--without-skills` | Skip installing external TAKT skills via `npx skills add` |
 | `--tag <version>` | Install a specific version (`latest`, `0.2.0`, etc.) |
 | `--lang <en\|ja>` | Facet and message language (default: `en`) |
 | `--dry-run` | Preview files without writing |
@@ -84,8 +82,6 @@ npx -y skills add j5ik2o/ai-tools --skill takt-optimizer
 npx -y skills add j5ik2o/ai-tools --skill takt-piece-builder
 npx -y skills add j5ik2o/ai-tools --skill takt-task-builder
 ```
-
-`create-takt-sdd` runs the same installation flow internally by default and only warns if external skill installation fails.
 
 ## Kiro Compatibility Workflow
 
