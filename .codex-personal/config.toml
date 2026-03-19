@@ -1,1 +1,21 @@
-../references/okite-ai/.codex/config.toml
+model = "gpt-5.4"
+model_reasoning_effort = "high"
+hide_agent_reasoning = true
+network_access = true
+web_search = "live"
+personality = "pragmatic"
+
+[features]
+rmcp_client = true
+skills = true
+unified_exec = true
+apps = false
+shell_snapshot = true
+steer = true
+
+[mcp_servers.serena]
+command = "zsh"
+args = ["-lc", "export HOME=\"$PWD/.serena-home\"; mkdir -p \"$HOME\"; exec uvx --from git+https://github.com/oraios/serena serena start-mcp-server --context codex --project . --enable-web-dashboard false"]
+
+[tui]
+status_line = ["current-dir", "git-branch"]
