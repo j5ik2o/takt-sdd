@@ -1,3 +1,22 @@
+## [0.16.0](https://github.com/j5ik2o/takt-sdd/compare/v0.15.1...v0.16.0) (2026-03-19)
+
+
+### Features
+
+* **agents:** add initial Codex agent directories ([ec8a3a1](https://github.com/j5ik2o/takt-sdd/commit/ec8a3a1ea190bf220d5cfbb5184030dfba96aaf8))
+* **config:** add `.mcp.json` for MCP server configuration ([b85d4f8](https://github.com/j5ik2o/takt-sdd/commit/b85d4f80f8f60fabd177601d785e50b75aea1e4a))
+* **config:** add `mise.toml` for tool version management ([acb2eea](https://github.com/j5ik2o/takt-sdd/commit/acb2eea2676783311fbf93da7b82403b08957aa5))
+* **config:** add Serena configuration and update ignore files ([1499008](https://github.com/j5ik2o/takt-sdd/commit/1499008d8734b8119e92960ff8f7b8a2fb11af6b))
+* **config:** enhance Codex configuration with advanced settings ([69ece37](https://github.com/j5ik2o/takt-sdd/commit/69ece376bb59cb55131edf6ca1f4a3c2bbf2aa8f))
+* **config:** extend project configuration with memory and line ending settings ([6bcdcde](https://github.com/j5ik2o/takt-sdd/commit/6bcdcde27b064ef35a494e1c5ca774f9aee30d9e))
+* **config:** unify and update Codex configuration files ([594c0bc](https://github.com/j5ik2o/takt-sdd/commit/594c0bc8fd9d2918c4d7197d15ff8ef47a9fe4f9))
+* **rules:** add guidelines for naming clarity, immutability, and pre-coding learning ([bc07a13](https://github.com/j5ik2o/takt-sdd/commit/bc07a13a9f376d0000e0683be3c1d29e606f20fc))
+
+
+### Bug Fixes
+
+* **ci:** add git pull --rebase before push in release workflow ([eef1982](https://github.com/j5ik2o/takt-sdd/commit/eef19823dfbbadb2d303c1eea71fbf225d4ae9a7))
+
 ## [0.15.1](https://github.com/j5ik2o/takt-sdd/compare/v0.15.0...v0.15.1) (2026-03-16)
 
 
