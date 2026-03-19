@@ -651,3 +651,4 @@ function processLargeData(items) {
 - ナビゲーション性の向上（ファイル名 = 型名）
 - 責任の明確化（ファイル肥大化 = 設計の問題）
 - Git履歴の追跡容易性
+
