@@ -75,7 +75,7 @@ jobs:
 
       - name: Create GitHub Release (core)
         if: ${{ steps.changelog.outputs.skipped == 'false' && !(inputs.dry_run || false) }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.changelog.outputs.tag }}
           name: "takt-sdd ${{ steps.changelog.outputs.tag }}"
@@ -87,7 +87,7 @@ jobs:
 
       - name: Create GitHub Release (installer)
         if: ${{ steps.changelog.outputs.skipped == 'false' && !(inputs.dry_run || false) }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: "installer/${{ steps.changelog.outputs.tag }}"
           name: "create-takt-sdd ${{ steps.changelog.outputs.tag }}"
