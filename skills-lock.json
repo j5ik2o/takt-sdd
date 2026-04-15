@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "skills": {
+    "skill-forge": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "computedHash": "6952ae52a11e093a7b447ebe4ab32551aacb4f7fd0597de0fd1d947df0a574f2"
+    },
+    "takt-analyzer": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "computedHash": "4eeca5d547f159d02a3aad3f6978959520c6271c18e44de23253cebd3e6c33d5"
+    },
+    "takt-facet-builder": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "computedHash": "3e27aadb1d2a19097a9aeeacf2101bee158c7ae8b2bbc5bb385d064b709eb45e"
+    },
+    "takt-optimizer": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "computedHash": "51903971826be39c1e641931eb3c1c65c7bb11d0c8a8e5cf779b9a1651cb1209"
+    },
+    "takt-piece-builder": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "computedHash": "5a5f0e50d7cf7b537325f5ffc36580af81fe386efa8412e8100dc1826d266d78"
+    },
+    "takt-skill-updater": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "computedHash": "1cba5d4b4224acd515c64ab52eafb7ff26bd2e6fb82fcf60d69fc8655fd297eb"
+    },
+    "takt-task-builder": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "computedHash": "be654f6aa705ef74f9d73ec5a67c45d319577ed6d527433a804801c1a251fbc1"
+    },
+    "takt-workflow-builder": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "computedHash": "c44eff3ea911cb12657e22027889c3833da2e74b068fda8dc6bfe671216289bf"
+    }
+  }
+}
