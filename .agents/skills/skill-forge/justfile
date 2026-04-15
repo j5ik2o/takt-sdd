@@ -1,0 +1,7 @@
+# スクリプトのユニットテスト + SKILL.md フォーマット検証
+verify:
+    bash scripts/ci/verify.sh
+
+# SKILL.md のトリガー eval（claude CLI が必要）
+verify-skill-md:
+    bash scripts/ci/verify_skill_md.sh

@@ -1,0 +1,18 @@
+[project]
+name = "skill-forge"
+version = "1.0.0"
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: tests that require external services (claude CLI)",
+]

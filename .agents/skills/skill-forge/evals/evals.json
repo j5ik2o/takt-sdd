@@ -1,0 +1,66 @@
+[
+  {
+    "query": "I want to create a new skill from scratch that helps format SQL queries consistently across my team's projects",
+    "should_trigger": true
+  },
+  {
+    "query": "Help me write a skill for my Claude Code setup that automatically reviews pull requests for security issues",
+    "should_trigger": true
+  },
+  {
+    "query": "My git-commit skill isn't triggering when it should — can you help me optimize the description so it fires more reliably?",
+    "should_trigger": true
+  },
+  {
+    "query": "Let's run evals on the code-review skill I made last week and see how it's performing",
+    "should_trigger": true
+  },
+  {
+    "query": "I made a skill a while back but the outputs aren't great. can we iterate on it and run some benchmarks to see if we're improving",
+    "should_trigger": true
+  },
+  {
+    "query": "ok so i have a skill draft at .claude/skills/deploy-checker/SKILL.md and i want to test it with some real prompts before shipping it",
+    "should_trigger": true
+  },
+  {
+    "query": "Can you help me improve this existing skill? The user feedback says it's too verbose and misses edge cases",
+    "should_trigger": true
+  },
+  {
+    "query": "I want to turn this workflow I just described into a reusable skill for my team",
+    "should_trigger": true
+  },
+  {
+    "query": "Can you debug this Python function that's throwing a KeyError on line 42?",
+    "should_trigger": false
+  },
+  {
+    "query": "Review my pull request — I refactored the auth module to use JWT tokens instead of sessions",
+    "should_trigger": false
+  },
+  {
+    "query": "What's the best way to structure a React component that needs to fetch data and handle loading states?",
+    "should_trigger": false
+  },
+  {
+    "query": "Help me write unit tests for this repository class using pytest fixtures",
+    "should_trigger": false
+  },
+  {
+    "query": "Explain the difference between CQRS and Event Sourcing and when I'd use each",
+    "should_trigger": false
+  },
+  {
+    "query": "Set up a GitHub Actions workflow that runs my test suite on every PR",
+    "should_trigger": false
+  },
+  {
+    "query": "My API is returning 500 errors in production — can you help me trace the issue through the logs?",
+    "should_trigger": false
+  },
+  {
+    "query": "I need to migrate this PostgreSQL schema to add a new foreign key constraint without downtime",
+    "should_trigger": false
+  }
+]
