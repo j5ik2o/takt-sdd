@@ -1,3 +1,12 @@
+## [0.17.0](https://github.com/j5ik2o/takt-sdd/compare/v0.16.0...v0.17.0) (2026-04-15)
+
+
+### Features
+
+* **agents:** add Takt skill directories for modular functionality ([4e1c390](https://github.com/j5ik2o/takt-sdd/commit/4e1c39060b10c7d204d4e364fef943c3f4cfef90))
+* **agents:** introduce policies and personas for Takt facet builder ([af73f98](https://github.com/j5ik2o/takt-sdd/commit/af73f988f0a41ddc896cf065eeb59345f36335fd))
+* **workflows:** add experimental OPSX commands for advanced task management ([aaf390a](https://github.com/j5ik2o/takt-sdd/commit/aaf390a32bc7fc974f0e3e77c7d8b8126e425ee2))
+
 ## [0.16.0](https://github.com/j5ik2o/takt-sdd/compare/v0.15.1...v0.16.0) (2026-03-19)
 
 
