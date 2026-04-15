@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #
 # validate-takt-files.sh
-# .takt/*/pieces/*.yaml と .takt/*/facets/**/*.md を検証する
+# .takt/*/workflows/*.yaml と .takt/*/facets/**/*.md を検証する
 #
 # 使用方法:
 #   ./scripts/validate-takt-files.sh             # 全ファイルを検証
 #   ./scripts/validate-takt-files.sh --quiet     # エラーと警告のみ表示
-#   ./scripts/validate-takt-files.sh --pieces    # ピースYAMLのみ
+#   ./scripts/validate-takt-files.sh --workflows # ワークフローYAMLのみ
 #   ./scripts/validate-takt-files.sh --facets    # ファセット.mdのみ
 #
 # 終了コード:
@@ -22,14 +22,14 @@ TAKT_DIR="${REPO_ROOT}/.takt"
 ERRORS=0
 WARNINGS=0
 QUIET=false
-CHECK_PIECES=true
+CHECK_WORKFLOWS=true
 CHECK_FACETS=true
 
 for arg in "$@"; do
   case "$arg" in
-    --quiet|-q)  QUIET=true ;;
-    --pieces)    CHECK_FACETS=false ;;
-    --facets)    CHECK_PIECES=false ;;
+    --quiet|-q)     QUIET=true ;;
+    --workflows)    CHECK_FACETS=false ;;
+    --facets)       CHECK_WORKFLOWS=false ;;
   esac
 done
 
@@ -95,13 +95,13 @@ validate_facet() {
 }
 
 # ──────────────────────────────────────
-# ピース YAML バリデーション
+# ワークフロー YAML バリデーション
 # ──────────────────────────────────────
-validate_piece() {
+validate_workflow() {
   local file="$1"
   local rel="${file#${REPO_ROOT}/}"
-  local piece_dir
-  piece_dir="$(dirname "$file")"
+  local workflow_dir
+  workflow_dir="$(dirname "$file")"
 
   info ""
   info "── ${rel}"
@@ -114,45 +114,48 @@ validate_piece() {
 
   # 必須フィールド: name
   if grep -qE "^name:[[:space:]]+.+" "$file"; then
-    local piece_name
-    piece_name=$(grep -E "^name:" "$file" | head -1 | sed 's/^name:[[:space:]]*//')
-    ok "name: ${piece_name}"
+    local workflow_name
+    workflow_name=$(grep -E "^name:" "$file" | head -1 | sed 's/^name:[[:space:]]*//')
+    ok "name: ${workflow_name}"
   else
     error "必須フィールド 'name' がありません（または空です）"
   fi
 
-  # 必須フィールド: initial_movement
-  local initial_movement=""
-  if grep -qE "^initial_movement:[[:space:]]+.+" "$file"; then
-    initial_movement=$(grep -E "^initial_movement:" "$file" | head -1 | sed 's/^initial_movement:[[:space:]]*//')
-    ok "initial_movement: ${initial_movement}"
+  # 必須フィールド: initial_step（alias: initial_movement）
+  local initial_step=""
+  if grep -qE "^initial_step:[[:space:]]+.+" "$file"; then
+    initial_step=$(grep -E "^initial_step:" "$file" | head -1 | sed 's/^initial_step:[[:space:]]*//')
+    ok "initial_step: ${initial_step}"
+  elif grep -qE "^initial_movement:[[:space:]]+.+" "$file"; then
+    initial_step=$(grep -E "^initial_movement:" "$file" | head -1 | sed 's/^initial_movement:[[:space:]]*//')
+    ok "initial_step (alias initial_movement): ${initial_step}"
   else
-    error "必須フィールド 'initial_movement' がありません（または空です）"
+    error "必須フィールド 'initial_step' がありません（または空です）"
   fi
 
-  # 必須フィールド: movements
-  if ! grep -qE "^movements:" "$file"; then
-    error "必須フィールド 'movements' がありません"
+  # 必須フィールド: steps（alias: movements）
+  if ! grep -qE "^steps:|^movements:" "$file"; then
+    error "必須フィールド 'steps' がありません"
     return
   fi
 
-  local movement_count
-  movement_count=$(grep -cE "^  - name:[[:space:]]+.+" "$file" || true)
-  if [[ "$movement_count" -eq 0 ]]; then
-    error "'movements' にエントリがありません"
+  local step_count
+  step_count=$(grep -cE "^  - name:[[:space:]]+.+" "$file" || true)
+  if [[ "$step_count" -eq 0 ]]; then
+    error "'steps' にエントリがありません"
     return
   fi
-  ok "movements: ${movement_count} 件"
+  ok "steps: ${step_count} 件"
 
-  # initial_movement が movements 内に存在するか
+  # initial_step が steps 内に存在するか
   # grep -F で固定文字列マッチし regex インジェクションを防ぐ
-  if [[ -n "$initial_movement" ]]; then
+  if [[ -n "$initial_step" ]]; then
     if grep -E "^  - name:[[:space:]]+" "$file" \
         | sed 's/^  - name:[[:space:]]*//' \
-        | grep -qxF "$initial_movement"; then
-      ok "initial_movement '${initial_movement}' → movement 存在確認"
+        | grep -qxF "$initial_step"; then
+      ok "initial_step '${initial_step}' → step 存在確認"
     else
-      error "initial_movement '${initial_movement}' が movements に定義されていません"
+      error "initial_step '${initial_step}' が steps に定義されていません"
     fi
   fi
 
@@ -169,7 +172,7 @@ validate_piece() {
     while IFS= read -r facet_ref; do
       [[ -z "$facet_ref" ]] && continue
       local abs_path
-      abs_path=$(normalize_path "$piece_dir" "$facet_ref")
+      abs_path=$(normalize_path "$workflow_dir" "$facet_ref")
       if [[ -f "$abs_path" ]]; then
         ok "参照: ${facet_ref}"
       else
@@ -185,35 +188,35 @@ require "yaml"
 
 file = ARGV[0]
 doc = YAML.load_file(file)
-movements = doc["movements"] || []
+steps = doc["steps"] || doc["movements"] || []
 loop_monitors = doc["loop_monitors"] || []
 
-movement_reports = Hash.new { |h, k| h[k] = [] }
+step_reports = Hash.new { |h, k| h[k] = [] }
 
-report_names = lambda do |movement_node|
-  report_entries = movement_node.dig("output_contracts", "report") || []
+report_names = lambda do |step_node|
+  report_entries = step_node.dig("output_contracts", "report") || []
   report_entries.filter_map do |entry|
     name = entry.is_a?(Hash) ? entry["name"] : nil
     name unless name.nil? || name.empty?
   end
 end
 
-movements.each do |movement|
-  next unless movement.is_a?(Hash)
-  name = movement["name"]
+steps.each do |step|
+  next unless step.is_a?(Hash)
+  name = step["name"]
   next unless name && !name.empty?
-  movement_reports[name].concat(report_names.call(movement))
+  step_reports[name].concat(report_names.call(step))
 
-  parallel = movement["parallel"] || []
+  parallel = step["parallel"] || []
   parallel.each do |substep|
     sub_name = substep.is_a?(Hash) ? substep["name"] : nil
     next unless sub_name && !sub_name.empty?
     sub_reports = report_names.call(substep)
-    movement_reports[sub_name].concat(sub_reports)
-    movement_reports[name].concat(sub_reports)
-    movement_reports[sub_name].uniq!
+    step_reports[sub_name].concat(sub_reports)
+    step_reports[name].concat(sub_reports)
+    step_reports[sub_name].uniq!
   end
-  movement_reports[name].uniq!
+  step_reports[name].uniq!
 end
 
 loop_monitors.each_with_index do |monitor, idx|
@@ -223,9 +226,9 @@ loop_monitors.each_with_index do |monitor, idx|
   cycle = cycle.map(&:to_s)
   first = cycle[0]
 
-  cycle.each do |movement_name|
-    unless movement_reports.key?(movement_name) || movements.any? { |m| m.is_a?(Hash) && m["name"].to_s == movement_name }
-      puts "ERROR|loop_monitors[#{idx}]: cycle に未定義 movement '#{movement_name}' があります"
+  cycle.each do |step_name|
+    unless step_reports.key?(step_name) || steps.any? { |s| s.is_a?(Hash) && s["name"].to_s == step_name }
+      puts "ERROR|loop_monitors[#{idx}]: cycle に未定義 step '#{step_name}' があります"
     end
   end
 
@@ -247,11 +250,11 @@ loop_monitors.each_with_index do |monitor, idx|
 
   template = monitor.dig("judge", "instruction_template").to_s
   report_refs = template.scan(/\{report:([^}]+)\}/).flatten.uniq
-  allowed_reports = cycle.flat_map { |movement_name| movement_reports[movement_name] }.compact.uniq
+  allowed_reports = cycle.flat_map { |step_name| step_reports[step_name] }.compact.uniq
 
   report_refs.each do |report_name|
     unless allowed_reports.include?(report_name)
-      puts "ERROR|loop_monitors[#{idx}]: report '#{report_name}' は cycle 内 movement 生成物ではありません"
+      puts "ERROR|loop_monitors[#{idx}]: report '#{report_name}' は cycle 内 step 生成物ではありません"
     end
   end
 end
@@ -287,7 +290,7 @@ main() {
   fi
 
   local facet_count=0
-  local piece_count=0
+  local workflow_count=0
 
   # ──── ファセット検証 ────
   if [[ "$CHECK_FACETS" == true ]]; then
@@ -310,24 +313,24 @@ main() {
     done
   fi
 
-  # ──── ピース検証 ────
-  if [[ "$CHECK_PIECES" == true ]]; then
+  # ──── ワークフロー検証 ────
+  if [[ "$CHECK_WORKFLOWS" == true ]]; then
     info ""
-    info "=== ピース (.yaml) チェック ==="
+    info "=== ワークフロー (.yaml) チェック ==="
 
     while IFS= read -r file; do
-      validate_piece "$file"
-      piece_count=$((piece_count + 1))
-    done < <(find "${TAKT_DIR}" -path "*/pieces/*.yaml" -print 2>/dev/null | sort)
+      validate_workflow "$file"
+      workflow_count=$((workflow_count + 1))
+    done < <(find "${TAKT_DIR}" -path "*/workflows/*.yaml" -print 2>/dev/null | sort)
 
-    if [[ "$piece_count" -eq 0 ]]; then
-      info "  ピースファイルが見つかりませんでした"
+    if [[ "$workflow_count" -eq 0 ]]; then
+      info "  ワークフローファイルが見つかりませんでした"
     fi
   fi
 
   info ""
   info "────────────────────────────────────────"
-  echo "ファセット: ${facet_count} / ピース: ${piece_count} | エラー: ${ERRORS} | 警告: ${WARNINGS}"
+  echo "ファセット: ${facet_count} / ワークフロー: ${workflow_count} | エラー: ${ERRORS} | 警告: ${WARNINGS}"
 
   if [[ "$ERRORS" -gt 0 ]]; then
     exit 1
