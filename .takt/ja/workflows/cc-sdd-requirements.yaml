@@ -1,0 +1,53 @@
+name: cc-sdd-requirements
+description: SDD Phase 1 - EARS形式の要件ドキュメントを生成する
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 10
+initial_step: generate-requirements
+
+personas:
+  cc-sdd-requirements-analyst: ../facets/personas/cc-sdd-requirements-analyst.md
+
+policies:
+  cc-sdd-ears-format: ../facets/policies/cc-sdd-ears-format.md
+
+instructions:
+  generate-requirements: ../facets/instructions/cc-sdd-generate-requirements.md
+
+report_formats:
+  cc-sdd-requirements: ../facets/output-contracts/cc-sdd-requirements.md
+
+steps:
+  - name: generate-requirements
+    edit: true
+    persona: cc-sdd-requirements-analyst
+    policy: cc-sdd-ears-format
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
+    required_permission_mode: edit
+    instruction: generate-requirements
+    output_contracts:
+      report:
+        - name: requirements.md
+          format: cc-sdd-requirements
+    rules:
+      - condition: 要件が明確で完全
+        next: COMPLETE
+      - condition: 情報不足、要件が不明確
+        next: ABORT
+        appendix: |
+          確認事項:
+          - {不明点1}
+          - {不明点2}
