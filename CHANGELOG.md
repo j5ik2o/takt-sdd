@@ -1,3 +1,10 @@
+## [0.18.0](https://github.com/j5ik2o/takt-sdd/compare/v0.17.0...v0.18.0) (2026-04-16)
+
+
+### Features
+
+* **skills:** add `skills-lock.json` for managing skill dependencies ([777cd24](https://github.com/j5ik2o/takt-sdd/commit/777cd2483652e54ce33330b9094c2b702d19d043))
+
 ## [0.17.0](https://github.com/j5ik2o/takt-sdd/compare/v0.16.0...v0.17.0) (2026-04-15)
 
 
