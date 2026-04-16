@@ -15,7 +15,7 @@ description: >
 
 Creates TAKT workflows (workflow YAML) and their associated facet files.
 
-> **Target takt version**: v0.35.4
+> **Target takt version**: v0.36.0
 
 ## Reference Materials
 
@@ -132,7 +132,7 @@ steps:
         next: review
 ```
 
-**Compatibility aliases**: `movements` is synonymous with `steps`, `initial_movement` is synonymous with `initial_step`, `max_movements` is synonymous with `max_steps`. Use the canonical names for new workflows.
+**BREAKING (v0.36.0)**: Legacy aliases (`movements`, `initial_movement`, `max_movements`, `piece_config`, `piece_categories`) have been completely removed. Use canonical names only.
 
 #### Parallel Step Example
 
@@ -186,8 +186,77 @@ steps:
 | AI evaluation | `ai("condition")` | When tag evaluation is unsuitable |
 | All match | `all("condition")` | Parent of parallel only |
 | Any match | `any("condition")` | Parent of parallel only |
+| Deterministic condition | `when: <expr>` | AI-free routing (no `condition:` needed) |
+
+`when:` supports comparison operators (`==`, `!=`, `>`, `<`, `>=`, `<=`), boolean logic (`&&`, `||`), and workflow state references (`context.*`, `structured.*`, `effect.*`).
 
 Special transition targets: `COMPLETE` (successful completion), `ABORT` (failure termination)
+
+#### Subworkflow Call (`call:` step)
+
+Call another workflow as a subroutine.
+
+```yaml
+steps:
+  - name: run-sub
+    call: sub-workflow-name    # target workflow name
+    overrides:                  # optional provider/model override
+      provider_options:
+        claude:
+          model: claude-opus-4-5
+    rules:
+      - condition: completed
+        next: next-step
+```
+
+- The called workflow requires `subworkflow: { callable: true }`
+- Recursive call detection enabled; max nesting depth: 5
+
+#### System Step (`kind: system`)
+
+A step executed without an AI agent. Performs side effects (PR creation, task queue operations, etc.).
+
+```yaml
+steps:
+  - name: enqueue
+    kind: system
+    system_inputs:
+      task: context.task        # bind runtime context
+    effects:
+      - type: enqueue_task
+        workflow: default
+    rules:
+      - when: "effect.enqueued == true"
+        next: next-step
+```
+
+`effects` types: `enqueue_task`, `comment_pr`, `sync_with_root`, `resolve_conflicts_with_ai`, `merge_pr`
+
+#### Structured Output (`structured_output:`)
+
+Validate and persist step output against a JSON schema.
+
+```yaml
+schemas:
+  review-result:
+    type: object
+    properties:
+      approved: { type: boolean }
+      issues: { type: array, items: { type: string } }
+
+steps:
+  - name: review
+    instruction: review
+    structured_output:
+      schema_ref: review-result   # key in schemas: map
+    rules:
+      - when: "structured.review.approved == true"
+        next: COMPLETE
+      - condition: needs_fix
+        next: fix
+```
+
+Reference from other steps via `{structured:step-name.field}` template syntax.
 
 ### Step 4: Facet File Creation
 
@@ -324,4 +393,4 @@ Verification items:
 - **Workflow YAML**: Required fields (`name`/`initial_step`/`steps`), `initial_step` step reference, facet file reference existence
 - **Facet .md**: Empty check, persona/policy/knowledge require `# heading`, instruction/output-contract require content
 
-Options `--pieces` / `--facets` can be used to narrow the scope.
+Options `--workflows` / `--facets` can be used to narrow the scope.

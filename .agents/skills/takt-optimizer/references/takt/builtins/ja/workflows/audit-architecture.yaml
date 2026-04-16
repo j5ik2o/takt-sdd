@@ -5,16 +5,20 @@ initial_step: plan
 
 loop_monitors:
   - cycle: [supervise, review]
-    threshold: 4
+    threshold: 3
     judge:
       persona: supervisor
       instruction: |
         architecture audit の supervise → review サイクルが {cycle_count} 回繰り返されました。
-        監査の完全性と品質を総合的に判断し、現状の結果で受け入れるか判断してください。
+        監査レポートと計画レポートを比較し、以下を判断してください:
+        - 監査スコープが前回サイクルから拡大しているか（新しいモジュールが監査されたか）
+        - 残りの未監査モジュールは合理的なサイクル数で完了可能か
       rules:
-        - condition: 十分な品質に達している
+        - condition: 監査品質・スコープが十分
           next: COMPLETE
-        - condition: 品質が不十分だが改善の見込みがない
+        - condition: スコープが拡大しており改善が続いている
+          next: review
+        - condition: スコープが停滞し改善の見込みがない
           next: ABORT
 
 steps:
@@ -70,6 +74,10 @@ steps:
     knowledge: architecture
     instruction: architecture-audit-review
     edit: false
+    output_contracts:
+      report:
+        - name: 02-architecture-audit.md
+          format: architecture-audit
     rules:
       - condition: 再監査完了
         next: supervise

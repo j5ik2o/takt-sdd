@@ -9,7 +9,7 @@
 export interface SessionLog {
   task: string;
   projectDir: string;
-  pieceName: string;
+  workflowName: string;
   iterations: number;
   startTime: string;
   endTime?: string;
@@ -22,6 +22,8 @@ export interface SessionLog {
     timestamp: string;
     content: string;
     error?: string;
+    workflow?: string;
+    stack?: NdjsonWorkflowStackEntry[];
     /** Matched rule index (0-based) when rules-based detection was used */
     matchedRuleIndex?: number;
     /** How the rule match was detected */
@@ -33,11 +35,18 @@ export interface SessionLog {
 
 // --- NDJSON log types ---
 
-export interface NdjsonPieceStart {
-  type: 'piece_start';
+export interface NdjsonWorkflowStart {
+  type: 'workflow_start';
   task: string;
-  pieceName: string;
+  workflowName: string;
   startTime: string;
+}
+
+export interface NdjsonWorkflowStackEntry {
+  workflow: string;
+  workflow_ref?: string;
+  step: string;
+  kind: 'agent' | 'system' | 'workflow_call';
 }
 
 export interface NdjsonStepStart {
@@ -46,6 +55,8 @@ export interface NdjsonStepStart {
   persona: string;
   iteration: number;
   timestamp: string;
+  workflow?: string;
+  stack?: NdjsonWorkflowStackEntry[];
   instruction?: string;
 }
 
@@ -53,9 +64,12 @@ export interface NdjsonStepComplete {
   type: 'step_complete';
   step: string;
   persona: string;
+  iteration: number;
   status: string;
   content: string;
   instruction: string;
+  workflow?: string;
+  stack?: NdjsonWorkflowStackEntry[];
   matchedRuleIndex?: number;
   matchedRuleMethod?: string;
   matchMethod?: string;
@@ -63,14 +77,14 @@ export interface NdjsonStepComplete {
   timestamp: string;
 }
 
-export interface NdjsonPieceComplete {
-  type: 'piece_complete';
+export interface NdjsonWorkflowComplete {
+  type: 'workflow_complete';
   iterations: number;
   endTime: string;
 }
 
-export interface NdjsonPieceAbort {
-  type: 'piece_abort';
+export interface NdjsonWorkflowAbort {
+  type: 'workflow_abort';
   iterations: number;
   reason: string;
   endTime: string;
@@ -80,6 +94,8 @@ export interface NdjsonPhaseStart {
   type: 'phase_start';
   step: string;
   iteration?: number;
+  workflow?: string;
+  stack?: NdjsonWorkflowStackEntry[];
   phase: 1 | 2 | 3;
   phaseName: 'execute' | 'report' | 'judge';
   phaseExecutionId?: string;
@@ -93,6 +109,8 @@ export interface NdjsonPhaseComplete {
   type: 'phase_complete';
   step: string;
   iteration?: number;
+  workflow?: string;
+  stack?: NdjsonWorkflowStackEntry[];
   phase: 1 | 2 | 3;
   phaseName: 'execute' | 'report' | 'judge';
   phaseExecutionId?: string;
@@ -106,6 +124,8 @@ export interface NdjsonPhaseJudgeStage {
   type: 'phase_judge_stage';
   step: string;
   iteration?: number;
+  workflow?: string;
+  stack?: NdjsonWorkflowStackEntry[];
   phase: 3;
   phaseName: 'judge';
   phaseExecutionId?: string;
@@ -130,11 +150,11 @@ export interface NdjsonInteractiveEnd {
 }
 
 export type NdjsonRecord =
-  | NdjsonPieceStart
+  | NdjsonWorkflowStart
   | NdjsonStepStart
   | NdjsonStepComplete
-  | NdjsonPieceComplete
-  | NdjsonPieceAbort
+  | NdjsonWorkflowComplete
+  | NdjsonWorkflowAbort
   | NdjsonPhaseStart
   | NdjsonPhaseComplete
   | NdjsonPhaseJudgeStage
@@ -143,7 +163,7 @@ export type NdjsonRecord =
 
 /** Record for debug prompt/response log (debug-*-prompts.jsonl) */
 export interface PromptLogRecord {
-  movement: string;
+  step: string;
   phase: 1 | 2 | 3;
   iteration: number;
   phaseExecutionId?: string;

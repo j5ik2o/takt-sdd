@@ -32,7 +32,7 @@ Analyzes existing TAKT workflows and facets, detecting issues and providing impr
 | Log Type Definitions | `references/takt/src/core/logging/contracts.ts` | NDJSON record type reference (renamed `observability` -> `logging` in v0.30.0) |
 | Provider Events | `references/takt/src/core/logging/providerEventLogger.ts` | `*-provider-events.jsonl` structure |
 | Usage Events | `references/takt/src/core/logging/usageEventLogger.ts` | Usage event structure |
-| Rule Evaluation | `references/takt/src/core/piece/evaluation/RuleEvaluator.ts` | matchedRuleMethod internals |
+| Rule Evaluation | `references/takt/src/core/workflow/evaluation/RuleEvaluator.ts` | matchedRuleMethod internals (incl. `when:` deterministic conditions) |
 
 ## Difference from takt-optimize
 

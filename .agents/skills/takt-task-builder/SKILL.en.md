@@ -23,7 +23,8 @@ Task-management materials are under `references/takt/`. Refer to the following a
 | Material | Path | Purpose |
 |----------|------|---------|
 | Task management docs | `references/takt/docs/task-management.ja.md` | Overall task workflow |
-| TaskRecord schema | `references/takt/src/infra/task/schema.ts` | Field definitions and validation |
+| TaskRecord schema | `references/takt/src/infra/task/taskRecordSchemas.ts` | Field definitions and validation |
+| TaskExecutionConfig schema | `references/takt/src/infra/task/taskExecutionSchemas.ts` | Execution config field definitions |
 | Task format spec | `references/takt/builtins/project/tasks/TASK-FORMAT` | Details of `task_dir` format |
 | Schema details | This skill's `references/task-schema.md` | Field list and status transitions |
 | Validation script | This skill's `validate-order-md.sh` | Structural validation for order.md |
@@ -369,7 +370,7 @@ If this task edits `.takt/workflows/*.yaml`, run the `takt-workflow-builder` ski
 Execute using the path appropriate for the skill's deployment location:
 
 ```bash
-bash <takt-workflow-builder skill directory>/scripts/validate-takt-files.sh --pieces
+bash <takt-workflow-builder skill directory>/scripts/validate-takt-files.sh --workflows
 ```
 
 Also confirm the following two points:

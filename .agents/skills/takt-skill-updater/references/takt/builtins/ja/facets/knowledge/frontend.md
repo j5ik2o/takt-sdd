@@ -288,43 +288,17 @@ const WeeklyCalendar = ({ facilityId }) => {
 
 ### 独立ウィジェットパターン
 
-WordPress のサイドバーウィジェットのように、どのページにも「置くだけ」で動くコンポーネント。親のデータフローに参加しない自己完結型。
-
-該当する例:
-- 通知バッジ・通知ベル（未読数を自分で取得）
-- ログインユーザー情報表示（ヘッダーのアバター等）
-- お知らせバナー
-- 天気・為替など外部データ表示
-- アクティビティフィード（サイドバー）
-
-```tsx
-// OK - 独立ウィジェット。どのページに置いても自分で動く
-const NotificationBell = () => {
-  const { data } = useNotificationCount({ refetchInterval: 30000 })
-  return (
-    <button aria-label="通知">
-      <Bell />
-      {data?.unreadCount > 0 && <span className="badge">{data.unreadCount}</span>}
-    </button>
-  )
-}
-
-// OK - ヘッダーに常駐するユーザーメニュー
-const UserMenu = () => {
-  const { data: user } = useCurrentUser()
-  return <Avatar name={user?.name} />
-}
-```
+どのページにも「置くだけ」で動く自己完結型コンポーネント（通知バッジ、ログインユーザー表示等）。
 
 ウィジェットと判定する条件（すべて満たすこと）:
-- 親のデータと**完全に無関係**（親から props でデータを受け取る必要がない）
-- 親の状態に**影響を与えない**（結果を親にバブリングしない）
-- **どのページに置いても同じ動作**をする（ページ固有のコンテキストに依存しない）
+- 親のデータと完全に無関係
+- 親の状態に影響を与えない
+- どのページに置いても同じ動作をする
 
 1つでも満たさない場合は View でデータ取得し、props で渡す。
 
 ```tsx
-// WRONG - ウィジェットに見えるが、orderId という親のコンテキストに依存
+// WRONG - orderId という親のコンテキストに依存。ウィジェットではない
 const OrderStatusWidget = ({ orderId }: { orderId: string }) => {
   const { data } = useGetOrder(orderId)
   return <StatusBadge status={data?.status} />
@@ -336,15 +310,48 @@ const OrderStatusWidget = ({ status }: { status: OrderStatus }) => {
 }
 ```
 
-判断基準: 「親が管理する意味がない / 親に影響を与えない」ケースのみ許容。
-
 | 基準 | 判定 |
 |------|------|
 | コンポーネント内で直接fetch | Container層に分離 |
 | エラーハンドリングなし | REJECT |
 | ローディング状態の未処理 | REJECT |
-| キャンセル処理なし | 警告 |
 | N+1クエリ的なフェッチ | REJECT |
+
+### 画面専用APIの利用
+
+画面が必要とするデータは、その画面専用のAPIエンドポイントから取得する。既存の汎用APIを流用して画面を組み立てない。APIが存在しない場合は、フロントで回避するのではなく、バックエンドに専用エンドポイントの追加を先に行う。
+
+| 基準 | 判定 |
+|------|------|
+| 一覧APIのレスポンスを詳細画面でも使い回す | REJECT |
+| 一覧の表示単位とAPIの取得単位がずれている | REJECT |
+| 判定だけのために全件取得する（集計APIを使うべき） | REJECT |
+| 画面ごとに専用の取得口を持ち、必要なデータだけ返す | OK |
+
+```tsx
+// REJECT - 一覧APIを詳細画面で流用
+const DetailScreen = ({ itemId }) => {
+  const { data: list } = useListItems({ date })
+  const item = list?.items.find(i => i.id === itemId)
+  return <Detail item={item} />
+}
+
+// OK - 詳細画面は詳細APIを使う
+const DetailScreen = ({ itemId }) => {
+  const { data: item } = useGetItem(itemId)
+  return <Detail item={item} />
+}
+```
+
+### 通信スコープの限定
+
+通信はタブ・画面単位で閉じる。他タブのために先読みしない。定期ポーリングは表示中の画面だけで行う。
+
+| 基準 | 判定 |
+|------|------|
+| タブ切替で表示中の画面だけが通信する | OK |
+| 全タブ共通の親でまとめて通信し、子タブに配る | REJECT |
+| 非表示タブでもポーリングが動き続ける | REJECT |
 
 ## 共有コンポーネントと抽象化
 

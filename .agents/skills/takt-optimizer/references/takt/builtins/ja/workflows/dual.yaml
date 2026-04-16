@@ -115,6 +115,7 @@ steps:
       - coding
       - testing
       - design-fidelity
+      - screen-api
     session: refresh
     knowledge:
       - frontend
@@ -201,6 +202,7 @@ steps:
       - coding
       - testing
       - design-fidelity
+      - screen-api
     session: refresh
     knowledge:
       - frontend
@@ -409,6 +411,7 @@ steps:
       - coding
       - testing
       - design-fidelity
+      - screen-api
     knowledge:
       - frontend
       - react

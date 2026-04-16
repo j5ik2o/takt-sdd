@@ -14,16 +14,19 @@
 - ただし設計判断自体の妥当性も評価し、問題がある場合は指摘する
 
 **前回指摘の追跡（必須）:**
-- まず「Previous Response」から前回の open findings を抽出する
-- 各 finding に `finding_id` を付け、今回の状態を `new / persists / resolved` で判定する
+- まず Report Directory 内で、このステップが前回までに出力したレビュー結果とそのタイムスタンプ付き履歴を確認し、無印ファイルを最新結果、直前のタイムスタンプ付きファイルを前回結果として扱う
+- `Previous Response` がある場合は補助情報として参照してよいが、findings の状態判定はレポート履歴を優先する
+- 各 finding に `finding_id` を付け、今回の状態を `new / persists / resolved / reopened` で判定する
 - `persists` と判定する場合は、未解決である根拠（ファイル/行）を必ず示す
+- 前回レポートにある open findings を、今回のレポートへ欠落させない
 
 ## 判定手順
 
-1. まず前回open findingsを抽出し、`new / persists / resolved` を仮判定する
+1. まず前回open findingsを抽出し、`new / persists / resolved / reopened` を仮判定する
 2. 変更差分を確認し、品質保証の観点に基づいて問題を検出する
    - ナレッジの判定基準テーブル（REJECT条件）と変更内容を照合する
    - テストが通っていても、task や plan にない追加変更が妥当か確認する
    - レビュー起因で設計変更が膨らんでいる場合、その追加変更が本当に必要かを評価する
+   - ビルド・テスト・動作確認を根拠に書く場合は、確認対象・確認内容・結果をレポート内に具体的に残す
 3. 検出した問題ごとに、Policyのスコープ判定表と判定ルールに基づいてブロッキング/非ブロッキングを分類する
-4. ブロッキング問題（`new` または `persists`）が1件でもあればREJECTと判定する
+4. ブロッキング問題（`new`、`persists`、または `reopened`）が1件でもあればREJECTと判定する

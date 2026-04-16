@@ -1,6 +1,6 @@
 # TaskRecord スキーマ詳細
 
-ソース: `references/takt/src/infra/task/schema.ts`
+ソース: `references/takt/src/infra/task/taskRecordSchemas.ts` / `references/takt/src/infra/task/taskExecutionSchemas.ts`
 
 ## TaskRecord フィールド一覧
 
@@ -8,8 +8,7 @@
 |-----------|------|------|---------|------|
 | `name` | string | YES | - | タスク識別名（AI自動生成、一意） |
 | `status` | enum | YES | - | `pending` / `running` / `completed` / `failed` / `exceeded` / `pr_failed` |
-| `piece` | string | - | - | 実行ワークフロー名（`workflow` のレガシーエイリアス） |
-| `workflow` | string | - | - | 実行ワークフロー名（`piece` のエイリアス。両方指定時は一致必須） |
+| `workflow` | string | - | - | 実行ワークフロー名 |
 | `task_dir` | string | ※ | - | タスクディレクトリパス（`.takt/tasks/{slug}` 形式） |
 | `content` | string | ※ | - | インラインタスク本文（レガシー） |
 | `content_file` | string | ※ | - | 外部ファイルパス参照（レガシー） |
@@ -22,8 +21,7 @@
 | `auto_pr` | boolean | - | false | 実行後にPR自動作成 |
 | `draft_pr` | boolean | - | false | PRをドラフト状態で作成 |
 | `issue` | int | - | - | GitHub Issue番号 |
-| `start_movement` | string | - | - | 開始step名（`start_step` のレガシーエイリアス） |
-| `start_step` | string | - | - | 開始step名（`start_movement` のエイリアス。両方指定時は一致必須） |
+| `start_step` | string | - | - | 開始step名 |
 | `retry_note` | string | - | - | リトライ時のメモ |
 | `worktree_path` | string | - | - | 実行時worktree絶対パス（自動設定） |
 | `pr_url` | string | - | - | 生成PR URL（自動設定） |
@@ -32,9 +30,9 @@
 | `failure` | object | - | - | 失敗情報（自動設定） |
 | `base_branch` | string | - | - | クローン元ブランチ（省略時: デフォルトブランチ） |
 | `exceeded_max_steps` | int | - | - | exceeded時のmax_steps値（自動設定） |
-| `exceeded_max_movements` | int | - | - | `exceeded_max_steps` のレガシーエイリアス（自動設定） |
 | `exceeded_current_iteration` | int | - | - | exceeded時のイテレーション数（自動設定） |
 | `run_slug` | string | - | - | 実行スラグ（タスク実行ごとの一意ID） |
+| `resume_point` | object | - | - | サブワークフロー再開ポイント（自動設定） |
 | `should_publish_branch_to_origin` | boolean | - | - | ブランチをoriginにpushするか |
 | `source` | enum | - | - | タスクソース: `pr_review` / `issue` / `manual` |
 | `pr_number` | int | - | - | PR番号（`source: pr_review` 時は必須） |
@@ -82,12 +80,14 @@ pending ──→ running ──→ completed
 
 order.md自体ではテンプレート変数は不要。エンジンが `{task}` として自動注入する。
 
-ワークフローの `instruction`（`instruction_template` はレガシーエイリアス）内では以下が使用可能:
+ワークフローの `instruction` 内では以下が使用可能（`instruction_template` は v0.36.0 で完全廃止）:
 
 | 変数 | 説明 |
 |------|------|
 | `{task}` | タスク内容（自動注入） |
 | `{previous_response}` | 前step出力 |
-| `{iteration}` | ピース全体イテレーション数 |
+| `{iteration}` | ワークフロー全体イテレーション数 |
+| `{max_steps}` | ワークフローの max_steps 値 |
+| `{step_iteration}` | このstepの実行回数 |
 | `{report_dir}` | レポートディレクトリ名 |
 | `{report:filename}` | レポートファイル内容 |

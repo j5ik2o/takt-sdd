@@ -14,7 +14,7 @@ description: >
 
 TAKTワークフロー（ワークフローYAML）とその関連ファセットファイルを作成する。
 
-> **前提 takt バージョン**: v0.35.4
+> **前提 takt バージョン**: v0.36.0
 
 ## 参照資料
 
@@ -131,7 +131,7 @@ steps:
         next: review
 ```
 
-**互換 alias**: `movements` は `steps` と同義、`initial_movement` は `initial_step` と同義、`max_movements` は `max_steps` と同義。新規作成では正式名を使う。
+**注意**: v0.36.0 で旧用語エイリアス（`movements`, `initial_movement`, `max_movements`, `piece_config`, `piece_categories`）は完全廃止（BREAKING）。正式名のみ使用可。
 
 #### Parallel Step 例
 
@@ -185,8 +185,77 @@ steps:
 | AI判定 | `ai("条件")` | タグ判定が不適な場合 |
 | 全一致 | `all("条件")` | parallelの親のみ |
 | いずれか | `any("条件")` | parallelの親のみ |
+| 決定論的条件 | `when: <expr>` | AI不要のルーティング（`condition:` 不要） |
+
+`when:` は比較演算子（`==`, `!=`, `>`, `<`, `>=`, `<=`）、ブール論理（`&&`, `\|\|`）、ワークフロー状態参照（`context.*`, `structured.*`, `effect.*`）を使用可能。
 
 特殊遷移先: `COMPLETE`（成功終了）、`ABORT`（失敗終了）
+
+#### サブワークフロー呼び出し（`call:` ステップ）
+
+別のワークフローをサブルーチンとして呼び出す。
+
+```yaml
+steps:
+  - name: run-sub
+    call: sub-workflow-name    # 呼び出し先ワークフロー名
+    overrides:                  # プロバイダ/モデル上書き（任意）
+      provider_options:
+        claude:
+          model: claude-opus-4-5
+    rules:
+      - condition: completed
+        next: next-step
+```
+
+- 呼び出し先には `subworkflow: { callable: true }` が必要
+- 再帰呼び出し検知あり、最大ネスト深度: 5
+
+#### システムステップ（`kind: system`）
+
+AIエージェントを介さず実行されるステップ。副作用（PR作成・タスクキュー操作等）を実行する。
+
+```yaml
+steps:
+  - name: enqueue
+    kind: system
+    system_inputs:
+      task: context.task        # ランタイムコンテキストをバインド
+    effects:
+      - type: enqueue_task
+        workflow: default
+    rules:
+      - when: "effect.enqueued == true"
+        next: next-step
+```
+
+`effects` の種別: `enqueue_task`, `comment_pr`, `sync_with_root`, `resolve_conflicts_with_ai`, `merge_pr`
+
+#### 構造化出力（`structured_output:`）
+
+ステップ出力をJSON スキーマでバリデーション・保存する。
+
+```yaml
+schemas:
+  review-result:
+    type: object
+    properties:
+      approved: { type: boolean }
+      issues: { type: array, items: { type: string } }
+
+steps:
+  - name: review
+    instruction: review
+    structured_output:
+      schema_ref: review-result   # schemas: マップのキーを参照
+    rules:
+      - when: "structured.review.approved == true"
+        next: COMPLETE
+      - condition: needs_fix
+        next: fix
+```
+
+他ステップから `{structured:step-name.field}` でテンプレート参照可能。
 
 ### Step 4: ファセットファイル作成
 
@@ -324,4 +393,4 @@ bash .agents/skills/takt-workflow-builder/scripts/validate-takt-files.sh
 - **ワークフロー YAML**: 必須フィールド（`name`/`initial_step`/`steps`）、`initial_step` の step 参照、ファセットファイル参照の実在
 - **ファセット .md**: 空チェック、persona/policy/knowledge は `# 見出し` 必須、instruction/output-contract は内容存在
 
-オプション `--pieces` / `--facets` で対象を絞り込み可能。
+オプション `--workflows` / `--facets` で対象を絞り込み可能。

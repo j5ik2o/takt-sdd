@@ -27,9 +27,9 @@ CHECK_FACETS=true
 
 for arg in "$@"; do
   case "$arg" in
-    --quiet|-q)     QUIET=true ;;
-    --workflows)    CHECK_FACETS=false ;;
-    --facets)       CHECK_WORKFLOWS=false ;;
+    --quiet|-q)    QUIET=true ;;
+    --workflows)   CHECK_FACETS=false ;;
+    --facets)      CHECK_WORKFLOWS=false ;;
   esac
 done
 
@@ -121,20 +121,29 @@ validate_workflow() {
     error "必須フィールド 'name' がありません（または空です）"
   fi
 
-  # 必須フィールド: initial_step（alias: initial_movement）
+  # 必須フィールド: initial_step（エイリアス: initial_movement）
   local initial_step=""
   if grep -qE "^initial_step:[[:space:]]+.+" "$file"; then
     initial_step=$(grep -E "^initial_step:" "$file" | head -1 | sed 's/^initial_step:[[:space:]]*//')
     ok "initial_step: ${initial_step}"
   elif grep -qE "^initial_movement:[[:space:]]+.+" "$file"; then
     initial_step=$(grep -E "^initial_movement:" "$file" | head -1 | sed 's/^initial_movement:[[:space:]]*//')
-    ok "initial_step (alias initial_movement): ${initial_step}"
+    warn "非推奨キー 'initial_movement' が使用されています。'initial_step' への移行を推奨します"
+    ok "initial_movement（→initial_step）: ${initial_step}"
   else
     error "必須フィールド 'initial_step' がありません（または空です）"
   fi
 
-  # 必須フィールド: steps（alias: movements）
-  if ! grep -qE "^steps:|^movements:" "$file"; then
+  # 必須フィールド: steps（エイリアス: movements）
+  local steps_key=""
+  if grep -qE "^steps:" "$file"; then
+    steps_key="steps"
+  elif grep -qE "^movements:" "$file"; then
+    steps_key="movements"
+    warn "非推奨キー 'movements' が使用されています。'steps' への移行を推奨します"
+  fi
+
+  if [[ -z "$steps_key" ]]; then
     error "必須フィールド 'steps' がありません"
     return
   fi
@@ -142,10 +151,10 @@ validate_workflow() {
   local step_count
   step_count=$(grep -cE "^  - name:[[:space:]]+.+" "$file" || true)
   if [[ "$step_count" -eq 0 ]]; then
-    error "'steps' にエントリがありません"
+    error "'${steps_key}' にエントリがありません"
     return
   fi
-  ok "steps: ${step_count} 件"
+  ok "${steps_key}: ${step_count} 件"
 
   # initial_step が steps 内に存在するか
   # grep -F で固定文字列マッチし regex インジェクションを防ぐ
@@ -155,7 +164,7 @@ validate_workflow() {
         | grep -qxF "$initial_step"; then
       ok "initial_step '${initial_step}' → step 存在確認"
     else
-      error "initial_step '${initial_step}' が steps に定義されていません"
+      error "initial_step '${initial_step}' が ${steps_key} に定義されていません"
     fi
   fi
 

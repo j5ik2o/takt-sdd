@@ -17,7 +17,7 @@ description: >
 
 既存のTAKTワークフローの最適化を実行する。診断・分析は takt-analyze が担う。
 
-> **前提 takt バージョン**: v0.35.4
+> **前提 takt バージョン**: v0.36.0
 
 ## 参照資料
 
@@ -324,4 +324,4 @@ bash .agents/skills/takt-optimize/scripts/validate-takt-files.sh
 - **ワークフロー YAML**: 必須フィールド（`name`/`initial_step`/`steps`）、`initial_step` の step 参照、ファセットファイル参照の実在
 - **ファセット .md**: 空チェック、persona/policy/knowledge は `# 見出し` 必須、instruction/output-contract は内容存在
 
-オプション `--pieces` / `--facets` で対象を絞り込み可能。
+オプション `--workflows` / `--facets` で対象を絞り込み可能。

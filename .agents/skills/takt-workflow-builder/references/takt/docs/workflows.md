@@ -14,19 +14,27 @@ A workflow is a YAML file that defines a sequence of steps executed by AI agents
 - Builtin workflows are embedded in the npm package (`dist/resources/`)
 - `~/.takt/workflows/` — User workflows (override builtins with the same name)
 - Use `takt eject <workflow>` to copy a builtin to `~/.takt/workflows/` for customization
-- TAKT still reads legacy `pieces/` directories as compatibility input, but `workflows/` is the canonical directory name in current docs and CLI output.
 
 ## Workflow Categories
 
-To organize the workflow selection UI into categories, configure `piece_categories`.
-See the [Configuration Guide](./configuration.md#piece-categories) for details.
+To organize the workflow selection UI into categories, configure `workflow_categories`.
+See the [Configuration Guide](./configuration.md#workflow-categories) for details.
+
+## Authoring Workflow Files
+
+Use `takt workflow init <name>` to create a new custom workflow scaffold in `.takt/workflows/` (or `~/.takt/workflows/` with `--global`).
+
+- `--template minimal`: generates a self-contained scaffold with generic step routing
+- `--template faceted`: generates a workflow plus local persona/instruction facet files
+
+After editing the generated files, run `takt workflow doctor <name or path>` to validate references, routing targets, and unreachable steps before executing the workflow.
 
 ## Workflow Schema
 
 ```yaml
 name: my-workflow
 description: Optional description
-max_movements: 10
+max_steps: 10
 initial_step: first-step          # Optional, defaults to the first step
 
 # Section maps (key → file path relative to workflow YAML directory)
@@ -54,19 +62,21 @@ steps:
     instruction: implement           # Instruction key (references instructions map)
     edit: true                       # Whether the step can edit files
     required_permission_mode: edit   # Minimum permission: readonly, edit, or full
-    allowed_tools:                   # Optional tool allowlist
-      - Read
-      - Glob
-      - Grep
-      - Edit
-      - Write
-      - Bash
+    provider_options:
+      claude:
+        allowed_tools:               # Optional Claude tool allowlist
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Write
+          - Bash
     rules:
       - condition: "Implementation complete"
         next: next-step
       - condition: "Cannot proceed"
         next: ABORT
-    instruction_template: |          # Inline instructions (alternative to instruction key)
+    instruction: |                   # Inline instructions
       Your instructions here with {variables}
     output_contracts:                # Report file configuration
       report:
@@ -76,7 +86,6 @@ steps:
 
 Steps reference section maps by key name (e.g., `persona: coder`), not by file path. Paths in section maps are resolved relative to the workflow YAML file's directory.
 
-Legacy YAML keys remain accepted for compatibility: `movements` is an alias for `steps`, and `initial_movement` is an alias for `initial_step`.
 
 ## Available Variables
 
@@ -84,14 +93,14 @@ Legacy YAML keys remain accepted for compatibility: `movements` is an alias for 
 |----------|-------------|
 | `{task}` | Original user request (auto-injected if not in template) |
 | `{iteration}` | Workflow-wide turn count (total steps executed) |
-| `{max_movements}` | Maximum steps allowed |
-| `{movement_iteration}` | Per-step iteration count (how many times THIS step has run) |
+| `{max_steps}` | Maximum steps allowed |
+| `{step_iteration}` | Per-step iteration count (how many times THIS step has run) |
 | `{previous_response}` | Previous step's output (auto-injected if not in template) |
 | `{user_inputs}` | Additional user inputs during workflow (auto-injected if not in template) |
 | `{report_dir}` | Report directory path (e.g., `.takt/runs/20250126-143052-task-summary/reports`) |
 | `{report:filename}` | Inline the content of `{report_dir}/filename` |
 
-> **Note**: `{task}`, `{previous_response}`, and `{user_inputs}` are auto-injected into instructions. You only need explicit placeholders if you want to control their position in the template. Internal runtime field names still use `max_movements` and `movement_iteration`.
+> **Note**: `{task}`, `{previous_response}`, and `{user_inputs}` are auto-injected into instructions. You only need explicit placeholders if you want to control their position in the template.
 
 ## Rules
 
@@ -195,7 +204,7 @@ output_contracts:
 | `instruction` | - | Instruction key (references section map) |
 | `edit` | - | Whether the step can edit project files (`true`/`false`) |
 | `pass_previous_response` | `true` | Pass previous step's output to `{previous_response}` |
-| `allowed_tools` | - | List of tools the agent can use (Read, Glob, Grep, Edit, Write, Bash, etc.) |
+| `provider_options.claude.allowed_tools` | - | Claude tool allowlist for the step or workflow |
 | `provider` | - | Override provider for this step (`claude`, `codex`, `opencode`, `cursor`, or `copilot`) |
 | `model` | - | Override model for this step |
 | `required_permission_mode` | - | Required minimum permission mode: `readonly`, `edit`, or `full` |
@@ -208,7 +217,7 @@ output_contracts:
 
 ```yaml
 name: simple-impl
-max_movements: 5
+max_steps: 5
 
 personas:
   coder: ../facets/personas/coder.md
@@ -218,13 +227,15 @@ steps:
     persona: coder
     edit: true
     required_permission_mode: edit
-    allowed_tools: [Read, Glob, Grep, Edit, Write, Bash, WebSearch, WebFetch]
+    provider_options:
+      claude:
+        allowed_tools: [Read, Glob, Grep, Edit, Write, Bash, WebSearch, WebFetch]
     rules:
       - condition: Implementation complete
         next: COMPLETE
       - condition: Cannot proceed
         next: ABORT
-    instruction_template: |
+    instruction: |
       Implement the requested changes.
 ```
 
@@ -232,7 +243,7 @@ steps:
 
 ```yaml
 name: with-review
-max_movements: 10
+max_steps: 10
 
 personas:
   coder: ../facets/personas/coder.md
@@ -280,11 +291,13 @@ steps:
   - name: analyze
     persona: planner
     edit: false
-    allowed_tools: [Read, Glob, Grep, WebSearch, WebFetch]
+    provider_options:
+      claude:
+        allowed_tools: [Read, Glob, Grep, WebSearch, WebFetch]
     rules:
       - condition: Analysis complete
         next: implement
-    instruction_template: |
+    instruction: |
       Analyze this request and create a plan.
 
   - name: implement
@@ -292,11 +305,13 @@ steps:
     edit: true
     pass_previous_response: true
     required_permission_mode: edit
-    allowed_tools: [Read, Glob, Grep, Edit, Write, Bash, WebSearch, WebFetch]
+    provider_options:
+      claude:
+        allowed_tools: [Read, Glob, Grep, Edit, Write, Bash, WebSearch, WebFetch]
     rules:
       - condition: Implementation complete
         next: COMPLETE
-    instruction_template: |
+    instruction: |
       Implement based on this analysis:
       {previous_response}
 ```

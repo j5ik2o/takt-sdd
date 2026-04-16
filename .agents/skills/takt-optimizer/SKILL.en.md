@@ -325,4 +325,4 @@ Verification items:
 - **Workflow YAML**: Required fields (`name`/`initial_step`/`steps`), `initial_step` step reference, facet file reference existence
 - **Facet .md**: Empty check, persona/policy/knowledge require `# heading`, instruction/output-contract require content
 
-Options `--pieces` / `--facets` can narrow the targets.
+Options `--workflows` / `--facets` can narrow the targets.

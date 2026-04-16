@@ -15,7 +15,7 @@ description: >
 
 Create and edit the 5 types of TAKT facet files individually.
 
-> **Required takt version**: v0.35.4
+> **Required takt version**: v0.36.0
 
 ## Reference Materials
 
@@ -65,7 +65,7 @@ Check existing built-in facets of the same type and determine if they can be reu
 | Facet | Built-in Examples |
 |-------|-------------------|
 | Persona | coder, planner, architect-planner, architecture-reviewer, qa-reviewer, supervisor, security-reviewer, frontend-reviewer, cqrs-es-reviewer, requirements-reviewer, testing-reviewer, terraform-reviewer, dual-supervisor, research-analyzer, research-digger, research-planner, research-supervisor, conductor, test-planner, ai-antipattern-reviewer |
-| Policy | coding, review, testing, qa, ai-antipattern, design-fidelity, design-planning, task-decomposition |
+| Policy | coding, review, testing, qa, ai-antipattern, design-fidelity, design-planning, task-decomposition, screen-api |
 | Instruction | plan, implement, implement-after-tests, write-tests-first, team-leader-implement, dual-team-leader-implement, review-arch, review-qa, review-security, review-frontend, review-cqrs-es, review-requirements, review-test, review-terraform, supervise, fix, ai-review, ai-fix, loop-monitor-ai-fix, loop-monitor-reviewers-fix, architecture-audit-plan, architecture-audit-review, architecture-audit-supervise, architecture-audit-team-leader, audit-security-plan, audit-security-review, audit-security-supervise, audit-security-team-leader, e2e-audit-plan, e2e-audit-review, e2e-audit-supervise, e2e-audit-team-leader, e2e-coverage-implement, e2e-coverage-plan, e2e-coverage-supervise, gather-review, unit-audit-plan, unit-audit-review, unit-audit-supervise, unit-audit-team-leader |
 | Knowledge | architecture, backend, cqrs-es, frontend, security, task-decomposition, takt, terraform-aws, e2e-testing, react, unit-testing |
 | Output Contract | plan, architecture-review, ai-review, qa-review, security-review, frontend-review, cqrs-es-review, requirements-review, testing-review, terraform-review, summary, validation, architecture-audit-plan, architecture-audit, audit-security, e2e-audit-plan, e2e-audit, e2e-coverage-plan, plan-frontend, test-report, unit-audit-plan, unit-audit, supervisor-validation |

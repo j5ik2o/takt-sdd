@@ -17,7 +17,7 @@ description: >
 
 既存のTAKTワークフローとファセットを分析し、問題点の検出と改善提案を行う。
 
-> **前提 takt バージョン**: v0.35.4
+> **前提 takt バージョン**: v0.36.0
 
 ## 参照資料
 
@@ -31,7 +31,7 @@ description: >
 | ログ型定義 | `references/takt/src/core/logging/contracts.ts` | NDJSONレコード型の参照（v0.30.0で `observability` → `logging` にリネーム） |
 | プロバイダイベント | `references/takt/src/core/logging/providerEventLogger.ts` | `*-provider-events.jsonl` の構造 |
 | 利用イベント | `references/takt/src/core/logging/usageEventLogger.ts` | 利用量イベントの構造 |
-| ルール評価 | `references/takt/src/core/piece/evaluation/RuleEvaluator.ts` | matchedRuleMethod の仕組み |
+| ルール評価 | `references/takt/src/core/workflow/evaluation/RuleEvaluator.ts` | matchedRuleMethod の仕組み（`when:` 決定論的条件含む） |
 
 ## takt-optimize との違い
 

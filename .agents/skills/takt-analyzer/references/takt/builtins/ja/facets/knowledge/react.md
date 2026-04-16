@@ -67,6 +67,45 @@ useEffect(() => {
 | loading state 更新で再取得が走る | REJECT |
 | message 表示や dialog 開閉で再取得が走る | REJECT |
 
+## データフェッチライブラリのキャッシュ適性
+
+データフェッチライブラリ（React Query 等）のキャッシュはすべてのデータ取得に適するわけではない。データの変動頻度とページング方式で判断する。
+
+| データ特性 | キャッシュ | 判定 |
+|-----------|----------|------|
+| 単一リソースの詳細（設定値、プロフィール等） | 有効 | OK |
+| 安定した一覧（マスタデータ、変更頻度が低い） | 有効 | OK |
+| cursor ページングかつ途中で追加・削除・並び替えが起きる一覧 | 無効 | local state で取得 |
+| offset ページングかつ途中でデータ変動が起きる一覧 | 無効 | local state で取得 |
+
+cursor ページングとキャッシュの相性が悪い理由:
+
+- nextId（cursor）が古くなり、次ページ取得で欠落や重複が発生する
+- 削除された行を基準に次ページを取ると取りこぼしが起きる
+- タブ復帰時に途中ページを自動再取得すると「いま見えている一覧」とサーバーの実態がズレる
+
+データフェッチライブラリを使う場合でもキャッシュを実質無効にする必要があるなら、そのライブラリを使う意味がない。画面の責務として毎回取り直す方が安全。
+
+```tsx
+// REJECT - 変動する cursor paged 一覧に React Query のキャッシュを適用
+const { data } = useInfiniteQuery({
+  queryKey: ['records'],
+  queryFn: ({ pageParam }) => fetchRecords(pageParam),
+  getNextPageParam: (last) => last.nextId,
+  staleTime: 5 * 60 * 1000,  // 途中で削除されうるのにキャッシュを効かせている
+})
+
+// OK - local state で画面の責務として取得
+const [records, setRecords] = useState<Record[]>([])
+const [nextId, setNextId] = useState<string | undefined>()
+
+const loadMore = async () => {
+  const result = await fetchRecords(nextId)
+  setRecords(prev => [...prev, ...result.items])
+  setNextId(result.nextId)
+}
+```
+
 ## custom hook の責務
 
 React custom hook は「React の state/effect/ref を使う状態遷移」に限定する。純粋計算だけなら custom hook ではなく関数モジュールでよい。

@@ -60,6 +60,7 @@ steps:
       - coding
       - testing
       - design-fidelity
+      - screen-api
     knowledge:
       - frontend
       - backend
@@ -224,6 +225,7 @@ steps:
       - coding
       - testing
       - design-fidelity
+      - screen-api
     knowledge:
       - frontend
       - backend
@@ -257,6 +259,7 @@ steps:
       - coding
       - testing
       - design-fidelity
+      - screen-api
     knowledge:
       - frontend
       - backend
