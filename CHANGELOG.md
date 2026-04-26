@@ -1,3 +1,15 @@
+## [0.18.1](https://github.com/j5ik2o/takt-sdd/compare/v0.18.0...v0.18.1) (2026-04-26)
+
+
+### Bug Fixes
+
+* CI で Persona file path エラーを期待されるエラーとして扱う ([074e16e](https://github.com/j5ik2o/takt-sdd/commit/074e16e7adc09348a0867381bdc10a96a61dc08e))
+* clarify missing opsx script error ([c986452](https://github.com/j5ik2o/takt-sdd/commit/c98645215eb24ffcfef264b2b38bb3feff8c9bc5))
+* install opsx cli script with workflows ([63daf9c](https://github.com/j5ik2o/takt-sdd/commit/63daf9c14e28b67c6b8a65bd34e1f8da679486f5))
+* installer と CI の pieces → workflows 対応 ([d6b7446](https://github.com/j5ik2o/takt-sdd/commit/d6b744698edf98b9bae0e4f63966c7886cc9da30))
+* require opsx installer script in release ([b81924c](https://github.com/j5ik2o/takt-sdd/commit/b81924c54d10b33d14a1942b4083164ff2b60aff))
+* レビュー指摘対応 - 変数名を pieces→workflows に統一 ([0b4abb5](https://github.com/j5ik2o/takt-sdd/commit/0b4abb56df02d2f0736983e0fca439a9fa6b620c))
+
 ## [0.18.0](https://github.com/j5ik2o/takt-sdd/compare/v0.17.0...v0.18.0) (2026-04-16)
 
 
