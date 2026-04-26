@@ -44,15 +44,15 @@ jobs:
       - name: Validate workflows (en)
         run: |
           failed=0
-          for piece in .takt/en/workflows/*.yaml; do
-            echo "::group::$(basename "$piece")"
-            output=$(takt prompt "$piece" 2>&1) && { echo "$output"; } || {
+          for workflow in .takt/en/workflows/*.yaml; do
+            echo "::group::$(basename "$workflow")"
+            output=$(takt prompt "$workflow" 2>&1) && { echo "$output"; } || {
               if echo "$output" | grep -q "reportContent is required"; then
                 echo "$output"
                 echo "::notice::Phase 2/3 report preview skipped (expected)"
               else
                 echo "$output"
-                echo "::error::Validation failed: $piece"
+                echo "::error::Validation failed: $workflow"
                 failed=1
               fi
             }
@@ -63,15 +63,15 @@ jobs:
       - name: Validate workflows (ja)
         run: |
           failed=0
-          for piece in .takt/ja/workflows/*.yaml; do
-            echo "::group::$(basename "$piece")"
-            output=$(takt prompt "$piece" 2>&1) && { echo "$output"; } || {
+          for workflow in .takt/ja/workflows/*.yaml; do
+            echo "::group::$(basename "$workflow")"
+            output=$(takt prompt "$workflow" 2>&1) && { echo "$output"; } || {
               if echo "$output" | grep -q "reportContent is required"; then
                 echo "$output"
                 echo "::notice::Phase 2/3 report preview skipped (expected)"
               else
                 echo "$output"
-                echo "::error::Validation failed: $piece"
+                echo "::error::Validation failed: $workflow"
                 failed=1
               fi
             }

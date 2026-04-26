@@ -281,9 +281,9 @@ export async function install(options: InstallOptions): Promise<void> {
 
   const manifest = loadManifest(manifestPath);
   const isUpdate = manifest !== null;
-  const piecesExist = existsSync(join(targetPath, PIECE_DIR));
+  const workflowsExist = existsSync(join(targetPath, PIECE_DIR));
 
-  if (!isUpdate && piecesExist && !options.force) {
+  if (!isUpdate && workflowsExist && !options.force) {
     errorExit(msg.existsError("npx create-takt-sdd"));
   }
 
