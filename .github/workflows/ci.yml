@@ -27,7 +27,7 @@ jobs:
       - name: Dry-run (${{ matrix.lang }})
         run: node installer/dist/cli.js --dry-run --lang ${{ matrix.lang }}
 
-  validate-pieces:
+  validate-workflows:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,10 +41,10 @@ jobs:
       - name: Install takt
         run: npm install -g takt
 
-      - name: Validate pieces (en)
+      - name: Validate workflows (en)
         run: |
           failed=0
-          for piece in .takt/en/pieces/*.yaml; do
+          for piece in .takt/en/workflows/*.yaml; do
             echo "::group::$(basename "$piece")"
             output=$(takt prompt "$piece" 2>&1) && { echo "$output"; } || {
               if echo "$output" | grep -q "reportContent is required"; then
@@ -60,10 +60,10 @@ jobs:
           done
           exit $failed
 
-      - name: Validate pieces (ja)
+      - name: Validate workflows (ja)
         run: |
           failed=0
-          for piece in .takt/ja/pieces/*.yaml; do
+          for piece in .takt/ja/workflows/*.yaml; do
             echo "::group::$(basename "$piece")"
             output=$(takt prompt "$piece" 2>&1) && { echo "$output"; } || {
               if echo "$output" | grep -q "reportContent is required"; then
