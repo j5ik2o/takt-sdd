@@ -21,6 +21,7 @@ function getInstallerVersion(): string {
 const REPO = "j5ik2o/takt-sdd";
 const TARGET_DIR = ".takt";
 const PIECE_DIR = "workflows";
+const OPSX_SCRIPT_INSTALL_PATH = "scripts/opsx-cli.sh";
 const FACET_TYPES = [
   "personas",
   "policies",
@@ -223,21 +224,20 @@ interface SyncResult {
   readonly files: Record<string, string>;
 }
 
-function syncDirectory(
-  srcDir: string,
-  destDir: string,
+function syncRelativeFiles(
   srcBase: string,
   destBase: string,
+  relativePaths: readonly string[],
   manifest: Manifest | null,
   msg: ReturnType<typeof getMessages>,
   cwd: string,
 ): SyncResult {
   const files: Record<string, string> = {};
-  if (!existsSync(srcDir)) return { files };
 
-  const srcFiles = collectFiles(srcDir, srcBase);
-  for (const relFile of srcFiles) {
+  for (const relFile of relativePaths) {
     const srcPath = join(srcBase, relFile);
+    if (!existsSync(srcPath)) continue;
+
     const destPath = join(destBase, relFile);
     const manifestKey = relative(cwd, destPath).split("\\").join("/");
     const srcHash = computeFileHash(srcPath);
@@ -266,6 +266,19 @@ function syncDirectory(
   }
 
   return { files };
+}
+
+function syncDirectory(
+  srcDir: string,
+  destDir: string,
+  srcBase: string,
+  destBase: string,
+  manifest: Manifest | null,
+  msg: ReturnType<typeof getMessages>,
+  cwd: string,
+): SyncResult {
+  if (!existsSync(srcDir)) return { files: {} };
+  return syncRelativeFiles(srcBase, destBase, collectFiles(srcDir, srcBase), manifest, msg, cwd);
 }
 
 export async function install(options: InstallOptions): Promise<void> {
@@ -308,6 +321,9 @@ export async function install(options: InstallOptions): Promise<void> {
     if (!existsSync(extractedTakt)) {
       errorExit(msg.archiveError);
     }
+    if (!existsSync(join(extractedDir, OPSX_SCRIPT_INSTALL_PATH))) {
+      errorExit(msg.requiredFileMissing(OPSX_SCRIPT_INSTALL_PATH));
+    }
 
     const resolvedLayout = options.layout === "auto" ? detectLayout() : options.layout;
     info(msg.layoutDetected(resolvedLayout));
@@ -329,6 +345,7 @@ export async function install(options: InstallOptions): Promise<void> {
           }
         }
       }
+      console.log(msg.dryRunItem(OPSX_SCRIPT_INSTALL_PATH));
       console.log("");
       info(msg.dryRunSkipped);
       return;
@@ -375,6 +392,16 @@ export async function install(options: InstallOptions): Promise<void> {
         Object.assign(allFiles, result.files);
       }
     }
+
+    const scriptFilesResult = syncRelativeFiles(
+      extractedDir,
+      options.cwd,
+      [OPSX_SCRIPT_INSTALL_PATH],
+      isUpdate ? manifest : null,
+      msg,
+      options.cwd,
+    );
+    Object.assign(allFiles, scriptFilesResult.files);
 
     const sddPkgPath = join(extractedDir, "package.json");
     const sddDevDependencies: Record<string, string> = {};
