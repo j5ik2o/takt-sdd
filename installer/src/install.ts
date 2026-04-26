@@ -322,7 +322,7 @@ export async function install(options: InstallOptions): Promise<void> {
       errorExit(msg.archiveError);
     }
     if (!existsSync(join(extractedDir, OPSX_SCRIPT_INSTALL_PATH))) {
-      errorExit(msg.archiveError);
+      errorExit(msg.requiredFileMissing(OPSX_SCRIPT_INSTALL_PATH));
     }
 
     const resolvedLayout = options.layout === "auto" ? detectLayout() : options.layout;

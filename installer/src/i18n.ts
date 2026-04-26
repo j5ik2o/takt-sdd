@@ -13,6 +13,7 @@ interface Messages {
   dryRunSkipped: string;
   tarNotFound: string;
   archiveError: string;
+  requiredFileMissing: (path: string) => string;
   helpText: string;
   usageExamples: string;
   scriptsAdded: (count: number) => string;
@@ -41,6 +42,7 @@ const en: Messages = {
   dryRunSkipped: "[dry-run] No files were written.",
   tarNotFound: "Error: tar command is required.",
   archiveError: "Error: .takt/ not found in the downloaded archive.",
+  requiredFileMissing: (path) => `Error: required file not found in the downloaded archive: ${path}`,
   scriptsAdded: (count) =>
     `Added ${count} npm scripts to package.json`,
   scriptsSkipped: (keys) =>
@@ -100,6 +102,8 @@ const ja: Messages = {
   tarNotFound: "エラー: tar コマンドが必要です。",
   archiveError:
     "エラー: ダウンロードしたアーカイブに .takt/ が見つかりません。",
+  requiredFileMissing: (path) =>
+    `エラー: ダウンロードしたアーカイブに必須ファイルが見つかりません: ${path}`,
   scriptsAdded: (count) =>
     `package.json に ${count} 個の npm scripts を追加しました`,
   scriptsSkipped: (keys) =>
