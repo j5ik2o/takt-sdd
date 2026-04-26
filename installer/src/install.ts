@@ -21,7 +21,7 @@ function getInstallerVersion(): string {
 const REPO = "j5ik2o/takt-sdd";
 const TARGET_DIR = ".takt";
 const PIECE_DIR = "workflows";
-const INSTALL_FILE_PATHS = ["scripts/opsx-cli.sh"] as const;
+const SCRIPT_INSTALL_PATHS = ["scripts/opsx-cli.sh"] as const;
 const FACET_TYPES = [
   "personas",
   "policies",
@@ -224,52 +224,7 @@ interface SyncResult {
   readonly files: Record<string, string>;
 }
 
-function syncDirectory(
-  srcDir: string,
-  destDir: string,
-  srcBase: string,
-  destBase: string,
-  manifest: Manifest | null,
-  msg: ReturnType<typeof getMessages>,
-  cwd: string,
-): SyncResult {
-  const files: Record<string, string> = {};
-  if (!existsSync(srcDir)) return { files };
-
-  const srcFiles = collectFiles(srcDir, srcBase);
-  for (const relFile of srcFiles) {
-    const srcPath = join(srcBase, relFile);
-    const destPath = join(destBase, relFile);
-    const manifestKey = relative(cwd, destPath).split("\\").join("/");
-    const srcHash = computeFileHash(srcPath);
-    files[manifestKey] = srcHash;
-
-    if (!existsSync(destPath)) {
-      mkdirSync(dirname(destPath), { recursive: true });
-      cpSync(srcPath, destPath);
-      info(msg.fileAdded(manifestKey));
-    } else if (manifest !== null) {
-      const recordedHash = manifest.files[manifestKey];
-      if (recordedHash === undefined) {
-        warn(msg.fileSkippedCustomized(manifestKey));
-      } else {
-        const currentHash = computeFileHash(destPath);
-        if (currentHash === recordedHash) {
-          cpSync(srcPath, destPath);
-          info(msg.fileUpdated(manifestKey));
-        } else {
-          warn(msg.fileSkippedCustomized(manifestKey));
-        }
-      }
-    } else {
-      cpSync(srcPath, destPath);
-    }
-  }
-
-  return { files };
-}
-
-function syncFiles(
+function syncRelativeFiles(
   srcBase: string,
   destBase: string,
   relativePaths: readonly string[],
@@ -311,6 +266,19 @@ function syncFiles(
   }
 
   return { files };
+}
+
+function syncDirectory(
+  srcDir: string,
+  destDir: string,
+  srcBase: string,
+  destBase: string,
+  manifest: Manifest | null,
+  msg: ReturnType<typeof getMessages>,
+  cwd: string,
+): SyncResult {
+  if (!existsSync(srcDir)) return { files: {} };
+  return syncRelativeFiles(srcBase, destBase, collectFiles(srcDir, srcBase), manifest, msg, cwd);
 }
 
 export async function install(options: InstallOptions): Promise<void> {
@@ -374,7 +342,7 @@ export async function install(options: InstallOptions): Promise<void> {
           }
         }
       }
-      for (const file of INSTALL_FILE_PATHS) {
+      for (const file of SCRIPT_INSTALL_PATHS) {
         console.log(msg.dryRunItem(file));
       }
       console.log("");
@@ -424,10 +392,10 @@ export async function install(options: InstallOptions): Promise<void> {
       }
     }
 
-    const scriptFilesResult = syncFiles(
+    const scriptFilesResult = syncRelativeFiles(
       extractedDir,
       options.cwd,
-      INSTALL_FILE_PATHS,
+      SCRIPT_INSTALL_PATHS,
       isUpdate ? manifest : null,
       msg,
       options.cwd,
