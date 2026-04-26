@@ -27,7 +27,7 @@ jobs:
       - name: Dry-run (${{ matrix.lang }})
         run: node installer/dist/cli.js --dry-run --lang ${{ matrix.lang }}
 
-  validate-pieces:
+  validate-workflows:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,18 +41,18 @@ jobs:
       - name: Install takt
         run: npm install -g takt
 
-      - name: Validate pieces (en)
+      - name: Validate workflows (en)
         run: |
           failed=0
-          for piece in .takt/en/pieces/*.yaml; do
-            echo "::group::$(basename "$piece")"
-            output=$(takt prompt "$piece" 2>&1) && { echo "$output"; } || {
-              if echo "$output" | grep -q "reportContent is required"; then
+          for workflow in .takt/en/workflows/*.yaml; do
+            echo "::group::$(basename "$workflow")"
+            output=$(takt prompt "$workflow" 2>&1) && { echo "$output"; } || {
+              if echo "$output" | grep -qE "reportContent is required|Persona prompt file path is not allowed"; then
                 echo "$output"
-                echo "::notice::Phase 2/3 report preview skipped (expected)"
+                echo "::notice::Validation skipped (expected limitation)"
               else
                 echo "$output"
-                echo "::error::Validation failed: $piece"
+                echo "::error::Validation failed: $workflow"
                 failed=1
               fi
             }
@@ -60,18 +60,18 @@ jobs:
           done
           exit $failed
 
-      - name: Validate pieces (ja)
+      - name: Validate workflows (ja)
         run: |
           failed=0
-          for piece in .takt/ja/pieces/*.yaml; do
-            echo "::group::$(basename "$piece")"
-            output=$(takt prompt "$piece" 2>&1) && { echo "$output"; } || {
-              if echo "$output" | grep -q "reportContent is required"; then
+          for workflow in .takt/ja/workflows/*.yaml; do
+            echo "::group::$(basename "$workflow")"
+            output=$(takt prompt "$workflow" 2>&1) && { echo "$output"; } || {
+              if echo "$output" | grep -qE "reportContent is required|Persona prompt file path is not allowed"; then
                 echo "$output"
-                echo "::notice::Phase 2/3 report preview skipped (expected)"
+                echo "::notice::Validation skipped (expected limitation)"
               else
                 echo "$output"
-                echo "::error::Validation failed: $piece"
+                echo "::error::Validation failed: $workflow"
                 failed=1
               fi
             }

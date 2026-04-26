@@ -20,7 +20,7 @@ function getInstallerVersion(): string {
 
 const REPO = "j5ik2o/takt-sdd";
 const TARGET_DIR = ".takt";
-const PIECE_DIR = "pieces";
+const PIECE_DIR = "workflows";
 const FACET_TYPES = [
   "personas",
   "policies",
@@ -281,9 +281,9 @@ export async function install(options: InstallOptions): Promise<void> {
 
   const manifest = loadManifest(manifestPath);
   const isUpdate = manifest !== null;
-  const piecesExist = existsSync(join(targetPath, "pieces"));
+  const workflowsExist = existsSync(join(targetPath, PIECE_DIR));
 
-  if (!isUpdate && piecesExist && !options.force) {
+  if (!isUpdate && workflowsExist && !options.force) {
     errorExit(msg.existsError("npx create-takt-sdd"));
   }
 
