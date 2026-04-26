@@ -58,6 +58,7 @@ npx create-takt-sdd --tag 0.1.2
 The installer sets up the following:
 
 - **`.takt/`** — Pieces (YAML workflows) and facets in the selected language (`--lang`)
+- **`scripts/opsx-cli.sh`** — OpenSpec workflow helper script used by the opsx workflows
 - **`package.json`** — npm scripts for each phase + takt as devDependency
 
 Options:

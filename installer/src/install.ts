@@ -21,6 +21,7 @@ function getInstallerVersion(): string {
 const REPO = "j5ik2o/takt-sdd";
 const TARGET_DIR = ".takt";
 const PIECE_DIR = "workflows";
+const INSTALL_FILE_PATHS = ["scripts/opsx-cli.sh"] as const;
 const FACET_TYPES = [
   "personas",
   "policies",
@@ -268,6 +269,50 @@ function syncDirectory(
   return { files };
 }
 
+function syncFiles(
+  srcBase: string,
+  destBase: string,
+  relativePaths: readonly string[],
+  manifest: Manifest | null,
+  msg: ReturnType<typeof getMessages>,
+  cwd: string,
+): SyncResult {
+  const files: Record<string, string> = {};
+
+  for (const relFile of relativePaths) {
+    const srcPath = join(srcBase, relFile);
+    if (!existsSync(srcPath)) continue;
+
+    const destPath = join(destBase, relFile);
+    const manifestKey = relative(cwd, destPath).split("\\").join("/");
+    const srcHash = computeFileHash(srcPath);
+    files[manifestKey] = srcHash;
+
+    if (!existsSync(destPath)) {
+      mkdirSync(dirname(destPath), { recursive: true });
+      cpSync(srcPath, destPath);
+      info(msg.fileAdded(manifestKey));
+    } else if (manifest !== null) {
+      const recordedHash = manifest.files[manifestKey];
+      if (recordedHash === undefined) {
+        warn(msg.fileSkippedCustomized(manifestKey));
+      } else {
+        const currentHash = computeFileHash(destPath);
+        if (currentHash === recordedHash) {
+          cpSync(srcPath, destPath);
+          info(msg.fileUpdated(manifestKey));
+        } else {
+          warn(msg.fileSkippedCustomized(manifestKey));
+        }
+      }
+    } else {
+      cpSync(srcPath, destPath);
+    }
+  }
+
+  return { files };
+}
+
 export async function install(options: InstallOptions): Promise<void> {
   const msg = getMessages(options.lang);
   const targetPath = join(options.cwd, TARGET_DIR);
@@ -329,6 +374,9 @@ export async function install(options: InstallOptions): Promise<void> {
           }
         }
       }
+      for (const file of INSTALL_FILE_PATHS) {
+        console.log(msg.dryRunItem(file));
+      }
       console.log("");
       info(msg.dryRunSkipped);
       return;
@@ -375,6 +423,16 @@ export async function install(options: InstallOptions): Promise<void> {
         Object.assign(allFiles, result.files);
       }
     }
+
+    const scriptFilesResult = syncFiles(
+      extractedDir,
+      options.cwd,
+      INSTALL_FILE_PATHS,
+      isUpdate ? manifest : null,
+      msg,
+      options.cwd,
+    );
+    Object.assign(allFiles, scriptFilesResult.files);
 
     const sddPkgPath = join(extractedDir, "package.json");
     const sddDevDependencies: Record<string, string> = {};

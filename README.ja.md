@@ -58,6 +58,7 @@ npx create-takt-sdd --tag 0.1.2
 インストーラは以下をセットアップする：
 
 - **`.takt/`** — 選択言語（`--lang`）のピース（YAML ワークフロー）とファセット群
+- **`scripts/opsx-cli.sh`** — opsx ワークフローが利用する OpenSpec 補助スクリプト
 - **`package.json`** — 各フェーズの npm scripts + takt を devDependency に追加
 
 オプション：
