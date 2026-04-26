@@ -21,7 +21,7 @@ function getInstallerVersion(): string {
 const REPO = "j5ik2o/takt-sdd";
 const TARGET_DIR = ".takt";
 const PIECE_DIR = "workflows";
-const SCRIPT_INSTALL_PATHS = ["scripts/opsx-cli.sh"] as const;
+const OPSX_SCRIPT_INSTALL_PATH = "scripts/opsx-cli.sh";
 const FACET_TYPES = [
   "personas",
   "policies",
@@ -321,6 +321,9 @@ export async function install(options: InstallOptions): Promise<void> {
     if (!existsSync(extractedTakt)) {
       errorExit(msg.archiveError);
     }
+    if (!existsSync(join(extractedDir, OPSX_SCRIPT_INSTALL_PATH))) {
+      errorExit(msg.archiveError);
+    }
 
     const resolvedLayout = options.layout === "auto" ? detectLayout() : options.layout;
     info(msg.layoutDetected(resolvedLayout));
@@ -342,9 +345,7 @@ export async function install(options: InstallOptions): Promise<void> {
           }
         }
       }
-      for (const file of SCRIPT_INSTALL_PATHS) {
-        console.log(msg.dryRunItem(file));
-      }
+      console.log(msg.dryRunItem(OPSX_SCRIPT_INSTALL_PATH));
       console.log("");
       info(msg.dryRunSkipped);
       return;
@@ -395,7 +396,7 @@ export async function install(options: InstallOptions): Promise<void> {
     const scriptFilesResult = syncRelativeFiles(
       extractedDir,
       options.cwd,
-      SCRIPT_INSTALL_PATHS,
+      [OPSX_SCRIPT_INSTALL_PATH],
       isUpdate ? manifest : null,
       msg,
       options.cwd,
