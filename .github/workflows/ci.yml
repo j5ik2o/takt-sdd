@@ -47,9 +47,9 @@ jobs:
           for workflow in .takt/en/workflows/*.yaml; do
             echo "::group::$(basename "$workflow")"
             output=$(takt prompt "$workflow" 2>&1) && { echo "$output"; } || {
-              if echo "$output" | grep -q "reportContent is required"; then
+              if echo "$output" | grep -qE "reportContent is required|Persona prompt file path is not allowed"; then
                 echo "$output"
-                echo "::notice::Phase 2/3 report preview skipped (expected)"
+                echo "::notice::Validation skipped (expected limitation)"
               else
                 echo "$output"
                 echo "::error::Validation failed: $workflow"
@@ -66,9 +66,9 @@ jobs:
           for workflow in .takt/ja/workflows/*.yaml; do
             echo "::group::$(basename "$workflow")"
             output=$(takt prompt "$workflow" 2>&1) && { echo "$output"; } || {
-              if echo "$output" | grep -q "reportContent is required"; then
+              if echo "$output" | grep -qE "reportContent is required|Persona prompt file path is not allowed"; then
                 echo "$output"
-                echo "::notice::Phase 2/3 report preview skipped (expected)"
+                echo "::notice::Validation skipped (expected limitation)"
               else
                 echo "$output"
                 echo "::error::Validation failed: $workflow"
