@@ -15,7 +15,7 @@
 
 A Spec-Driven Development (SDD) workflow definition repository using [takt](https://github.com/nrslib/takt).
 
-Automates the entire development flow — from requirements definition through design, task decomposition, implementation, review, and validation — using takt pieces (YAML workflows) and facets.
+Automates the entire development flow — from requirements definition through design, task decomposition, implementation, review, and validation — using takt workflows (YAML workflows) and facets.
 
 takt-sdd is compatible with Kiro (`.kiro/specs/`) and can be used alongside it.
 
@@ -23,12 +23,12 @@ takt-sdd is compatible with Kiro (`.kiro/specs/`) and can be used alongside it.
 
 takt-sdd uses [takt](https://github.com/nrslib/takt)'s state-machine-based workflow control to deterministically manage AI agent execution paths.
 
-- **Declarative Workflow Control** — Define AI agent execution order and transition conditions declaratively in pieces (YAML). While AI output itself is non-deterministic, "which step, in what order, under what conditions" is deterministically controlled by YAML rules. Workflows progress as state machines, not free-form chat.
-- **Faceted Prompting** — Separate prompts into 5 independent concerns (Persona / Policy / Instruction / Knowledge / Output Contract). Each facet is reusable and swappable, shareable across pieces. Eliminates duplication of monolithic prompts and improves maintainability.
+- **Declarative Workflow Control** — Define AI agent execution order and transition conditions declaratively in workflows (YAML). While AI output itself is non-deterministic, "which step, in what order, under what conditions" is deterministically controlled by YAML rules. Workflows progress as state machines, not free-form chat.
+- **Faceted Prompting** — Separate prompts into 5 independent concerns (Persona / Policy / Instruction / Knowledge / Output Contract). Each facet is reusable and swappable, shareable across workflows. Eliminates duplication of monolithic prompts and improves maintainability.
 - **Multi-stage Validation** — Place validation gates at each phase: requirements, design, and implementation. Gap analysis, design review (GO/NO-GO decisions), and parallel architecture/QA/implementation reviews detect quality issues early and minimize rework.
 - **Loop Detection and Supervisory Control** — Automatically detect repetitive patterns like plan→implement and review→fix. When thresholds are exceeded, a supervisor intervenes to assess progress and automatically escalates unproductive loops.
 - **Adaptive Batch Implementation** — Analyze inter-task dependencies and automatically choose between sequential and parallel execution. Independent tasks are processed in parallel by multiple workers.
-- **Provider Agnostic** — The same piece definitions work across different providers such as Claude and Codex.
+- **Provider Agnostic** — The same workflow definitions work across different providers such as Claude and Codex.
 
 ## Prerequisites
 
@@ -57,7 +57,7 @@ npx create-takt-sdd --tag 0.1.2
 
 The installer sets up the following:
 
-- **`.takt/`** — Pieces (YAML workflows) and facets in the selected language (`--lang`)
+- **`.takt/`** — Workflows (YAML workflows) and facets in the selected language (`--lang`)
 - **`scripts/opsx-cli.sh`** — OpenSpec workflow helper script used by the opsx workflows
 - **`package.json`** — npm scripts for each phase + takt as devDependency
 
@@ -88,7 +88,7 @@ npx -y skills add j5ik2o/ai-tools --skill takt-task-builder
 
 SDD executes the following phases in order:
 
-| Phase | Piece | Description |
+| Phase | Workflow | Description |
 |-------|-------|-------------|
 | 1 | `cc-sdd-requirements` | Requirements document generation in EARS format |
 | 1.5 | `cc-sdd-validate-gap` | Gap analysis between requirements and existing codebase |
@@ -98,7 +98,7 @@ SDD executes the following phases in order:
 | 4 | `cc-sdd-impl` | Adaptive batch implementation (sequential/parallel worker support) |
 | 5 | `cc-sdd-validate-impl` | Parallel architecture, QA, and implementation review, including auto-fix on NO-GO |
 
-Use the full-auto piece `cc-sdd-full` to run Phases 1–5 in a single automated sequence.
+Use the full-auto workflow `cc-sdd-full` to run Phases 1–5 in a single automated sequence.
 
 ### Full-Auto Execution
 
@@ -150,7 +150,7 @@ takt --pipeline --skip-git -w cc-sdd-impl -t "feature={feature}"
 takt --pipeline --skip-git -w cc-sdd-validate-impl -t "feature={feature}"
 ```
 
-For interactive mode, run `takt -w {piece-name}`.
+For interactive mode, run `takt -w {workflow-name}`.
 
 </details>
 
@@ -170,9 +170,9 @@ Artifacts from each phase are output to `.kiro/specs/{feature}/`. The format is 
 
 ## Steering (Project Memory Management)
 
-Separate from the SDD workflow, pieces are provided to manage `.kiro/steering/` as project memory.
+Separate from the SDD workflow, workflows are provided to manage `.kiro/steering/` as project memory.
 
-| Piece | Description |
+| Workflow | Description |
 |-------|-------------|
 | `cc-sdd-steering` | Generation and sync of core steering files (product.md / tech.md / structure.md) |
 | `cc-sdd-steering-custom` | Creation of domain-specific custom steering files |
@@ -244,7 +244,7 @@ Generated steering files are automatically referenced during design phases (`sdd
 
 Separate from the SDD workflow, an OpenSpec-based change management workflow is provided. This workflow manages structured changes through proposal → implementation → archival phases.
 
-| Piece | Description |
+| Workflow | Description |
 |-------|-------------|
 | `opsx-propose` | Create a change and generate all artifacts (proposal, design, tasks) |
 | `opsx-apply` | Implement tasks from a change |
@@ -297,15 +297,15 @@ Changes are stored in `openspec/changes/<name>/` and archived to `openspec/chang
 
 ```
 .takt/
-├── en/                      # English facets and pieces
-│   ├── pieces/              # Piece definitions (workflow YAML)
+├── en/                      # English facets and workflows
+│   ├── pieces/              # Workflow definitions (YAML)
 │   ├── personas/            # Persona facets
 │   ├── policies/            # Policy facets
 │   ├── instructions/        # Instruction facets
 │   ├── knowledge/           # Knowledge facets
 │   └── output-contracts/    # Output contract facets
-└── ja/                      # Japanese facets and pieces
-    ├── pieces/              # ピース定義（ワークフロー YAML）
+└── ja/                      # Japanese facets and workflows
+    ├── pieces/              # ワークフロー定義（YAML）
     ├── personas/            # ペルソナファセット
     ├── policies/            # ポリシーファセット
     ├── instructions/        # インストラクションファセット
