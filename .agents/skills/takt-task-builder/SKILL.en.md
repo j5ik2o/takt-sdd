@@ -14,7 +14,7 @@ description: >
 
 Create and edit TAKT tasks.yaml entries and task directories (order.md).
 
-> **Required takt version**: v0.35.4
+> **Required takt version**: v0.42.0
 
 ## Reference Materials
 
@@ -30,6 +30,7 @@ Task-management materials are under `references/takt/`. Refer to the following a
 | Validation script | This skill's `validate-order-md.sh` | Structural validation for order.md |
 
 **Important**: TaskRecord status-transition rules are strictly validated. Read `references/task-schema.md` and understand the invariants.
+Treat `references/task-schema.md` as the source of truth for execution-config details such as `managed_pr`, `source` / `pr_number`, and `resume_point`.
 
 ## Workflow
 

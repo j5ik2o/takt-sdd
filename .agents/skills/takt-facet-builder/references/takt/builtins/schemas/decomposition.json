@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "properties": {
+    "parts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique part identifier"
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable part title"
+          },
+          "instruction": {
+            "type": "string",
+            "description": "Instruction for the part agent"
+          }
+        },
+        "required": ["id", "title", "instruction"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["parts"],
+  "additionalProperties": false
+}

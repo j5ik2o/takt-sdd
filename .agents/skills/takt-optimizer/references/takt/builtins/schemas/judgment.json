@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "properties": {
+    "step": {
+      "type": "integer",
+      "description": "Matched rule number (1-based)"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Brief justification for the decision"
+    }
+  },
+  "required": ["step", "reason"],
+  "additionalProperties": false
+}

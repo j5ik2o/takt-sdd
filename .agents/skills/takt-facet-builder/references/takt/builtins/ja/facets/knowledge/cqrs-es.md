@@ -205,6 +205,54 @@ data class OrderCancelledEvent(
 - 適切: `ShippingAddressChanged` → 意図が明確
 - 粗すぎ: `OrderModified` → 何が変わったか不明
 
+## Event Evolution
+
+イベントは永続化済みの契約であり、現在のイベント型を変えた場合でも過去イベントを再生できなければならない。旧イベントの読み替えはイベント本体やドメインロジックではなく、イベントストアから復元する境界の upcaster / migration 層で行う。
+
+| 基準 | 判定 |
+|------|------|
+| 永続化済みイベントの型・フィールドを変更したのに変換経路がない | REJECT |
+| 現行イベント型に旧フィールド名の alias や互換用プロパティを残す | REJECT。履歴互換は upcaster に分離 |
+| Aggregate や apply が旧イベント形式を直接解釈する | REJECT。再生前に現行イベントへ変換する |
+| イベントに「変更前の値」を互換目的で追加する | REJECT。イベントは発生後の事実を表す |
+| upcaster が旧 payload を現行イベントの意味へ変換する | OK |
+| 旧 payload から現行イベントへ変換できることをテストしている | OK |
+
+イベント進化で分ける責務:
+
+| 責務 | 置き場所 |
+|------|----------|
+| 現行イベントの意味とフィールド | イベント型 |
+| 旧 payload の読み替え | upcaster / migration 層 |
+| イベント再生による状態復元 | Aggregate の `apply` |
+| 旧イベントから現行イベントへ変換できることの保証 | upcaster テスト |
+
+```kotlin
+// NG - 現行イベント型に旧フィールド互換を混ぜる
+data class OrderAssignedEvent(
+    val orderId: String,
+    @JsonAlias("assigneeId")
+    val assigneeIds: List<String>
+)
+
+// OK - 現行イベント型は現行契約だけを表す
+data class OrderAssignedEvent(
+    val orderId: String,
+    val assigneeIds: List<String>
+)
+```
+
+```kotlin
+// OK - 旧 payload を upcaster で現行 payload へ変換する
+when (eventType) {
+    OrderAssignedEvent::class.java.typeName -> {
+        event.moveTextFieldToArray("assigneeId", "assigneeIds")
+    }
+}
+```
+
+旧イベント型そのものをアプリケーションコードに残すかどうかは、利用フレームワークと運用方針で決める。一般には「旧型を通常のドメインイベントとして扱う」のではなく、「旧 serialized type と payload を upcaster の入力契約としてテストする」方が、現行モデルを汚さずに済む。
+
 ## コマンドハンドラ
 
 | 基準 | 判定 |
@@ -231,6 +279,24 @@ data class OrderCancelledEvent(
 | API層 | 構造的バリデーション | `@NotBlank`, `init` ブロック | 必須項目、型、フォーマット |
 | UseCase層 | ビジネスルール検証 | Read Modelへの問い合わせ | 重複チェック、前提条件の存在確認 |
 | ドメイン層 | 状態遷移の不変条件 | `require` | 「PENDINGでないと承認できない」 |
+
+### Aggregateの判断境界
+
+Aggregate は、自身のイベント履歴から復元できる状態と、コマンドとして明示された事実だけで判断する。境界由来の入力を解釈・正規化・所有権確認する場所ではない。
+
+Aggregate に入れてよい検証は「イベント再生だけで再現できる状態」に基づくものに限る。それ以外の検証は、コマンド送信前に境界側で解決し、Aggregate には解決済みの事実を渡す。
+
+| 判断対象 | 置き場所 |
+|---------|---------|
+| 現在状態でその操作が可能か | Aggregate |
+| コマンド実行者がAggregate ownerと一致するか | Aggregate |
+| HTTP/API入力の形式が正しいか | API層 |
+| object key、URL、path などの外部識別子の形式解釈 | UseCase層または境界側Policy/Verifier |
+| 外部識別子が現在user/tenantに属するか | UseCase層または境界側Policy/Verifier |
+| Read Modelや他Aggregateの状態確認 | UseCase層 |
+| 外部サービス上に実体があるか | Application層の外部サービス連携 |
+
+例: アップロード完了コマンドでは、Aggregate は「このセッションのownerと実行者が一致するか」「現在状態で完了可能か」を判断する。保存先object keyの文字列形式や、そのkeyが現在user/tenantの領域かどうかは、コマンド送信前にUseCase層で検証する。
 
 ```kotlin
 // API層: 構造的バリデーション

@@ -18,7 +18,7 @@ description: >
 
 Executes optimizations on existing TAKT workflows. Diagnostics and analysis are handled by takt-analyze.
 
-> **Required takt version**: v0.35.4
+> **Required takt version**: v0.42.0
 
 ## Reference Materials
 
@@ -149,7 +149,7 @@ Improve efficiency and safety of fix loops.
 | max_steps adjustment | Adjust when max_steps is excessive/insufficient for the number of steps |
 | Fix supervise failure transition | Change `supervise` failure rule to transition to `fix` instead of `plan`. The `supervise -> plan` loop tends to be high-cost and unproductive |
 | Add edit=false build prohibition | Add a prohibition section ("## Do Not") to instructions referenced by `edit: false` steps stating "Do not execute build commands" |
-| Normalize loop monitor judge instruction | Unify `loop_monitors.judge.instruction` to built-in facet references (`loop-monitor-ai-fix`, `loop-monitor-reviewers-fix`) and remove legacy judge template notation |
+| Normalize loop monitor judge instruction | Unify `loop_monitors.judge.instruction` to built-in facet references (`loop-monitor-ai-antipattern-fix`, `loop-monitor-reviewers-fix`) and remove legacy judge template notation |
 | Migrate allowed_tools to provider_options | Move top-level `allowed_tools` to `provider_options.claude.allowed_tools` (v0.30.0+) |
 
 **Recommended threshold values:**

@@ -17,7 +17,7 @@ description: >
 
 既存のTAKTワークフローとファセットを分析し、問題点の検出と改善提案を行う。
 
-> **前提 takt バージョン**: v0.36.0
+> **前提 takt バージョン**: v0.42.0
 
 ## 参照資料
 
@@ -28,7 +28,7 @@ description: >
 | スタイルガイド群 | `references/takt/builtins/ja/*_STYLE_GUIDE.md` | ファセット品質基準 |
 | ビルトインワークフロー | `references/takt/builtins/ja/workflows/` | 構造パターンの参照 |
 | ビルトインファセット | `references/takt/builtins/ja/facets/{personas,policies,instructions,knowledge,output-contracts}/` | ファセット品質の参照 |
-| ログ型定義 | `references/takt/src/core/logging/contracts.ts` | NDJSONレコード型の参照（v0.30.0で `observability` → `logging` にリネーム） |
+| ログ型定義 | `references/takt/src/shared/utils/types.ts` | NDJSONレコード型の参照 |
 | プロバイダイベント | `references/takt/src/core/logging/providerEventLogger.ts` | `*-provider-events.jsonl` の構造 |
 | 利用イベント | `references/takt/src/core/logging/usageEventLogger.ts` | 利用量イベントの構造 |
 | ルール評価 | `references/takt/src/core/workflow/evaluation/RuleEvaluator.ts` | matchedRuleMethod の仕組み（`when:` 決定論的条件含む） |
@@ -147,13 +147,13 @@ description: >
 
 | type | 内容 |
 |------|------|
-| `piece_start` | ピース実行の開始 |
+| `workflow_start` | ワークフロー実行の開始 |
 | `step_start` | ステップの開始 |
 | `step_complete` | ステップ完了（`matchedRuleIndex`, `matchedRuleMethod` を含む） |
 | `phase_start` | フェーズの開始 |
 | `phase_complete` | フェーズ完了（`error` フィールドあり） |
-| `piece_complete` | ピース実行の正常完了（`iterations` を含む） |
-| `piece_abort` | ピース実行の中断（`reason` を含む） |
+| `workflow_complete` | ワークフロー実行の正常完了（`iterations` を含む） |
+| `workflow_abort` | ワークフロー実行の中断（`reason` を含む） |
 | `interactive_start` / `interactive_end` | インタラクティブモードの開始・終了 |
 
 > 各レコード型の詳細フィールドは `references/takt/src/shared/utils/types.ts` を参照。
@@ -185,6 +185,7 @@ description: >
 | `structured_output` | なし | 高 | 構造化出力による判定 |
 
 > `ai_judge_fallback` の頻度が高い場合、output-contract にタグ出力指示を追加すべき。
+> `step_start` には `providerOptions` / `providerOptionsSources` も入るため、期待と異なる provider / effort 解決の原因分析に使える。
 
 #### c) 診断分析項目
 
@@ -193,9 +194,9 @@ description: >
 | ループホットスポット | 同一ステップの `step_start` 出現回数を集計 | 閾値超え=Warning、`loop_monitor` 未設定=Critical |
 | デッドルール | `matchedRuleIndex` の分布でマッチ0回のルールを検出 | Critical（到達不能コード） |
 | ルール評価効率 | `matchedRuleMethod` の分布を集計。`ai_judge_fallback` の割合に注目 | >50%=Warning、>80%=Critical |
-| ABORT率 | `piece_abort` / `piece_complete` の比率 | >30%=Warning、>50%=Critical |
+| ABORT率 | `workflow_abort` / `workflow_complete` の比率 | >30%=Warning、>50%=Critical |
 | フェーズ別エラー | `phase_complete` の `error` フィールドを集計 | 同一フェーズで繰り返しエラー=Warning |
-| イテレーション効率 | `piece_complete.iterations` vs `max_steps` | 常に上限近く=Warning |
+| イテレーション効率 | `workflow_complete.iterations` vs `max_steps` | 常に上限近く=Warning |
 
 #### d) 複数ログの統合分析ガイド
 

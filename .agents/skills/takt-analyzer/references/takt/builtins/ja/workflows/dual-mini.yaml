@@ -96,7 +96,7 @@ steps:
           format: coder-decisions
   - name: reviewers
     parallel:
-      - name: ai_review
+      - name: ai-antipattern-review-2nd
         edit: false
         persona: ai-antipattern-reviewer
         policy:
@@ -110,14 +110,14 @@ steps:
               - Grep
               - WebSearch
               - WebFetch
-        instruction: review-ai
+        instruction: ai-antipattern-review
         rules:
           - condition: AI特有の問題なし
           - condition: AI特有の問題あり
         output_contracts:
           report:
-            - name: ai-review.md
-              format: ai-review
+            - name: ai-antipattern-review.md
+              format: ai-antipattern-review
       - name: supervise
         edit: false
         persona: dual-supervisor
@@ -153,12 +153,12 @@ steps:
       - condition: all("AI特有の問題あり", "要求未達成、テスト失敗、ビルドエラー")
         next: fix_both
       - condition: any("AI特有の問題あり")
-        next: ai_fix
+        next: ai-antipattern-fix
       - condition: any("要求未達成、テスト失敗、ビルドエラー")
         next: supervise_fix
   - name: fix_both
     parallel:
-      - name: ai_fix_parallel
+      - name: ai-antipattern-fix-parallel
         edit: true
         persona: coder
         policy:
@@ -185,7 +185,7 @@ steps:
           - condition: AI問題の修正完了
           - condition: 修正不要（指摘対象ファイル/仕様の確認済み）
           - condition: 判断できない、情報不足
-        instruction: ai-fix
+        instruction: ai-antipattern-fix
       - name: supervise_fix_parallel
         edit: true
         persona: coder
@@ -218,7 +218,7 @@ steps:
         next: reviewers
       - condition: any("修正不要（指摘対象ファイル/仕様の確認済み）", "判断できない、情報不足", "修正を進行できない")
         next: implement
-  - name: ai_fix
+  - name: ai-antipattern-fix
     edit: true
     persona: coder
     policy:
@@ -251,7 +251,7 @@ steps:
         next: implement
       - condition: 判断できない、情報不足
         next: implement
-    instruction: ai-fix
+    instruction: ai-antipattern-fix
   - name: supervise_fix
     edit: true
     persona: coder

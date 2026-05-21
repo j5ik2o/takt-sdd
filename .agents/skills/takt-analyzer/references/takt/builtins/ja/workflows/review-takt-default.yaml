@@ -138,7 +138,7 @@ steps:
           - condition: approved
           - condition: needs_fix
 
-      - name: ai-antipattern-review
+      - name: ai-antipattern-review-2nd
         edit: false
         persona: ai-antipattern-reviewer
         policy:
@@ -153,11 +153,11 @@ steps:
               - Bash
               - WebSearch
               - WebFetch
-        instruction: ai-review
+        instruction: ai-antipattern-review
         output_contracts:
           report:
-            - name: ai-review.md
-              format: ai-review
+            - name: ai-antipattern-review.md
+              format: ai-antipattern-review
         rules:
           - condition: approved
           - condition: needs_fix
@@ -220,7 +220,7 @@ steps:
          - `02-security-review.md`（セキュリティレビュー）
          - `03-qa-review.md`（QAレビュー）
          - `04-testing-review.md`（テストレビュー）
-         - `05-ai-review.md`（AIアンチパターンレビュー）
+         - `05-ai-antipattern-review.md`（AIアンチパターンレビュー）
          - `06-requirements-review.md`（要件充足レビュー）
       2. 5つのレビュー結果を統合
       3. 統合レビューサマリーと総合判定を作成

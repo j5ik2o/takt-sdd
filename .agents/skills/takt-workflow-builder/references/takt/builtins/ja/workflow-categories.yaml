@@ -2,11 +2,14 @@ workflow_categories:
   🚀 クイックスタート:
     workflows:
       - default
-      - frontend-mini
-      - backend-mini
-      - compound-eye
+      - default-mini
+      - default-high
+      - frontend
+      - backend
+      - dual
   ⚡ Mini:
     workflows:
+      - default-mini
       - frontend-mini
       - backend-mini
       - backend-cqrs-mini
@@ -57,6 +60,9 @@ workflow_categories:
   🎵 TAKT開発:
     workflows:
       - takt-default
+      - takt-default-refresh-all
+      - takt-default-refresh-fast
+      - auto-improvement-loop
       - review-takt-default
       - review-fix-takt-default
   その他:

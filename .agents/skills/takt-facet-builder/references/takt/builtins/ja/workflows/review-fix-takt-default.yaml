@@ -10,15 +10,15 @@ max_steps: 50
 initial_step: gather
 loop_monitors:
   - cycle:
-      - ai_review
-      - ai_fix
+      - ai-antipattern-review-1st
+      - ai-antipattern-fix
     threshold: 5
     judge:
       persona: supervisor
-      instruction: loop-monitor-ai-fix
+      instruction: loop-monitor-ai-antipattern-fix
       rules:
         - condition: 健全（進捗あり）
-          next: ai_review
+          next: ai-antipattern-review-1st
         - condition: 非生産的（改善なし）
           next: reviewers
   - cycle:
@@ -163,7 +163,7 @@ steps:
           - condition: approved
           - condition: needs_fix
 
-      - name: ai-antipattern-review
+      - name: ai-antipattern-review-2nd
         edit: false
         persona: ai-antipattern-reviewer
         policy:
@@ -178,11 +178,11 @@ steps:
               - Bash
               - WebSearch
               - WebFetch
-        instruction: ai-review
+        instruction: ai-antipattern-review
         output_contracts:
           report:
-            - name: ai-review.md
-              format: ai-review
+            - name: ai-antipattern-review.md
+              format: ai-antipattern-review
         rules:
           - condition: approved
           - condition: needs_fix
@@ -240,11 +240,11 @@ steps:
     instruction: fix
     rules:
       - condition: 修正完了
-        next: ai_review
+        next: ai-antipattern-review-1st
       - condition: 判断できない、情報不足
         next: ABORT
 
-  - name: ai_review
+  - name: ai-antipattern-review-1st
     edit: false
     persona: ai-antipattern-reviewer
     policy:
@@ -262,13 +262,13 @@ steps:
       - condition: AI固有の問題なし
         next: reviewers
       - condition: AI固有の問題あり
-        next: ai_fix
-    instruction: ai-review
+        next: ai-antipattern-fix
+    instruction: ai-antipattern-review
     output_contracts:
       report:
-        - name: ai-review.md
-          format: ai-review
-  - name: ai_fix
+        - name: ai-antipattern-review.md
+          format: ai-antipattern-review
+  - name: ai-antipattern-fix
     edit: true
     persona: coder
     policy:
@@ -292,13 +292,13 @@ steps:
     pass_previous_response: false
     rules:
       - condition: AI問題修正完了
-        next: ai_review
+        next: ai-antipattern-review-1st
       - condition: 修正不要（対象ファイル・仕様確認済み）
-        next: ai_no_fix
+        next: ai-antipattern-no-fix
       - condition: 判断できない、情報不足
-        next: ai_no_fix
-    instruction: ai-fix
-  - name: ai_no_fix
+        next: ai-antipattern-no-fix
+    instruction: ai-antipattern-fix
+  - name: ai-antipattern-no-fix
     edit: false
     persona: architecture-reviewer
     policy: review
@@ -309,9 +309,9 @@ steps:
           - Glob
           - Grep
     rules:
-      - condition: ai_reviewの指摘が妥当（修正必要）
-        next: ai_fix
-      - condition: ai_fixの判断が妥当（修正不要）
+      - condition: ai-antipattern-review-1stの指摘が妥当（修正必要）
+        next: ai-antipattern-fix
+      - condition: ai-antipattern-fixの判断が妥当（修正不要）
         next: reviewers
     instruction: arbitrate
   - name: supervise

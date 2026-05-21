@@ -15,7 +15,7 @@ description: >
 
 Creates TAKT workflows (workflow YAML) and their associated facet files.
 
-> **Target takt version**: v0.36.0
+> **Target takt version**: v0.42.0
 
 ## Reference Materials
 
@@ -65,6 +65,15 @@ Search for similar patterns in builtin workflows (`references/takt/builtins/en/w
 | `terraform.yaml` | Infrastructure | Terraform |
 | `research.yaml` / `deep-research.yaml` | Research | Research |
 | `magi.yaml` / `compound-eye.yaml` | Special composition | Multi-perspective analysis |
+
+**Representative additions and expansions in v0.42.0**:
+- `default-draft.yaml`, `draft.yaml`: draft-oriented flows that assume managed PR handling
+- `default-high.yaml`: a heavier review/verification profile
+- `default-mini.yaml`: the minimal variant of the standard family
+- `default-peer-review.yaml`, `peer-review.yaml`: explicit peer-review branches
+- `auto-improvement-loop.yaml`: self-improvement loop using system steps and `managed_pr`
+- `review-backend-cqrs.yaml`, `review-dual-cqrs.yaml`, `review-fix-backend-cqrs.yaml`, `review-fix-dual-cqrs.yaml`: CQRS review/review-fix variants
+- `takt-default-refresh-fast.yaml`, `takt-default-refresh-all.yaml`: TAKT self-refresh workflows
 
 **Reuse decision**: Do not create custom facets if builtin facets are sufficient.
 
@@ -132,7 +141,7 @@ steps:
         next: review
 ```
 
-**BREAKING (v0.36.0)**: Legacy aliases (`movements`, `initial_movement`, `max_movements`, `piece_config`, `piece_categories`) have been completely removed. Use canonical names only.
+**Note**: Legacy aliases (`movements`, `initial_movement`, `max_movements`, `piece_config`, `piece_categories`) remain unavailable. Use canonical names only.
 
 #### Parallel Step Example
 
@@ -177,6 +186,7 @@ steps:
 | `pass_previous_response: false` | When you don't want review results passed directly |
 | `required_permission_mode` | Specify `edit` when edit permissions are needed |
 | `provider_options.claude.allowed_tools` | Restrict Claude's available tools per step |
+| `provider_options.<provider>.effort` | Raise reasoning depth when needed; verify model compatibility |
 
 #### Rule Design
 
@@ -347,14 +357,14 @@ Configure when fix loops are expected.
 
 ```yaml
 loop_monitors:
-  - cycle: [ai_review, ai_fix]
+  - cycle: [ai_antipattern_review, ai_antipattern_fix]
     threshold: 3
     judge:
       persona: supervisor
-      instruction: loop-monitor-ai-fix               # Builtin facet reference
+      instruction: loop-monitor-ai-antipattern-fix   # Builtin facet reference
       rules:
         - condition: Healthy (progress is being made)
-          next: ai_review
+          next: ai_antipattern_review
         - condition: Unproductive (no improvement)
           next: reviewers
   - cycle: [reviewers, fix]
