@@ -27,7 +27,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
 
       - name: Upgrade takt
         run: npx -y npm-check-updates -u --filter takt --packageFile package.json
