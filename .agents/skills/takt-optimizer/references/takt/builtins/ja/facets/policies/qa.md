@@ -22,7 +22,9 @@
 
 | パターン | 判定 |
 |---------|------|
-| TODO/FIXMEの放置 | 警告 |
+| Issue番号・外部制約・除去条件のない TODO/FIXME | REJECT |
+| Issue番号・外部制約・除去条件がある TODO/FIXME | 警告 |
+| 空実装、スタブ、コメントアウトされた旧実装の放置 | REJECT |
 | 理由なしの @ts-ignore, @ts-expect-error | 警告 |
 | 理由なしの eslint-disable | 警告 |
 | 非推奨APIの使用 | 警告 |

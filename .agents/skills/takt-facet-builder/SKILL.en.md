@@ -15,7 +15,7 @@ description: >
 
 Create and edit the 5 types of TAKT facet files individually.
 
-> **Required takt version**: v0.36.0
+> **Required takt version**: v0.42.0
 
 ## Reference Materials
 
@@ -31,7 +31,7 @@ When creating facets, refer to the materials in `references/takt/builtins/en/`.
 | Faceted Prompting | `references/takt/docs/faceted-prompting.en.md` | Theory of the 5-facet design |
 | Built-in Facets | `references/takt/builtins/en/facets/{personas,policies,instructions,knowledge,output-contracts}/` | Existing facet examples |
 
-**Note**: The templates directory has been removed. When creating new facets, refer to existing built-in facets instead.
+**Note**: `references/takt/builtins/{ja,en}/templates/` still exists in v0.42.0. You can use it as a scaffold, but treat the built-in facets as the source of truth for naming, scope, and writing style.
 
 **Important**: Always read the relevant style guide before creating a facet.
 
@@ -64,11 +64,11 @@ Check existing built-in facets of the same type and determine if they can be reu
 
 | Facet | Built-in Examples |
 |-------|-------------------|
-| Persona | coder, planner, architect-planner, architecture-reviewer, qa-reviewer, supervisor, security-reviewer, frontend-reviewer, cqrs-es-reviewer, requirements-reviewer, testing-reviewer, terraform-reviewer, dual-supervisor, research-analyzer, research-digger, research-planner, research-supervisor, conductor, test-planner, ai-antipattern-reviewer |
-| Policy | coding, review, testing, qa, ai-antipattern, design-fidelity, design-planning, task-decomposition, screen-api |
-| Instruction | plan, implement, implement-after-tests, write-tests-first, team-leader-implement, dual-team-leader-implement, review-arch, review-qa, review-security, review-frontend, review-cqrs-es, review-requirements, review-test, review-terraform, supervise, fix, ai-review, ai-fix, loop-monitor-ai-fix, loop-monitor-reviewers-fix, architecture-audit-plan, architecture-audit-review, architecture-audit-supervise, architecture-audit-team-leader, audit-security-plan, audit-security-review, audit-security-supervise, audit-security-team-leader, e2e-audit-plan, e2e-audit-review, e2e-audit-supervise, e2e-audit-team-leader, e2e-coverage-implement, e2e-coverage-plan, e2e-coverage-supervise, gather-review, unit-audit-plan, unit-audit-review, unit-audit-supervise, unit-audit-team-leader |
-| Knowledge | architecture, backend, cqrs-es, frontend, security, task-decomposition, takt, terraform-aws, e2e-testing, react, unit-testing |
-| Output Contract | plan, architecture-review, ai-review, qa-review, security-review, frontend-review, cqrs-es-review, requirements-review, testing-review, terraform-review, summary, validation, architecture-audit-plan, architecture-audit, audit-security, e2e-audit-plan, e2e-audit, e2e-coverage-plan, plan-frontend, test-report, unit-audit-plan, unit-audit, supervisor-validation |
+| Persona | coder, planner, architect-planner, architecture-reviewer, qa-reviewer, supervisor, security-reviewer, frontend-reviewer, cqrs-es-reviewer, requirements-reviewer, testing-reviewer, terraform-reviewer, terraform-coder, dual-supervisor, research-analyzer, research-digger, research-planner, research-supervisor, conductor, pr-commenter, test-planner, ai-antipattern-reviewer, melchior, balthasar, casper |
+| Policy | coding, review, testing, qa, ai-antipattern, design-fidelity, design-planning, task-decomposition, screen-api, research, terraform |
+| Instruction | plan, plan-investigate, plan-test, implement, implement-after-tests, implement-test, implement-terraform, write-tests-first, team-leader-implement, dual-team-leader-implement, review-arch, review-qa, review-security, review-frontend, review-cqrs-es, review-requirements, review-test, review-terraform, supervise, fix, fix-supervisor, arbitrate, architect, ai-antipattern-review, ai-antipattern-fix, loop-monitor-ai-antipattern-fix, loop-monitor-reviewers-fix, research-plan, research-dig, research-analyze, research-supervise, gather-review, architecture-audit-plan, architecture-audit-review, architecture-audit-supervise, architecture-audit-team-leader, audit-security-plan, audit-security-review, audit-security-supervise, audit-security-team-leader, e2e-audit-plan, e2e-audit-review, e2e-audit-supervise, e2e-audit-team-leader, e2e-coverage-implement, e2e-coverage-plan, e2e-coverage-supervise, unit-audit-plan, unit-audit-review, unit-audit-supervise, unit-audit-team-leader |
+| Knowledge | architecture, backend, cqrs-es, frontend, security, task-decomposition, takt, terraform-aws, e2e-testing, react, unit-testing, research, research-comparative |
+| Output Contract | plan, architecture-design, architecture-review, ai-antipattern-review, qa-review, security-review, frontend-review, cqrs-es-review, requirements-review, testing-review, terraform-review, summary, validation, coder-scope, coder-decisions, review-gather, research-report, test-plan, test-report, plan-frontend, architecture-audit-plan, architecture-audit, audit-security, e2e-audit-plan, e2e-audit, e2e-coverage-plan, unit-audit-plan, unit-audit, supervisor-validation |
 
 **Reuse Decision**: Do not create a custom facet if a built-in is sufficient.
 
@@ -82,7 +82,7 @@ Reference: existing facets in `references/takt/builtins/en/facets/personas/`
 |----------|----------|----------|
 | `simple.md` | No domain knowledge | coder, planner |
 | `expert.md` | With domain knowledge | architecture-reviewer |
-| `character.md` | Distinct personality/tone | melchior, balthasar |
+| `character.md` | Distinct personality/tone | melchior, balthasar, casper |
 
 ```markdown
 # {Agent Name}

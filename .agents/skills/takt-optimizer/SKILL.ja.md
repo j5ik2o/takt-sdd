@@ -17,7 +17,7 @@ description: >
 
 既存のTAKTワークフローの最適化を実行する。診断・分析は takt-analyze が担う。
 
-> **前提 takt バージョン**: v0.36.0
+> **前提 takt バージョン**: v0.42.0
 
 ## 参照資料
 
@@ -148,7 +148,7 @@ steps:
 | max_steps調整 | ステップ数に対してmax_stepsが過大/過小な場合に調整 |
 | supervise失敗遷移の修正 | `supervise` 失敗時に `plan` へ遷移するルールを `fix` に変更する。`supervise → plan` ループは高コストで非生産的になりやすい |
 | edit=false ビルド禁止の追記 | `edit: false` のステップが参照するインストラクションに「ビルドコマンドを実行しないこと」の禁止セクション（`## やらないこと`）を追加する |
-| loop monitor judge の instruction 正規化 | `loop_monitors.judge.instruction` をビルトインファセット参照（`loop-monitor-ai-fix`, `loop-monitor-reviewers-fix`）へ統一し、旧 judge テンプレート記法を除去する |
+| loop monitor judge の instruction 正規化 | `loop_monitors.judge.instruction` をビルトインファセット参照（`loop-monitor-ai-antipattern-fix`, `loop-monitor-reviewers-fix`）へ統一し、旧 judge テンプレート記法を除去する |
 | allowed_tools の provider_options 移行 | トップレベルの `allowed_tools` を `provider_options.claude.allowed_tools` に移動する（v0.30.0〜） |
 
 **threshold推奨値:**

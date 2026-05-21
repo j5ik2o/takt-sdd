@@ -18,7 +18,7 @@ description: >
 
 Analyzes existing TAKT workflows and facets, detecting issues and providing improvement suggestions.
 
-> **Required takt version**: v0.35.4
+> **Required takt version**: v0.42.0
 
 ## Reference Materials
 
@@ -29,7 +29,7 @@ Analyzes existing TAKT workflows and facets, detecting issues and providing impr
 | Style Guides | `references/takt/builtins/en/*_STYLE_GUIDE.md` | Facet quality criteria |
 | Builtin Workflows | `references/takt/builtins/en/workflows/` | Structural pattern reference |
 | Builtin Facets | `references/takt/builtins/en/{personas,policies,instructions,knowledge,output-contracts}/` | Facet quality reference |
-| Log Type Definitions | `references/takt/src/core/logging/contracts.ts` | NDJSON record type reference (renamed `observability` -> `logging` in v0.30.0) |
+| Log Type Definitions | `references/takt/src/shared/utils/types.ts` | NDJSON record type reference |
 | Provider Events | `references/takt/src/core/logging/providerEventLogger.ts` | `*-provider-events.jsonl` structure |
 | Usage Events | `references/takt/src/core/logging/usageEventLogger.ts` | Usage event structure |
 | Rule Evaluation | `references/takt/src/core/workflow/evaluation/RuleEvaluator.ts` | matchedRuleMethod internals (incl. `when:` deterministic conditions) |
@@ -148,13 +148,13 @@ Parses execution logs (`.takt/logs/*.jsonl`) and detects dynamic issues. Skipped
 
 | type | Description |
 |------|-------------|
-| `piece_start` | Start of workflow execution |
+| `workflow_start` | Start of workflow execution |
 | `step_start` | Start of a step |
 | `step_complete` | Step completion (includes `matchedRuleIndex`, `matchedRuleMethod`) |
 | `phase_start` | Start of a phase |
 | `phase_complete` | Phase completion (has `error` field) |
-| `piece_complete` | Normal completion of workflow execution (includes `iterations`) |
-| `piece_abort` | Abort of workflow execution (includes `reason`) |
+| `workflow_complete` | Normal completion of workflow execution (includes `iterations`) |
+| `workflow_abort` | Abort of workflow execution (includes `reason`) |
 | `interactive_start` / `interactive_end` | Start/end of interactive mode |
 
 > See `references/takt/src/shared/utils/types.ts` for detailed fields of each record type.
@@ -186,6 +186,7 @@ The `matchedRuleMethod` in `step_complete` records indicates which method the ru
 | `structured_output` | None | High | Judgment via structured output |
 
 > If `ai_judge_fallback` frequency is high, add tag output instructions to the output-contract.
+> `step_start` also carries `providerOptions` / `providerOptionsSources`, which is useful when diagnosing unexpected provider or effort resolution.
 
 #### c) Diagnostic Analysis Items
 
@@ -194,9 +195,9 @@ The `matchedRuleMethod` in `step_complete` records indicates which method the ru
 | Loop hotspots | Count `step_start` occurrences for the same step | Exceeds threshold=Warning, no `loop_monitor`=Critical |
 | Dead rules | Detect rules with 0 matches from `matchedRuleIndex` distribution | Critical (unreachable code) |
 | Rule evaluation efficiency | Aggregate `matchedRuleMethod` distribution; focus on `ai_judge_fallback` proportion | >50%=Warning, >80%=Critical |
-| ABORT rate | Ratio of `piece_abort` / `piece_complete` | >30%=Warning, >50%=Critical |
+| ABORT rate | Ratio of `workflow_abort` / `workflow_complete` | >30%=Warning, >50%=Critical |
 | Per-phase errors | Aggregate `phase_complete` `error` fields | Repeated errors in same phase=Warning |
-| Iteration efficiency | `piece_complete.iterations` vs `max_steps` | Consistently near limit=Warning |
+| Iteration efficiency | `workflow_complete.iterations` vs `max_steps` | Consistently near limit=Warning |
 
 #### d) Multiple Log Integration Analysis Guide
 

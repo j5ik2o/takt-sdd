@@ -1,0 +1,208 @@
+name: peer-review
+description: takt-default の Phase 2。5 並列ピアレビュー（+ ai-antipattern-review-2nd）⇄ 修正 ループ。
+subworkflow:
+  callable: true
+  visibility: internal
+  returns:
+    - need_replan
+  params:
+    arch_knowledge:
+      type: facet_ref[]
+      facet_kind: knowledge
+      default:
+        - architecture
+        - takt
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 30
+initial_step: reviewers
+loop_monitors:
+  - cycle:
+      - reviewers
+      - fix
+    threshold: 5
+    judge:
+      persona: supervisor
+      instruction: loop-monitor-reviewers-fix
+      rules:
+        - condition: 健全（指摘数が減少、修正が反映されている）
+          next: reviewers
+        - condition: 非生産的（同じ指摘が繰り返される）
+          next: COMPLETE
+steps:
+  - name: reviewers
+    parallel:
+      - name: arch-review
+        edit: false
+        persona: architecture-reviewer
+        policy: review
+        knowledge:
+          $param: arch_knowledge
+        provider_options:
+          claude:
+            allowed_tools:
+              - Read
+              - Glob
+              - Grep
+              - Bash
+              - WebSearch
+              - WebFetch
+        rules:
+          - condition: approved
+          - condition: needs_fix
+        instruction: review-arch
+        output_contracts:
+          report:
+            - name: architect-review.md
+              format: architecture-review
+      - name: security-review
+        edit: false
+        persona: security-reviewer
+        policy: review
+        knowledge: security
+        provider_options:
+          claude:
+            allowed_tools:
+              - Read
+              - Glob
+              - Grep
+              - Bash
+              - WebSearch
+              - WebFetch
+        rules:
+          - condition: approved
+          - condition: needs_fix
+        instruction: review-security
+        output_contracts:
+          report:
+            - name: security-review.md
+              format: security-review
+      - name: qa-review
+        edit: false
+        persona: qa-reviewer
+        policy:
+          - review
+          - qa
+        provider_options:
+          claude:
+            allowed_tools:
+              - Read
+              - Glob
+              - Grep
+              - Bash
+              - WebSearch
+              - WebFetch
+        rules:
+          - condition: approved
+          - condition: needs_fix
+        instruction: review-qa
+        output_contracts:
+          report:
+            - name: qa-review.md
+              format: qa-review
+      - name: testing-review
+        edit: false
+        persona: testing-reviewer
+        policy:
+          - review
+          - testing
+        knowledge:
+          - unit-testing
+          - e2e-testing
+        provider_options:
+          claude:
+            allowed_tools:
+              - Read
+              - Glob
+              - Grep
+              - Bash
+              - WebSearch
+              - WebFetch
+        rules:
+          - condition: approved
+          - condition: needs_fix
+        instruction: review-test
+        output_contracts:
+          report:
+            - name: testing-review.md
+              format: testing-review
+      - name: requirements-review
+        edit: false
+        persona: requirements-reviewer
+        policy: review
+        provider_options:
+          claude:
+            allowed_tools:
+              - Read
+              - Glob
+              - Grep
+              - Bash
+              - WebSearch
+              - WebFetch
+        rules:
+          - condition: approved
+          - condition: needs_fix
+        instruction: review-requirements
+        output_contracts:
+          report:
+            - name: requirements-review.md
+              format: requirements-review
+      - name: ai-antipattern-review-2nd
+        edit: false
+        persona: ai-antipattern-reviewer
+        policy:
+          - review
+          - ai-antipattern
+        provider_options:
+          claude:
+            allowed_tools:
+              - Read
+              - Glob
+              - Grep
+              - WebSearch
+              - WebFetch
+        instruction: ai-antipattern-review
+        rules:
+          - condition: approved
+          - condition: needs_fix
+        output_contracts:
+          report:
+            - name: ai-antipattern-review.md
+              format: ai-antipattern-review
+    rules:
+      - condition: all("approved")
+        next: COMPLETE
+      - condition: any("needs_fix")
+        next: fix
+  - name: fix
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+    knowledge:
+      - takt
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
+    required_permission_mode: edit
+    pass_previous_response: false
+    rules:
+      - condition: 修正完了
+        next: reviewers
+      - condition: 判断できない、情報不足
+        return: need_replan
+    instruction: fix

@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "enqueue_from_pr",
+        "prepare_merge",
+        "reject_pr"
+      ]
+    },
+    "task_markdown": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "action",
+    "task_markdown"
+  ],
+  "additionalProperties": false
+}

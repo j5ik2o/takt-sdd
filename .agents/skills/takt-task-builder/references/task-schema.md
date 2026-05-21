@@ -20,6 +20,7 @@
 | `branch` | string | - | auto | gitブランチ名（省略時: `takt/{timestamp}-{slug}`） |
 | `auto_pr` | boolean | - | false | 実行後にPR自動作成 |
 | `draft_pr` | boolean | - | false | PRをドラフト状態で作成 |
+| `managed_pr` | boolean | - | false | TAKT管理下のPRフローを使う。`auto_pr: true` かつ `worktree` 有効が前提 |
 | `issue` | int | - | - | GitHub Issue番号 |
 | `start_step` | string | - | - | 開始step名 |
 | `retry_note` | string | - | - | リトライ時のメモ |
@@ -49,6 +50,28 @@ failure:
   error: "エラーメッセージ"  # エラー本体（必須）
   last_message: "..."    # 最後の出力（任意）
 ```
+
+## TaskExecutionConfig の追加制約
+
+- `source: pr_review` のときは `pr_number` が必須
+- `managed_pr: true` のときは `auto_pr: true` が必須
+- `managed_pr: true` のときは `worktree` を有効化する必要がある
+
+## resume_point オブジェクト
+
+```yaml
+resume_point:
+  version: 1
+  stack:
+    - workflow: child-workflow
+      workflow_ref: references/takt/builtins/ja/workflows/default.yaml   # 任意
+      step: review
+      kind: workflow_call   # agent / system / workflow_call
+  iteration: 12
+  elapsed_ms: 38124
+```
+
+サブワークフロー再開用の内部状態。手動作成対象ではなく、自動設定値として扱う。
 
 ## ステータス遷移と不変条件
 
