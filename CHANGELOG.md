@@ -1,3 +1,10 @@
+## [0.18.2](https://github.com/j5ik2o/takt-sdd/compare/v0.18.1...v0.18.2) (2026-05-21)
+
+
+### Bug Fixes
+
+* **installer:** add node types for TypeScript 6 build ([e9b0cfa](https://github.com/j5ik2o/takt-sdd/commit/e9b0cfa7843dd5d9e3362574dd2b5efde17cd24d))
+
 ## [0.18.1](https://github.com/j5ik2o/takt-sdd/compare/v0.18.0...v0.18.1) (2026-04-26)
 
 
