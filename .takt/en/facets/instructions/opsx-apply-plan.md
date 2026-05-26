@@ -21,11 +21,11 @@ Check the task checkbox status and determine the next batch.
 
 4. Read `{tasks_path}`
    - If the file doesn't exist: judge as "tasks.md does not exist or is empty"
-   - If empty or no tasks (`- [ ]` / `- [x]`): same
+   - If empty or no tasks (`- [ ]` / `- [x]` / `- [X]`): same
 
 5. Identify incomplete tasks (`- [ ]`)
 
-6. If all tasks are complete (`- [x]`): judge as "all tasks complete"
+6. If all tasks are complete (`- [x]` or `- [X]`): judge as "all tasks complete"
 
 7. If incomplete tasks exist:
    a. Estimate implementation scope per task (files changed, complexity)

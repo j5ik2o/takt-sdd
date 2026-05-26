@@ -10,7 +10,7 @@ Verify that the implementation aligns with requirements, design, and tasks.
    - `design.md` - Design
    - `tasks.md` - Task list
 4. Check task completion status:
-   - Count the `[x]` checkboxes in `tasks.md`
+   - Count the `[x]` and `[X]` checkboxes in `tasks.md` as complete
    - Identify incomplete tasks
 5. Verify requirements coverage:
    - Confirm that implementation code exists for each requirement ID

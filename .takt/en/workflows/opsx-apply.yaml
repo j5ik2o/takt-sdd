@@ -16,10 +16,11 @@ instructions:
   batch-plan-implement-loop-judge: ../facets/instructions/batch-plan-implement-loop-judge.md
   ai-review-fix-loop-judge: ../facets/instructions/ai-review-fix-loop-judge.md
   opsx-review-fix-loop-judge: ../facets/instructions/opsx-review-fix-loop-judge.md
+  validate-impl: ../facets/instructions/opsx-apply-validate-impl.md
 
 report_formats:
   opsx-apply-summary: ../facets/output-contracts/opsx-apply-summary.md
-  opsx-apply-impl-validation: ../facets/output-contracts/cc-sdd-impl-validation.md
+  opsx-apply-impl-validation: ../facets/output-contracts/opsx-apply-impl-validation.md
 
 # --- Loop Monitors ---
 loop_monitors:
