@@ -360,6 +360,7 @@ export async function install(options: InstallOptions): Promise<void> {
   const msg = getMessages(options.lang);
   const targetPath = join(options.cwd, TARGET_DIR);
   const manifestPath = join(targetPath, MANIFEST_FILE);
+  const openspecConfigPath = join(options.cwd, OPENSPEC_CONFIG_PATH);
 
   try {
     execSync("which tar", { stdio: "ignore" });
@@ -370,9 +371,13 @@ export async function install(options: InstallOptions): Promise<void> {
   const manifest = loadManifest(manifestPath);
   const isUpdate = manifest !== null;
   const workflowsExist = existsSync(join(targetPath, PIECE_DIR));
+  const isRecoverablePartialInstall = !isUpdate && workflowsExist && !existsSync(openspecConfigPath);
 
-  if (!isUpdate && workflowsExist && !options.force) {
+  if (!isUpdate && workflowsExist && !options.force && !isRecoverablePartialInstall) {
     errorExit(msg.existsError("npx create-takt-sdd"));
+  }
+  if (isRecoverablePartialInstall) {
+    warn(msg.recoveringPartialInstall);
   }
 
   info(msg.downloading);

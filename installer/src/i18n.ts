@@ -21,6 +21,7 @@ interface Messages {
   scriptsCreated: string;
   depsAdded: (keys: string[]) => string;
   depsUpdated: (keys: string[]) => string;
+  recoveringPartialInstall: string;
   layoutDetected: (layout: string) => string;
   fileAdded: (path: string) => string;
   fileUpdated: (path: string) => string;
@@ -54,6 +55,7 @@ const en: Messages = {
   scriptsCreated: "Created package.json with npm scripts and devDependencies",
   depsAdded: (keys) => `Added devDependencies: ${keys.join(", ")}`,
   depsUpdated: (keys) => `Updated devDependencies: ${keys.join(", ")}`,
+  recoveringPartialInstall: "Detected a partial install without an OpenSpec config. Continuing recovery install.",
   layoutDetected: (layout) => `Using ${layout} layout`,
   fileAdded: (path) => `Added: ${path}`,
   fileUpdated: (path) => `Updated: ${path}`,
@@ -119,6 +121,7 @@ const ja: Messages = {
   scriptsCreated: "npm scripts と devDependencies 付きの package.json を作成しました",
   depsAdded: (keys) => `devDependencies を追加しました: ${keys.join(", ")}`,
   depsUpdated: (keys) => `devDependencies を更新しました: ${keys.join(", ")}`,
+  recoveringPartialInstall: "OpenSpec 設定のない中途半端なインストールを検出しました。復旧インストールを続行します。",
   layoutDetected: (layout) => `${layout} レイアウトを使用します`,
   fileAdded: (path) => `追加: ${path}`,
   fileUpdated: (path) => `更新: ${path}`,
