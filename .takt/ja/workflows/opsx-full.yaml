@@ -22,11 +22,12 @@ instructions:
   batch-plan-implement-loop-judge: ../facets/instructions/batch-plan-implement-loop-judge.md
   ai-review-fix-loop-judge: ../facets/instructions/ai-review-fix-loop-judge.md
   opsx-review-fix-loop-judge: ../facets/instructions/opsx-review-fix-loop-judge.md
+  validate-impl: ../facets/instructions/opsx-apply-validate-impl.md
 
 report_formats:
   opsx-propose-summary: ../facets/output-contracts/opsx-propose-summary.md
   opsx-apply-summary: ../facets/output-contracts/opsx-apply-summary.md
-  opsx-apply-impl-validation: ../facets/output-contracts/cc-sdd-impl-validation.md
+  opsx-apply-impl-validation: ../facets/output-contracts/opsx-apply-impl-validation.md
   opsx-archive-summary: ../facets/output-contracts/opsx-archive-summary.md
 
 # --- ループ監視 ---
@@ -195,9 +196,9 @@ steps:
         - name: 04-ai-review.md
           format: ai-review
     rules:
-      - condition: AI特有の問題なし
+      - condition: APPROVE
         next: reviewers
-      - condition: AI特有の問題あり
+      - condition: REJECT
         next: ai_fix
 
   # ===== AI問題修正 =====

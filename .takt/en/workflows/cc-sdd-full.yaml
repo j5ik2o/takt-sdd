@@ -326,9 +326,9 @@ steps:
         - name: 04-ai-review.md
           format: ai-review
     rules:
-      - condition: No AI-specific issues found
+      - condition: APPROVE
         next: validate-impl
-      - condition: AI-specific issues found
+      - condition: REJECT
         next: ai_fix
 
   - name: ai_fix
@@ -356,9 +356,9 @@ steps:
     pass_previous_response: false
     instruction: ai-fix
     rules:
-      - condition: AI issue fixes complete
+      - condition: AI issue fix complete
         next: ai_review
-      - condition: No fix needed (target files/specs verified)
+      - condition: Fix not needed (target file/spec verified)
         next: validate-impl
       - condition: Unable to determine, insufficient information
         next: validate-impl

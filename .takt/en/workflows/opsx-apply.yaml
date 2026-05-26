@@ -16,10 +16,11 @@ instructions:
   batch-plan-implement-loop-judge: ../facets/instructions/batch-plan-implement-loop-judge.md
   ai-review-fix-loop-judge: ../facets/instructions/ai-review-fix-loop-judge.md
   opsx-review-fix-loop-judge: ../facets/instructions/opsx-review-fix-loop-judge.md
+  validate-impl: ../facets/instructions/opsx-apply-validate-impl.md
 
 report_formats:
   opsx-apply-summary: ../facets/output-contracts/opsx-apply-summary.md
-  opsx-apply-impl-validation: ../facets/output-contracts/cc-sdd-impl-validation.md
+  opsx-apply-impl-validation: ../facets/output-contracts/opsx-apply-impl-validation.md
 
 # --- Loop Monitors ---
 loop_monitors:
@@ -159,9 +160,9 @@ steps:
         - name: 04-ai-review.md
           format: ai-review
     rules:
-      - condition: No AI-specific issues found
+      - condition: APPROVE
         next: reviewers
-      - condition: AI-specific issues found
+      - condition: REJECT
         next: ai_fix
 
   # ===== AI Issue Fix =====
@@ -281,13 +282,13 @@ steps:
             - name: 07-impl-validation.md
               format: opsx-apply-impl-validation
         rules:
-          - condition: Validation passed
-          - condition: Validation failed
+          - condition: 検証合格
+          - condition: 検証不合格
 
     rules:
-      - condition: all("approved", "approved", "Validation passed")
+      - condition: all("approved", "approved", "検証合格")
         next: supervise
-      - condition: any("needs_fix", "Validation failed")
+      - condition: any("needs_fix", "検証不合格")
         next: fix
 
   - name: fix

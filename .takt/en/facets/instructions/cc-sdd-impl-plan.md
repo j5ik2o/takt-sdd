@@ -12,9 +12,9 @@ Check the check status in tasks.md and determine the next batch.
 3. Establish `tasks_path = .kiro/specs/{feature}/tasks.md`
 4. Read `{tasks_path}`
    - If the file does not exist, determine "tasks.md does not exist or is empty"
-   - Same if the file is empty or contains no tasks (`- [ ]` / `- [x]`)
+   - Same if the file is empty or contains no tasks (`- [ ]` / `- [x]` / `- [X]`)
 5. Identify incomplete tasks (`- [ ]`)
-6. If all tasks are complete (`- [x]`), determine "all tasks complete"
+6. If all tasks are complete (`- [x]` or `- [X]`), determine "all tasks complete"
 7. If there are incomplete tasks:
    a. Estimate the implementation scope of each task (number of files changed, complexity)
    b. Investigate the code to identify the impact scope
