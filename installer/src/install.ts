@@ -571,8 +571,10 @@ export async function install(options: InstallOptions): Promise<void> {
       info(msg.scriptsCreated);
     }
 
-    if (usesOfficialOpenSpec) {
+    if (usesOfficialOpenSpec && !existsSync(openspecConfigPath)) {
       initializeOpenSpecProject(options.cwd, openspecVersionSpec, msg);
+    }
+    if (usesOfficialOpenSpec) {
       removeLegacyOpsxScript(options.cwd, manifest, msg);
     }
 
