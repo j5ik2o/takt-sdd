@@ -59,7 +59,7 @@ You have full context of the OpenSpec system. Use it naturally, don't force it.
 
 At the start, quickly check what exists:
 ```bash
-openspec list --json
+./node_modules/.bin/openspec list --json
 ```
 
 This tells you if there are active changes, their names and status.

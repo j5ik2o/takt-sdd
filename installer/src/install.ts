@@ -526,8 +526,8 @@ export async function install(options: InstallOptions): Promise<void> {
       info(msg.scriptsCreated);
     }
 
-    removeLegacyOpsxScript(options.cwd, manifest, msg);
     initializeOpenSpecProject(options.cwd, msg);
+    removeLegacyOpsxScript(options.cwd, manifest, msg);
 
     const newManifest: Manifest = {
       version: version,

@@ -59,7 +59,7 @@ OpenSpecシステムの完全なコンテキストを持っている。自然に
 
 開始時に既存の状態を素早く確認する:
 ```bash
-openspec list --json
+./node_modules/.bin/openspec list --json
 ```
 
 アクティブな変更があるか、その名前とステータスを確認できる。

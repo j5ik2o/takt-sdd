@@ -10,7 +10,7 @@ Archive a completed OpenSpec change.
 
 2. Check artifact completion status
    ```bash
-   openspec status --change "<name>" --json
+   ./node_modules/.bin/openspec status --change "<name>" --json
    ```
    Parse the JSON to understand:
    - `schemaName`: The workflow being used
@@ -34,17 +34,17 @@ Archive a completed OpenSpec change.
 
 5. Perform the archive with the official lifecycle command
    ```bash
-   openspec archive "<name>" --yes
+   ./node_modules/.bin/openspec archive "<name>" --yes
    ```
    This validates the change, syncs delta specs into `openspec/specs/`, and moves the change into
    `openspec/changes/archive/YYYY-MM-DD-<name>/`.
 
 6. Verify the archive was successful
-   Confirm the change no longer appears in `openspec list` and the archive directory exists.
+   Confirm the change no longer appears in `./node_modules/.bin/openspec list` and the archive directory exists.
 
 **Critical rules:**
 
 - Always check artifact and task completion status before archiving
 - Never block archive on warnings - include them in the report
-- `openspec archive --yes` is the source of truth for sync + archive behavior
+- `./node_modules/.bin/openspec archive --yes` is the source of truth for sync + archive behavior
 - Preserve .openspec.yaml in the archived change directory

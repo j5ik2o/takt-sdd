@@ -10,7 +10,7 @@
 
 2. アーティファクトの完了ステータスを確認する
    ```bash
-   openspec status --change "<name>" --json
+   ./node_modules/.bin/openspec status --change "<name>" --json
    ```
    JSONを解析して以下を理解する:
    - `schemaName`: 使用されているワークフロー
@@ -34,17 +34,17 @@
 
 5. 公式のライフサイクルコマンドでアーカイブを実行する
    ```bash
-   openspec archive "<name>" --yes
+   ./node_modules/.bin/openspec archive "<name>" --yes
    ```
    このコマンドは変更の検証、デルタスペックの `openspec/specs/` への同期、
    `openspec/changes/archive/YYYY-MM-DD-<name>/` への移動をまとめて行う。
 
 6. アーカイブの成功を確認する
-   `openspec list` に対象変更が出なくなり、アーカイブ先ディレクトリが存在することを確認する。
+   `./node_modules/.bin/openspec list` に対象変更が出なくなり、アーカイブ先ディレクトリが存在することを確認する。
 
 **重要なルール:**
 
 - アーカイブ前に必ずアーティファクトとタスクの完了ステータスを確認する
 - 警告でアーカイブをブロックしない - レポートに含める
-- sync と archive の挙動は `openspec archive --yes` を正とする
+- sync と archive の挙動は `./node_modules/.bin/openspec archive --yes` を正とする
 - アーカイブ後も .openspec.yaml が変更ディレクトリ内に保持されることを前提にする

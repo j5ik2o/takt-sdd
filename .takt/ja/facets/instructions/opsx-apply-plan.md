@@ -12,7 +12,7 @@
 
 2. 変更のコンテキストを取得する
    ```bash
-   openspec instructions apply --change "<name>" --json
+   ./node_modules/.bin/openspec instructions apply --change "<name>" --json
    ```
    - `state: "blocked"` の場合: 「tasks.mdが存在しない、またはブロック状態」と判定する
    - レスポンスから `contextFiles` と `tasksFile` を取得する
