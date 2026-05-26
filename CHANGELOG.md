@@ -1,3 +1,13 @@
+## [0.19.1](https://github.com/j5ik2o/takt-sdd/compare/v0.19.0...v0.19.1) (2026-05-26)
+
+
+### Bug Fixes
+
+* align ai review verdict rules ([1f41900](https://github.com/j5ik2o/takt-sdd/commit/1f419001768397b8e68ffd00ff8c727d37ab6765))
+* align english ai fix verdict rules ([c9fdaea](https://github.com/j5ik2o/takt-sdd/commit/c9fdaea559b5b3dbde9b3467e3961c4fe7867884))
+* align english opsx validation verdicts ([c21cd29](https://github.com/j5ik2o/takt-sdd/commit/c21cd297c9eca9c5f86b1401d1325df31f61fcd4))
+* align openspec workflow validation contracts ([686d6f6](https://github.com/j5ik2o/takt-sdd/commit/686d6f6c79fe0c9ca773dd02db2ec491b73216b3))
+
 ## [0.19.0](https://github.com/j5ik2o/takt-sdd/compare/v0.18.2...v0.19.0) (2026-05-26)
 
 
