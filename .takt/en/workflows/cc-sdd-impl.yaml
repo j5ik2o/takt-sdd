@@ -172,9 +172,9 @@ steps:
     pass_previous_response: false
     instruction: ai-fix
     rules:
-      - condition: AI issue fixes complete
+      - condition: AI issue fix complete
         next: ai_review
-      - condition: No fix needed (target files/specs verified)
+      - condition: Fix not needed (target file/spec verified)
         next: supervise
       - condition: Unable to determine, insufficient information
         next: supervise
