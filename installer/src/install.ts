@@ -291,6 +291,10 @@ function getOpenSpecCliPath(): string {
   return resolve(dirname(packageEntry), "..", "bin", "openspec.js");
 }
 
+function getNpmCliPath(): string {
+  return resolve(dirname(process.execPath), "..", "lib", "node_modules", "npm", "bin", "npm-cli.js");
+}
+
 function formatExecError(error: unknown): string {
   if (typeof error === "object" && error !== null) {
     const stderr = Reflect.get(error, "stderr");
@@ -309,19 +313,31 @@ function formatExecError(error: unknown): string {
 
 function initializeOpenSpecProject(
   cwd: string,
+  openspecVersionSpec: string,
   msg: ReturnType<typeof getMessages>,
 ): void {
-  info(msg.openspecInitializing(OPENSPEC_VERSION));
+  info(msg.openspecInitializing(openspecVersionSpec));
   try {
-    execFileSync(
-      process.execPath,
-      [getOpenSpecCliPath(), "init", "--tools", "none", "--force", "."],
-      {
-        cwd,
-        encoding: "utf-8",
-        stdio: ["ignore", "pipe", "pipe"],
-      },
-    );
+    const args = openspecVersionSpec === OPENSPEC_VERSION
+      ? [getOpenSpecCliPath(), "init", "--tools", "none", "--force", "."]
+      : [
+        getNpmCliPath(),
+        "exec",
+        "--yes",
+        `--package=${OPENSPEC_PACKAGE}@${openspecVersionSpec}`,
+        "--",
+        "openspec",
+        "init",
+        "--tools",
+        "none",
+        "--force",
+        ".",
+      ];
+    execFileSync(process.execPath, args, {
+      cwd,
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
   } catch (error) {
     errorExit(msg.openspecInitFailed(formatExecError(error)));
   }
@@ -397,6 +413,8 @@ export async function install(options: InstallOptions): Promise<void> {
 
     const extractedDir = join(tmpDir, `takt-sdd-${version}`);
     const extractedTakt = join(extractedDir, ".takt");
+    const extractedLegacyOpsxPath = join(extractedDir, LEGACY_OPSX_SCRIPT_INSTALL_PATH);
+    const hasLegacyOpsxScript = existsSync(extractedLegacyOpsxPath);
 
     if (!existsSync(extractedTakt)) {
       errorExit(msg.archiveError);
@@ -404,6 +422,18 @@ export async function install(options: InstallOptions): Promise<void> {
 
     const resolvedLayout = options.layout === "auto" ? detectLayout() : options.layout;
     info(msg.layoutDetected(resolvedLayout));
+
+    const sddPkgPath = join(extractedDir, "package.json");
+    const sddDevDependencies: Record<string, string> = {};
+    if (existsSync(sddPkgPath)) {
+      const sddPkg = JSON.parse(readFileSync(sddPkgPath, "utf-8"));
+      const deps = sddPkg.devDependencies ?? {};
+      for (const [key, value] of Object.entries(deps)) {
+        sddDevDependencies[key] = value as string;
+      }
+    }
+    const openspecVersionSpec = sddDevDependencies[OPENSPEC_PACKAGE];
+    const usesOfficialOpenSpec = openspecVersionSpec !== undefined;
 
     if (options.dryRun) {
       info(msg.dryRunHeader);
@@ -422,7 +452,11 @@ export async function install(options: InstallOptions): Promise<void> {
           }
         }
       }
-      console.log(msg.dryRunItem(OPENSPEC_CONFIG_PATH));
+      if (usesOfficialOpenSpec) {
+        console.log(msg.dryRunItem(OPENSPEC_CONFIG_PATH));
+      } else if (hasLegacyOpsxScript) {
+        console.log(msg.dryRunItem(LEGACY_OPSX_SCRIPT_INSTALL_PATH));
+      }
       console.log("");
       info(msg.dryRunSkipped);
       return;
@@ -470,14 +504,20 @@ export async function install(options: InstallOptions): Promise<void> {
       }
     }
 
-    const sddPkgPath = join(extractedDir, "package.json");
-    const sddDevDependencies: Record<string, string> = {};
-    if (existsSync(sddPkgPath)) {
-      const sddPkg = JSON.parse(readFileSync(sddPkgPath, "utf-8"));
-      const deps = sddPkg.devDependencies ?? {};
-      for (const [key, value] of Object.entries(deps)) {
-        sddDevDependencies[key] = value as string;
-      }
+    if (!usesOfficialOpenSpec && hasLegacyOpsxScript) {
+      const scriptFilesResult = syncRelativeFiles(
+        extractedDir,
+        options.cwd,
+        [LEGACY_OPSX_SCRIPT_INSTALL_PATH],
+        isUpdate ? manifest : null,
+        msg,
+        options.cwd,
+      );
+      Object.assign(allFiles, scriptFilesResult.files);
+    }
+
+    if (!usesOfficialOpenSpec && !hasLegacyOpsxScript) {
+      errorExit(msg.requiredFileMissing(LEGACY_OPSX_SCRIPT_INSTALL_PATH));
     }
 
     const pkgPath = join(options.cwd, "package.json");
@@ -531,8 +571,10 @@ export async function install(options: InstallOptions): Promise<void> {
       info(msg.scriptsCreated);
     }
 
-    initializeOpenSpecProject(options.cwd, msg);
-    removeLegacyOpsxScript(options.cwd, manifest, msg);
+    if (usesOfficialOpenSpec) {
+      initializeOpenSpecProject(options.cwd, openspecVersionSpec, msg);
+      removeLegacyOpsxScript(options.cwd, manifest, msg);
+    }
 
     const newManifest: Manifest = {
       version: version,
