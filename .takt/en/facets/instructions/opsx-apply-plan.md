@@ -12,7 +12,7 @@ Check the task checkbox status and determine the next batch.
 
 2. Get change context
    ```bash
-   bash scripts/opsx-cli.sh instructions apply --change "<name>" --json
+   ./node_modules/.bin/openspec instructions apply --change "<name>" --json
    ```
    - If `state: "blocked"`: judge as "tasks.md does not exist or is empty"
    - Parse `contextFiles` and `tasksFile` from the response

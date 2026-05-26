@@ -58,8 +58,8 @@ npx create-takt-sdd --tag 0.1.2
 インストーラは以下をセットアップする：
 
 - **`.takt/`** — 選択言語（`--lang`）のワークフロー（YAML ワークフロー）とファセット群
-- **`scripts/opsx-cli.sh`** — opsx ワークフローが利用する OpenSpec 補助スクリプト
-- **`package.json`** — 各フェーズの npm scripts + takt を devDependency に追加
+- **`openspec/config.yaml`** — OpenSpec `1.3.1` の公式 CLI で初期化されたプロジェクト設定
+- **`package.json`** — 各フェーズの npm scripts と `takt` / `@fission-ai/openspec@1.3.1` を devDependencies に追加
 
 オプション：
 
@@ -70,7 +70,7 @@ npx create-takt-sdd --tag 0.1.2
 | `--lang <en\|ja>` | ファセット・メッセージの言語（デフォルト: `en`） |
 | `--dry-run` | ファイルを書き込まずにプレビュー |
 
-既存の `package.json` がある場合は npm scripts のみマージされる（既存のスクリプトは上書きしない）。
+既存の `package.json` がある場合は npm scripts のみマージされる（既存のスクリプトは上書きしない）。あわせて `openspec init --tools none --force .` を実行するため、AI ツール向けの追加ファイルを増やさずに OpenSpec を利用できる状態になる。
 
 ### スキルの個別追加
 
@@ -244,6 +244,8 @@ npm run cc-sdd:steering:custom -- "testing"
 
 SDD ワークフローとは別に、OpenSpec ベースの変更管理ワークフローを提供する。提案 → 実装 → アーカイブの各フェーズで構造化された変更を管理する。
 
+`npm run opsx:*` の入口は維持しつつ、内部のワークフロー定義は repo ローカルの補助スクリプトではなく、公式 OpenSpec CLI 契約（`openspec new change` / `openspec status` / `openspec instructions` / `openspec archive --yes`）に合わせている。
+
 | ワークフロー | 内容 |
 |--------|------|
 | `opsx-propose` | 変更を作成し、全アーティファクト（提案書、設計書、タスク）を生成 |
@@ -314,8 +316,7 @@ schema: spec-driven
 references/
 └── okite-ai/                # AI ルール集（submodule）
 scripts/
-├── takt.sh                  # takt 実行ラッパー
-└── opsx-cli.sh              # OpenSpec CLI（変更管理）
+└── takt.sh                  # takt 実行ラッパー
 ```
 
 ## 影響を受けたツール

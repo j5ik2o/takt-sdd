@@ -9,7 +9,7 @@ OpenSpec変更からタスクを実装せよ。
 
 2. ステータスを確認してスキーマを理解する
    ```bash
-   bash scripts/opsx-cli.sh status --change "<name>" --json
+   ./node_modules/.bin/openspec status --change "<name>" --json
    ```
    JSONを解析して以下を理解する:
    - `schemaName`: 使用されているワークフロー
@@ -17,7 +17,7 @@ OpenSpec変更からタスクを実装せよ。
 
 3. apply指示を取得する
    ```bash
-   bash scripts/opsx-cli.sh instructions apply --change "<name>" --json
+   ./node_modules/.bin/openspec instructions apply --change "<name>" --json
    ```
    以下が返される:
    - コンテキストファイルパス

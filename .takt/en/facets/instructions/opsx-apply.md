@@ -9,7 +9,7 @@ Implement tasks from an OpenSpec change.
 
 2. Check status to understand the schema
    ```bash
-   bash scripts/opsx-cli.sh status --change "<name>" --json
+   ./node_modules/.bin/openspec status --change "<name>" --json
    ```
    Parse the JSON to understand:
    - `schemaName`: The workflow being used
@@ -17,7 +17,7 @@ Implement tasks from an OpenSpec change.
 
 3. Get apply instructions
    ```bash
-   bash scripts/opsx-cli.sh instructions apply --change "<name>" --json
+   ./node_modules/.bin/openspec instructions apply --change "<name>" --json
    ```
    This returns:
    - Context file paths

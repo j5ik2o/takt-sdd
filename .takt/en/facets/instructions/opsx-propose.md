@@ -13,13 +13,13 @@ Create a new OpenSpec change and generate all required artifacts in one step.
 
 3. Create the change directory
    ```bash
-   bash scripts/opsx-cli.sh new change "<name>"
+   ./node_modules/.bin/openspec new change "<name>"
    ```
    This creates a scaffolded change at `openspec/changes/<name>/` with `.openspec.yaml`.
 
 4. Get the artifact build order
    ```bash
-   bash scripts/opsx-cli.sh status --change "<name>" --json
+   ./node_modules/.bin/openspec status --change "<name>" --json
    ```
    Parse the JSON to get:
    - `applyRequires`: array of artifact IDs needed before implementation
@@ -32,7 +32,7 @@ Create a new OpenSpec change and generate all required artifacts in one step.
    a. For each artifact that is `ready` (dependencies satisfied):
       - Get instructions:
         ```bash
-        bash scripts/opsx-cli.sh instructions <artifact-id> --change "<name>" --json
+        ./node_modules/.bin/openspec instructions <artifact-id> --change "<name>" --json
         ```
       - The instructions JSON includes:
         - `context`: Project background (constraints for you - do NOT include in output)
@@ -45,18 +45,18 @@ Create a new OpenSpec change and generate all required artifacts in one step.
       - Create the artifact file using `template` as the structure
       - Apply `context` and `rules` as constraints - but do NOT copy them into the file
 
-   b. After creating each artifact, re-run `bash scripts/opsx-cli.sh status --change "<name>" --json`
+   b. After creating each artifact, re-run `./node_modules/.bin/openspec status --change "<name>" --json`
       - Check if every artifact ID in `applyRequires` has `status: "done"` in the artifacts array
       - Stop when all `applyRequires` artifacts are done
 
 6. Show final status
    ```bash
-   bash scripts/opsx-cli.sh status --change "<name>"
+   ./node_modules/.bin/openspec status --change "<name>"
    ```
 
 **Critical rules:**
 
-- Follow the `instruction` field from `bash scripts/opsx-cli.sh instructions` for each artifact type
+- Follow the `instruction` field from `./node_modules/.bin/openspec instructions` for each artifact type
 - Use `template` as the structure for your output file - fill in its sections
 - `context` and `rules` are constraints for YOU, not content for the file
   - Do NOT copy `<context>`, `<rules>`, `<project_context>` blocks into the artifact

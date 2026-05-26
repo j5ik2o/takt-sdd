@@ -21,11 +21,16 @@ interface Messages {
   scriptsCreated: string;
   depsAdded: (keys: string[]) => string;
   depsUpdated: (keys: string[]) => string;
+  recoveringPartialInstall: string;
   layoutDetected: (layout: string) => string;
   fileAdded: (path: string) => string;
   fileUpdated: (path: string) => string;
+  fileRemoved: (path: string) => string;
   fileSkippedCustomized: (path: string) => string;
   manifestCreated: string;
+  openspecInitializing: (version: string) => string;
+  openspecInitialized: (path: string) => string;
+  openspecInitFailed: (details: string) => string;
 }
 
 const en: Messages = {
@@ -50,11 +55,16 @@ const en: Messages = {
   scriptsCreated: "Created package.json with npm scripts and devDependencies",
   depsAdded: (keys) => `Added devDependencies: ${keys.join(", ")}`,
   depsUpdated: (keys) => `Updated devDependencies: ${keys.join(", ")}`,
+  recoveringPartialInstall: "Detected a partial install without an OpenSpec config. Continuing recovery install.",
   layoutDetected: (layout) => `Using ${layout} layout`,
   fileAdded: (path) => `Added: ${path}`,
   fileUpdated: (path) => `Updated: ${path}`,
+  fileRemoved: (path) => `Removed: ${path}`,
   fileSkippedCustomized: (path) => `Skipped (customized): ${path}`,
   manifestCreated: "Created install manifest",
+  openspecInitializing: (version) => `Initializing OpenSpec ${version}...`,
+  openspecInitialized: (path) => `OpenSpec initialized: ${path}`,
+  openspecInitFailed: (details) => `Error: failed to initialize OpenSpec.\n${details}`,
   helpText: `Usage: npx create-takt-sdd [options]
 
 Options:
@@ -111,11 +121,16 @@ const ja: Messages = {
   scriptsCreated: "npm scripts と devDependencies 付きの package.json を作成しました",
   depsAdded: (keys) => `devDependencies を追加しました: ${keys.join(", ")}`,
   depsUpdated: (keys) => `devDependencies を更新しました: ${keys.join(", ")}`,
+  recoveringPartialInstall: "OpenSpec 設定のない中途半端なインストールを検出しました。復旧インストールを続行します。",
   layoutDetected: (layout) => `${layout} レイアウトを使用します`,
   fileAdded: (path) => `追加: ${path}`,
   fileUpdated: (path) => `更新: ${path}`,
+  fileRemoved: (path) => `削除: ${path}`,
   fileSkippedCustomized: (path) => `スキップ（カスタマイズ済み）: ${path}`,
   manifestCreated: "インストールマニフェストを作成しました",
+  openspecInitializing: (version) => `OpenSpec ${version} を初期化中...`,
+  openspecInitialized: (path) => `OpenSpec を初期化しました: ${path}`,
+  openspecInitFailed: (details) => `エラー: OpenSpec の初期化に失敗しました。\n${details}`,
   helpText: `使い方: npx create-takt-sdd [オプション]
 
 オプション:

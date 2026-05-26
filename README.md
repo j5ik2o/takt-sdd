@@ -58,8 +58,8 @@ npx create-takt-sdd --tag 0.1.2
 The installer sets up the following:
 
 - **`.takt/`** — Workflows (YAML workflows) and facets in the selected language (`--lang`)
-- **`scripts/opsx-cli.sh`** — OpenSpec workflow helper script used by the opsx workflows
-- **`package.json`** — npm scripts for each phase + takt as devDependency
+- **`openspec/config.yaml`** — OpenSpec project config initialized via the official OpenSpec `1.3.1` CLI
+- **`package.json`** — npm scripts for each phase + `takt` and `@fission-ai/openspec@1.3.1` as devDependencies
 
 Options:
 
@@ -70,7 +70,7 @@ Options:
 | `--lang <en\|ja>` | Facet and message language (default: `en`) |
 | `--dry-run` | Preview files without writing |
 
-When `package.json` already exists, only npm scripts are merged (existing scripts are not overwritten).
+When `package.json` already exists, only npm scripts are merged (existing scripts are not overwritten). The installer also runs `openspec init --tools none --force .`, so OpenSpec is ready without generating extra AI-tool-specific files.
 
 ### Adding Individual Skills
 
@@ -244,6 +244,8 @@ Generated steering files are automatically referenced during design phases (`sdd
 
 Separate from the SDD workflow, an OpenSpec-based change management workflow is provided. This workflow manages structured changes through proposal → implementation → archival phases.
 
+The `npm run opsx:*` entrypoints stay intact, but the workflow definitions now follow the official OpenSpec CLI contract (`openspec new change`, `openspec status`, `openspec instructions`, `openspec archive --yes`) instead of a repo-local helper script.
+
 | Workflow | Description |
 |-------|-------------|
 | `opsx-propose` | Create a change and generate all artifacts (proposal, design, tasks) |
@@ -314,8 +316,7 @@ Changes are stored in `openspec/changes/<name>/` and archived to `openspec/chang
 references/
 └── okite-ai/                # AI rules collection (submodule)
 scripts/
-├── takt.sh                  # takt execution wrapper
-└── opsx-cli.sh              # OpenSpec CLI (change management)
+└── takt.sh                  # takt execution wrapper
 ```
 
 ## Inspired By

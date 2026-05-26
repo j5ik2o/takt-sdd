@@ -10,9 +10,39 @@ const __dirname = dirname(__filename);
 const packageRoot = resolve(__dirname, "..");
 
 type Layout = "auto" | "modern" | "legacy";
+const MIN_NODE_VERSION = { major: 20, minor: 19, patch: 0 } as const;
 
 function isLayout(value: string): value is Layout {
   return value === "auto" || value === "modern" || value === "legacy";
+}
+
+function assertSupportedNodeVersion(): void {
+  const match = process.versions.node.match(/^(\d+)\.(\d+)\.(\d+)/);
+  if (!match) return;
+
+  const [, majorText, minorText, patchText] = match;
+  const current = {
+    major: Number(majorText),
+    minor: Number(minorText),
+    patch: Number(patchText),
+  };
+
+  const supported =
+    current.major > MIN_NODE_VERSION.major
+    || (current.major === MIN_NODE_VERSION.major && current.minor > MIN_NODE_VERSION.minor)
+    || (
+      current.major === MIN_NODE_VERSION.major
+      && current.minor === MIN_NODE_VERSION.minor
+      && current.patch >= MIN_NODE_VERSION.patch
+    );
+
+  if (supported) return;
+
+  console.error(
+    `Error: create-takt-sdd requires Node.js >= ${MIN_NODE_VERSION.major}.${MIN_NODE_VERSION.minor}.${MIN_NODE_VERSION.patch}. `
+      + `Current: ${process.versions.node}`,
+  );
+  process.exit(1);
 }
 
 interface ParsedArgs {
@@ -90,6 +120,7 @@ function parseArgs(argv: string[]): ParsedArgs {
 }
 
 async function main(): Promise<void> {
+  assertSupportedNodeVersion();
   const args = parseArgs(process.argv.slice(2));
 
   if (args.version) {
