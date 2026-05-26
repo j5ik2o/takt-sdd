@@ -10,7 +10,7 @@ Archive a completed OpenSpec change.
 
 2. Check artifact completion status
    ```bash
-   bash scripts/opsx-cli.sh status --change "<name>" --json
+   openspec status --change "<name>" --json
    ```
    Parse the JSON to understand:
    - `schemaName`: The workflow being used
@@ -32,27 +32,19 @@ Archive a completed OpenSpec change.
    - Note what changes would be applied (adds, modifications, removals)
    - Include sync status in the summary report
 
-5. Perform the archive
+5. Perform the archive with the official lifecycle command
    ```bash
-   mkdir -p openspec/changes/archive
+   openspec archive "<name>" --yes
    ```
-
-   Generate target name using current date: `YYYY-MM-DD-<change-name>`
-
-   Check if target already exists:
-   - If yes: ABORT with error, suggest renaming existing archive
-   - If no: Move the change directory
-   ```bash
-   mv openspec/changes/<name> openspec/changes/archive/YYYY-MM-DD-<name>
-   ```
+   This validates the change, syncs delta specs into `openspec/specs/`, and moves the change into
+   `openspec/changes/archive/YYYY-MM-DD-<name>/`.
 
 6. Verify the archive was successful
-   Confirm the directory exists at the new location and the original is gone.
+   Confirm the change no longer appears in `openspec list` and the archive directory exists.
 
 **Critical rules:**
 
 - Always check artifact and task completion status before archiving
 - Never block archive on warnings - include them in the report
-- Preserve .openspec.yaml when moving to archive (it moves with the directory)
-- Use YYYY-MM-DD prefix for archive directory naming
-- If target archive directory already exists, ABORT rather than overwriting
+- `openspec archive --yes` is the source of truth for sync + archive behavior
+- Preserve .openspec.yaml in the archived change directory

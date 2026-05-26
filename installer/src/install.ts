@@ -1,9 +1,10 @@
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import type { IncomingMessage } from "node:http";
 import https from "node:https";
 import { createWriteStream, mkdtempSync } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,6 +12,7 @@ import { type Lang, getMessages } from "./i18n.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const require = createRequire(import.meta.url);
 
 function getInstallerVersion(): string {
   const pkgPath = resolve(__dirname, "..", "package.json");
@@ -21,7 +23,10 @@ function getInstallerVersion(): string {
 const REPO = "j5ik2o/takt-sdd";
 const TARGET_DIR = ".takt";
 const PIECE_DIR = "workflows";
-const OPSX_SCRIPT_INSTALL_PATH = "scripts/opsx-cli.sh";
+const LEGACY_OPSX_SCRIPT_INSTALL_PATH = "scripts/opsx-cli.sh";
+const OPENSPEC_PACKAGE = "@fission-ai/openspec";
+const OPENSPEC_VERSION = "1.3.1";
+const OPENSPEC_CONFIG_PATH = "openspec/config.yaml";
 const FACET_TYPES = [
   "personas",
   "policies",
@@ -281,6 +286,76 @@ function syncDirectory(
   return syncRelativeFiles(srcBase, destBase, collectFiles(srcDir, srcBase), manifest, msg, cwd);
 }
 
+function getOpenSpecCliPath(): string {
+  const packageEntry = require.resolve(OPENSPEC_PACKAGE);
+  return resolve(dirname(packageEntry), "..", "bin", "openspec.js");
+}
+
+function formatExecError(error: unknown): string {
+  if (typeof error === "object" && error !== null) {
+    const stderr = Reflect.get(error, "stderr");
+    if (typeof stderr === "string" && stderr.trim() !== "") return stderr.trim();
+    if (stderr instanceof Buffer && stderr.length > 0) return stderr.toString("utf-8").trim();
+
+    const stdout = Reflect.get(error, "stdout");
+    if (typeof stdout === "string" && stdout.trim() !== "") return stdout.trim();
+    if (stdout instanceof Buffer && stdout.length > 0) return stdout.toString("utf-8").trim();
+
+    const message = Reflect.get(error, "message");
+    if (typeof message === "string" && message.trim() !== "") return message.trim();
+  }
+  return String(error);
+}
+
+function initializeOpenSpecProject(
+  cwd: string,
+  msg: ReturnType<typeof getMessages>,
+): void {
+  info(msg.openspecInitializing(OPENSPEC_VERSION));
+  try {
+    execFileSync(
+      process.execPath,
+      [getOpenSpecCliPath(), "init", "--tools", "none", "--force", "."],
+      {
+        cwd,
+        encoding: "utf-8",
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+  } catch (error) {
+    errorExit(msg.openspecInitFailed(formatExecError(error)));
+  }
+  info(msg.openspecInitialized(OPENSPEC_CONFIG_PATH));
+}
+
+function removeLegacyOpsxScript(
+  cwd: string,
+  manifest: Manifest | null,
+  msg: ReturnType<typeof getMessages>,
+): void {
+  if (manifest === null) return;
+
+  const legacyScriptPath = join(cwd, LEGACY_OPSX_SCRIPT_INSTALL_PATH);
+  if (!existsSync(legacyScriptPath)) return;
+
+  const manifestKey = LEGACY_OPSX_SCRIPT_INSTALL_PATH;
+  const recordedHash = manifest.files[manifestKey];
+  if (recordedHash === undefined) return;
+
+  const currentHash = computeFileHash(legacyScriptPath);
+  if (currentHash !== recordedHash) {
+    warn(msg.fileSkippedCustomized(manifestKey));
+    return;
+  }
+
+  rmSync(legacyScriptPath, { force: true });
+  const legacyScriptDir = dirname(legacyScriptPath);
+  if (existsSync(legacyScriptDir) && readdirSync(legacyScriptDir).length === 0) {
+    rmSync(legacyScriptDir, { recursive: true, force: true });
+  }
+  info(msg.fileRemoved(manifestKey));
+}
+
 export async function install(options: InstallOptions): Promise<void> {
   const msg = getMessages(options.lang);
   const targetPath = join(options.cwd, TARGET_DIR);
@@ -321,9 +396,6 @@ export async function install(options: InstallOptions): Promise<void> {
     if (!existsSync(extractedTakt)) {
       errorExit(msg.archiveError);
     }
-    if (!existsSync(join(extractedDir, OPSX_SCRIPT_INSTALL_PATH))) {
-      errorExit(msg.requiredFileMissing(OPSX_SCRIPT_INSTALL_PATH));
-    }
 
     const resolvedLayout = options.layout === "auto" ? detectLayout() : options.layout;
     info(msg.layoutDetected(resolvedLayout));
@@ -345,7 +417,7 @@ export async function install(options: InstallOptions): Promise<void> {
           }
         }
       }
-      console.log(msg.dryRunItem(OPSX_SCRIPT_INSTALL_PATH));
+      console.log(msg.dryRunItem(OPENSPEC_CONFIG_PATH));
       console.log("");
       info(msg.dryRunSkipped);
       return;
@@ -392,16 +464,6 @@ export async function install(options: InstallOptions): Promise<void> {
         Object.assign(allFiles, result.files);
       }
     }
-
-    const scriptFilesResult = syncRelativeFiles(
-      extractedDir,
-      options.cwd,
-      [OPSX_SCRIPT_INSTALL_PATH],
-      isUpdate ? manifest : null,
-      msg,
-      options.cwd,
-    );
-    Object.assign(allFiles, scriptFilesResult.files);
 
     const sddPkgPath = join(extractedDir, "package.json");
     const sddDevDependencies: Record<string, string> = {};
@@ -463,6 +525,9 @@ export async function install(options: InstallOptions): Promise<void> {
       writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
       info(msg.scriptsCreated);
     }
+
+    removeLegacyOpsxScript(options.cwd, manifest, msg);
+    initializeOpenSpecProject(options.cwd, msg);
 
     const newManifest: Manifest = {
       version: version,

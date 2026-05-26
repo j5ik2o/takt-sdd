@@ -13,13 +13,13 @@
 
 3. 変更ディレクトリを作成する
    ```bash
-   bash scripts/opsx-cli.sh new change "<name>"
+   openspec new change "<name>"
    ```
    これにより `openspec/changes/<name>/` に `.openspec.yaml` を含むスキャフォールドされた変更が作成される。
 
 4. アーティファクトのビルド順序を取得する
    ```bash
-   bash scripts/opsx-cli.sh status --change "<name>" --json
+   openspec status --change "<name>" --json
    ```
    JSONを解析して以下を取得する:
    - `applyRequires`: 実装前に必要なアーティファクトIDの配列
@@ -32,7 +32,7 @@
    a. `ready`（依存関係が満たされている）の各アーティファクトに対して:
       - 指示を取得する:
         ```bash
-        bash scripts/opsx-cli.sh instructions <artifact-id> --change "<name>" --json
+        openspec instructions <artifact-id> --change "<name>" --json
         ```
       - 指示JSONには以下が含まれる:
         - `context`: プロジェクトの背景（あなたへの制約 - 出力に含めないこと）
@@ -45,18 +45,18 @@
       - `template`を構造として使用してアーティファクトファイルを作成する
       - `context`と`rules`は制約として適用するが、ファイルにコピーしない
 
-   b. 各アーティファクト作成後、`bash scripts/opsx-cli.sh status --change "<name>" --json`を再実行する
+   b. 各アーティファクト作成後、`openspec status --change "<name>" --json`を再実行する
       - `applyRequires`のすべてのアーティファクトIDがアーティファクト配列で`status: "done"`であるか確認する
       - すべての`applyRequires`アーティファクトが完了したら停止する
 
 6. 最終ステータスを表示する
    ```bash
-   bash scripts/opsx-cli.sh status --change "<name>"
+   openspec status --change "<name>"
    ```
 
 **重要なルール:**
 
-- 各アーティファクトタイプの`bash scripts/opsx-cli.sh instructions`からの`instruction`フィールドに従う
+- 各アーティファクトタイプの`openspec instructions`からの`instruction`フィールドに従う
 - `template`を出力ファイルの構造として使用する - そのセクションを埋める
 - `context`と`rules`はあなたへの制約であり、ファイルの内容ではない
   - `<context>`、`<rules>`、`<project_context>`ブロックをアーティファクトにコピーしない

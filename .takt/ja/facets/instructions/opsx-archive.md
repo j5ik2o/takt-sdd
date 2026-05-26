@@ -10,7 +10,7 @@
 
 2. アーティファクトの完了ステータスを確認する
    ```bash
-   bash scripts/opsx-cli.sh status --change "<name>" --json
+   openspec status --change "<name>" --json
    ```
    JSONを解析して以下を理解する:
    - `schemaName`: 使用されているワークフロー
@@ -32,27 +32,19 @@
    - 適用される変更（追加、変更、削除）を記録する
    - サマリーレポートに同期ステータスを含める
 
-5. アーカイブを実行する
+5. 公式のライフサイクルコマンドでアーカイブを実行する
    ```bash
-   mkdir -p openspec/changes/archive
+   openspec archive "<name>" --yes
    ```
-
-   現在の日付でターゲット名を生成: `YYYY-MM-DD-<change-name>`
-
-   ターゲットが既に存在するか確認:
-   - 存在する場合: ABORTしてエラーを返し、既存アーカイブの名前変更を提案
-   - 存在しない場合: 変更ディレクトリを移動
-   ```bash
-   mv openspec/changes/<name> openspec/changes/archive/YYYY-MM-DD-<name>
-   ```
+   このコマンドは変更の検証、デルタスペックの `openspec/specs/` への同期、
+   `openspec/changes/archive/YYYY-MM-DD-<name>/` への移動をまとめて行う。
 
 6. アーカイブの成功を確認する
-   ディレクトリが新しい場所に存在し、元の場所から消えていることを確認する。
+   `openspec list` に対象変更が出なくなり、アーカイブ先ディレクトリが存在することを確認する。
 
 **重要なルール:**
 
 - アーカイブ前に必ずアーティファクトとタスクの完了ステータスを確認する
 - 警告でアーカイブをブロックしない - レポートに含める
-- アーカイブ時に.openspec.yamlを保持する（ディレクトリと一緒に移動）
-- アーカイブディレクトリの命名にYYYY-MM-DDプレフィックスを使用する
-- ターゲットアーカイブディレクトリが既に存在する場合、上書きせずABORTする
+- sync と archive の挙動は `openspec archive --yes` を正とする
+- アーカイブ後も .openspec.yaml が変更ディレクトリ内に保持されることを前提にする

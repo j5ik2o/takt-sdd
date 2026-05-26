@@ -37,7 +37,8 @@ opsx-propose → opsx-apply → opsx-archive
 
 ## インストーラの仕組み
 
-- `installer/src/install.ts` が本体。`.takt/` のピースとファセットを配置し、`package.json` に必要な scripts と `takt` の devDependency を追加する。
+- `installer/src/install.ts` が本体。`.takt/` のピースとファセットを配置し、`package.json` に必要な scripts と `takt` / `@fission-ai/openspec@1.3.1` の devDependencies を追加する。
+- インストール時に `openspec init --tools none --force .` を実行し、`openspec/config.yaml` を初期化する。
 - TAKT スキルは別リポジトリで提供しており、必要に応じて個別に導入する。
 
 # 基本原則
