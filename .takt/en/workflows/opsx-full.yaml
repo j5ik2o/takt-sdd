@@ -318,13 +318,13 @@ steps:
             - name: 07-impl-validation.md
               format: opsx-apply-impl-validation
         rules:
-          - condition: Validation passed
-          - condition: Validation failed
+          - condition: 検証合格
+          - condition: 検証不合格
 
     rules:
-      - condition: all("approved", "approved", "Validation passed")
+      - condition: all("approved", "approved", "検証合格")
         next: supervise
-      - condition: any("needs_fix", "Validation failed")
+      - condition: any("needs_fix", "検証不合格")
         next: fix
 
   - name: fix
