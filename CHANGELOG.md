@@ -1,3 +1,18 @@
+## [0.19.0](https://github.com/j5ik2o/takt-sdd/compare/v0.18.2...v0.19.0) (2026-05-26)
+
+
+### Features
+
+* **installer:** use official openspec cli ([e96bac7](https://github.com/j5ik2o/takt-sdd/commit/e96bac7cdb333e4f1bcdbbc3b040af08431a135d))
+
+
+### Bug Fixes
+
+* **installer:** address review comments ([d1d0587](https://github.com/j5ik2o/takt-sdd/commit/d1d0587f89030971f36558529e284f4899f0ddba))
+* **installer:** align tagged openspec setup ([7a20ca5](https://github.com/j5ik2o/takt-sdd/commit/7a20ca5dcd142dae1fa4049d6ee8939ba0740b49))
+* **installer:** preserve openspec config on update ([c6f384f](https://github.com/j5ik2o/takt-sdd/commit/c6f384ffa0435902e7db8b73186fe7f1a3bb1572))
+* **installer:** recover partial openspec init ([46da2c9](https://github.com/j5ik2o/takt-sdd/commit/46da2c9549d0b490789137795b6d93da3b9b93e7))
+
 ## [0.18.2](https://github.com/j5ik2o/takt-sdd/compare/v0.18.1...v0.18.2) (2026-05-21)
 
 
