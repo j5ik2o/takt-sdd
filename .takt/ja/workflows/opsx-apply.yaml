@@ -160,9 +160,9 @@ steps:
         - name: 04-ai-review.md
           format: ai-review
     rules:
-      - condition: AI特有の問題なし
+      - condition: APPROVE
         next: reviewers
-      - condition: AI特有の問題あり
+      - condition: REJECT
         next: ai_fix
 
   # ===== AI問題修正 =====

@@ -196,9 +196,9 @@ steps:
         - name: 04-ai-review.md
           format: ai-review
     rules:
-      - condition: No AI-specific issues found
+      - condition: APPROVE
         next: reviewers
-      - condition: AI-specific issues found
+      - condition: REJECT
         next: ai_fix
 
   # ===== AI Issue Fix =====
