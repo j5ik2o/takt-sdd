@@ -5,7 +5,7 @@
   "description": "Spec-Driven Development workflow for takt",
   "devDependencies": {
     "@fission-ai/openspec": "1.3.1",
-    "takt": "^0.42.0"
+    "takt": "^0.43.0"
   },
   "scripts": {
     "cc-sdd:full": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-full -t",
