@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "properties": {
+    "matched_index": {
+      "type": "integer",
+      "description": "Matched condition number (1-based)"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Why this condition was matched"
+    }
+  },
+  "required": ["matched_index", "reason"],
+  "additionalProperties": false
+}

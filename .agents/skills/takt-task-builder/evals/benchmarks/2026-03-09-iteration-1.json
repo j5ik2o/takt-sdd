@@ -1,0 +1,186 @@
+{
+  "metadata": {
+    "skill_name": "takt-task-builder",
+    "skill_path": "/Users/j5ik2o/Sources/j5ik2o.github.com/j5ik2o/ai-tools/plugins/takt/skills/takt-task-builder",
+    "timestamp": "2026-03-09T13:10:00Z",
+    "evals_run": [1, 2, 3],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "single-task-jwt-auth",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 64.7,
+        "tokens": 34104,
+        "tool_calls": 11,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "tasks.yamlが生成されている", "passed": true, "evidence": "Found in outputs/.takt/tasks.yaml"},
+        {"text": "order.mdが生成されている", "passed": true, "evidence": "Found 2 order.md(s)"},
+        {"text": "slugがYYYYMMDD-HHmmss-xxxxxx形式", "passed": true, "evidence": "slug='20260309-130313-jr84pl'"},
+        {"text": "piece: default が設定されている", "passed": true, "evidence": "piece='default'"},
+        {"text": "worktree: true が設定されている", "passed": true, "evidence": "worktree=True"},
+        {"text": "auto_pr: true が設定されている", "passed": true, "evidence": "auto_pr=True"},
+        {"text": "status: pending が設定されている", "passed": true, "evidence": "status='pending'"},
+        {"text": "order.mdに目的・要件・受け入れ基準セクションがある", "passed": true, "evidence": "All sections present"}
+      ]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "single-task-jwt-auth",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.88,
+        "passed": 7,
+        "failed": 1,
+        "total": 8,
+        "time_seconds": 93.7,
+        "tokens": 61685,
+        "tool_calls": 23,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "tasks.yamlが生成されている", "passed": true, "evidence": "Found in outputs/.takt/tasks.yaml"},
+        {"text": "order.mdが生成されている", "passed": true, "evidence": "Found 2 order.md(s)"},
+        {"text": "slugがYYYYMMDD-HHmmss-xxxxxx形式", "passed": false, "evidence": "slug='jwt-auth'"},
+        {"text": "piece: default が設定されている", "passed": true, "evidence": "piece='default'"},
+        {"text": "worktree: true が設定されている", "passed": true, "evidence": "worktree=True"},
+        {"text": "auto_pr: true が設定されている", "passed": true, "evidence": "auto_pr=True"},
+        {"text": "status: pending が設定されている", "passed": true, "evidence": "status='pending'"},
+        {"text": "order.mdに目的・要件・受け入れ基準セクションがある", "passed": true, "evidence": "All sections present"}
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "parallel-three-independent-tasks",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 89.1,
+        "tokens": 36320,
+        "tool_calls": 11,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "tasks.yamlが生成されている", "passed": true, "evidence": "Found in outputs/.takt/tasks.yaml"},
+        {"text": "tasks.yamlに3エントリがある", "passed": true, "evidence": "Found 3 tasks"},
+        {"text": "全タスクにworktree: trueが設定されている", "passed": true, "evidence": "worktree values: [True, True, True]"},
+        {"text": "3つのorder.mdが生成されている", "passed": true, "evidence": "Found 3 order.md files"},
+        {"text": "3つのslugが全て異なる", "passed": true, "evidence": "slugs unique"},
+        {"text": "全slugがYYYYMMDD-HHmmss-xxxxxx形式", "passed": true, "evidence": "All valid format"},
+        {"text": "並列実行の推奨concurrency値が提示されている", "passed": true, "evidence": "Found in parallel-execution-analysis.md"}
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "parallel-three-independent-tasks",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.71,
+        "passed": 5,
+        "failed": 2,
+        "total": 7,
+        "time_seconds": 88.7,
+        "tokens": 54781,
+        "tool_calls": 14,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "tasks.yamlが生成されている", "passed": true, "evidence": "Found in outputs/.takt/tasks.yaml"},
+        {"text": "tasks.yamlに3エントリがある", "passed": true, "evidence": "Found 3 tasks"},
+        {"text": "全タスクにworktree: trueが設定されている", "passed": true, "evidence": "worktree values: [True, True, True]"},
+        {"text": "3つのorder.mdが生成されている", "passed": true, "evidence": "Found 3 order.md files"},
+        {"text": "3つのslugが全て異なる", "passed": true, "evidence": "slugs unique (name-based)"},
+        {"text": "全slugがYYYYMMDD-HHmmss-xxxxxx形式", "passed": false, "evidence": "slugs: ['api-rate-limit-middleware', 'user-profile-ui', 'notification-email-sender']"},
+        {"text": "並列実行の推奨concurrency値が提示されている", "passed": false, "evidence": "No analysis file found"}
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "issue-based-task-dual-piece",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 52.7,
+        "tokens": 34010,
+        "tool_calls": 9,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "tasks.yamlが生成されている", "passed": true, "evidence": "Found in outputs/.takt/tasks.yaml"},
+        {"text": "piece: dual が設定されている", "passed": true, "evidence": "piece='dual'"},
+        {"text": "branch: fix/issue-42 が設定されている", "passed": true, "evidence": "branch='fix/issue-42'"},
+        {"text": "issue: 42 が設定されている", "passed": true, "evidence": "issue=42"},
+        {"text": "slugがYYYYMMDD-HHmmss-xxxxxx形式", "passed": true, "evidence": "slug='20260309-130333-raj7yt'"},
+        {"text": "order.mdに目的・要件・受け入れ基準セクションがある", "passed": true, "evidence": "All sections present"}
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "issue-based-task-dual-piece",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.67,
+        "passed": 4,
+        "failed": 2,
+        "total": 6,
+        "time_seconds": 56.3,
+        "tokens": 56278,
+        "tool_calls": 14,
+        "errors": 0
+      },
+      "expectations": [
+        {"text": "tasks.yamlが生成されている", "passed": true, "evidence": "Found in outputs/.takt/tasks.yaml"},
+        {"text": "piece: dual が設定されている", "passed": true, "evidence": "piece='dual'"},
+        {"text": "branch: fix/issue-42 が設定されている", "passed": true, "evidence": "branch='fix/issue-42'"},
+        {"text": "issue: 42 が設定されている", "passed": true, "evidence": "issue=42"},
+        {"text": "slugがYYYYMMDD-HHmmss-xxxxxx形式", "passed": false, "evidence": "slug='fix-issue-42'"},
+        {"text": "order.mdに目的・要件・受け入れ基準セクションがある", "passed": false, "evidence": "Missing: ['目的', '受け入れ基準']"}
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0},
+      "time_seconds": {"mean": 68.8, "stddev": 18.8, "min": 52.7, "max": 89.1},
+      "tokens": {"mean": 34811, "stddev": 1256, "min": 34010, "max": 36320}
+    },
+    "without_skill": {
+      "pass_rate": {"mean": 0.75, "stddev": 0.11, "min": 0.67, "max": 0.88},
+      "time_seconds": {"mean": 79.6, "stddev": 20.5, "min": 56.3, "max": 93.7},
+      "tokens": {"mean": 57581, "stddev": 3587, "min": 54781, "max": 61685}
+    },
+    "delta": {
+      "pass_rate": "+0.25",
+      "time_seconds": "-10.8",
+      "tokens": "-22770"
+    }
+  },
+  "notes": [
+    "スキルあり版は全3テストケースで100%パス。スキルなし版は平均75%",
+    "slug形式（YYYYMMDD-HHmmss-xxxxxx）はスキルなし版で一貫して失敗 — TAKT固有の規約なのでスキルがないと知りえない",
+    "並列実行分析（concurrency推奨）はスキルあり版のみ生成 — スキルのStep 2が効果的に機能",
+    "order.mdのセクション構造（目的/要件/受け入れ基準）はスキルなし版で不安定 — テンプレートの有無が品質差を生む",
+    "トークン消費はスキルあり版が平均39%少ない（34.8k vs 57.6k）— スキルのガイダンスにより試行錯誤が減っている",
+    "tasks.yaml存在、piece/branch/issue設定は両方とも安定してパス — これらはスキルの差別化要因ではない"
+  ]
+}

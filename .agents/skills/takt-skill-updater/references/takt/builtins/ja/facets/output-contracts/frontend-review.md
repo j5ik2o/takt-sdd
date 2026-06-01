@@ -1,0 +1,45 @@
+```markdown
+# フロントエンドレビュー
+
+## 結果: APPROVE / REJECT
+
+## サマリー
+{1-2文で結果を要約}
+
+## 確認した観点
+| 観点 | 結果 | 備考 |
+|------|------|------|
+| コンポーネント設計 | ✅ | - |
+| 状態管理 | ✅ | - |
+| パフォーマンス | ✅ | - |
+| アクセシビリティ | ✅ | - |
+| 型安全性 | ✅ | - |
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | 場所 | 問題 | 修正案 |
+|---|------------|------------|------|------|--------|
+| 1 | FE-NEW-src-file-L42 | component-design | `src/file.tsx:42` | 問題の説明 | 修正方法 |
+
+## 継続指摘（persists）
+| # | finding_id | family_tag | 前回根拠 | 今回根拠 | 問題 | 修正案 |
+|---|------------|------------|----------|----------|------|--------|
+| 1 | FE-PERSIST-src-file-L77 | component-design | `src/file.tsx:77` | `src/file.tsx:77` | 未解消 | 既存修正方針を適用 |
+
+## 解消済み（resolved）
+| finding_id | 解消根拠 |
+|------------|----------|
+| FE-RESOLVED-src-file-L10 | `src/file.tsx:10` は規約を満たす |
+
+## 再開指摘（reopened）
+| # | finding_id | family_tag | 解消根拠（前回） | 再発根拠 | 問題 | 修正案 |
+|---|------------|------------|----------------|---------|------|--------|
+| 1 | FE-REOPENED-src-file-L55 | component-design | `前回: src/file.tsx:10 で修正済み` | `src/file.tsx:55 で再発` | 問題の説明 | 修正方法 |
+
+## REJECT判定条件
+- `new`、`persists`、または `reopened` が1件以上ある場合のみ REJECT 可
+- `finding_id` なしの指摘は無効
+```
+
+**認知負荷軽減ルール:**
+- APPROVE → サマリーのみ（5行以内）
+- REJECT → 該当指摘のみ表で記載（30行以内）

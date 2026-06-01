@@ -1,0 +1,76 @@
+name: audit-security
+description: セキュリティ全件監査。プロジェクトの全ファイルを1つずつ読んでセキュリティレビューする
+max_steps: 15
+initial_step: plan
+
+loop_monitors:
+  - cycle: [supervise, review]
+    threshold: 3
+    judge:
+      persona: supervisor
+      instruction: |
+        セキュリティ監査の supervise → review サイクルが {cycle_count} 回繰り返されました。
+        監査レポートを確認し、以下を判断してください:
+        - 監査スコープが前回サイクルから拡大しているか（新しいファイルが監査されたか）
+        - 残りの未監査ファイルは合理的なサイクル数で完了可能か
+      rules:
+        - condition: 監査品質・スコープが十分
+          next: COMPLETE
+        - condition: スコープが拡大しており改善が続いている
+          next: review
+        - condition: スコープが停滞し改善の見込みがない
+          next: ABORT
+
+steps:
+  - name: plan
+    persona: planner
+    instruction: audit-security-plan
+    edit: false
+    output_contracts:
+      report:
+        - name: 01-plan.md
+          format: plan
+    rules:
+      - condition: プロジェクト構造の把握完了
+        next: audit
+
+  - name: audit
+    persona: security-reviewer
+    knowledge: security
+    instruction: audit-security-team-leader
+    edit: false
+    team_leader:
+      max_parts: 3
+      part_persona: security-reviewer
+      part_edit: false
+    output_contracts:
+      report:
+        - name: 02-audit-security.md
+          format: audit-security
+    rules:
+      - condition: 監査完了
+        next: supervise
+
+  - name: supervise
+    persona: supervisor
+    knowledge: security
+    instruction: audit-security-supervise
+    edit: false
+    rules:
+      - condition: 全ファイルが監査済みで品質も十分
+        next: COMPLETE
+      - condition: 未監査ファイルがある、または監査が不十分
+        next: review
+
+  - name: review
+    persona: security-reviewer
+    knowledge: security
+    instruction: audit-security-review
+    edit: false
+    output_contracts:
+      report:
+        - name: 02-audit-security.md
+          format: audit-security
+    rules:
+      - condition: 再監査完了
+        next: supervise

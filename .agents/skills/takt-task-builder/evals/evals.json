@@ -1,0 +1,50 @@
+{
+  "skill_name": "takt-task-builder",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "ユーザー認証機能をJWTベースで実装するタスクを作って。ピースはdefaultで、worktreeで隔離してPRも自動作成してほしい",
+      "expected_output": "tasks.yamlにpendingステータスのタスクエントリが生成され、.takt/tasks/{slug}/order.mdに目的・要件・受け入れ基準を含むタスク仕様書が作成される",
+      "files": [],
+      "expectations": [
+        "tasks.yamlが生成されている",
+        "order.mdが生成されている",
+        "slugがYYYYMMDD-HHmmss-xxxxxx形式",
+        "piece: default が設定されている",
+        "worktree: true が設定されている",
+        "auto_pr: true が設定されている",
+        "status: pending が設定されている",
+        "order.mdに目的・要件・受け入れ基準セクションがある"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "3つのタスクを作りたい。①APIのレート制限ミドルウェア追加、②ユーザープロフィール画面のUI実装、③通知サービスのメール送信機能追加。それぞれ独立したモジュールで、全部defaultピースでお願い",
+      "expected_output": "tasks.yamlに3つのpendingタスクエントリが生成され、各タスクにworktree: trueが設定され、それぞれのorder.mdが作成される。並列実行の推奨concurrency値が提示される",
+      "files": [],
+      "expectations": [
+        "tasks.yamlが生成されている",
+        "tasks.yamlに3エントリがある",
+        "全タスクにworktree: trueが設定されている",
+        "3つのorder.mdが生成されている",
+        "3つのslugが全て異なる",
+        "全slugがYYYYMMDD-HHmmss-xxxxxx形式",
+        "並列実行の推奨concurrency値が提示されている"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Issue #42 の内容をもとにtaktタスクを作って。dualピースで、ブランチ名は fix/issue-42 にして",
+      "expected_output": "tasks.yamlにpiece: dual、branch: fix/issue-42、issue: 42が設定されたタスクエントリが生成され、対応するorder.mdが作成される",
+      "files": [],
+      "expectations": [
+        "tasks.yamlが生成されている",
+        "piece: dual が設定されている",
+        "branch: fix/issue-42 が設定されている",
+        "issue: 42 が設定されている",
+        "slugがYYYYMMDD-HHmmss-xxxxxx形式",
+        "order.mdに目的・要件・受け入れ基準セクションがある"
+      ]
+    }
+  ]
+}

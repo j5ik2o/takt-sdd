@@ -1,0 +1,47 @@
+```markdown
+# CQRS+ESレビュー
+
+## 結果: APPROVE / REJECT
+
+## サマリー
+{1-2文で結果を要約}
+
+## 確認した観点
+| 観点 | 結果 | 備考 |
+|------|------|------|
+| Aggregate設計 | ✅ | - |
+| イベント設計 | ✅ | - |
+| Command/Query分離 | ✅ | - |
+| プロジェクション | ✅ | - |
+| 結果整合性 | ✅ | - |
+
+## 今回の指摘（new）
+| # | finding_id | family_tag | スコープ | 場所 | 問題 | 修正案 |
+|---|------------|------------|---------|------|------|--------|
+| 1 | CQRS-NEW-src-file-L42 | cqrs-violation | スコープ内 | `src/file.ts:42` | 問題の説明 | 修正方法 |
+
+スコープ: 「スコープ内」（今回修正可能）/ 「スコープ外」（既存問題・非ブロッキング）
+
+## 継続指摘（persists）
+| # | finding_id | family_tag | 前回根拠 | 今回根拠 | 問題 | 修正案 |
+|---|------------|------------|----------|----------|------|--------|
+| 1 | CQRS-PERSIST-src-file-L77 | cqrs-violation | `src/file.ts:77` | `src/file.ts:77` | 未解消 | 既存修正方針を適用 |
+
+## 解消済み（resolved）
+| finding_id | 解消根拠 |
+|------------|----------|
+| CQRS-RESOLVED-src-file-L10 | `src/file.ts:10` は規約を満たす |
+
+## 再開指摘（reopened）
+| # | finding_id | family_tag | 解消根拠（前回） | 再発根拠 | 問題 | 修正案 |
+|---|------------|------------|----------------|---------|------|--------|
+| 1 | CQRS-REOPENED-src-file-L55 | cqrs-violation | `前回: src/file.ts:10 で修正済み` | `src/file.ts:55 で再発` | 問題の説明 | 修正方法 |
+
+## REJECT判定条件
+- `new`、`persists`、または `reopened` が1件以上ある場合のみ REJECT 可
+- `finding_id` なしの指摘は無効
+```
+
+**認知負荷軽減ルール:**
+- APPROVE → サマリーのみ（5行以内）
+- REJECT → 該当指摘のみ表で記載（30行以内）
