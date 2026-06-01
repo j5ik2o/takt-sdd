@@ -1,1 +1,0 @@
-../../references/okite-ai/.agents/rules/avoiding-ambiguous-suffixes.md

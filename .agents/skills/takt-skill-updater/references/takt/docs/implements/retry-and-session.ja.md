@@ -26,7 +26,7 @@
 
 ## 重要: Retry で復元される情報
 
-`requeueFailedTask()` はタスクファイルに `sessionId` を書き戻さない。  
+`requeueFailedTask()` はタスクファイルに `sessionId` を書き戻さない。
 復元対象は `start_step` と `retry_note` のみ。
 
 つまり、`failed` タスクを `Retry` しても「その failed ディレクトリに紐づくセッションID」を直接復元する実装にはなっていない。

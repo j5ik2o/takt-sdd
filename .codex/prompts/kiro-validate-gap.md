@@ -1,1 +1,0 @@
-../../references/okite-ai/.codex/prompts/kiro-validate-gap.md

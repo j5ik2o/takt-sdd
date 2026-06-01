@@ -1,1 +1,0 @@
-../references/okite-ai/.agents/CC-SDD.md
