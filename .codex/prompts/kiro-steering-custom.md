@@ -1,1 +1,0 @@
-../../references/okite-ai/.codex/prompts/kiro-steering-custom.md

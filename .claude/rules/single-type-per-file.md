@@ -1,1 +1,0 @@
-../../references/okite-ai/.agents/rules/single-type-per-file.md
