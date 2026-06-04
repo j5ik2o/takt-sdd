@@ -40,6 +40,7 @@
     - _Requirements: 1.2, 1.3, 3.5, 5.5_
     - _Boundary:_ InstallerScriptCatalog, LegacyCompatibilityShim
     - _Depends:_ 2.1
+    - _Blocked: task 2.2 requires legacy shim runtime behavior before task 3.1 creates the shim and task 4.2 wires installer scripts to it. Review task ordering or narrow 2.2 before continuing._
 
   - [ ] 2.3 root package と installer の script catalog 差分を検出できる fixture を用意する
     - root package と installer catalog の canonical `kiro:*` key set 比較に必要な test fixture または helper を追加する。

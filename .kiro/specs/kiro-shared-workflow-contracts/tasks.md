@@ -1,0 +1,108 @@
+# Implementation Plan
+
+- [ ] 1. Kiro shared contract の validation harness を追加する
+  - Kiro output contract、skill identity fixture、artifact lifecycle terms、optional workflow references を検証できる repository-local check を追加する。
+  - downstream `kiro-*.yaml` が未作成でも failure にしない scope guard を含める。
+  - 完了時点で shared contract files が未作成の場合は、どの contract が missing かを validation result で確認できる。
+  - _Requirements: 1.6, 2.5, 4.5, 5.1, 5.2, 5.3, 5.4, 5.5_
+  - _Boundary:_ SharedContractValidationHarness
+  - _Depends:_ none
+
+- [ ] 2. status と validation result の output contract を追加する
+  - feature existence、phase、approval、ready 判定を返す status contract を en/ja に追加する。
+  - `PASS`、`FAIL`、`NEEDS_FIX`、`BLOCKED` と evidence を返す validation result contract を en/ja に追加する。
+  - 完了時点で validation harness が status/validation の required machine fields と enum を検出できる。
+  - _Requirements: 1.1, 1.2, 1.6, 5.1, 6.1_
+  - _Boundary:_ KiroOutputContractCatalog, ContractFacetBundle
+  - _Depends:_ 1
+
+- [ ] 3. review verdict と debug decision の output contract を追加する
+  - `GO` / `NO_GO`、actionable findings、requirement/task references を返す review verdict contract を追加する。
+  - root cause、selected action、retry eligibility、abort reason を返す debug decision contract を追加する。
+  - 完了時点で downstream review/debug workflow が machine verdict を rule condition に使える contract shape を参照できる。
+  - _Requirements: 1.3, 1.4, 1.6, 5.1, 6.1_
+  - _Boundary:_ KiroOutputContractCatalog, ContractFacetBundle
+  - _Depends:_ 1
+
+- [ ] 4. completion verification の output contract を追加する
+  - 完了可否、未完了項目、検証証跡を返す completion verification contract を en/ja に追加する。
+  - `COMPLETE`、`INCOMPLETE`、`BLOCKED` の verdict が human summary と分離されていることを validation 対象にする。
+  - 完了時点で implementation workflow の完了判定が shared contract を参照できる。
+  - _Requirements: 1.5, 1.6, 5.1, 6.1, 6.2_
+  - _Boundary:_ KiroOutputContractCatalog, ContractFacetBundle
+  - _Depends:_ 1
+
+- [ ] 5. skill identity resolver の instruction contract を追加する
+  - `$kiro-*`、`/kiro-*`、`kiro-*`、`kiro:*` の代表入力を canonical skill identity へ正規化する規約を追加する。
+  - `.agents/skills/kiro-*` と `.claude/skills/kiro-*` の source root lookup と fallback を明示する。
+  - 完了時点で `kiro-impl`、`$kiro-impl`、`/kiro-impl`、`kiro:impl` が同じ identity として validation fixture で確認できる。
+  - _Requirements: 2.1, 2.2, 2.4, 2.5, 6.4_
+  - _Boundary:_ SkillIdentityResolver
+  - _Depends:_ 1
+
+- [ ] 6. skill resolution error を shared output contract と接続する
+  - unknown skill と missing source root の error category を output contract 側に追加する。
+  - downstream workflow が `BLOCKED` または abort として扱える machine field を明示する。
+  - 完了時点で source root が見つからない fixture が supported error category として validation される。
+  - _Requirements: 2.3, 5.2, 6.1, 6.2_
+  - _Boundary:_ SkillIdentityResolver, KiroOutputContractCatalog
+  - _Depends:_ 2, 5
+
+- [ ] 7. `.kiro/*` artifact operation policy を追加する
+  - `.kiro/steering/roadmap.md` と存在する steering files の読み込み規約を追加する。
+  - `.kiro/specs/<feature>/`、`brief.md`、`requirements.md`、`design.md`、`tasks.md`、`spec.json` の存在確認規約を追加する。
+  - OpenSpec artifacts を `.kiro/*` contract に取り込まない boundary を明記する。
+  - 完了時点で downstream workflow が artifact missing と feature missing を同じ policy から判断できる。
+  - _Requirements: 3.1, 3.2, 3.3, 3.5, 5.3, 6.1_
+  - _Boundary:_ KiroArtifactAccessPolicy
+  - _Depends:_ 1
+
+- [ ] 8. artifact error categories を output contract と validation に追加する
+  - `FEATURE_NOT_FOUND`、`ARTIFACT_MISSING`、`SPEC_JSON_INVALID`、`LIFECYCLE_INCONSISTENT` などの共通カテゴリを定義する。
+  - phase と artifact の矛盾を downstream workflow が修復、停止、次 phase へ進む判断に使える形へそろえる。
+  - 完了時点で validation harness が artifact policy と output contract の error category drift を検出できる。
+  - _Requirements: 3.4, 5.3, 6.1, 6.3_
+  - _Boundary:_ KiroArtifactAccessPolicy, KiroOutputContractCatalog
+  - _Depends:_ 2, 7
+
+- [ ] 9. `spec.json` lifecycle policy を追加する
+  - requirements/design/tasks phase 完了時の `phase`、`generated`、`approved`、`ready_for_implementation` の期待状態を定義する。
+  - auto-approve mode と通常 mode の更新差分を明示する。
+  - 完了時点で lifecycle policy から各 phase の expected state を validation harness が検出できる。
+  - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 5.3_
+  - _Boundary:_ SpecLifecycleStateContract
+  - _Depends:_ 1
+
+- [ ] 10. Kiro workflow reference rules を validation に追加する
+  - `.takt/{en,ja}/workflows/kiro-*.yaml` が存在する場合に shared facet reference を解決できることを検証する。
+  - workflow YAML が存在しないこと自体は failure にしない。
+  - 完了時点で下流 workflow が shared contract 名を誤って参照した場合に validation failure として見える。
+  - _Requirements: 5.4, 5.5, 6.1, 6.2, 6.3, 6.4_
+  - _Boundary:_ KiroWorkflowReferenceRules, SharedContractValidationHarness
+  - _Depends:_ 2, 3, 4, 5, 7, 9
+
+- [ ] 11. built-in facet inheritance policy を追加する
+  - Kiro-specific facet が built-in facet と責務を共有する場合、`extends` による差分記述を優先する policy を定義する。
+  - `extends` は `instructions/plan`、`policies/coding`、`output-contracts/validation` のような type-qualified facet id を基本形にする。
+  - validation harness は親 facet の存在、TAKT runtime の inheritance 対応、full custom の理由有無を検出する。
+  - 完了時点で親 facet 不在は `BUILTIN_FACET_NOT_FOUND`、runtime 未対応は `FACET_EXTENDS_UNSUPPORTED` として見える。
+  - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
+  - _Boundary:_ BuiltinFacetInheritancePolicy, SharedContractValidationHarness
+  - _Depends:_ 1
+
+- [ ] 12. shared contract validation を test command に接続する
+  - validation harness を test runner から実行できる regression test として接続する。
+  - enum、field、language pair、skill fixture、artifact lifecycle、built-in facet inheritance、optional workflow reference の check がまとめて実行される。
+  - 完了時点で repository の通常検証から shared contract drift を検出できる。
+  - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 7.3, 7.4_
+  - _Boundary:_ SharedContractValidationHarness
+  - _Depends:_ 10, 11
+
+- [ ] 13. 下流 spec 向けの共通契約参照を最終検証する
+  - status/validation/spec generation/discovery/implementation の各下流 spec が参照できる contract 名と boundary を確認する。
+  - 下流 spec が built-in facet inheritance policy を使い、親 facet の全文コピーを前提にしていないことを確認する。
+  - `kiro-workflow-surface` の `kiro:*` namespace と矛盾する identity がないことを確認する。
+  - 完了時点で downstream workflow の実装者が本 spec の contract を参照し、個別 workflow logic を重複定義せずに進められる。
+  - _Requirements: 6.1, 6.2, 6.3, 6.4, 7.1, 7.5_
+  - _Boundary:_ ContractFacetBundle, KiroWorkflowReferenceRules, BuiltinFacetInheritancePolicy
+  - _Depends:_ 12
