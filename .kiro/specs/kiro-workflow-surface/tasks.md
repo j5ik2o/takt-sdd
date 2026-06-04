@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. package metadata と root script surface を `kiro:*` canonical に更新する
+- [x] 1. package metadata と root script surface を `kiro:*` canonical に更新する
   - [x] 1.1 root package metadata を breaking Kiro surface release として更新する
     - root package の version を次の major version に上げる。
     - description または package metadata から Kiro-compatible TAKT workflow が主 surface であることを読み取れるようにする。
@@ -17,7 +17,7 @@
     - _Boundary:_ ReleaseSurfaceMetadata, CanonicalKiroScripts
     - _Depends:_ 1.1
 
-  - [ ] 1.3 root script surface を `npm run` で確認できる状態にする
+  - [x] 1.3 root script surface を `npm run` で確認できる状態にする
     - `npm run` の script 一覧から `kiro:*` が正規 SDD surface として確認できる。
     - OpenSpec の `opsx:*` は別入口として残っていることを確認する。
     - _Requirements: 1.1, 1.4, 2.2_
