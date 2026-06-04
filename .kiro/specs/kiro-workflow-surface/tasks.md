@@ -9,7 +9,7 @@
     - _Boundary:_ ReleaseSurfaceMetadata
     - _Depends:_ none
 
-  - [ ] 1.2 root package に canonical `kiro:*` script set を追加する
+  - [x] 1.2 root package に canonical `kiro:*` script set を追加する
     - `kiro:discovery`、`kiro:spec:init`、`kiro:spec:requirements`、`kiro:validate:gap`、`kiro:spec:design`、`kiro:validate:design`、`kiro:spec:tasks`、`kiro:spec:quick`、`kiro:spec:batch`、`kiro:spec:status`、`kiro:impl`、`kiro:validate:impl`、`kiro:steering`、`kiro:steering-custom` を root scripts に追加する。
     - script value は `takt --pipeline --skip-git -w kiro-* -t` 形式の canonical workflow identity に接続する。
     - `cc-sdd:*` や `opsx:*` を canonical Kiro set に混入させない。
