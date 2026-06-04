@@ -25,7 +25,7 @@
     - _Depends:_ 1.2
 
 - [ ] 2. installer が配る script catalog を `kiro:*` canonical set に更新する
-  - [ ] 2.1 installer の SDD script catalog に canonical `kiro:*` set を追加する
+  - [x] 2.1 installer の SDD script catalog に canonical `kiro:*` set を追加する
     - 既存 project への script merge で `kiro:*` が追加対象になる。
     - 新規 `package.json` 生成時にも `kiro:*` と `opsx:*` が含まれる。
     - root package と installer の canonical `kiro:*` key set が一致する。

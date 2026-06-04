@@ -71,6 +71,20 @@ function rewritePiecePathsForLegacy(piecesDir: string): void {
 }
 
 const SDD_SCRIPTS: Record<string, string> = {
+  "kiro:discovery": "takt --pipeline --skip-git -w kiro-discovery -t",
+  "kiro:spec:init": "takt --pipeline --skip-git -w kiro-spec-init -t",
+  "kiro:spec:requirements": "takt --pipeline --skip-git -w kiro-spec-requirements -t",
+  "kiro:validate:gap": "takt --pipeline --skip-git -w kiro-validate-gap -t",
+  "kiro:spec:design": "takt --pipeline --skip-git -w kiro-spec-design -t",
+  "kiro:validate:design": "takt --pipeline --skip-git -w kiro-validate-design -t",
+  "kiro:spec:tasks": "takt --pipeline --skip-git -w kiro-spec-tasks -t",
+  "kiro:spec:quick": "takt --pipeline --skip-git -w kiro-spec-quick -t",
+  "kiro:spec:batch": "takt --pipeline --skip-git -w kiro-spec-batch -t",
+  "kiro:spec:status": "takt --pipeline --skip-git -w kiro-spec-status -t",
+  "kiro:impl": "takt --pipeline --skip-git -w kiro-impl -t",
+  "kiro:validate:impl": "takt --pipeline --skip-git -w kiro-validate-impl -t",
+  "kiro:steering": "takt --pipeline --skip-git -w kiro-steering -t",
+  "kiro:steering-custom": "takt --pipeline --skip-git -w kiro-steering-custom -t",
   "cc-sdd:full": "takt --pipeline --skip-git -w cc-sdd-full -t",
   "cc-sdd:requirements": "takt --pipeline --skip-git -w cc-sdd-requirements -t",
   "cc-sdd:validate-gap": "takt --pipeline --skip-git -w cc-sdd-validate-gap -t",
