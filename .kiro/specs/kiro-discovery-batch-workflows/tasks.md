@@ -86,7 +86,7 @@
   - 完了時点で片言語だけの追加や enum drift が validation failure として見える。
   - _Requirements: 1.5, 6.1, 6.4_
   - _Boundary:_ DiscoveryWorkflow, BatchWorkerDispatcher, CrossSpecReviewWorkflow, DiscoveryBatchValidationHarness
-  - _Depends:_ 2, 3, 8, 10
+  - _Depends:_ 2, 3, 8, 9, 10
 
 - [ ] 12. repository-local test command に discovery/batch validation を接続する
   - validation script を test runner から実行できる regression test として接続する。
@@ -103,4 +103,4 @@
   - 完了時点で discovery/batch validation harness が親 facet 不在、runtime 未対応、全文コピー前提を検出できる。
   - _Requirements: 6.6_
   - _Boundary:_ DiscoveryBatchValidationHarness
-  - _Depends:_ 2, 3, 8, 10
+  - _Depends:_ 2, 3, 8, 9, 10, 11, 12
