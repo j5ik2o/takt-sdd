@@ -28,7 +28,16 @@ if (!workflowCandidates.some((path) => existsSync(path))) {
 
 const taktWrapper = resolve(repoRoot, "scripts", "takt.sh");
 const command = existsSync(taktWrapper) ? taktWrapper : "takt";
-const args = [...forwardedArgs, "-w", workflowName];
+const taskArgIndex = forwardedArgs.findIndex((arg) => arg === "-t" || arg === "--task");
+const args =
+  taskArgIndex === -1
+    ? [...forwardedArgs, "-w", workflowName]
+    : [
+        ...forwardedArgs.slice(0, taskArgIndex),
+        "-w",
+        workflowName,
+        ...forwardedArgs.slice(taskArgIndex),
+      ];
 const result = spawnSync(command, args, { stdio: "inherit" });
 
 if (result.error) {

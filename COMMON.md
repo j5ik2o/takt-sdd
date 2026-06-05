@@ -19,13 +19,13 @@
 | `.kiro/steering/` | プロジェクトメモリ（product.md / tech.md / structure.md 等） |
 | `openspec/` | OpenSpec の設定・変更ディレクトリ |
 
-## SDD フェーズ
+## Kiro SDD ワークフロー
 
 ```
-cc-sdd-requirements → cc-sdd-validate-gap → cc-sdd-design → cc-sdd-validate-design → cc-sdd-tasks → cc-sdd-impl → cc-sdd-validate-impl
+kiro-discovery → kiro-spec-init → kiro-spec-requirements → kiro-validate-gap → kiro-spec-design → kiro-validate-design → kiro-spec-tasks → kiro-impl → kiro-validate-impl
 ```
 
-フルオートピース `cc-sdd-full` で全フェーズを一括実行できる。各フェーズは `npm run cc-sdd:{phase} -- "..."` で個別実行も可能。
+Kiro スキルでは `$kiro-discovery`, `$kiro-spec-quick`, `$kiro-spec-batch`, `$kiro-impl`, `$kiro-spec-status` を正規導線として使う。npm scripts では `npm run kiro:{phase} -- "..."` で個別実行できる。旧 `cc-sdd:*` は互換・移行用として残すが、新規案内では Kiro 系を優先する。
 
 ## OpenSpec ワークフロー
 
