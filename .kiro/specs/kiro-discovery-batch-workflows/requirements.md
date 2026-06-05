@@ -57,7 +57,7 @@
 #### Acceptance Criteria
 
 1. batch worker が feature spec を作成する場合、discovery batch workflows は `kiro-spec-generation-workflows` の init、requirements、design、tasks phase を利用する。
-2. auto-approve mode が batch で使われる場合、discovery batch workflows は requirements、design、tasks の generated/approved state と `ready_for_implementation` を shared lifecycle contract に合わせる。
+2. auto-approve mode が batch で使われる場合、discovery batch workflows は worker-local な requirements、design、tasks の generated/approved state と `ready_for_implementation` を shared lifecycle contract に合わせるが、batch-level readiness は cross-spec review と remediation gate が完了するまで確定しない。
 3. discovery batch workflows は requirements/design/tasks の本文生成 rules、EARS rules、design synthesis、task graph review の所有を `kiro-spec-generation-workflows` から奪わない。
 4. individual spec generation が `BLOCKED` または `NEEDS_FIX` を返す場合、discovery batch workflows は 同じ wave の他 feature の結果を保持し、該当 feature の failure と next action を報告する。
 5. discovery batch workflows は code edit implementation と task checkbox progress update を batch completion の成功条件に含めない。
@@ -73,6 +73,7 @@
 3. task boundary review runs場合、discovery batch workflows は `tasks.md` の `_Boundary:_` annotation と roadmap dependency が矛盾しないことを確認する。
 4. important issue が見つかり、局所修正で解消できる場合、discovery batch workflows は affected spec の修正対象と再 review の必要性を示す。
 5. issue が decomposition 問題である場合、discovery batch workflows は local patch で隠さず、roadmap/discovery に戻す必要があることを示す。
+6. generated spec が worker-local に `ready_for_implementation: true` を持つ場合でも、cross-spec review と必要な remediation が完了するまで、discovery batch workflows は batch summary と downstream status signal でその spec を implementation-ready として確定しない。
 
 ### Requirement 6: discovery/batch workflow の drift を検出できる
 
