@@ -154,10 +154,10 @@ function fetchJson(url: string): Promise<string> {
 }
 
 async function fetchLatestTag(): Promise<string> {
-  const data = await fetchJson(`https://api.github.com/repos/${REPO}/releases/latest`);
-  const release = JSON.parse(data);
-  const tagName = release.tag_name as string;
-  if (!tagName) {
+  const data = await fetchJson(`https://api.github.com/repos/${REPO}/releases?per_page=100`);
+  const releases = JSON.parse(data) as Array<{ tag_name?: string }>;
+  const tagName = releases.find((release) => release.tag_name?.startsWith("v"))?.tag_name;
+  if (tagName === undefined) {
     throw new Error("No releases found");
   }
   return tagName;
@@ -202,6 +202,10 @@ function download(url: string, dest: string): Promise<void> {
     };
     request(url);
   });
+}
+
+function isDownloadNotFound(error: unknown): boolean {
+  return error instanceof Error && error.message === "Download failed: HTTP 404";
 }
 
 function collectFiles(dir: string, base: string): string[] {
@@ -418,11 +422,22 @@ export async function install(options: InstallOptions): Promise<void> {
 
   try {
     const installerVersion = getInstallerVersion();
-    const tag = await resolveTag(options.tag, installerVersion);
-    const version = tag.startsWith("v") ? tag.slice(1) : tag;
+    let tag = await resolveTag(options.tag, installerVersion);
+    let version = tag.startsWith("v") ? tag.slice(1) : tag;
     info(msg.downloadingVersion(tag));
-    const tarballUrl = `https://github.com/${REPO}/archive/refs/tags/${tag}.tar.gz`;
-    await download(tarballUrl, archivePath);
+    try {
+      const tarballUrl = `https://github.com/${REPO}/archive/refs/tags/${tag}.tar.gz`;
+      await download(tarballUrl, archivePath);
+    } catch (error) {
+      if (options.tag !== undefined || !isDownloadNotFound(error)) {
+        throw error;
+      }
+      tag = await fetchLatestTag();
+      version = tag.startsWith("v") ? tag.slice(1) : tag;
+      info(msg.downloadingVersion(tag));
+      const tarballUrl = `https://github.com/${REPO}/archive/refs/tags/${tag}.tar.gz`;
+      await download(tarballUrl, archivePath);
+    }
 
     execSync(`tar -xzf "${archivePath}" -C "${tmpDir}"`, { stdio: "ignore" });
 
