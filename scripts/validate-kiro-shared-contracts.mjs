@@ -154,7 +154,10 @@ function validateSkillIdentityFixtures() {
       failures.push(`${rel(path)} missing`);
       continue;
     }
-    containsAll(readText(path), ["UNSUPPORTED_KIRO_IDENTITY", "SKILL_SOURCE_MISSING", ".agents/skills", ".claude/skills", "runtime control plane"], path, failures);
+    const content = readText(path);
+    const scriptMappingTerms = [...scriptMap.entries()].flatMap(([script, identity]) => [script, identity]);
+    containsAll(content, scriptMappingTerms, path, failures);
+    containsAll(content, ["UNSUPPORTED_KIRO_IDENTITY", "SKILL_SOURCE_MISSING", ".agents/skills", ".claude/skills", "runtime control plane"], path, failures);
   }
   return { ok: failures.length === 0, failures };
 }
