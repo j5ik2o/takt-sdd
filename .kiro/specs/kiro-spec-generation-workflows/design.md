@@ -318,7 +318,7 @@ type KiroSpecGenerationPhase =
 
 interface KiroSpecGenerationResult {
   readonly phase: KiroSpecGenerationPhase;
-  readonly validation: SharedKiroValidationResult;
+  readonly validation: KiroSharedContractValidationResult;
   readonly featureName: string;
   readonly updatedFiles: readonly string[];
   readonly nextAction?: string;
@@ -553,7 +553,7 @@ interface SpecLifecycleUpdate {
 
 ```typescript
 interface SpecGenerationValidationResult {
-  readonly validation: SharedKiroValidationResult;
+  readonly validation: KiroSharedContractValidationResult;
   readonly checkedWorkflows: readonly string[];
   readonly checkedFacets: readonly string[];
   readonly findings: readonly string[];

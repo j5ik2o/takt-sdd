@@ -209,12 +209,16 @@ sequenceDiagram
     Executor-->>Impl: changes and evidence
     Impl->>Review: review task result
     Review-->>Impl: GO or NO_GO
-    Impl->>Verify: verify completion
-    Verify-->>Impl: COMPLETE or not
-    alt COMPLETE
-        Impl->>Updater: update selected task only
-    else not COMPLETE
-        Impl->>Debug: investigate incomplete verification
+    alt GO
+        Impl->>Verify: verify completion
+        Verify-->>Impl: COMPLETE or not
+        alt COMPLETE
+            Impl->>Updater: update selected task only
+        else not COMPLETE
+            Impl->>Debug: investigate incomplete verification
+        end
+    else NO_GO
+        Impl->>Debug: investigate review findings
     end
     Debug-->>Impl: retry block or stop
 ```
