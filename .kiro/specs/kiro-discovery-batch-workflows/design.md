@@ -76,10 +76,12 @@ graph TB
     Parser --> Planner[Wave planner]
     Planner --> Dispatcher[Batch dispatcher]
     Dispatcher --> Generation[Spec generation workflows]
-    Dispatcher --> Remediation[Remediation coordinator]
     Generation --> Specs[Generated specs]
+    Generation --> WorkerResults[Worker results]
     Specs --> CrossReview[Cross spec review]
-    CrossReview --> Remediation[Remediation coordinator]
+    WorkerResults --> ReviewAggregate[Post-wave aggregate]
+    CrossReview --> ReviewAggregate
+    ReviewAggregate --> Remediation[Remediation coordinator]
     Shared[Shared contracts] --> Discovery
     Shared --> Parser
     Shared --> Dispatcher

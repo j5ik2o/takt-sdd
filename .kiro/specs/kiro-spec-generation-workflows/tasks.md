@@ -44,7 +44,7 @@
   - requirements/design approval gate、task generation、task plan review、task graph sanity review を workflow に接続する。
   - すべての executable task に observable completion、numeric requirements、`_Boundary:_`、`_Depends:_` を要求する。
   - 完了時点で tasks.md が implementation-ready になり、auto-approve mode では ready state が true になる。
-  - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
+  - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
   - _Boundary:_ TasksGenerationWorkflow
   - _Depends:_ 2, 5
 
