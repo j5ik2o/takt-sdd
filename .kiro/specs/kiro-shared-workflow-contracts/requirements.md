@@ -93,7 +93,7 @@
 #### Acceptance Criteria
 
 1. Kiro-specific facet が TAKT 既定 facet と同じ責務を持つ場合、Kiro contract set は `extends` による親 facet 参照を優先する方針を示す。
-2. facet が `extends` を使う場合、Kiro contract set は `instructions/plan`、`policies/coding`、`output-contracts/validation` のような type-qualified facet id を基本形として定義する。
+2. facet が `extends` を使う場合、Kiro contract set は TAKT runtime が解決できる `{extends: parent}` の bare facet name を基本形として定義し、type-qualified facet id は runtime が対応した後の再検証対象として扱う。
 3. 親 facet が `node_modules/takt/builtins/{lang}/facets` に存在しない場合、Kiro contract validation は `BUILTIN_FACET_NOT_FOUND` として fail-fast できる。
 4. TAKT runtime が Markdown facet inheritance を解決できない場合、Kiro contract validation は `FACET_EXTENDS_UNSUPPORTED` として前提不足を示し、親 facet の暗黙コピーとして扱わない。
 5. Kiro-specific facet が built-in facet を継承しない場合、design または validation finding は full custom にする理由を示す。
