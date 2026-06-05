@@ -8,7 +8,7 @@
 
 ## Boundary Context
 
-- **In scope**: `kiro-spec-status`、`kiro-validate-gap`、`kiro-validate-design`、`kiro-validate-impl` の TAKT workflow、status/readiness 判定、gap/design/impl validation の shared validation output、test/build evidence と manual verification requirement の明示
+- **In scope**: `kiro-spec-status`、`kiro-validate-gap`、`kiro-validate-design`、`kiro-validate-impl` の TAKT workflow、status/readiness 判定、gap/design/impl validation の shared validation output、test/build evidence と manual verification requirement の明示、status/validation workflow 用 repository-local validation scripts
 - **Out of scope**: spec artifact の新規作成や更新、requirements/design/tasks 生成、roadmap batch 実行、implementation task の実行、tasks.md checkbox 更新、review/debug sub-workflow の実行
 - **Adjacent expectations**: `kiro-shared-workflow-contracts` の共通 output contract と artifact policy を参照し、`kiro-workflow-surface` の `kiro:*` namespace と矛盾しない workflow 名を使う
 
@@ -33,7 +33,7 @@
 
 1. `kiro-validate-gap` が requirements 済み feature を検証する場合、Kiro gap validation workflow は existing implementation、missing components、integration points、recommended next action を validation result として返す。
 2. requirements artifact が存在しない、または requirements phase に到達していない場合、Kiro gap validation workflow は `FAIL` または `BLOCKED` の verdict と不足 artifact を返す。
-3. codebase evidence を十分に確認できない場合、Kiro gap validation workflow は 検証不能な項目を `manual_verification_required` として明示し、成功扱いにしない。
+3. codebase evidence を十分に確認できない場合、Kiro gap validation workflow は 検証不能な項目を shared validation result contract の `findings` に `category: "MANUAL_VERIFICATION_REQUIRED"` として明示し、成功扱いにしない。
 4. Kiro gap validation workflow は requirements/design/tasks artifact を生成または更新しない。
 
 ### Requirement 3: design validation の shared verdict を返す
@@ -43,7 +43,7 @@
 #### Acceptance Criteria
 
 1. `kiro-validate-design` が design 済み feature を検証する場合、Kiro design validation workflow は requirements coverage、Boundary Commitments、File Structure Plan、validation hooks の充足状況を shared validation verdict として返す。
-2. design artifact が存在しない、または requirements approval と矛盾している場合、Kiro design validation workflow は `FAIL` または `BLOCKED` verdict と修復すべき lifecycle reason を返す。
+2. design artifact が存在しない、または requirements approval と矛盾している場合、Kiro design validation workflow は `FAIL` または `BLOCKED` verdict と修復すべき lifecycle reason を `findings.message`、`error_category`、`summary` に写像して返す。
 3. design が下流 spec の責務を吸収している場合、Kiro design validation workflow は boundary violation を actionable finding として返す。
 4. Kiro design validation workflow は design.md を自動修正せず、必要な修正内容を validation result として提示する。
 
@@ -64,10 +64,10 @@
 
 #### Acceptance Criteria
 
-1. validation workflow が結果を返す場合、Kiro validation workflows は shared validation result contract の verdict、reason、evidence、manual verification field を使う。
+1. validation workflow が結果を返す場合、Kiro validation workflows は shared validation result contract の `verdict`、`findings`、`error_category`、`evidence`、`summary` を使い、独自の `reason` や `manual_verification_required` field を追加しない。
 2. workflow が継続できる状態を返す場合、Kiro validation workflows は `PASS` の machine verdict と人間向け根拠を両方示す。
 3. workflow が継続できない状態を返す場合、Kiro validation workflows は `FAIL`、`NEEDS_FIX`、`BLOCKED` のいずれかで停止理由を分類する。
-4. Kiro validation workflows は 検証できていない項目を evidence として扱わず、manual verification requirement として分離する。
+4. Kiro validation workflows は 検証できていない項目を evidence として扱わず、`findings` の `category: "MANUAL_VERIFICATION_REQUIRED"` として分離する。
 
 ### Requirement 6: read-only 境界と上流契約への依存を守る
 
