@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { basename, dirname, join, relative } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -294,7 +294,7 @@ export function validateKiroSharedContracts() {
   return { ok: failures.length === 0, failures, sections };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && __filename === resolve(process.argv[1])) {
   const result = validateKiroSharedContracts();
   if (result.ok) {
     console.log("Kiro shared contract validation passed");
