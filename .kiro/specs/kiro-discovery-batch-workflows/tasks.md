@@ -68,7 +68,8 @@
   - wave plan、skipped completed specs、worker results、failed features、awareness-only items、next action を summary contract に定義する。
   - generation failure と review issue を区別し、局所修正、再 review、roadmap/discovery return の routing を持たせる。
   - 完了時点で partial success を成功扱いにせず、feature ごとの状態と残作業が利用者に見える。
-  - _Requirements: 4.2, 4.4, 5.4, 5.5_
+  - cross-spec review と必要な remediation が完了するまで、worker-local `ready_for_implementation` を batch summary の implementation-ready signal として扱わない。
+  - _Requirements: 4.2, 4.4, 5.4, 5.5, 5.6_
   - _Boundary:_ BatchRemediationCoordinator
   - _Depends:_ 8, 10
 
