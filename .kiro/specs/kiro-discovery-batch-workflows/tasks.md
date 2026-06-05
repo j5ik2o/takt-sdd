@@ -59,7 +59,7 @@
 - [ ] 8. `kiro-spec-batch` workflow と worker dispatch を追加する
   - roadmap parse、wave plan、same-wave worker dispatch、strict wave ordering、feature result aggregation を workflow に接続する。
   - worker は `kiro-spec-generation-workflows` の init、requirements、design、tasks phase を呼び出し、feature directory に閉じて更新する。
-  - 完了時点で同じ wave の success/failure が batch summary に残り、次 wave は前 wave 完了後にだけ開始される。
+  - 完了時点で同じ wave の success/failure が feature result として coordinator に渡り、次 wave は前 wave 完了後にだけ開始される。
   - _Requirements: 3.5, 4.1, 4.2, 4.3, 4.4, 4.5, 6.3_
   - _Boundary:_ BatchWorkerDispatcher
   - _Depends:_ 7
@@ -94,7 +94,7 @@
   - 完了時点で discovery/batch workflow の drift が通常検証で検出できる。
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
   - _Boundary:_ DiscoveryBatchValidationHarness
-  - _Depends:_ 6, 8, 10, 11
+  - _Depends:_ 6, 8, 9, 10, 11
 
 - [ ] 13. discovery/batch facets の built-in 継承候補を棚卸しする
   - `node_modules/takt/builtins/{en,ja}/facets` の research、planning、review 系 facet を確認し、各 Kiro-specific discovery/batch facet の親候補を記録する。

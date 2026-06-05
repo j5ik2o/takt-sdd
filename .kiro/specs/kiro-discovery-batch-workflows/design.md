@@ -470,7 +470,7 @@ interface BatchPlan {
 - same wave の feature worker を並列可能な単位として扱う。
 - worker は feature directory に閉じて `kiro-spec-generation-workflows` を実行する。
 - auto-approve mode では shared lifecycle contract に沿って ready state まで進める。
-- worker failure は batch summary に残し、implementation execution は呼ばない。
+- worker failure は feature result として返し、implementation execution は呼ばない。
 
 **Dependencies**
 
@@ -505,8 +505,9 @@ interface BatchPlan {
 
 **Dependencies**
 
-- Inbound: `BatchRemediationCoordinator` — review result を remediation に使う (P0)
+- Inbound: `kiro-spec-batch` workflow — planned waves 完了後の review phase controller (P0)
 - Outbound: generated specs、roadmap — review input (P0)
+- Outbound: `BatchRemediationCoordinator` — review result を remediation に渡す (P0)
 
 **Contracts**: Service [ ] / API [ ] / Event [ ] / Batch [x] / State [ ]
 
@@ -514,7 +515,7 @@ interface BatchPlan {
 
 - Trigger: planned waves 完了後、または partial completion 後の review phase。
 - Input / validation: generated specs、roadmap、worker result。
-- Output / destination: cross-spec review output contract と batch summary。
+- Output / destination: cross-spec review output contract。
 - Idempotency & recovery: review は read-only で issue を返し、修正が必要な場合は coordinator が next action を決める。
 
 #### BatchRemediationCoordinator
