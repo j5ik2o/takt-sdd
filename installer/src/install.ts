@@ -206,8 +206,8 @@ function download(url: string, dest: string): Promise<void> {
   });
 }
 
-function isDownloadNotFound(error: unknown): boolean {
-  return error instanceof Error && error.message === "Download failed: HTTP 404";
+function isDefaultTagDownloadFallback(error: unknown): boolean {
+  return error instanceof Error && /^Download failed: HTTP (403|404)$/.test(error.message);
 }
 
 function collectFiles(dir: string, base: string): string[] {
@@ -431,7 +431,7 @@ export async function install(options: InstallOptions): Promise<void> {
       const tarballUrl = `https://github.com/${REPO}/archive/refs/tags/${tag}.tar.gz`;
       await download(tarballUrl, archivePath);
     } catch (error) {
-      if (options.tag !== undefined || !isDownloadNotFound(error)) {
+      if (options.tag !== undefined || !isDefaultTagDownloadFallback(error)) {
         throw error;
       }
       tag = await fetchLatestTag();
