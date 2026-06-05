@@ -23,10 +23,53 @@ function getInstallerVersion(): string {
 const REPO = "j5ik2o/takt-sdd";
 const TARGET_DIR = ".takt";
 const PIECE_DIR = "workflows";
+const KIRO_STAGED_SCRIPT_INSTALL_PATH = "scripts/kiro-staged.mjs";
 const LEGACY_OPSX_SCRIPT_INSTALL_PATH = "scripts/opsx-cli.sh";
 const OPENSPEC_PACKAGE = "@fission-ai/openspec";
 const OPENSPEC_VERSION = "1.3.1";
 const OPENSPEC_CONFIG_PATH = "openspec/config.yaml";
+const KIRO_STAGED_SCRIPT_CONTENT = [
+  "#!/usr/bin/env node",
+  "",
+  "import { existsSync } from \"node:fs\";",
+  "import { dirname, resolve } from \"node:path\";",
+  "import { spawnSync } from \"node:child_process\";",
+  "import { fileURLToPath } from \"node:url\";",
+  "",
+  "const [, , workflowName, ...forwardedArgs] = process.argv;",
+  "",
+  "if (!workflowName) {",
+  "  console.error(\"Usage: node scripts/kiro-staged.mjs <workflow-name> [takt args...]\");",
+  "  process.exit(1);",
+  "}",
+  "",
+  "const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), \"..\");",
+  "const workflowCandidates = [",
+  "  resolve(repoRoot, \".takt\", \"workflows\", `${workflowName}.yaml`),",
+  "  resolve(repoRoot, \".takt\", \"ja\", \"workflows\", `${workflowName}.yaml`),",
+  "  resolve(repoRoot, \".takt\", \"en\", \"workflows\", `${workflowName}.yaml`),",
+  "];",
+  "",
+  "if (!workflowCandidates.some((path) => existsSync(path))) {",
+  "  console.error(`Kiro workflow '${workflowName}' is not installed yet.`);",
+  "  console.error(\"This command is part of the staged Kiro workflow surface.\");",
+  "  console.error(\"Install or merge the downstream Kiro workflow implementation before running it.\");",
+  "  process.exit(1);",
+  "}",
+  "",
+  "const taktWrapper = resolve(repoRoot, \"scripts\", \"takt.sh\");",
+  "const command = existsSync(taktWrapper) ? taktWrapper : \"takt\";",
+  "const args = [...forwardedArgs, \"-w\", workflowName];",
+  "const result = spawnSync(command, args, { stdio: \"inherit\" });",
+  "",
+  "if (result.error) {",
+  "  console.error(result.error.message);",
+  "  process.exit(1);",
+  "}",
+  "",
+  "process.exit(result.status ?? 1);",
+  "",
+].join("\n");
 const FACET_TYPES = [
   "personas",
   "policies",
@@ -71,20 +114,20 @@ function rewritePiecePathsForLegacy(piecesDir: string): void {
 }
 
 const SDD_SCRIPTS: Record<string, string> = {
-  "kiro:discovery": "takt --pipeline --skip-git -w kiro-discovery -t",
-  "kiro:spec:init": "takt --pipeline --skip-git -w kiro-spec-init -t",
-  "kiro:spec:requirements": "takt --pipeline --skip-git -w kiro-spec-requirements -t",
-  "kiro:validate:gap": "takt --pipeline --skip-git -w kiro-validate-gap -t",
-  "kiro:spec:design": "takt --pipeline --skip-git -w kiro-spec-design -t",
-  "kiro:validate:design": "takt --pipeline --skip-git -w kiro-validate-design -t",
-  "kiro:spec:tasks": "takt --pipeline --skip-git -w kiro-spec-tasks -t",
-  "kiro:spec:quick": "takt --pipeline --skip-git -w kiro-spec-quick -t",
-  "kiro:spec:batch": "takt --pipeline --skip-git -w kiro-spec-batch -t",
-  "kiro:spec:status": "takt --pipeline --skip-git -w kiro-spec-status -t",
-  "kiro:impl": "takt --pipeline --skip-git -w kiro-impl -t",
-  "kiro:validate:impl": "takt --pipeline --skip-git -w kiro-validate-impl -t",
-  "kiro:steering": "takt --pipeline --skip-git -w kiro-steering -t",
-  "kiro:steering-custom": "takt --pipeline --skip-git -w kiro-steering-custom -t",
+  "kiro:discovery": "node scripts/kiro-staged.mjs kiro-discovery --pipeline --skip-git -t",
+  "kiro:spec:init": "node scripts/kiro-staged.mjs kiro-spec-init --pipeline --skip-git -t",
+  "kiro:spec:requirements": "node scripts/kiro-staged.mjs kiro-spec-requirements --pipeline --skip-git -t",
+  "kiro:validate:gap": "node scripts/kiro-staged.mjs kiro-validate-gap --pipeline --skip-git -t",
+  "kiro:spec:design": "node scripts/kiro-staged.mjs kiro-spec-design --pipeline --skip-git -t",
+  "kiro:validate:design": "node scripts/kiro-staged.mjs kiro-validate-design --pipeline --skip-git -t",
+  "kiro:spec:tasks": "node scripts/kiro-staged.mjs kiro-spec-tasks --pipeline --skip-git -t",
+  "kiro:spec:quick": "node scripts/kiro-staged.mjs kiro-spec-quick --pipeline --skip-git -t",
+  "kiro:spec:batch": "node scripts/kiro-staged.mjs kiro-spec-batch --pipeline --skip-git -t",
+  "kiro:spec:status": "node scripts/kiro-staged.mjs kiro-spec-status --pipeline --skip-git -t",
+  "kiro:impl": "node scripts/kiro-staged.mjs kiro-impl --pipeline --skip-git -t",
+  "kiro:validate:impl": "node scripts/kiro-staged.mjs kiro-validate-impl --pipeline --skip-git -t",
+  "kiro:steering": "node scripts/kiro-staged.mjs kiro-steering --pipeline --skip-git -t",
+  "kiro:steering-custom": "node scripts/kiro-staged.mjs kiro-steering-custom --pipeline --skip-git -t",
   "cc-sdd:full": "takt --pipeline --skip-git -w cc-sdd-full -t",
   "cc-sdd:requirements": "takt --pipeline --skip-git -w cc-sdd-requirements -t",
   "cc-sdd:validate-gap": "takt --pipeline --skip-git -w cc-sdd-validate-gap -t",
@@ -230,6 +273,10 @@ function computeFileHash(filePath: string): string {
   return createHash("sha256").update(content).digest("hex");
 }
 
+function computeContentHash(content: string): string {
+  return createHash("sha256").update(content).digest("hex");
+}
+
 function loadManifest(manifestPath: string): Manifest | null {
   if (!existsSync(manifestPath)) return null;
   try {
@@ -282,6 +329,43 @@ function syncRelativeFiles(
     } else {
       cpSync(srcPath, destPath);
     }
+  }
+
+  return { files };
+}
+
+function syncGeneratedFile(
+  destBase: string,
+  relFile: string,
+  content: string,
+  manifest: Manifest | null,
+  msg: ReturnType<typeof getMessages>,
+  cwd: string,
+): SyncResult {
+  const destPath = join(destBase, relFile);
+  const manifestKey = relative(cwd, destPath).split("\\").join("/");
+  const contentHash = computeContentHash(content);
+  const files: Record<string, string> = { [manifestKey]: contentHash };
+
+  if (!existsSync(destPath)) {
+    mkdirSync(dirname(destPath), { recursive: true });
+    writeFileSync(destPath, content, "utf-8");
+    info(msg.fileAdded(manifestKey));
+  } else if (manifest !== null) {
+    const recordedHash = manifest.files[manifestKey];
+    if (recordedHash === undefined) {
+      warn(msg.fileSkippedCustomized(manifestKey));
+    } else {
+      const currentHash = computeFileHash(destPath);
+      if (currentHash === recordedHash) {
+        writeFileSync(destPath, content, "utf-8");
+        info(msg.fileUpdated(manifestKey));
+      } else {
+        warn(msg.fileSkippedCustomized(manifestKey));
+      }
+    }
+  } else {
+    writeFileSync(destPath, content, "utf-8");
   }
 
   return { files };
@@ -471,6 +555,7 @@ export async function install(options: InstallOptions): Promise<void> {
       } else if (hasLegacyOpsxScript) {
         console.log(msg.dryRunItem(LEGACY_OPSX_SCRIPT_INSTALL_PATH));
       }
+      console.log(msg.dryRunItem(KIRO_STAGED_SCRIPT_INSTALL_PATH));
       console.log("");
       info(msg.dryRunSkipped);
       return;
@@ -533,6 +618,16 @@ export async function install(options: InstallOptions): Promise<void> {
     if (!usesOfficialOpenSpec && !hasLegacyOpsxScript) {
       errorExit(msg.requiredFileMissing(LEGACY_OPSX_SCRIPT_INSTALL_PATH));
     }
+
+    const kiroStagedScriptResult = syncGeneratedFile(
+      options.cwd,
+      KIRO_STAGED_SCRIPT_INSTALL_PATH,
+      KIRO_STAGED_SCRIPT_CONTENT,
+      isUpdate ? manifest : null,
+      msg,
+      options.cwd,
+    );
+    Object.assign(allFiles, kiroStagedScriptResult.files);
 
     const pkgPath = join(options.cwd, "package.json");
     if (existsSync(pkgPath)) {
