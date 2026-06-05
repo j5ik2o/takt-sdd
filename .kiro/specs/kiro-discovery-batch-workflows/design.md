@@ -569,7 +569,7 @@ interface BatchPlan {
 
 ```typescript
 interface DiscoveryBatchValidationResult {
-  readonly validation: SharedKiroValidationResult;
+  readonly validation: KiroSharedContractValidationResult;
   readonly checkedWorkflows: readonly string[];
   readonly checkedFacets: readonly string[];
   readonly findings: readonly DiscoveryBatchValidationFinding[];

@@ -211,7 +211,11 @@ sequenceDiagram
     Review-->>Impl: GO or NO_GO
     Impl->>Verify: verify completion
     Verify-->>Impl: COMPLETE or not
-    Impl->>Updater: update selected task only
+    alt COMPLETE
+        Impl->>Updater: update selected task only
+    else not COMPLETE
+        Impl->>Debug: investigate incomplete verification
+    end
     Debug-->>Impl: retry block or stop
 ```
 

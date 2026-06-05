@@ -75,6 +75,17 @@
 4. validation checks を実行する場合、Kiro contract validation は workflow YAML が存在する場合に Kiro-specific output contract 名と facet reference を解決できることを検出する。
 5. Kiro contract validation は 個別 workflow の full behavior をこの spec の成功条件に含めない。
 
+### Requirement 6: 下流 workflow が共通契約を安全に参照できる
+
+**Objective:** 下流 spec の実装者として、共通契約の責務と参照方法を明確に知りたい。そうすることで、status/validation/spec generation/discovery/implementation workflow が同じ contract を使いながら重複実装を避けられる。
+
+#### Acceptance Criteria
+
+1. downstream workflow spec が設計される場合、Kiro contract set は どの output contract、skill identity rule、artifact operation rule を参照すべきか判断できる名前と境界を提供する。
+2. downstream workflow が本 spec の契約を使う場合、Kiro contract set は downstream-specific な task selection、generation prompt、review loop の詳細を要求しない。
+3. shared contract の enum、tag、field name が変更される場合、Kiro contract set は downstream workflow の再検証が必要であることを示す。
+4. Kiro contract set は `kiro-workflow-surface` の `kiro:*` namespace と矛盾する command identity を導入しない。
+
 ### Requirement 7: built-in facet を継承して差分だけを記述できる
 
 **Objective:** workflow/facet 実装者として、TAKT の既定 facet を活かしながら Kiro 固有の差分だけを記述したい。そうすることで、既定の persona、policy、instruction、output contract の改善を取り込みやすくし、Kiro-specific facet のコピー肥大化を避けられる。
@@ -86,14 +97,3 @@
 3. 親 facet が `node_modules/takt/builtins/{lang}/facets` に存在しない場合、Kiro contract validation は `BUILTIN_FACET_NOT_FOUND` として fail-fast できる。
 4. TAKT runtime が Markdown facet inheritance を解決できない場合、Kiro contract validation は `FACET_EXTENDS_UNSUPPORTED` として前提不足を示し、親 facet の暗黙コピーとして扱わない。
 5. Kiro-specific facet が built-in facet を継承しない場合、design または validation finding は full custom にする理由を示す。
-
-### Requirement 6: 下流 workflow が共通契約を安全に参照できる
-
-**Objective:** 下流 spec の実装者として、共通契約の責務と参照方法を明確に知りたい。そうすることで、status/validation/spec generation/discovery/implementation workflow が同じ contract を使いながら重複実装を避けられる。
-
-#### Acceptance Criteria
-
-1. downstream workflow spec が設計される場合、Kiro contract set は どの output contract、skill identity rule、artifact operation rule を参照すべきか判断できる名前と境界を提供する。
-2. downstream workflow が本 spec の契約を使う場合、Kiro contract set は downstream-specific な task selection、generation prompt、review loop の詳細を要求しない。
-3. shared contract の enum、tag、field name が変更される場合、Kiro contract set は downstream workflow の再検証が必要であることを示す。
-4. Kiro contract set は `kiro-workflow-surface` の `kiro:*` namespace と矛盾する command identity を導入しない。
