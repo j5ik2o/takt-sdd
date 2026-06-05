@@ -316,9 +316,21 @@ type KiroSpecGenerationPhase =
   | "tasks"
   | "quick";
 
+type KiroSpecGenerationVerdict =
+  | "PASS"
+  | "NEEDS_FIX"
+  | "BLOCKED";
+
+interface KiroSpecGenerationValidation {
+  readonly verdict: KiroSpecGenerationVerdict;
+  readonly evidence: readonly string[];
+  readonly findings: readonly string[];
+  readonly sharedContractValidation: KiroSharedContractValidationResult;
+}
+
 interface KiroSpecGenerationResult {
   readonly phase: KiroSpecGenerationPhase;
-  readonly validation: KiroSharedContractValidationResult;
+  readonly validation: KiroSpecGenerationValidation;
   readonly featureName: string;
   readonly updatedFiles: readonly string[];
   readonly nextAction?: string;
@@ -571,7 +583,7 @@ interface SpecGenerationValidationResult {
 - `FeatureSpec` — `.kiro/specs/<feature>` directory と lifecycle state を持つ個別 spec。
 - `SpecArtifact` — `requirements.md`、`design.md`、`research.md`、`tasks.md` の phase output。
 - `LifecycleState` — `spec.json.phase`、`approvals.*.generated`、`approvals.*.approved`、`ready_for_implementation`。
-- `GenerationPhaseResult` — workflow phase の verdict、updated files、next action、blocking reason。
+- `GenerationPhaseResult` — workflow phase の validation verdict、updated files、next action、blocking reason。
 - `TaskAnnotation` — downstream implementation が読む `_Requirements:_`、`_Boundary:_`、`_Depends:_`、`(P)` marker。
 
 ### Logical Data Model
@@ -581,7 +593,7 @@ interface SpecGenerationValidationResult {
 | FeatureSpec | feature name | directory path, optional brief, spec json | feature directory に閉じて更新する |
 | SpecJson | file path | phase, approvals, ready flag, timestamps | shared lifecycle phase table と一致する |
 | MarkdownArtifact | file path | artifact type, required sections | phase ごとの required sections を満たす |
-| GenerationResult | phase run | verdict, updated files, blocking reason | `PASS` のときだけ lifecycle を進める |
+| GenerationResult | phase run | validation.verdict, updated files, blocking reason | `PASS` のときだけ lifecycle を進める |
 | TaskAnnotation | task id | requirements, boundary, depends, parallel marker | tasks.md の全 executable task に存在する |
 
 ## Error Handling
