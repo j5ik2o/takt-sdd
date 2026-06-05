@@ -153,7 +153,7 @@ Key decisions:
 
 ### Modified Files
 
-- `tests/kiro-shared-workflow-contracts.test.*` — shared contract validation を既存 test/check command から検出できる形で追加する。`package.json` の script wiring は `kiro-workflow-surface` の所有範囲に残す。
+- `package.json` — `validate:kiro-shared-contracts` と `test:kiro-shared-contracts` を追加し、shared contract validation を repository-local command と test runner から実行できる形にする。
 - 下流 `.takt/{en,ja}/workflows/kiro-*.yaml` — 本 spec では変更しない。存在する場合に validation の参照対象になる。
 
 ### Component to File Mapping
@@ -201,7 +201,7 @@ Key decisions:
 | 6.3 | downstream revalidation on contract change | KiroWorkflowReferenceRules | Validation rules | Contract validation |
 | 6.4 | `kiro:*` namespace consistency | KiroWorkflowReferenceRules | Policy | Shared contract consumption |
 | 7.1 | built-in facet 継承を優先する | BuiltinFacetInheritancePolicy, ContractFacetBundle | Policy | Contract validation |
-| 7.2 | type-qualified facet id を定義する | BuiltinFacetInheritancePolicy | Data model | Contract validation |
+| 7.2 | runtime-supported facet parent id を定義する | BuiltinFacetInheritancePolicy | Data model | Contract validation |
 | 7.3 | 親 facet 不在を fail-fast する | SharedContractValidationHarness, BuiltinFacetInheritancePolicy | Validation | Contract validation |
 | 7.4 | runtime 未対応を前提不足として扱う | SharedContractValidationHarness, BuiltinFacetInheritancePolicy | Validation | Contract validation |
 | 7.5 | full custom facet の理由を要求する | BuiltinFacetInheritancePolicy, ContractFacetBundle | Policy | Shared contract consumption |
@@ -529,15 +529,13 @@ sequenceDiagram
 
 ### Facet Inheritance Contract
 
-Kiro-specific facet が built-in facet を継承する場合、Markdown frontmatter で親 facet を明示します。
+Kiro-specific facet が built-in facet を継承する場合、TAKT 0.43.0 が解決できる単独行の `{extends: parent}` directive で親 facet を明示します。
 
-```yaml
----
-extends: instructions/plan
----
+```markdown
+{extends: validation}
 ```
 
-`extends` は `instructions/plan`、`policies/coding`、`knowledge/takt`、`output-contracts/validation`、`personas/coder` のように facet kind と basename を `/` で区切る type-qualified facet id を基本形にします。同じ facet kind 内で一意に解決できる場合だけ basename のみを許可できます。validation harness は `node_modules/takt/builtins/{lang}/facets/<kind>/<name>.md` を親として解決し、親が存在しない場合は `BUILTIN_FACET_NOT_FOUND`、TAKT runtime が inheritance を解決できない場合は `FACET_EXTENDS_UNSUPPORTED` を返します。
+TAKT 0.43.0 の Markdown facet inheritance は同じ facet kind 内の bare facet name だけを親として解決します。たとえば output contract facet は `{extends: validation}`、instruction facet は `{extends: plan}`、policy facet は `{extends: coding}` のように書きます。validation harness は `.takt/{lang}/facets/<kind>/<name>.md` の facet kind と `{extends: parent}` から `node_modules/takt/builtins/{lang}/facets/<kind>/<parent>.md` を親として解決し、親が存在しない場合は `BUILTIN_FACET_NOT_FOUND`、TAKT runtime が directive を解決できない場合は `FACET_EXTENDS_UNSUPPORTED` を返します。`instructions/plan` のような type-qualified facet id は runtime が対応した後に再検証して採用します。
 
 ### Output Contract Enum Set
 
@@ -566,7 +564,7 @@ extends: instructions/plan
 - `KiroOutputContractCatalog`: en/ja の `kiro-*.md` output contract に required machine field と allowed enum が書かれていることを検証する。対象: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 5.1
 - `SkillIdentityResolver`: `kiro-impl`、`$kiro-impl`、`/kiro-impl`、`kiro:impl` が同じ canonical identity へ解決され、unknown skill が `UNSUPPORTED_KIRO_IDENTITY`、missing source が `SKILL_SOURCE_MISSING` になることを検証する。対象: 2.1, 2.2, 2.3, 2.5, 5.2
 - `KiroArtifactAccessPolicy` と `SpecLifecycleStateContract`: phase names、approval fields、required artifacts、OpenSpec separation の terms が policy に存在し、矛盾した lifecycle terms がないことを検証する。対象: 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4, 5.3
-- `BuiltinFacetInheritancePolicy`: Kiro-specific facet の `extends` frontmatter が type-qualified facet id を使い、`node_modules/takt/builtins/{lang}/facets` の親 facet へ解決できることを検証する。TAKT runtime が inheritance 未対応の場合は `FACET_EXTENDS_UNSUPPORTED` として失敗させる。対象: 7.1, 7.2, 7.3, 7.4, 7.5
+- `BuiltinFacetInheritancePolicy`: Kiro-specific facet の `{extends: parent}` directive が bare facet name を使い、同じ facet kind の `node_modules/takt/builtins/{lang}/facets` 親 facet へ解決できることを検証する。TAKT runtime が inheritance 未対応の場合は `FACET_EXTENDS_UNSUPPORTED` として失敗させる。対象: 7.1, 7.2, 7.3, 7.4, 7.5
 - `KiroWorkflowReferenceRules`: `.takt/{en,ja}/workflows/kiro-*.yaml` が存在する場合に、shared facet references が解決できることを検証する。対象: 5.4, 6.1, 6.3, 6.4
 - Scope guard: validation script が downstream workflow YAML の未実装を failure にしないことを検証する。対象: 5.5, 6.2
 
