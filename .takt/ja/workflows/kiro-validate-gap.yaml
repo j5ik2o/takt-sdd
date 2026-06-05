@@ -1,0 +1,36 @@
+name: kiro-validate-gap
+description: Kiro - design 前 gap validation を読み取り専用で行う
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 5
+initial_step: validate-gap
+
+instructions:
+  kiro-validate-gap-readiness: ../facets/instructions/kiro-validate-gap-readiness.md
+
+report_formats:
+  kiro-validation-result: ../facets/output-contracts/kiro-validation-result.md
+
+steps:
+  - name: validate-gap
+    edit: false
+    persona: qa-reviewer
+    policy:
+      - review
+      - qa
+    instruction: kiro-validate-gap-readiness
+    output_contracts:
+      report:
+        - name: kiro-gap-validation-result.md
+          format: kiro-validation-result
+    rules:
+      - condition: verdict PASS
+        next: COMPLETE
+      - condition: verdict FAIL or verdict NEEDS_FIX or verdict BLOCKED
+        next: ABORT
+      - condition: finding category MANUAL_VERIFICATION_REQUIRED
+        next: ABORT

@@ -156,7 +156,7 @@ Key decisions:
 - `.takt/{en,ja}/facets/instructions/kiro-validate-gap-readiness.md` — requirements と current codebase evidence から gap validation verdict を作る手順。
 - `.takt/{en,ja}/facets/instructions/kiro-validate-design-readiness.md` — requirements/design の coverage、boundary、file structure、validation hooks を検証する手順。
 - `.takt/{en,ja}/facets/instructions/kiro-validate-impl-readiness.md` — tasks、task completion、test/build evidence、manual verification を検証する手順。
-- `.takt/{en,ja}/facets/instructions/kiro-collect-validation-evidence.md` — validation workflow 共通の evidence と `MANUAL_VERIFICATION_REQUIRED` finding の分離規約。
+- `.takt/{en,ja}/facets/instructions/kiro-collect-validation-evidence.md` — validation workflow 共通の evidence と `MANUAL_VERIFICATION_REQUIRED` finding の分離規約。TAKT workflow YAML の `instruction` は単一参照であるため、gap/implementation workflow では readiness facet に同じ証跡分離語彙を埋め込む。
 - `.takt/{en,ja}/workflows/kiro-spec-status.yaml` — `kiro-spec-status` workflow。
 - `.takt/{en,ja}/workflows/kiro-validate-gap.yaml` — `kiro-validate-gap` workflow。
 - `.takt/{en,ja}/workflows/kiro-validate-design.yaml` — `kiro-validate-design` workflow。
@@ -209,7 +209,7 @@ sequenceDiagram
     participant SharedContract
     Caller->>ValidationWorkflow: feature
     ValidationWorkflow->>Workspace: read phase artifacts
-    ValidationWorkflow->>EvidenceCollector: collect evidence
+    ValidationWorkflow->>EvidenceCollector: apply embedded evidence separation terms
     EvidenceCollector-->>ValidationWorkflow: evidence and manual checks
     ValidationWorkflow->>SharedContract: map verdict
     ValidationWorkflow-->>Caller: PASS / FAIL / NEEDS_FIX / BLOCKED result
@@ -391,7 +391,7 @@ interface KiroSpecStatusResult {
 
 **Dependencies**
 
-- Inbound: gap/implementation validation workflow — evidence collection step として参照する (P0)
+- Inbound: gap/implementation validation workflow — readiness facet に埋め込む evidence separation 語彙として参照する (P0)
 - Outbound: repository files、test/build logs — read-only evidence source (P1)
 
 **Contracts**: Service [x] / API [ ] / Event [ ] / Batch [ ] / State [ ]

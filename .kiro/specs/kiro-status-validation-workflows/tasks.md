@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. Kiro status/validation workflow の validation harness を追加する
+- [x] 1. Kiro status/validation workflow の validation harness を追加する
   - en/ja の workflow file、instruction facet、shared contract reference を検証できる repository-local check を追加する。
   - `kiro-spec-status`、`kiro-validate-gap`、`kiro-validate-design`、`kiro-validate-impl` が未作成の場合に missing file を明示する。
   - 完了時点で shared contract が未作成の場合も、どの reference が不足しているかを validation failure として確認できる。
@@ -9,7 +9,7 @@
   - _Boundary:_ StatusValidationWorkflowValidationHarness
   - _Depends:_ none
 
-- [ ] 2. status reporting の instruction facet を追加する
+- [x] 2. status reporting の instruction facet を追加する
   - feature existence、`spec.json` phase、approvals、ready-for-implementation、phase artifact consistency を読む手順を en/ja に追加する。
   - missing feature、missing artifact、invalid lifecycle を分けて status result に渡す規約を明示する。
   - 完了時点で `kiro-report-spec-status` facet が read-only status 判定の入力と出力を説明できる。
@@ -17,7 +17,7 @@
   - _Boundary:_ KiroSpecStatusWorkflow
   - _Depends:_ 1
 
-- [ ] 3. gap validation の instruction facet を追加する
+- [x] 3. gap validation の instruction facet を追加する
   - requirements artifact、current codebase evidence、missing components、integration points、recommended next action を確認する手順を en/ja に追加する。
   - requirements が不足している場合の `FAIL` または `BLOCKED` と、codebase evidence が不足している場合の `MANUAL_VERIFICATION_REQUIRED` finding を分ける。
   - 完了時点で `kiro-validate-gap-readiness` facet が artifact 更新なしで gap validation verdict を組み立てられる。
@@ -25,7 +25,7 @@
   - _Boundary:_ KiroGapValidationWorkflow
   - _Depends:_ 1
 
-- [ ] 4. design validation の instruction facet を追加する
+- [x] 4. design validation の instruction facet を追加する
   - requirements coverage、Boundary Commitments、File Structure Plan、validation hooks を確認する手順を en/ja に追加する。
   - design artifact 不足、approval 矛盾、下流責務の吸収を actionable finding として返す規約を明示する。
   - 完了時点で `kiro-validate-design-readiness` facet が design.md を修正せずに shared validation verdict を返せる。
@@ -33,7 +33,7 @@
   - _Boundary:_ KiroDesignValidationWorkflow
   - _Depends:_ 1
 
-- [ ] 5. implementation validation の instruction facet を追加する
+- [x] 5. implementation validation の instruction facet を追加する
   - tasks artifact、ready-for-implementation、task checkbox、test/build evidence、remaining manual verification を確認する手順を en/ja に追加する。
   - incomplete work、evidence mismatch、`MANUAL_VERIFICATION_REQUIRED` finding を分けて返す規約を明示する。
   - 完了時点で `kiro-validate-impl-readiness` facet が task execution と checkbox 更新なしで completion gate を判定できる。
@@ -41,7 +41,7 @@
   - _Boundary:_ KiroImplValidationWorkflow
   - _Depends:_ 1
 
-- [ ] 6. evidence collection の共通 instruction facet を追加する
+- [x] 6. evidence collection の共通 instruction facet を追加する
   - observed evidence、missing evidence、`MANUAL_VERIFICATION_REQUIRED` finding を分離する共通手順を en/ja に追加する。
   - evidence のない項目を `PASS` の根拠に含めないルールを validation workflow 共通で使えるようにする。
   - 完了時点で gap validation と implementation validation が同じ evidence separation 語彙を参照できる。
@@ -49,7 +49,7 @@
   - _Boundary:_ KiroEvidenceCollector
   - _Depends:_ 3, 5
 
-- [ ] 7. status workflow YAML を追加する
+- [x] 7. status workflow YAML を追加する
   - `kiro-spec-status` workflow を en/ja に追加し、status instruction facet と shared `kiro-status` contract を参照する。
   - feature missing、artifact missing、lifecycle inconsistency、ready state の分岐を workflow step と output mapping に反映する。
   - 完了時点で workflow validation harness が `kiro-spec-status.yaml` の facet reference と read-only boundary を検出できる。
@@ -57,15 +57,15 @@
   - _Boundary:_ KiroSpecStatusWorkflow, KiroReadinessEvaluator, KiroValidationOutputMapper
   - _Depends:_ 2
 
-- [ ] 8. gap validation workflow YAML を追加する
-  - `kiro-validate-gap` workflow を en/ja に追加し、gap instruction facet、evidence collection facet、shared validation result contract を参照する。
+- [x] 8. gap validation workflow YAML を追加する
+  - `kiro-validate-gap` workflow を en/ja に追加し、gap instruction facet、readiness facet に埋め込んだ evidence collection 語彙、shared validation result contract を参照する。
   - requirements 不足時の `FAIL` または `BLOCKED` と evidence 不足時の `MANUAL_VERIFICATION_REQUIRED` finding を output mapping に反映する。
   - 完了時点で workflow が artifact 生成や design/tasks 更新を行わないことを validation harness で確認できる。
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 5.1, 5.2, 5.4, 6.1_
   - _Boundary:_ KiroGapValidationWorkflow, KiroEvidenceCollector, KiroValidationOutputMapper
   - _Depends:_ 3, 6
 
-- [ ] 9. design validation workflow YAML を追加する
+- [x] 9. design validation workflow YAML を追加する
   - `kiro-validate-design` workflow を en/ja に追加し、design instruction facet と shared validation result contract を参照する。
   - coverage、boundary、file structure、lifecycle inconsistency の findings を shared validation verdict に写像する。
   - 完了時点で workflow が design.md の自動修正を含まないことを validation harness で確認できる。
@@ -73,15 +73,15 @@
   - _Boundary:_ KiroDesignValidationWorkflow, KiroReadinessEvaluator, KiroValidationOutputMapper
   - _Depends:_ 4
 
-- [ ] 10. implementation validation workflow YAML を追加する
-  - `kiro-validate-impl` workflow を en/ja に追加し、implementation validation facet、evidence collection facet、shared validation result contract を参照する。
+- [x] 10. implementation validation workflow YAML を追加する
+  - `kiro-validate-impl` workflow を en/ja に追加し、implementation validation facet、readiness facet に埋め込んだ evidence collection 語彙、shared validation result contract を参照する。
   - tasks/ready state 不足、unchecked task、test/build evidence mismatch、manual verification remaining を `findings` と verdict に写像する。
   - 完了時点で workflow が implementation task execution と tasks.md checkbox 更新を含まないことを validation harness で確認できる。
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 5.1, 5.3, 5.4, 6.1_
   - _Boundary:_ KiroImplValidationWorkflow, KiroEvidenceCollector, KiroReadinessEvaluator, KiroValidationOutputMapper
   - _Depends:_ 5, 6
 
-- [ ] 11. status/validation workflow の regression test を追加する
+- [x] 11. status/validation workflow の regression test を追加する
   - validation harness を test runner から実行し、en/ja file parity、shared contract reference、read-only boundary、OpenSpec separation を検証する。
   - workflow YAML が shared Kiro contract ではなく旧 cc-sdd contract だけを参照した場合に failure になるようにする。
   - `validate:kiro-status-validation-workflows` と `test:kiro-status-validation-workflows` を repository-local command として追加する。
@@ -90,7 +90,7 @@
   - _Boundary:_ StatusValidationWorkflowValidationHarness
   - _Depends:_ 7, 8, 9, 10
 
-- [ ] 12. downstream workflow から参照できる output boundary を最終検証する
+- [x] 12. downstream workflow から参照できる output boundary を最終検証する
   - `kiro-spec-generation-workflows` と `kiro-iterative-implementation-workflow` が参照する status/readiness/verdict 語彙が shared contract と矛盾しないことを確認する。
   - `kiro:*` script surface の ownership を吸収せず、workflow 名だけが surface spec と整合することを確認する。
   - 完了時点で downstream workflow が task selection や generation prompt の詳細なしに status/validation result を分岐条件として使える。
@@ -98,7 +98,7 @@
   - _Boundary:_ KiroValidationOutputMapper, StatusValidationWorkflowValidationHarness
   - _Depends:_ 11
 
-- [ ] 13. status/validation facets の built-in 継承候補を棚卸しする
+- [x] 13. status/validation facets の built-in 継承候補を棚卸しする
   - `node_modules/takt/builtins/{en,ja}/facets` の validation/review 系 instruction、policy、output contract を確認し、各 Kiro-specific facet の親候補を記録する。
   - 親候補がある facet は shared `BuiltinFacetInheritancePolicy` の `{extends: parent}` 単独行 directive を使い、Kiro 固有の `.kiro/*` lifecycle 判定だけを差分として記述する。
   - 親候補がない、または full custom が必要な facet は理由を design note または validation finding に残す。
