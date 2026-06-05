@@ -70,7 +70,7 @@
   - 完了時点で partial success を成功扱いにせず、feature ごとの状態と残作業が利用者に見える。
   - _Requirements: 4.2, 4.4, 5.4, 5.5_
   - _Boundary:_ BatchRemediationCoordinator
-  - _Depends:_ 8
+  - _Depends:_ 8, 10
 
 - [ ] 10. cross-spec review instruction と output contract を追加する
   - generated specs の requirements、design、tasks、roadmap を読む review instruction を追加する。
@@ -78,7 +78,7 @@
   - 完了時点で review result が severity、affected specs、suggested fix、decomposition return を machine-readable に返す。
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 6.4_
   - _Boundary:_ CrossSpecReviewWorkflow
-  - _Depends:_ 8, 9
+  - _Depends:_ 8
 
 - [ ] 11. discovery/batch workflow の en/ja language pair をそろえる
   - 追加した workflow、instruction、policy、output contract の en/ja basename と machine field をそろえる。
