@@ -65,7 +65,7 @@
 
 #### Acceptance Criteria
 
-1. task implementation が一通り完了する場合、Kiro implementation workflow は internal `kiro-review` を実行し、shared review verdict contract の `GO` または `NO_GO` を使って分岐する。
+1. task implementation と validation plan が成功し、完了候補になる場合、Kiro implementation workflow は internal `kiro-review` を実行し、shared review verdict contract の `GO` または `NO_GO` を使って分岐する。
 2. review verdict が `NO_GO` である場合、Kiro implementation workflow は actionable findings を対象 task と requirement に結びつけ、修正対象を明示する。
 3. validation failure または review finding が修正を必要とする場合、Kiro implementation workflow は internal `kiro-debug` を使って root cause、`RETRY_TASK`、`BLOCK_TASK`、`STOP_FOR_HUMAN` の decision を返す。
 4. Kiro implementation workflow は debug decision が `STOP_FOR_HUMAN` の場合に追加実装を続けず、必要な人間確認事項を blocker として残す。
