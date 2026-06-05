@@ -25,7 +25,7 @@
 kiro-discovery → kiro-spec-init → kiro-spec-requirements → kiro-validate-gap → kiro-spec-design → kiro-validate-design → kiro-spec-tasks → kiro-impl → kiro-validate-impl
 ```
 
-Kiro スキルでは `$kiro-discovery`, `$kiro-spec-quick`, `$kiro-spec-batch`, `$kiro-impl`, `$kiro-spec-status` を正規導線として使う。npm scripts では `npm run kiro:{phase} -- "..."` で個別実行できる。旧 `cc-sdd:*` は互換・移行用として残すが、新規案内では Kiro 系を優先する。
+Kiro スキルでは `$kiro-discovery`, `$kiro-spec-quick`, `$kiro-spec-batch`, `$kiro-impl`, `$kiro-spec-status` を正規導線として使う。npm scripts で個別実行する場合は、`package.json` に定義された `kiro:discovery`, `kiro:spec:*`, `kiro:validate:*`, `kiro:impl`, `kiro:steering*` の実名を使う（例: `npm run kiro:spec:requirements -- "..."`）。旧 `cc-sdd:*` は互換・移行用として残すが、新規案内では Kiro 系を優先する。
 
 ## OpenSpec ワークフロー
 
