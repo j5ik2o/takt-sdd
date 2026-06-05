@@ -28,57 +28,6 @@ const LEGACY_OPSX_SCRIPT_INSTALL_PATH = "scripts/opsx-cli.sh";
 const OPENSPEC_PACKAGE = "@fission-ai/openspec";
 const OPENSPEC_VERSION = "1.3.1";
 const OPENSPEC_CONFIG_PATH = "openspec/config.yaml";
-const KIRO_STAGED_SCRIPT_CONTENT = [
-  "#!/usr/bin/env node",
-  "",
-  "import { existsSync } from \"node:fs\";",
-  "import { dirname, resolve } from \"node:path\";",
-  "import { spawnSync } from \"node:child_process\";",
-  "import { fileURLToPath } from \"node:url\";",
-  "",
-  "const [, , workflowName, ...forwardedArgs] = process.argv;",
-  "",
-  "if (!workflowName) {",
-  "  console.error(\"Usage: node scripts/kiro-staged.mjs <workflow-name> [takt args...]\");",
-  "  process.exit(1);",
-  "}",
-  "",
-  "const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), \"..\");",
-  "const workflowCandidates = [",
-  "  resolve(repoRoot, \".takt\", \"workflows\", `${workflowName}.yaml`),",
-  "  resolve(repoRoot, \".takt\", \"ja\", \"workflows\", `${workflowName}.yaml`),",
-  "  resolve(repoRoot, \".takt\", \"en\", \"workflows\", `${workflowName}.yaml`),",
-  "];",
-  "",
-  "if (!workflowCandidates.some((path) => existsSync(path))) {",
-  "  console.error(`Kiro workflow '${workflowName}' is not installed yet.`);",
-  "  console.error(\"This command is part of the staged Kiro workflow surface.\");",
-  "  console.error(\"Install or merge the downstream Kiro workflow implementation before running it.\");",
-  "  process.exit(1);",
-  "}",
-  "",
-  "const taktWrapper = resolve(repoRoot, \"scripts\", \"takt.sh\");",
-  "const command = existsSync(taktWrapper) ? taktWrapper : \"takt\";",
-  "const taskArgIndex = forwardedArgs.findIndex((arg) => arg === \"-t\" || arg === \"--task\");",
-  "const args =",
-  "  taskArgIndex === -1",
-  "    ? [...forwardedArgs, \"-w\", workflowName]",
-  "    : [",
-  "        ...forwardedArgs.slice(0, taskArgIndex),",
-  "        \"-w\",",
-  "        workflowName,",
-  "        ...forwardedArgs.slice(taskArgIndex),",
-  "      ];",
-  "const result = spawnSync(command, args, { stdio: \"inherit\" });",
-  "",
-  "if (result.error) {",
-  "  console.error(result.error.message);",
-  "  process.exit(1);",
-  "}",
-  "",
-  "process.exit(result.status ?? 1);",
-  "",
-].join("\n");
 const FACET_TYPES = [
   "personas",
   "policies",
@@ -282,10 +231,6 @@ function computeFileHash(filePath: string): string {
   return createHash("sha256").update(content).digest("hex");
 }
 
-function computeContentHash(content: string): string {
-  return createHash("sha256").update(content).digest("hex");
-}
-
 function loadManifest(manifestPath: string): Manifest | null {
   if (!existsSync(manifestPath)) return null;
   try {
@@ -338,43 +283,6 @@ function syncRelativeFiles(
     } else {
       cpSync(srcPath, destPath);
     }
-  }
-
-  return { files };
-}
-
-function syncGeneratedFile(
-  destBase: string,
-  relFile: string,
-  content: string,
-  manifest: Manifest | null,
-  msg: ReturnType<typeof getMessages>,
-  cwd: string,
-): SyncResult {
-  const destPath = join(destBase, relFile);
-  const manifestKey = relative(cwd, destPath).split("\\").join("/");
-  const contentHash = computeContentHash(content);
-  const files: Record<string, string> = { [manifestKey]: contentHash };
-
-  if (!existsSync(destPath)) {
-    mkdirSync(dirname(destPath), { recursive: true });
-    writeFileSync(destPath, content, "utf-8");
-    info(msg.fileAdded(manifestKey));
-  } else if (manifest !== null) {
-    const recordedHash = manifest.files[manifestKey];
-    if (recordedHash === undefined) {
-      warn(msg.fileSkippedCustomized(manifestKey));
-    } else {
-      const currentHash = computeFileHash(destPath);
-      if (currentHash === recordedHash) {
-        writeFileSync(destPath, content, "utf-8");
-        info(msg.fileUpdated(manifestKey));
-      } else {
-        warn(msg.fileSkippedCustomized(manifestKey));
-      }
-    }
-  } else {
-    writeFileSync(destPath, content, "utf-8");
   }
 
   return { files };
@@ -521,7 +429,11 @@ export async function install(options: InstallOptions): Promise<void> {
     const extractedDir = join(tmpDir, `takt-sdd-${version}`);
     const extractedTakt = join(extractedDir, ".takt");
     const extractedLegacyOpsxPath = join(extractedDir, LEGACY_OPSX_SCRIPT_INSTALL_PATH);
+    const extractedKiroStagedPath = join(extractedDir, KIRO_STAGED_SCRIPT_INSTALL_PATH);
+    const packagedAssetBase = join(__dirname, "assets");
+    const packagedKiroStagedPath = join(packagedAssetBase, KIRO_STAGED_SCRIPT_INSTALL_PATH);
     const hasLegacyOpsxScript = existsSync(extractedLegacyOpsxPath);
+    const hasKiroStagedScript = existsSync(extractedKiroStagedPath) || existsSync(packagedKiroStagedPath);
 
     if (!existsSync(extractedTakt)) {
       errorExit(msg.archiveError);
@@ -564,7 +476,11 @@ export async function install(options: InstallOptions): Promise<void> {
       } else if (hasLegacyOpsxScript) {
         console.log(msg.dryRunItem(LEGACY_OPSX_SCRIPT_INSTALL_PATH));
       }
-      console.log(msg.dryRunItem(KIRO_STAGED_SCRIPT_INSTALL_PATH));
+      if (hasKiroStagedScript) {
+        console.log(msg.dryRunItem(KIRO_STAGED_SCRIPT_INSTALL_PATH));
+      } else {
+        errorExit(msg.requiredFileMissing(KIRO_STAGED_SCRIPT_INSTALL_PATH));
+      }
       console.log("");
       info(msg.dryRunSkipped);
       return;
@@ -628,10 +544,14 @@ export async function install(options: InstallOptions): Promise<void> {
       errorExit(msg.requiredFileMissing(LEGACY_OPSX_SCRIPT_INSTALL_PATH));
     }
 
-    const kiroStagedScriptResult = syncGeneratedFile(
+    if (!hasKiroStagedScript) {
+      errorExit(msg.requiredFileMissing(KIRO_STAGED_SCRIPT_INSTALL_PATH));
+    }
+
+    const kiroStagedScriptResult = syncRelativeFiles(
+      existsSync(extractedKiroStagedPath) ? extractedDir : packagedAssetBase,
       options.cwd,
-      KIRO_STAGED_SCRIPT_INSTALL_PATH,
-      KIRO_STAGED_SCRIPT_CONTENT,
+      [KIRO_STAGED_SCRIPT_INSTALL_PATH],
       isUpdate ? manifest : null,
       msg,
       options.cwd,
