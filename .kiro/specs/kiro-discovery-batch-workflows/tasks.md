@@ -59,7 +59,7 @@
 - [ ] 8. `kiro-spec-batch` workflow と worker dispatch を追加する
   - roadmap parse、wave plan、same-wave worker dispatch、strict wave ordering、feature result aggregation を workflow に接続する。
   - worker は `kiro-spec-generation-workflows` の init、requirements、design、tasks phase を呼び出し、feature directory に閉じて更新する。
-  - 完了時点で同じ wave の success/failure が feature result として coordinator に渡り、次 wave は前 wave 完了後にだけ開始される。
+  - 完了時点で同じ wave の success/failure が feature result として保持され、次 wave は前 wave 完了後にだけ開始される。
   - _Requirements: 3.5, 4.1, 4.2, 4.3, 4.4, 4.5, 6.3_
   - _Boundary:_ BatchWorkerDispatcher
   - _Depends:_ 7

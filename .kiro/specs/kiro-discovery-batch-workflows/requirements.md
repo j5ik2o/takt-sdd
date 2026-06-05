@@ -21,7 +21,7 @@
 #### Acceptance Criteria
 
 1. `kiro-discovery` が作業説明を受け取る場合、discovery batch workflows は existing spec update、direct implementation、single spec、multi-spec、mixed decomposition の候補を判定できる。
-2. action path が single spec または multi-spec である場合、discovery batch workflows は 後続 workflow が読める `brief.md` を対象 feature directory に作成できる。
+2. action path が single spec、multi-spec、または mixed decomposition である場合、discovery batch workflows は 後続 workflow が読める `brief.md` を対象 feature directory に作成できる。
 3. action path が multi-spec または mixed decomposition である場合、discovery batch workflows は `.kiro/steering/roadmap.md` に dependency order と scope boundary を残せる。
 4. 作業内容が既存 spec 更新または direct implementation と判断される場合、discovery batch workflows は 新規 spec generation を開始せず、利用者に次の action を示す。
 5. discovery batch workflows は discovery output の日本語本文を自然な日本語にし、JSON key、path、script 名、enum 値は machine-readable な表記を維持する。
