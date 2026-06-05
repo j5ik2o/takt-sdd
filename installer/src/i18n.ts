@@ -78,16 +78,19 @@ Options:
   usageExamples: `
   Installed to: .takt/
 
-  Usage (CC-SDD):
-    npm run cc-sdd:full -- "description of requirements"
+  Usage (Kiro-compatible SDD):
+    npm run kiro:spec:quick -- "description of requirements"
+    npm run kiro:impl -- "feature={feature}"
 
-  Run individual CC-SDD phases:
-    npm run cc-sdd:requirements -- "description of requirements"
-    npm run cc-sdd:design -- "feature={feature}"
-    npm run cc-sdd:validate-design -- "feature={feature}"
-    npm run cc-sdd:tasks -- "feature={feature}"
-    npm run cc-sdd:impl -- "feature={feature}"
-    npm run cc-sdd:validate-impl -- "feature={feature}"
+  Run individual Kiro phases:
+    npm run kiro:spec:requirements -- "description of requirements"
+    npm run kiro:spec:design -- "feature={feature}"
+    npm run kiro:validate:design -- "feature={feature}"
+    npm run kiro:spec:tasks -- "feature={feature}"
+    npm run kiro:validate:impl -- "feature={feature}"
+
+  Legacy CC-SDD scripts remain available during migration:
+    npm run cc-sdd:full -- "description of requirements"
 
   Usage (OpenSpec):
     npm run opsx:full -- "description of change"
@@ -144,16 +147,19 @@ const ja: Messages = {
   usageExamples: `
   インストール先: .takt/
 
-  使い方 (CC-SDD):
-    npm run cc-sdd:full -- "要件の説明"
+  使い方 (Kiro-compatible SDD):
+    npm run kiro:spec:quick -- "要件の説明"
+    npm run kiro:impl -- "feature={feature}"
 
-  CC-SDD 各フェーズの個別実行:
-    npm run cc-sdd:requirements -- "要件の説明"
-    npm run cc-sdd:design -- "feature={feature}"
-    npm run cc-sdd:validate-design -- "feature={feature}"
-    npm run cc-sdd:tasks -- "feature={feature}"
-    npm run cc-sdd:impl -- "feature={feature}"
-    npm run cc-sdd:validate-impl -- "feature={feature}"
+  Kiro 各フェーズの個別実行:
+    npm run kiro:spec:requirements -- "要件の説明"
+    npm run kiro:spec:design -- "feature={feature}"
+    npm run kiro:validate:design -- "feature={feature}"
+    npm run kiro:spec:tasks -- "feature={feature}"
+    npm run kiro:validate:impl -- "feature={feature}"
+
+  旧 CC-SDD scripts は移行期間中も利用できます:
+    npm run cc-sdd:full -- "要件の説明"
 
   使い方 (OpenSpec):
     npm run opsx:full -- "変更の説明"

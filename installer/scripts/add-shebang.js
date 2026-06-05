@@ -1,9 +1,11 @@
-import { readFileSync, writeFileSync, chmodSync } from "node:fs";
+import { readFileSync, writeFileSync, chmodSync, cpSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const cliPath = resolve(__dirname, "..", "dist", "cli.js");
+const kiroStagedSourcePath = resolve(__dirname, "..", "..", "scripts", "kiro-staged.mjs");
+const kiroStagedAssetPath = resolve(__dirname, "..", "dist", "assets", "scripts", "kiro-staged.mjs");
 
 const content = readFileSync(cliPath, "utf-8");
 if (!content.startsWith("#!/")) {
@@ -11,4 +13,7 @@ if (!content.startsWith("#!/")) {
 }
 chmodSync(cliPath, 0o755);
 
-console.log("Added shebang to dist/cli.js");
+mkdirSync(dirname(kiroStagedAssetPath), { recursive: true });
+cpSync(kiroStagedSourcePath, kiroStagedAssetPath);
+
+console.log("Prepared dist/cli.js and dist/assets/scripts/kiro-staged.mjs");

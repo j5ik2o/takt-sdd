@@ -23,6 +23,7 @@ function getInstallerVersion(): string {
 const REPO = "j5ik2o/takt-sdd";
 const TARGET_DIR = ".takt";
 const PIECE_DIR = "workflows";
+const KIRO_STAGED_SCRIPT_INSTALL_PATH = "scripts/kiro-staged.mjs";
 const LEGACY_OPSX_SCRIPT_INSTALL_PATH = "scripts/opsx-cli.sh";
 const OPENSPEC_PACKAGE = "@fission-ai/openspec";
 const OPENSPEC_VERSION = "1.3.1";
@@ -71,6 +72,20 @@ function rewritePiecePathsForLegacy(piecesDir: string): void {
 }
 
 const SDD_SCRIPTS: Record<string, string> = {
+  "kiro:discovery": "node scripts/kiro-staged.mjs kiro-discovery --pipeline --skip-git -t",
+  "kiro:spec:init": "node scripts/kiro-staged.mjs kiro-spec-init --pipeline --skip-git -t",
+  "kiro:spec:requirements": "node scripts/kiro-staged.mjs kiro-spec-requirements --pipeline --skip-git -t",
+  "kiro:validate:gap": "node scripts/kiro-staged.mjs kiro-validate-gap --pipeline --skip-git -t",
+  "kiro:spec:design": "node scripts/kiro-staged.mjs kiro-spec-design --pipeline --skip-git -t",
+  "kiro:validate:design": "node scripts/kiro-staged.mjs kiro-validate-design --pipeline --skip-git -t",
+  "kiro:spec:tasks": "node scripts/kiro-staged.mjs kiro-spec-tasks --pipeline --skip-git -t",
+  "kiro:spec:quick": "node scripts/kiro-staged.mjs kiro-spec-quick --pipeline --skip-git -t",
+  "kiro:spec:batch": "node scripts/kiro-staged.mjs kiro-spec-batch --pipeline --skip-git -t",
+  "kiro:spec:status": "node scripts/kiro-staged.mjs kiro-spec-status --pipeline --skip-git -t",
+  "kiro:impl": "node scripts/kiro-staged.mjs kiro-impl --pipeline --skip-git -t",
+  "kiro:validate:impl": "node scripts/kiro-staged.mjs kiro-validate-impl --pipeline --skip-git -t",
+  "kiro:steering": "node scripts/kiro-staged.mjs kiro-steering --pipeline --skip-git -t",
+  "kiro:steering-custom": "node scripts/kiro-staged.mjs kiro-steering-custom --pipeline --skip-git -t",
   "cc-sdd:full": "takt --pipeline --skip-git -w cc-sdd-full -t",
   "cc-sdd:requirements": "takt --pipeline --skip-git -w cc-sdd-requirements -t",
   "cc-sdd:validate-gap": "takt --pipeline --skip-git -w cc-sdd-validate-gap -t",
@@ -139,10 +154,12 @@ function fetchJson(url: string): Promise<string> {
 }
 
 async function fetchLatestTag(): Promise<string> {
-  const data = await fetchJson(`https://api.github.com/repos/${REPO}/releases/latest`);
-  const release = JSON.parse(data);
-  const tagName = release.tag_name as string;
-  if (!tagName) {
+  const data = await fetchJson(`https://api.github.com/repos/${REPO}/releases?per_page=100`);
+  const releases = JSON.parse(data) as Array<{ tag_name?: string; prerelease?: boolean }>;
+  const tagName = releases.find((release) =>
+    release.prerelease !== true && release.tag_name?.startsWith("v")
+  )?.tag_name;
+  if (tagName === undefined) {
     throw new Error("No releases found");
   }
   return tagName;
@@ -187,6 +204,10 @@ function download(url: string, dest: string): Promise<void> {
     };
     request(url);
   });
+}
+
+function isDefaultTagDownloadFallback(error: unknown): boolean {
+  return error instanceof Error && /^Download failed: HTTP (403|404)$/.test(error.message);
 }
 
 function collectFiles(dir: string, base: string): string[] {
@@ -403,18 +424,33 @@ export async function install(options: InstallOptions): Promise<void> {
 
   try {
     const installerVersion = getInstallerVersion();
-    const tag = await resolveTag(options.tag, installerVersion);
-    const version = tag.startsWith("v") ? tag.slice(1) : tag;
+    let tag = await resolveTag(options.tag, installerVersion);
+    let version = tag.startsWith("v") ? tag.slice(1) : tag;
     info(msg.downloadingVersion(tag));
-    const tarballUrl = `https://github.com/${REPO}/archive/refs/tags/${tag}.tar.gz`;
-    await download(tarballUrl, archivePath);
+    try {
+      const tarballUrl = `https://github.com/${REPO}/archive/refs/tags/${tag}.tar.gz`;
+      await download(tarballUrl, archivePath);
+    } catch (error) {
+      if (options.tag !== undefined || !isDefaultTagDownloadFallback(error)) {
+        throw error;
+      }
+      tag = await fetchLatestTag();
+      version = tag.startsWith("v") ? tag.slice(1) : tag;
+      info(msg.downloadingVersion(tag));
+      const tarballUrl = `https://github.com/${REPO}/archive/refs/tags/${tag}.tar.gz`;
+      await download(tarballUrl, archivePath);
+    }
 
     execSync(`tar -xzf "${archivePath}" -C "${tmpDir}"`, { stdio: "ignore" });
 
     const extractedDir = join(tmpDir, `takt-sdd-${version}`);
     const extractedTakt = join(extractedDir, ".takt");
     const extractedLegacyOpsxPath = join(extractedDir, LEGACY_OPSX_SCRIPT_INSTALL_PATH);
+    const extractedKiroStagedPath = join(extractedDir, KIRO_STAGED_SCRIPT_INSTALL_PATH);
+    const packagedAssetBase = join(__dirname, "assets");
+    const packagedKiroStagedPath = join(packagedAssetBase, KIRO_STAGED_SCRIPT_INSTALL_PATH);
     const hasLegacyOpsxScript = existsSync(extractedLegacyOpsxPath);
+    const hasKiroStagedScript = existsSync(extractedKiroStagedPath) || existsSync(packagedKiroStagedPath);
 
     if (!existsSync(extractedTakt)) {
       errorExit(msg.archiveError);
@@ -456,6 +492,11 @@ export async function install(options: InstallOptions): Promise<void> {
         console.log(msg.dryRunItem(OPENSPEC_CONFIG_PATH));
       } else if (hasLegacyOpsxScript) {
         console.log(msg.dryRunItem(LEGACY_OPSX_SCRIPT_INSTALL_PATH));
+      }
+      if (hasKiroStagedScript) {
+        console.log(msg.dryRunItem(KIRO_STAGED_SCRIPT_INSTALL_PATH));
+      } else {
+        errorExit(msg.requiredFileMissing(KIRO_STAGED_SCRIPT_INSTALL_PATH));
       }
       console.log("");
       info(msg.dryRunSkipped);
@@ -519,6 +560,20 @@ export async function install(options: InstallOptions): Promise<void> {
     if (!usesOfficialOpenSpec && !hasLegacyOpsxScript) {
       errorExit(msg.requiredFileMissing(LEGACY_OPSX_SCRIPT_INSTALL_PATH));
     }
+
+    if (!hasKiroStagedScript) {
+      errorExit(msg.requiredFileMissing(KIRO_STAGED_SCRIPT_INSTALL_PATH));
+    }
+
+    const kiroStagedScriptResult = syncRelativeFiles(
+      existsSync(extractedKiroStagedPath) ? extractedDir : packagedAssetBase,
+      options.cwd,
+      [KIRO_STAGED_SCRIPT_INSTALL_PATH],
+      isUpdate ? manifest : null,
+      msg,
+      options.cwd,
+    );
+    Object.assign(allFiles, kiroStagedScriptResult.files);
 
     const pkgPath = join(options.cwd, "package.json");
     if (existsSync(pkgPath)) {
