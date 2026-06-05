@@ -127,4 +127,4 @@
   - 完了時点で implementation validation harness が親 facet 不在、runtime 未対応、全文コピー前提を検出できる。
   - _Requirements:_ 7.5
   - _Boundary:_ IterativeImplementationValidationHarness
-  - _Depends:_ 10, 13
+  - _Depends:_ 10, 13, 14

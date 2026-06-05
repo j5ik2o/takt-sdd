@@ -74,7 +74,8 @@ graph TB
     ImplWorkflow --> ReadinessGate
     ReadinessGate --> TaskPlanner
     TaskPlanner --> TaskExecutor
-    TaskExecutor --> ReviewWorkflow
+    TaskExecutor -->|validation PASS| ReviewWorkflow
+    TaskExecutor -->|validation failed| DebugWorkflow
     ReviewWorkflow --> CompletionVerifier
     ReviewWorkflow --> DebugWorkflow
     DebugWorkflow --> TaskExecutor
@@ -95,6 +96,7 @@ Key decisions:
 
 - `TaskPlanner` は実行可能な 1 task だけを選ぶ。複数 task の batch は扱わない。
 - `TaskExecutor` は code edit と validation evidence 収集を行うが、checkbox は更新しない。
+- `TaskExecutor` の validation failure は review を経由せず、直接 `DebugWorkflow` に渡す。
 - `ReviewWorkflow`、`DebugWorkflow`、`CompletionVerifier` は shared output contract の machine verdict で分岐する。
 - `ProgressUpdater` は completion verdict が `COMPLETE` のときだけ selected task に限定して `tasks.md` を更新する。
 - validation harness は workflow/facet の順序、shared contract reference、out-of-boundary reference を検証する。
@@ -206,19 +208,23 @@ sequenceDiagram
     Impl->>Workspace: read spec state and tasks
     Impl->>Impl: select one eligible task
     Impl->>Executor: execute selected task
-    Executor-->>Impl: changes and evidence
-    Impl->>Review: review task result
-    Review-->>Impl: GO or NO_GO
-    alt GO
-        Impl->>Verify: verify completion
-        Verify-->>Impl: COMPLETE or not
-        alt COMPLETE
-            Impl->>Updater: update selected task only
-        else not COMPLETE
-            Impl->>Debug: investigate incomplete verification
+    Executor-->>Impl: changes, evidence, validation verdict
+    alt validation PASS
+        Impl->>Review: review task result
+        Review-->>Impl: GO or NO_GO
+        alt GO
+            Impl->>Verify: verify completion
+            Verify-->>Impl: COMPLETE or not
+            alt COMPLETE
+                Impl->>Updater: update selected task only
+            else not COMPLETE
+                Impl->>Debug: investigate incomplete verification
+            end
+        else NO_GO
+            Impl->>Debug: investigate review findings
         end
-    else NO_GO
-        Impl->>Debug: investigate review findings
+    else validation failed
+        Impl->>Debug: investigate validation failure
     end
     Debug-->>Impl: retry block or stop
 ```
@@ -278,6 +284,7 @@ stateDiagram-v2
 | 7.2 | gate order validation | IterativeImplementationValidationHarness | Validation script | Harness validation |
 | 7.3 | boundary violation detection | IterativeImplementationValidationHarness | Validation script | Harness validation |
 | 7.4 | PR/CI/OpenSpec 非依存 | IterativeImplementationValidationHarness | Validation scope | Harness validation |
+| 7.5 | built-in facet inheritance validation | IterativeImplementationValidationHarness | Validation script | Harness validation |
 
 ## Components and Interfaces
 
@@ -291,7 +298,7 @@ stateDiagram-v2
 | KiroDebugSubWorkflow | Workflow | failure の root cause と次 action を返す | 2.3, 3.3, 5.3, 5.4 | debug contract P0 | Service |
 | KiroCompletionVerifier | Workflow | completion 可否と remaining work を判定する | 3.4, 6.1, 6.2, 6.4 | completion contract P0 | Service |
 | KiroTaskProgressUpdater | Workflow | selected task の checkbox/blocker/notes を更新する | 4.3, 4.4, 5.4, 6.2, 6.3 | artifact policy P0 | State |
-| IterativeImplementationValidationHarness | Validation | workflow drift と boundary violation を検出する | 7.1, 7.2, 7.3, 7.4 | workflow YAML P0 | Batch |
+| IterativeImplementationValidationHarness | Validation | workflow drift と boundary violation を検出する | 7.1, 7.2, 7.3, 7.4, 7.5 | workflow YAML P0 | Batch |
 
 ### Workflow Layer
 
@@ -509,11 +516,12 @@ interface KiroOneTaskPlanner {
 | Field | Detail |
 |-------|--------|
 | Intent | implementation workflow の safety gate と boundary drift を検出する |
-| Requirements | 7.1, 7.2, 7.3, 7.4 |
+| Requirements | 7.1, 7.2, 7.3, 7.4, 7.5 |
 
 **Responsibilities & Constraints**
 
 - en/ja workflow/facet parity、shared contract reference、gate order を検証する。
+- Kiro-specific implementation facet が `BuiltinFacetInheritancePolicy` に従い、継承可能な built-in facet を全文コピーしていないことを検証する。
 - `kiro-impl` が `kiro-spec-*` generation、`kiro-spec-batch`、major-version surface、PR monitoring を成功条件にしていないことを検出する。
 - full code edit behavior は実行せず、workflow contract の drift detection に限定する。
 

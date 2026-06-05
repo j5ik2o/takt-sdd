@@ -111,4 +111,4 @@
   - 完了時点で spec generation validation harness が親 facet 不在、runtime 未対応、全文コピー前提を検出できる。
   - _Requirements: 6.6_
   - _Boundary:_ SpecGenerationValidationHarness
-  - _Depends:_ 3, 4, 5, 6
+  - _Depends:_ 3, 4, 5, 6, 11, 12

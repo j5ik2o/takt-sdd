@@ -76,6 +76,7 @@ graph TB
     Parser --> Planner[Wave planner]
     Planner --> Dispatcher[Batch dispatcher]
     Dispatcher --> Generation[Spec generation workflows]
+    Dispatcher --> Remediation[Remediation coordinator]
     Generation --> Specs[Generated specs]
     Specs --> CrossReview[Cross spec review]
     CrossReview --> Remediation[Remediation coordinator]
@@ -287,7 +288,7 @@ wave ordering は strict です。同じ wave の worker は互いに独立し�
 | BatchWavePlanner | Batch planning | pending specs を dependency wave に分類する | 3.2, 3.3, 3.4 | RoadmapDependencyParser P0 | Service |
 | BatchWorkerDispatcher | Workflow controller | wave ごとに individual spec generation workflow を呼び出す | 3.5, 4.1, 4.2, 4.3, 4.5, 6.3 | Spec generation workflows P0 | Batch |
 | CrossSpecReviewWorkflow | Review | generated specs の boundary と contract consistency を確認する | 5.1, 5.2, 5.3, 5.4, 5.5, 6.4 | generated specs P0 | Batch |
-| BatchRemediationCoordinator | Controller | worker failure と review issue の next action をまとめる | 4.2, 4.4, 5.4, 5.5 | CrossSpecReviewWorkflow P0 | State |
+| BatchRemediationCoordinator | Controller | worker failure と review issue の next action をまとめる | 4.2, 4.4, 5.4, 5.5 | BatchWorkerDispatcher P0, CrossSpecReviewWorkflow P0 | State |
 | DiscoveryBatchValidationHarness | Validation | discovery/batch workflow と parser contract の drift を検出する | 1.5, 6.1, 6.2, 6.3, 6.4, 6.5 | Node.js 22+ P0 | Service, Batch |
 
 ### Discovery Layer
