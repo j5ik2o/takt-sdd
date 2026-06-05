@@ -18,6 +18,7 @@
 
 - [ ] 3. readiness gate と one-task planning の instruction facet を追加する
   - feature readiness、`spec.json`、required artifacts、task annotation、unchecked task、dependency、blocker notes を読む手順を en/ja に追加する。
+  - `spec.json.ready_for_implementation` が true でも、status/readiness signal が batch-level readiness 保留を示す場合は code edit 前に `BLOCKED` として止める。
   - eligible な 1 task だけを selected task にし、複数 task batch を作らない decision rule を明示する。
   - 完了時点で ready でない feature、annotation 不足、eligible task 不在が code edit 前に止まる。
   - _Requirements:_ 1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 2.3, 2.4

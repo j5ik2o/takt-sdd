@@ -257,7 +257,7 @@ stateDiagram-v2
 | Requirement | Summary | Components | Interfaces | Flows |
 |-------------|---------|------------|------------|-------|
 | 1.1 | readiness と artifact state 確認 | KiroImplementationReadinessGate | Status contract, Artifact policy | One Task Implementation |
-| 1.2 | ready でない feature の停止 | KiroImplementationReadinessGate | Validation result contract | Task State |
+| 1.2 | implementation-ready でない feature の停止 | KiroImplementationReadinessGate | Validation result contract | Task State |
 | 1.3 | task annotation 不足の blocker | KiroOneTaskPlanner | Task annotation policy | One Task Implementation |
 | 1.4 | readiness 確認の read-only 境界 | KiroImplementationReadinessGate | Artifact policy | One Task Implementation |
 | 2.1 | eligible task selection | KiroOneTaskPlanner | Task plan output | One Task Implementation |
@@ -344,7 +344,8 @@ interface KiroImplementationWorkflow {
 
 **Responsibilities & Constraints**
 
-- `spec.json`、phase artifacts、approval、ready state を status/validation contract に沿って読む。
+- `spec.json`、phase artifacts、approval、ready state、downstream implementation-ready signal を status/validation contract に沿って読む。
+- `spec.json.ready_for_implementation` が true でも、batch-level readiness が cross-spec review/remediation 未完了または blocking issue 残存を示す場合は code edit を開始しない。
 - readiness 不足は `BLOCKED` として返し、artifact を生成・修正しない。
 
 **Dependencies**
@@ -356,7 +357,7 @@ interface KiroImplementationWorkflow {
 
 ##### State Management
 
-- State model: `.kiro/specs/<feature>/spec.json` と phase artifact の current state。
+- State model: `.kiro/specs/<feature>/spec.json`、phase artifact、status/readiness signal の current state。
 - Persistence & consistency: read-only。矛盾は finding として返す。
 - Concurrency strategy: progress update 前に selected task の checkbox を再読する。
 

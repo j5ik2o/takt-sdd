@@ -21,7 +21,7 @@
 #### Acceptance Criteria
 
 1. `kiro-impl` が feature 名を受け取る場合、Kiro implementation workflow は shared artifact policy と status/readiness signal を使って `spec.json`、`requirements.md`、`design.md`、`tasks.md` の実装可能状態を確認する。
-2. feature が存在しない、または `ready_for_implementation` が true でない場合、Kiro implementation workflow は code edit を開始せず、`BLOCKED` 相当の machine decision と不足 state を返す。
+2. feature が存在しない、`ready_for_implementation` が true でない、または status/readiness signal が batch-level readiness 保留（cross-spec review/remediation 未完了または blocking issue 残存）を示す場合、Kiro implementation workflow は code edit を開始せず、`BLOCKED` 相当の machine decision と不足 state を返す。
 3. `tasks.md` が task annotation を欠いている場合、Kiro implementation workflow は task execution へ進まず、どの annotation が不足しているかを blocker として返す。
 4. Kiro implementation workflow は readiness 確認のために requirements/design/tasks artifact を生成または修正しない。
 
