@@ -155,8 +155,10 @@ function fetchJson(url: string): Promise<string> {
 
 async function fetchLatestTag(): Promise<string> {
   const data = await fetchJson(`https://api.github.com/repos/${REPO}/releases?per_page=100`);
-  const releases = JSON.parse(data) as Array<{ tag_name?: string }>;
-  const tagName = releases.find((release) => release.tag_name?.startsWith("v"))?.tag_name;
+  const releases = JSON.parse(data) as Array<{ tag_name?: string; prerelease?: boolean }>;
+  const tagName = releases.find((release) =>
+    release.prerelease !== true && release.tag_name?.startsWith("v")
+  )?.tag_name;
   if (tagName === undefined) {
     throw new Error("No releases found");
   }
