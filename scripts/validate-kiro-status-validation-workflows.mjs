@@ -39,7 +39,7 @@ const instructionSpecs = [
   {
     file: "kiro-report-spec-status.md",
     parent: "gather-review",
-    terms: ["spec.json", "phase", "approvals", "ready_for_implementation", "FEATURE_NOT_FOUND", "ARTIFACT_MISSING", "LIFECYCLE_INCONSISTENT", "READY", "NOT_READY", "INCONSISTENT", "kiro-status"],
+    terms: ["spec.json", "phase", "approvals", "ready_for_implementation", "FOUND", "FEATURE_NOT_FOUND", "ARTIFACT_MISSING", "LIFECYCLE_INCONSISTENT", "READY", "NOT_READY", "INCONSISTENT", "kiro-status"],
   },
   {
     file: "kiro-validate-gap-readiness.md",
@@ -54,7 +54,7 @@ const instructionSpecs = [
   {
     file: "kiro-validate-impl-readiness.md",
     parent: "supervise",
-    terms: ["tasks.md", "ready_for_implementation", "task checkbox", "test/build evidence", "evidence mismatch", "observed evidence", "missing evidence", "findings", "evidence", "MANUAL_VERIFICATION_REQUIRED", "kiro-validation-result"],
+    terms: ["tasks.md", "ready_for_implementation", "FAIL", "BLOCKED", "ARTIFACT_MISSING", "LIFECYCLE_INCONSISTENT", "task checkbox", "test/build evidence", "evidence mismatch", "observed evidence", "missing evidence", "findings", "evidence", "MANUAL_VERIFICATION_REQUIRED", "kiro-validation-result"],
   },
   {
     file: "kiro-collect-validation-evidence.md",

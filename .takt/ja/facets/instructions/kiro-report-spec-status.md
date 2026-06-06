@@ -10,7 +10,7 @@
 
 1. `.kiro/specs/<feature>/` 配下の対象 feature directory を解決する。
 2. `spec.json` がない場合は、`status: MISSING`、`readiness: NOT_READY`、`error_category: FEATURE_NOT_FOUND` を返す。
-3. `spec.json` を読み、`phase`、`approvals`、`ready_for_implementation` を報告する。
+3. `spec.json` を読み、`status: FOUND` を設定し、`phase`、`approvals`、`ready_for_implementation` を報告する。
 4. phase artifact consistency を確認する:
    - `requirements-generated` は `requirements.md` を要求する。
    - `design-generated` は `requirements.md` と `design.md` を要求する。

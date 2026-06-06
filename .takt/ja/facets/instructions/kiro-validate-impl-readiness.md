@@ -10,11 +10,13 @@
 
 1. `.kiro/specs/<feature>/tasks.md` が存在することを確認する。
 2. implementation validation の対象にする前に、`spec.json.ready_for_implementation` が true であることを確認する。
-3. task checkbox state と blocked notes を確認する。
-4. task completion と test/build evidence、報告された verification facts を比較する。
-5. incomplete work、evidence mismatch、missing manual checks を分ける。
-6. observed evidence と missing evidence を `evidence` と `findings` に分けて記録する。
-7. evidence が不足する場合は、`category: "MANUAL_VERIFICATION_REQUIRED"` の finding を追加し、その項目を PASS evidence として扱わない。
+3. `tasks.md` が不足する場合は、`error_category: ARTIFACT_MISSING` とともに `verdict: FAIL` を返す。
+4. `ready_for_implementation` が false、または lifecycle state が implementation validation をブロックする場合は、`error_category: LIFECYCLE_INCONSISTENT` とともに `verdict: BLOCKED` を返す。
+5. task checkbox state と blocked notes を確認する。
+6. task completion と test/build evidence、報告された verification facts を比較する。
+7. incomplete work、evidence mismatch、missing manual checks を分ける。
+8. observed evidence と missing evidence を `evidence` と `findings` に分けて記録する。
+9. evidence が不足する場合は、`category: "MANUAL_VERIFICATION_REQUIRED"` の finding を追加し、その項目を PASS evidence として扱わない。
 
 ## Output mapping
 

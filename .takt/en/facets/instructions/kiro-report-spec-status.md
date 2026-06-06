@@ -10,7 +10,7 @@ This instruction is read-only. Inspect `.kiro/specs/<feature>/` and `.kiro/steer
 
 1. Resolve the target feature directory under `.kiro/specs/<feature>/`.
 2. If `spec.json` is missing, return `status: MISSING`, `readiness: NOT_READY`, and `error_category: FEATURE_NOT_FOUND`.
-3. Read `spec.json` and report `phase`, `approvals`, and `ready_for_implementation`.
+3. Read `spec.json`, set `status: FOUND`, and report `phase`, `approvals`, and `ready_for_implementation`.
 4. Check phase artifact consistency:
    - `requirements-generated` requires `requirements.md`.
    - `design-generated` requires `requirements.md` and `design.md`.
