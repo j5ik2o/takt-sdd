@@ -32,11 +32,11 @@
 
 - `verdict PASS` だけが quick-completion を許可する。
 - `NEEDS_FIX` は `fix_targets` を含める。
-- `BLOCKED` は `blockingReason` を含める。
+- `BLOCKED` は `blockingReason` と `fix_targets` を含める。
 - quick path は discovery、batch、implementation execution を呼ばない。
 
 ## Result mapping
 
 - pass の場合、`kiro-spec-sanity-review` output contract で `verdict: "PASS"` と `quick-completion` の evidence を返す。
 - needs-fix の場合、requirements、design、tasks の具体的な `fix_targets` とともに `verdict: "NEEDS_FIX"` を返す。
-- blocked の場合、不足している phase result、artifact、または unsafe boundary を `blockingReason` として `verdict: "BLOCKED"` を返す。
+- blocked の場合、不足している phase result、artifact、または unsafe boundary を `blockingReason` とし、blocked correction target の `fix_targets` とともに `verdict: "BLOCKED"` を返す。

@@ -201,6 +201,8 @@ test("task 8.1 quick workflow composes standalone phase contracts in one YAML", 
     "kiro-spec-design: ../facets/instructions/kiro-spec-design.md",
     "kiro-spec-tasks: ../facets/instructions/kiro-spec-tasks.md",
     "kiro-spec-quick-sanity-review: ../facets/instructions/kiro-spec-quick-sanity-review.md",
+    "kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md",
+    "kiro-spec-lifecycle: ../facets/policies/kiro-spec-lifecycle.md",
     "kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
     "kiro-spec-task-annotations: ../facets/policies/kiro-spec-task-annotations.md",
     "kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md",
@@ -227,6 +229,8 @@ test("task 8.1 quick workflow composes standalone phase contracts in one YAML", 
     "standalone workflow",
     "same auto-approve semantics",
     "verdict PASS",
+    "fix_targets",
+    "blockingReason",
     "completion",
     "discovery",
     "batch",
@@ -1046,6 +1050,46 @@ test("task 11.1 validation detects task annotation drift and invalid parallel ma
 
   assert.ok(
     result.failures.some((failure) => failure.includes("TASK_ANNOTATION_DRIFT")),
+    result.failures.join("\n"),
+  );
+});
+
+test("task 11.1 validation detects task requirement and observable completion drift", () => {
+  const root = makeValidationFixture();
+  const featureName = "task-requirement-completion-drift";
+  writeSpecArtifactFixture(
+    root,
+    featureName,
+    specState(featureName, "tasks-generated", {
+      approvals: {
+        requirements: { generated: true, approved: true },
+        design: { generated: true, approved: true },
+        tasks: { generated: true, approved: false },
+      },
+    }),
+    ["requirements.md", "design.md"],
+  );
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/tasks.md`,
+    [
+      "# Implementation Plan",
+      "",
+      "- [ ] 1.1 validate task metadata",
+      "  - _Requirements: R1_",
+      "  - _Boundary:_ Harness",
+      "  - _Depends:_ none",
+    ].join("\n"),
+  );
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) => failure.includes("TASK_ANNOTATION_DRIFT") && failure.includes("missing observable completion")),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some((failure) => failure.includes("TASK_ANNOTATION_DRIFT") && failure.includes("non-numeric requirement id")),
     result.failures.join("\n"),
   );
 });

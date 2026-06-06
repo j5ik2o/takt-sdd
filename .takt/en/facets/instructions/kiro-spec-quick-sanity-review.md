@@ -32,11 +32,11 @@ Review the already completed quick path. This instruction is used only by the fi
 
 - `verdict PASS` is the only result that allows quick-completion.
 - `NEEDS_FIX` must include `fix_targets`.
-- `BLOCKED` must include `blockingReason`.
+- `BLOCKED` must include `blockingReason` and `fix_targets`.
 - The quick path must not call discovery, batch, or implementation execution.
 
 ## Result mapping
 
 - On pass, return the `kiro-spec-sanity-review` output contract with `verdict: "PASS"` and evidence for `quick-completion`.
 - On needs-fix, return `verdict: "NEEDS_FIX"` with concrete `fix_targets` for requirements, design, or tasks.
-- On blocked, return `verdict: "BLOCKED"` with the missing phase result, missing artifact, or unsafe boundary as `blockingReason`.
+- On blocked, return `verdict: "BLOCKED"` with the missing phase result, missing artifact, or unsafe boundary as `blockingReason`, plus `fix_targets` for the blocked correction target.

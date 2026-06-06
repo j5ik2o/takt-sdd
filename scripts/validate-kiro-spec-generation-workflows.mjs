@@ -40,8 +40,19 @@ const phaseWorkflowSpecs = [
   {
     name: "kiro-spec-quick",
     requiredTerms: ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"],
-    instructionFacets: ["kiro-spec-quick-sanity-review"],
-    policyFacets: ["kiro-spec-generation", "kiro-spec-task-annotations"],
+    instructionFacets: [
+      "kiro-spec-init",
+      "kiro-spec-requirements",
+      "kiro-spec-design",
+      "kiro-spec-tasks",
+      "kiro-spec-quick-sanity-review",
+    ],
+    policyFacets: [
+      "kiro-artifact-operations",
+      "kiro-spec-lifecycle",
+      "kiro-spec-generation",
+      "kiro-spec-task-annotations",
+    ],
     outputContracts: ["kiro-spec-generation-result", "kiro-spec-sanity-review"],
   },
 ];
@@ -921,6 +932,32 @@ function taskAnnotationValue(block, label) {
   return match?.[1]?.trim();
 }
 
+function taskRequirementsValue(block) {
+  const match = block.match(/^\s+-\s+_Requirements:\s*(.+?)_\s*$/m);
+  return match?.[1]?.trim();
+}
+
+function hasObservableCompletion(block) {
+  return block
+    .split("\n")
+    .some((line) => /^\s+-\s+/.test(line) && !/^\s+-\s+_(?:Requirements|Boundary|Depends):/.test(line));
+}
+
+function validateTaskRequirements(failures, artifactPath, repoRoot, task, requirements) {
+  if (!requirements) {
+    failures.push(`TASK_ANNOTATION_DRIFT: ${rel(repoRoot, artifactPath)} task ${task.id} missing _Requirements:_`);
+    return;
+  }
+
+  for (const requirement of requirements.split(",").map((value) => value.trim())) {
+    if (!/^\d+(?:\.\d+)?$/.test(requirement)) {
+      failures.push(
+        `TASK_ANNOTATION_DRIFT: ${rel(repoRoot, artifactPath)} task ${task.id} has non-numeric requirement id: ${requirement}`,
+      );
+    }
+  }
+}
+
 function boundaryNames(value) {
   return value
     .split(",")
@@ -961,7 +998,12 @@ function validateTasksArtifact(failures, artifactPath, repoRoot, content) {
   for (const task of tasks) {
     const boundary = taskAnnotationValue(task.block, "Boundary");
     const depends = taskAnnotationValue(task.block, "Depends");
+    const requirements = taskRequirementsValue(task.block);
 
+    if (!hasObservableCompletion(task.block)) {
+      failures.push(`TASK_ANNOTATION_DRIFT: ${rel(repoRoot, artifactPath)} task ${task.id} missing observable completion`);
+    }
+    validateTaskRequirements(failures, artifactPath, repoRoot, task, requirements);
     if (!boundary) {
       failures.push(`TASK_ANNOTATION_DRIFT: ${rel(repoRoot, artifactPath)} task ${task.id} missing _Boundary:_`);
     } else if (/\(P\)/.test(task.title)) {
