@@ -60,6 +60,37 @@ test("task 2.1 shared spec generation policy and result contract are available i
   }
 });
 
+test("task 7.1 quick sanity review contract exposes machine-readable verdict and fix targets", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  const contractTerms = [
+    "verdict",
+    "findings",
+    "requirements",
+    "design",
+    "tasks",
+    "fix_targets",
+    "PASS",
+    "NEEDS_FIX",
+    "BLOCKED",
+    "coherence",
+    "hidden prerequisite",
+    "task annotation",
+    "`summary`",
+  ];
+
+  for (const lang of ["en", "ja"]) {
+    const path = `.takt/${lang}/facets/output-contracts/kiro-spec-sanity-review.md`;
+    assertFacetTerms(repoRoot, path, contractTerms);
+    const content = readFileSync(join(repoRoot, path), "utf8");
+    assert.ok(content.startsWith("{extends: validation}"), `${path} should extend validation`);
+    if (lang === "en") {
+      assert.ok(content.includes("branch on `verdict`"), `${path} should branch on verdict`);
+    } else {
+      assert.ok(content.includes("`verdict` を参照して分岐する"), `${path} should branch on verdict`);
+    }
+  }
+});
+
 test("kiro spec generation validation reports current missing downstream generation surface", () => {
   const result = validateKiroSpecGenerationWorkflows();
 

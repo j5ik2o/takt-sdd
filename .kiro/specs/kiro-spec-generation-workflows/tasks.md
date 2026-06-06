@@ -57,7 +57,7 @@
   - _Depends:_ 2.1, 5.1
 
 - [ ] 7. quick path sanity review contract
-- [ ] 7.1 quick path の sanity review contract を追加する
+- [x] 7.1 quick path の sanity review contract を追加する
   - requirements/design/tasks の coherence、hidden prerequisite、task annotation を確認する lightweight sanity review output contract を追加する。
   - `PASS`、`NEEDS_FIX`、`BLOCKED` の verdict と修正対象を machine-readable にする。
   - 完了時点で quick workflow が final sanity review の結果を rule condition として参照できる。
