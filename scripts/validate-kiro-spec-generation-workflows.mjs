@@ -123,6 +123,16 @@ const taskAnnotationContractPaths = [
   ".takt/en/facets/policies/kiro-spec-task-annotations.md",
   ".takt/ja/facets/policies/kiro-spec-task-annotations.md",
 ];
+const packageScriptSpecs = [
+  {
+    name: "validate:kiro-spec-generation-workflows",
+    command: "node scripts/validate-kiro-spec-generation-workflows.mjs",
+  },
+  {
+    name: "test:kiro-spec-generation-workflows",
+    command: "node --test tests/kiro-spec-generation-workflows.test.mjs",
+  },
+];
 
 const languageParityFacetKinds = ["instructions", "policies", "output-contracts"];
 const sharedContractTerms = [
@@ -823,6 +833,33 @@ function validateTaskAnnotationContract(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
+function validatePackageScripts(repoRoot) {
+  const failures = [];
+  const packagePath = join(repoRoot, "package.json");
+  if (!existsSync(packagePath)) {
+    failures.push("PACKAGE_SCRIPT_DRIFT: package.json missing");
+    return { ok: false, failures };
+  }
+
+  let packageJson;
+  try {
+    packageJson = JSON.parse(readText(packagePath));
+  } catch (error) {
+    failures.push(`PACKAGE_SCRIPT_DRIFT: ${rel(repoRoot, packagePath)} has invalid JSON: ${error.message}`);
+    return { ok: false, failures };
+  }
+
+  for (const spec of packageScriptSpecs) {
+    const script = packageJson.scripts?.[spec.name];
+    if (script !== spec.command) {
+      failures.push(
+        `PACKAGE_SCRIPT_DRIFT: ${rel(repoRoot, packagePath)} scripts.${spec.name} must equal "${spec.command}"`,
+      );
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
 function validateScopeGuard() {
   return { ok: true, failures: [] };
 }
@@ -836,6 +873,7 @@ export function validateKiroSpecGenerationWorkflows(options = {}) {
     specArtifactLifecycle: validateSpecArtifactLifecycle(repoRoot),
     generatedArtifacts: validateGeneratedArtifacts(repoRoot),
     taskAnnotationContract: validateTaskAnnotationContract(repoRoot),
+    packageScripts: validatePackageScripts(repoRoot),
     quickComposition: validateQuickComposition(repoRoot),
     languageParity: validateLanguageParity(repoRoot),
     scopeGuard: validateScopeGuard(),

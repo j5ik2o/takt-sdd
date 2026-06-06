@@ -15,6 +15,20 @@ function makeValidationFixture() {
   symlinkSync(join(repoRoot, ".takt"), join(root, ".takt"), "dir");
   mkdirSync(join(root, ".kiro"), { recursive: true });
   symlinkSync(join(repoRoot, ".kiro", "settings"), join(root, ".kiro", "settings"), "dir");
+  writeFixtureFile(
+    root,
+    "package.json",
+    `${JSON.stringify(
+      {
+        scripts: {
+          "validate:kiro-spec-generation-workflows": "node scripts/validate-kiro-spec-generation-workflows.mjs",
+          "test:kiro-spec-generation-workflows": "node --test tests/kiro-spec-generation-workflows.test.mjs",
+        },
+      },
+      null,
+      2,
+    )}\n`,
+  );
   return root;
 }
 
@@ -253,6 +267,61 @@ test("kiro spec generation validation passes current spec generation surface", (
   assert.equal(result.failures.some((failure) => failure.includes("kiro-discovery")), false);
   assert.equal(result.failures.some((failure) => failure.includes("kiro-spec-batch")), false);
   assert.equal(result.failures.some((failure) => failure.includes("kiro-impl")), false);
+});
+
+test("task 12.1 validation detects missing package script wiring", () => {
+  const root = makeValidationFixture();
+  writeFixtureFile(root, "package.json", `${JSON.stringify({ scripts: {} }, null, 2)}\n`);
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("PACKAGE_SCRIPT_DRIFT") &&
+      failure.includes("validate:kiro-spec-generation-workflows"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("PACKAGE_SCRIPT_DRIFT") && failure.includes("test:kiro-spec-generation-workflows"),
+    ),
+    result.failures.join("\n"),
+  );
+});
+
+test("task 12.1 validation detects package script command mismatch", () => {
+  const root = makeValidationFixture();
+  writeFixtureFile(
+    root,
+    "package.json",
+    `${JSON.stringify(
+      {
+        scripts: {
+          "validate:kiro-spec-generation-workflows": "node scripts/validate-kiro-spec-generation-workflows.mjs.bak",
+          "test:kiro-spec-generation-workflows": "node --test tests/kiro-spec-generation-workflows.test.mjs.bak",
+        },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("PACKAGE_SCRIPT_DRIFT") &&
+      failure.includes("validate:kiro-spec-generation-workflows"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("PACKAGE_SCRIPT_DRIFT") && failure.includes("test:kiro-spec-generation-workflows"),
+    ),
+    result.failures.join("\n"),
+  );
 });
 
 test("task 4.1 requirements workflow connects EARS generation, review gate, and lifecycle update", () => {

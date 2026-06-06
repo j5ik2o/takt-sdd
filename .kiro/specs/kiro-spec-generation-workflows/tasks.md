@@ -104,7 +104,7 @@
   - _Depends:_ 4.1, 5.1, 6.1, 10.1
 
 - [ ] 12. repository-local validation wiring
-- [ ] 12.1 validation harness を test command に接続する
+- [x] 12.1 validation harness を test command に接続する
   - spec generation validation script を repository の通常 test/check 経路から実行できるようにする。
   - `package.json` に `validate:kiro-spec-generation-workflows` と `test:kiro-spec-generation-workflows` を追加する。
   - workflow/facet parity、lifecycle fixtures、artifact section、task annotation の check をまとめて実行する。
