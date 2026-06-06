@@ -66,13 +66,13 @@ test("kiro spec generation validation reports current missing downstream generat
   assert.equal(result.ok, false);
   assert.ok(
     result.failures.some((failure) =>
-      failure.includes("WORKFLOW_MISSING") && failure.includes(".takt/en/workflows/kiro-spec-design.yaml"),
+      failure.includes("WORKFLOW_MISSING") && failure.includes(".takt/en/workflows/kiro-spec-tasks.yaml"),
     ),
   );
   assert.ok(
     result.failures.some((failure) =>
       failure.includes("FACET_MISSING") &&
-      failure.includes(".takt/ja/facets/instructions/kiro-spec-design.md"),
+      failure.includes(".takt/ja/facets/instructions/kiro-spec-quick.md"),
     ),
   );
   assert.ok(
@@ -129,6 +129,51 @@ test("task 4.1 requirements workflow connects EARS generation, review gate, and 
   for (const lang of ["en", "ja"]) {
     assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-requirements.yaml`, workflowTerms);
     assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`, instructionTerms);
+  }
+});
+
+test("task 5.1 design workflow connects research, required sections, review gate, and lifecycle update", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  const workflowTerms = [
+    "design.md",
+    "research.md",
+    "design-generated",
+    "requirements approval gate",
+    "-y",
+    "auto-approve",
+    "discovery/research",
+    "design synthesis",
+    "design review gate",
+    "requirements/design gap",
+    "Boundary Commitments",
+    "File Structure Plan",
+    "Requirements Traceability",
+    "approvals.requirements.approved",
+    "approvals.design.generated",
+    "kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
+    "kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md",
+  ];
+  const instructionTerms = [
+    "design.md",
+    "research.md",
+    "design-generated",
+    "requirements approval gate",
+    "-y",
+    "auto-approve",
+    "discovery/research",
+    "design synthesis",
+    "design review gate",
+    "requirements/design gap",
+    "Boundary Commitments",
+    "File Structure Plan",
+    "Requirements Traceability",
+    "approvals.requirements.approved",
+    "approvals.design.generated",
+  ];
+
+  for (const lang of ["en", "ja"]) {
+    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-design.yaml`, workflowTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-design.md`, instructionTerms);
   }
 });
 

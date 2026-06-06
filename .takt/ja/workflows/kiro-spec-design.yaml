@@ -1,0 +1,65 @@
+name: kiro-spec-design
+description: Kiro - approved requirements から design.md と research.md を生成する
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 10
+initial_step: generate-design
+
+instructions:
+  kiro-spec-design: ../facets/instructions/kiro-spec-design.md
+
+policies:
+  kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
+  kiro-spec-lifecycle: ../facets/policies/kiro-spec-lifecycle.md
+  kiro-spec-generation: ../facets/policies/kiro-spec-generation.md
+
+report_formats:
+  kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
+
+steps:
+  - name: generate-design
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
+    required_permission_mode: edit
+    instruction: kiro-spec-design
+    output_contracts:
+      report:
+        - name: kiro-spec-design-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and phase design and design.md written and research.md written and design-generated and approvals.requirements.approved true and approvals.design.generated true
+        next: COMPLETE
+      - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
+        next: ABORT
+      - condition: validation.verdict NEEDS_FIX or design review gate failed
+        next: ABORT
+
+# validation/review 用の contract notes:
+# - requirements approval gate は design generation 前に requirements.md と spec.json を確認する。
+# - 通常 mode では未承認 requirements で停止する。-y または auto-approve の場合は、続行前に approvals.requirements.approved: true を明示的に設定する。
+# - discovery/research と discovery/research validation は design synthesis 前に requirements.md、existing design.md、optional research.md、steering context、関連する code patterns を読む。
+# - research.md は design phase の補助 artifact として書き、最終的な実装判断は design.md にも残す。
+# - design.md は required sections として Boundary Commitments、File Structure Plan、Requirements Traceability を含める。
+# - design review gate は requirement coverage、architecture readiness、boundary readiness、File Structure Plan の具体性、Requirements Traceability を確認する。
+# - real requirements/design gap が残る場合は BLOCKED または NEEDS_FIX を返し、design-generated へ進めない。
+# - 成功時は spec.json を phase: "design-generated"、approvals.requirements.approved: true、approvals.design.generated: true に更新する。

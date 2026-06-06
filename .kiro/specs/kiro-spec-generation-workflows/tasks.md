@@ -38,7 +38,7 @@
   - _Depends:_ 2.1, 3.1
 
 - [ ] 5. design and research generation workflow
-- [ ] 5.1 design/research 生成 policy と `kiro-spec-design` workflow を追加する
+- [x] 5.1 design/research 生成 policy と `kiro-spec-design` workflow を追加する
   - requirements approval gate、`-y` auto-approval、discovery/research、design synthesis、design review gate を workflow に接続する。
   - Boundary Commitments、File Structure Plan、Requirements Traceability を required section として扱う。
   - 完了時点で design.md と research.md が生成され、requirements/design gap がある場合は success state へ進まない。
