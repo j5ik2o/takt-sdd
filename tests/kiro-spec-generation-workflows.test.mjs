@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { validateKiroSpecGenerationWorkflows } from "../scripts/validate-kiro-spec-generation-workflows.mjs";
@@ -15,6 +15,51 @@ function writeFixtureFile(root, path, content) {
   writeFileSync(fullPath, content);
 }
 
+function assertFacetTerms(root, path, terms) {
+  const fullPath = join(root, path);
+  assert.equal(existsSync(fullPath), true, `${path} should exist`);
+  const content = readFileSync(fullPath, "utf8");
+  for (const term of terms) {
+    assert.ok(content.includes(term), `${path} should include ${term}`);
+  }
+}
+
+test("task 2.1 shared spec generation policy and result contract are available in both languages", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  const policyTerms = [
+    "phase gate",
+    "artifact write",
+    "metadata update",
+    "blocking result",
+    ".kiro/specs/<feature>",
+    "spec.json",
+    "requirements-generated",
+    "design-generated",
+    "tasks-generated",
+    "ready_for_implementation",
+  ];
+  const resultTerms = [
+    "phase",
+    "validation",
+    "featureName",
+    "updatedFiles",
+    "nextAction",
+    "blockingReason",
+    "PASS",
+    "NEEDS_FIX",
+    "BLOCKED",
+  ];
+
+  for (const lang of ["en", "ja"]) {
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/policies/kiro-spec-generation.md`, policyTerms);
+    assertFacetTerms(
+      repoRoot,
+      `.takt/${lang}/facets/output-contracts/kiro-spec-generation-result.md`,
+      resultTerms,
+    );
+  }
+});
+
 test("kiro spec generation validation reports current missing generation surface without requiring downstream workflows", () => {
   const result = validateKiroSpecGenerationWorkflows();
 
@@ -27,7 +72,7 @@ test("kiro spec generation validation reports current missing generation surface
   assert.ok(
     result.failures.some((failure) =>
       failure.includes("FACET_MISSING") &&
-      failure.includes(".takt/ja/facets/output-contracts/kiro-spec-generation-result.md"),
+      failure.includes(".takt/ja/facets/instructions/kiro-spec-init.md"),
     ),
   );
   assert.ok(

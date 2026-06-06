@@ -11,7 +11,7 @@
   - _Depends:_ none
 
 - [ ] 2. shared spec generation contract
-- [ ] 2.1 spec generation 共通 policy と result contract を追加する
+- [x] 2.1 spec generation 共通 policy と result contract を追加する
   - phase gate、artifact write、metadata update、blocking result の共通 policy を en/ja facet に追加する。
   - phase completion、updated files、next action、blocking reason を返す output contract を追加する。
   - 完了時点で standalone workflow が同じ result shape と lifecycle rule を参照できる。
