@@ -24,6 +24,16 @@ function assertFacetTerms(root, path, terms) {
   }
 }
 
+function assertOrderedTerms(content, terms, label) {
+  let previousIndex = -1;
+  for (const term of terms) {
+    const index = content.indexOf(term);
+    assert.notEqual(index, -1, `${label} should include ${term}`);
+    assert.ok(index > previousIndex, `${label} should place ${term} after the previous term`);
+    previousIndex = index;
+  }
+}
+
 test("task 2.1 shared spec generation policy and result contract are available in both languages", () => {
   const repoRoot = join(import.meta.dirname, "..");
   const policyTerms = [
@@ -91,24 +101,73 @@ test("task 7.1 quick sanity review contract exposes machine-readable verdict and
   }
 });
 
-test("kiro spec generation validation reports current missing downstream generation surface", () => {
+test("task 8.1 quick workflow composes standalone phase contracts in one YAML", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  const orderedSteps = ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"];
+  const workflowTerms = [
+    "kiro-spec-init: ../facets/instructions/kiro-spec-init.md",
+    "kiro-spec-requirements: ../facets/instructions/kiro-spec-requirements.md",
+    "kiro-spec-design: ../facets/instructions/kiro-spec-design.md",
+    "kiro-spec-tasks: ../facets/instructions/kiro-spec-tasks.md",
+    "kiro-spec-quick: ../facets/instructions/kiro-spec-quick.md",
+    "kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
+    "kiro-spec-task-annotations: ../facets/policies/kiro-spec-task-annotations.md",
+    "kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md",
+    "kiro-spec-sanity-review: ../facets/output-contracts/kiro-spec-sanity-review.md",
+    "automatic mode",
+    "interactive mode",
+    "phase approval",
+    "same auto-approve semantics",
+    "verdict PASS",
+    "quick-completion",
+  ];
+  const instructionTerms = [
+    "quick-init",
+    "quick-requirements",
+    "quick-design",
+    "quick-tasks",
+    "quick-sanity-review",
+    "automatic mode",
+    "interactive mode",
+    "phase approval",
+    "standalone workflow",
+    "same auto-approve semantics",
+    "verdict PASS",
+    "completion",
+    "discovery",
+    "batch",
+    "implementation",
+  ];
+  const forbiddenTerms = [
+    "workflow_call",
+    "takt -w",
+    "takt --workflow",
+    "kiro-discovery",
+    "kiro-spec-batch",
+    "kiro-impl",
+  ];
+
+  for (const lang of ["en", "ja"]) {
+    const workflowPath = `.takt/${lang}/workflows/kiro-spec-quick.yaml`;
+    assertFacetTerms(repoRoot, workflowPath, workflowTerms);
+    const workflow = readFileSync(join(repoRoot, workflowPath), "utf8");
+    assertOrderedTerms(workflow, orderedSteps, workflowPath);
+    for (const forbiddenTerm of forbiddenTerms) {
+      assert.equal(workflow.includes(forbiddenTerm), false, `${workflowPath} should not include ${forbiddenTerm}`);
+    }
+
+    const instructionPath = `.takt/${lang}/facets/instructions/kiro-spec-quick.md`;
+    assertFacetTerms(repoRoot, instructionPath, instructionTerms);
+  }
+});
+
+test("kiro spec generation validation passes current spec generation surface", () => {
   const result = validateKiroSpecGenerationWorkflows();
 
-  assert.equal(result.ok, false);
+  assert.equal(result.ok, true, result.failures.join("\n"));
   assert.equal(
     result.failures.some((failure) => failure.includes(".takt/en/workflows/kiro-spec-tasks.yaml")),
     false,
-  );
-  assert.ok(
-    result.failures.some((failure) =>
-      failure.includes("FACET_MISSING") &&
-      failure.includes(".takt/ja/facets/instructions/kiro-spec-quick.md"),
-    ),
-  );
-  assert.ok(
-    result.failures.some((failure) =>
-      failure.includes("QUICK_COMPOSITION_DRIFT") && failure.includes("kiro-spec-quick.yaml missing"),
-    ),
   );
   assert.equal(result.failures.some((failure) => failure.includes("kiro-discovery")), false);
   assert.equal(result.failures.some((failure) => failure.includes("kiro-spec-batch")), false);

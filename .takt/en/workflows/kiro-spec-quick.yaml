@@ -1,0 +1,173 @@
+name: kiro-spec-quick
+description: Kiro - Compose init, requirements, design, tasks, and final sanity review in one workflow
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 14
+initial_step: quick-init
+
+instructions:
+  kiro-spec-init: ../facets/instructions/kiro-spec-init.md
+  kiro-spec-requirements: ../facets/instructions/kiro-spec-requirements.md
+  kiro-spec-design: ../facets/instructions/kiro-spec-design.md
+  kiro-spec-tasks: ../facets/instructions/kiro-spec-tasks.md
+  kiro-spec-quick: ../facets/instructions/kiro-spec-quick.md
+
+policies:
+  kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
+  kiro-spec-lifecycle: ../facets/policies/kiro-spec-lifecycle.md
+  kiro-spec-generation: ../facets/policies/kiro-spec-generation.md
+  kiro-spec-task-annotations: ../facets/policies/kiro-spec-task-annotations.md
+
+report_formats:
+  kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
+  kiro-spec-sanity-review: ../facets/output-contracts/kiro-spec-sanity-review.md
+
+steps:
+  - name: quick-init
+    edit: true
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    required_permission_mode: edit
+    instruction: kiro-spec-init
+    output_contracts:
+      report:
+        - name: kiro-spec-quick-init-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and automatic mode and phase init and initialized
+        next: quick-requirements
+      - condition: validation.verdict PASS and interactive mode and phase approval granted for requirements
+        next: quick-requirements
+      - condition: validation.verdict PASS and interactive mode and phase approval missing
+        next: ABORT
+      - condition: validation.verdict BLOCKED or validation.verdict NEEDS_FIX
+        next: ABORT
+
+  - name: quick-requirements
+    edit: true
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    required_permission_mode: edit
+    instruction: kiro-spec-requirements
+    output_contracts:
+      report:
+        - name: kiro-spec-quick-requirements-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and automatic mode and phase requirements and requirements-generated
+        next: quick-design
+      - condition: validation.verdict PASS and interactive mode and phase approval granted for design
+        next: quick-design
+      - condition: validation.verdict PASS and interactive mode and phase approval missing
+        next: ABORT
+      - condition: validation.verdict BLOCKED or validation.verdict NEEDS_FIX
+        next: ABORT
+
+  - name: quick-design
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
+    required_permission_mode: edit
+    instruction: kiro-spec-design
+    output_contracts:
+      report:
+        - name: kiro-spec-quick-design-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and automatic mode and same auto-approve semantics and phase design and design-generated and approvals.requirements.approved true
+        next: quick-tasks
+      - condition: validation.verdict PASS and interactive mode and phase approval granted for tasks and same auto-approve semantics and phase design and design-generated and approvals.requirements.approved true
+        next: quick-tasks
+      - condition: validation.verdict PASS and interactive mode and phase approval missing
+        next: ABORT
+      - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
+        next: ABORT
+      - condition: validation.verdict NEEDS_FIX or design review gate failed
+        next: ABORT
+
+  - name: quick-tasks
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+      - kiro-spec-task-annotations
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
+    required_permission_mode: edit
+    instruction: kiro-spec-tasks
+    output_contracts:
+      report:
+        - name: kiro-spec-quick-tasks-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and same auto-approve semantics and phase tasks and tasks-generated and approvals.tasks.approved true and ready_for_implementation true
+        next: quick-sanity-review
+      - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
+        next: ABORT
+      - condition: validation.verdict NEEDS_FIX or task plan review failed or task graph sanity review failed
+        next: ABORT
+
+  - name: quick-sanity-review
+    edit: false
+    persona: reviewer
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+      - kiro-spec-task-annotations
+    required_permission_mode: read-only
+    instruction: kiro-spec-quick
+    output_contracts:
+      report:
+        - name: kiro-spec-quick-sanity-review.md
+          format: kiro-spec-sanity-review
+    rules:
+      - condition: verdict PASS and quick-completion
+        next: COMPLETE
+      - condition: verdict NEEDS_FIX and fix_targets present
+        next: ABORT
+      - condition: verdict BLOCKED or blockingReason present
+        next: ABORT
+
+# Contract notes for validation and reviewers:
+# - automatic mode runs quick-init, quick-requirements, quick-design, quick-tasks, then quick-sanity-review without user prompts between successful phases.
+# - interactive mode requires phase approval between init -> requirements, requirements -> design, and design -> tasks; missing phase approval stops the quick path.
+# - quick-design and quick-tasks use the standalone workflow same auto-approve semantics from their phase contracts.
+# - This single YAML composes phase steps directly. It does not call external workflow orchestration or restart TAKT through a shell command.
+# - The quick path does not call discovery/batch/implementation behavior.
+# - Only a final sanity review verdict PASS can produce quick-completion and COMPLETE.

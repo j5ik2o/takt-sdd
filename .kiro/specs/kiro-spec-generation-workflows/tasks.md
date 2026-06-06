@@ -66,7 +66,7 @@
   - _Depends:_ 1.1, 2.1
 
 - [ ] 8. quick phase contract composition
-- [ ] 8.1 `kiro-spec-quick` workflow を phase contract composition として追加する
+- [x] 8.1 `kiro-spec-quick` workflow を phase contract composition として追加する
   - automatic mode では `quick-init`、`quick-requirements`、`quick-design`、`quick-tasks` を同一 YAML 内で連続実行し、interactive mode では phase 間 approval を要求する。
   - quick phase step は standalone workflow と同じ instruction/policy/output contract を参照し、外部 `workflow_call` や shell 経由の `takt -w` 再起動には依存しない。
   - design/tasks 呼び出し時は standalone workflow と同じ auto-approve semantics を使う。
