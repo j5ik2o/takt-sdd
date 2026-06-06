@@ -94,7 +94,7 @@
   - _Depends:_ 2.1, 3.1, 4.1, 5.1, 6.1
 
 - [ ] 11. generated artifact validation
-- [ ] 11.1 generation artifact の section と task annotation 検証を追加する
+- [x] 11.1 generation artifact の section と task annotation 検証を追加する
   - requirements の EARS/numeric ID、design の boundary/file structure/traceability、tasks の Boundary / Depends annotation を検証する。
   - `.kiro/settings/templates/specs/tasks.md` と `kiro-spec-task-annotations` policy が dependency なしの canonical grammar と全 executable task の Boundary annotation を同じ grammar で要求していることを検証する。
   - `(P)` marker が boundary と dependency graph に反する場合に finding を返す。

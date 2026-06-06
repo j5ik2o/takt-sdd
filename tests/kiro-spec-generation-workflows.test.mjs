@@ -13,6 +13,8 @@ function makeValidationFixture() {
   const root = makeFixture();
   const repoRoot = join(import.meta.dirname, "..");
   symlinkSync(join(repoRoot, ".takt"), join(root, ".takt"), "dir");
+  mkdirSync(join(root, ".kiro"), { recursive: true });
+  symlinkSync(join(repoRoot, ".kiro", "settings"), join(root, ".kiro", "settings"), "dir");
   return root;
 }
 
@@ -25,7 +27,54 @@ function writeFixtureFile(root, path, content) {
 function writeSpecArtifactFixture(root, featureName, spec, artifacts) {
   writeFixtureFile(root, `.kiro/specs/${featureName}/spec.json`, `${JSON.stringify(spec, null, 2)}\n`);
   for (const artifact of artifacts) {
-    writeFixtureFile(root, `.kiro/specs/${featureName}/${artifact}`, `# ${artifact}\n`);
+    writeFixtureFile(root, `.kiro/specs/${featureName}/${artifact}`, validArtifactContent(artifact));
+  }
+}
+
+function validArtifactContent(artifact) {
+  switch (artifact) {
+    case "requirements.md":
+      return [
+        "# Requirements Document",
+        "",
+        "## Requirements",
+        "",
+        "### Requirement 1: validation fixture",
+        "",
+        "#### Acceptance Criteria",
+        "",
+        "1. validation が実行される場合、fixture は EARS と numeric ID を保持する。",
+      ].join("\n");
+    case "design.md":
+      return [
+        "# Design Document",
+        "",
+        "## Boundary Commitments",
+        "",
+        "Fixture boundary.",
+        "",
+        "## File Structure Plan",
+        "",
+        "Fixture files.",
+        "",
+        "## Requirements Traceability",
+        "",
+        "| Requirement | Component |",
+        "|-------------|-----------|",
+        "| 1.1 | Fixture |",
+      ].join("\n");
+    case "tasks.md":
+      return [
+        "# Implementation Plan",
+        "",
+        "- [ ] 1.1 validate fixture artifact",
+        "  - Fixture artifact validation passes.",
+        "  - _Requirements: 1.1_",
+        "  - _Boundary:_ FixtureValidationHarness",
+        "  - _Depends:_ none",
+      ].join("\n");
+    default:
+      return `# ${artifact}\n`;
   }
 }
 
@@ -540,6 +589,215 @@ test("task 10.1 validation blocks artifact missing and lifecycle inconsistent fi
     result.failures.some((failure) =>
       failure.includes("LIFECYCLE_INCONSISTENT") && failure.includes("approvals.tasks.approved"),
     ),
+    result.failures.join("\n"),
+  );
+});
+
+test("task 11.1 validation detects generated artifact section drift", () => {
+  const root = makeValidationFixture();
+  const featureName = "artifact-section-drift";
+  writeFixtureFile(root, `.kiro/specs/${featureName}/spec.json`, `${JSON.stringify(
+    specState(featureName, "design-generated", {
+      approvals: {
+        requirements: { generated: true, approved: true },
+        design: { generated: true, approved: false },
+        tasks: { generated: false, approved: false },
+      },
+    }),
+    null,
+    2,
+  )}\n`);
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/requirements.md`,
+    [
+      "# Requirements Document",
+      "",
+      "## Requirements",
+      "",
+      "### Requirement Alpha: missing numeric requirement ID",
+      "",
+      "#### Acceptance Criteria",
+      "",
+      "1. This criterion lacks the EARS fixed phrase.",
+    ].join("\n"),
+  );
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/design.md`,
+    [
+      "# Design Document",
+      "",
+      "## Boundary Commitments",
+      "",
+      "Boundary details.",
+      "",
+      "## Architecture",
+      "",
+      "The file structure and traceability sections are missing.",
+    ].join("\n"),
+  );
+  writeFixtureFile(root, `.kiro/specs/${featureName}/research.md`, "# Research\n");
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) => failure.includes("ARTIFACT_SECTION_DRIFT")),
+    result.failures.join("\n"),
+  );
+});
+
+test("task 11.1 validation detects task annotation drift and invalid parallel markers", () => {
+  const root = makeValidationFixture();
+  const featureName = "task-annotation-drift";
+  writeFixtureFile(root, `.kiro/specs/${featureName}/spec.json`, `${JSON.stringify(
+    specState(featureName, "tasks-generated", {
+      approvals: {
+        requirements: { generated: true, approved: true },
+        design: { generated: true, approved: true },
+        tasks: { generated: true, approved: false },
+      },
+    }),
+    null,
+    2,
+  )}\n`);
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/requirements.md`,
+    [
+      "# Requirements Document",
+      "",
+      "## Requirements",
+      "",
+      "### Requirement 1: artifact validation",
+      "",
+      "#### Acceptance Criteria",
+      "",
+      "1. validation が実行される場合、harness は drift を返す。",
+    ].join("\n"),
+  );
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/design.md`,
+    [
+      "# Design Document",
+      "",
+      "## Boundary Commitments",
+      "",
+      "Boundary details.",
+      "",
+      "## File Structure Plan",
+      "",
+      "File details.",
+      "",
+      "## Requirements Traceability",
+      "",
+      "| Requirement | Component |",
+      "|-------------|-----------|",
+      "| 1.1 | Harness |",
+    ].join("\n"),
+  );
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/tasks.md`,
+    [
+      "# Implementation Plan",
+      "",
+      "- [ ] 1.1 validate requirements",
+      "  - Validate requirement artifacts.",
+      "  - _Requirements: 1.1_",
+      "  - _Depends:_ none",
+      "",
+      "- [ ] 1.2 validate tasks (P)",
+      "  - Validate task annotations.",
+      "  - _Requirements: 1.1_",
+      "  - _Boundary:_ Harness",
+      "  - _Depends:_ 1.1",
+    ].join("\n"),
+  );
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) => failure.includes("TASK_ANNOTATION_DRIFT")),
+    result.failures.join("\n"),
+  );
+});
+
+test("task 11.1 validation detects parallel marker boundary overlap", () => {
+  const root = makeValidationFixture();
+  const featureName = "parallel-boundary-overlap";
+  writeFixtureFile(root, `.kiro/specs/${featureName}/spec.json`, `${JSON.stringify(
+    specState(featureName, "tasks-generated", {
+      approvals: {
+        requirements: { generated: true, approved: true },
+        design: { generated: true, approved: true },
+        tasks: { generated: true, approved: false },
+      },
+    }),
+    null,
+    2,
+  )}\n`);
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/requirements.md`,
+    [
+      "# Requirements Document",
+      "",
+      "## Requirements",
+      "",
+      "### Requirement 1: boundary validation",
+      "",
+      "#### Acceptance Criteria",
+      "",
+      "1. validation が実行される場合、harness は boundary overlap を返す。",
+    ].join("\n"),
+  );
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/design.md`,
+    [
+      "# Design Document",
+      "",
+      "## Boundary Commitments",
+      "",
+      "Boundary details.",
+      "",
+      "## File Structure Plan",
+      "",
+      "File details.",
+      "",
+      "## Requirements Traceability",
+      "",
+      "| Requirement | Component |",
+      "|-------------|-----------|",
+      "| 1.1 | Harness |",
+    ].join("\n"),
+  );
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/tasks.md`,
+    [
+      "# Implementation Plan",
+      "",
+      "- [ ] 1.1 validate shared boundary (P)",
+      "  - Validate first shared boundary task.",
+      "  - _Requirements: 1.1_",
+      "  - _Boundary:_ SharedBoundary, FirstOnly",
+      "  - _Depends:_ none",
+      "",
+      "- [ ] 1.2 validate overlapping boundary (P)",
+      "  - Validate second shared boundary task.",
+      "  - _Requirements: 1.1_",
+      "  - _Boundary:_ SecondOnly, SharedBoundary",
+      "  - _Depends:_ none",
+    ].join("\n"),
+  );
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) => failure.includes("TASK_ANNOTATION_DRIFT")),
     result.failures.join("\n"),
   );
 });

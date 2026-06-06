@@ -117,6 +117,12 @@ const phaseArtifactContracts = {
   "design-generated": ["requirements.md", "design.md", "research.md"],
   "tasks-generated": ["requirements.md", "design.md", "tasks.md"],
 };
+const requiredDesignSections = ["Boundary Commitments", "File Structure Plan", "Requirements Traceability"];
+const taskAnnotationContractPaths = [
+  ".kiro/settings/templates/specs/tasks.md",
+  ".takt/en/facets/policies/kiro-spec-task-annotations.md",
+  ".takt/ja/facets/policies/kiro-spec-task-annotations.md",
+];
 
 const languageParityFacetKinds = ["instructions", "policies", "output-contracts"];
 const sharedContractTerms = [
@@ -636,6 +642,187 @@ function validateSpecArtifactLifecycle(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
+function hasHeading(content, level, title) {
+  return new RegExp(`^${"#".repeat(level)}\\s+${title}\\s*$`, "m").test(content);
+}
+
+function numberedRequirementSections(content) {
+  const matches = [...content.matchAll(/^### Requirement\s+(\d+):\s+.+$/gm)];
+  return matches.map((match, index) => {
+    const next = matches[index + 1];
+    return {
+      id: match[1],
+      body: content.slice(match.index, next?.index ?? content.length),
+    };
+  });
+}
+
+function validateRequirementsArtifact(failures, artifactPath, repoRoot, content) {
+  const sections = numberedRequirementSections(content);
+  if (sections.length === 0) {
+    failures.push(
+      `ARTIFACT_SECTION_DRIFT: ${rel(repoRoot, artifactPath)} must use numeric headings like "### Requirement 1:"`,
+    );
+    return;
+  }
+
+  for (const section of sections) {
+    const criteria = [...section.body.matchAll(/^\d+\.\s+(.+)$/gm)].map((match) => match[1]);
+    if (criteria.length === 0) {
+      failures.push(
+        `ARTIFACT_SECTION_DRIFT: ${rel(repoRoot, artifactPath)} Requirement ${section.id} missing numeric acceptance criteria`,
+      );
+      continue;
+    }
+    for (const criterion of criteria) {
+      if (!/(?:場合|は|^When\b|^If\b|^While\b|^Where\b|^Upon\b|\bshall\b|\bmust\b)/i.test(criterion)) {
+        failures.push(
+          `ARTIFACT_SECTION_DRIFT: ${rel(repoRoot, artifactPath)} Requirement ${section.id} acceptance criterion must keep an EARS fixed phrase`,
+        );
+      }
+    }
+  }
+}
+
+function validateDesignArtifact(failures, artifactPath, repoRoot, content) {
+  for (const section of requiredDesignSections) {
+    if (!hasHeading(content, 2, section)) {
+      failures.push(`ARTIFACT_SECTION_DRIFT: ${rel(repoRoot, artifactPath)} missing required section: ${section}`);
+    }
+  }
+}
+
+function executableTaskBlocks(content) {
+  const matches = [...content.matchAll(/^- \[[ xX]\]\s+(\d+\.\d+)\s+(.+)$/gm)];
+  return matches.map((match, index) => {
+    const next = matches[index + 1];
+    return {
+      id: match[1],
+      title: match[2],
+      block: content.slice(match.index, next?.index ?? content.length),
+    };
+  });
+}
+
+function taskAnnotationValue(block, label) {
+  const match = block.match(new RegExp(`^\\s+-\\s+_${label}:_\\s*(.+?)\\s*$`, "m"));
+  return match?.[1]?.trim();
+}
+
+function boundaryNames(value) {
+  return value
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
+function validateTaskDependencies(failures, artifactPath, repoRoot, task, depends, taskIds) {
+  if (depends === "none") {
+    return;
+  }
+  if (/^none$/i.test(depends)) {
+    failures.push(
+      `TASK_ANNOTATION_DRIFT: ${rel(repoRoot, artifactPath)} task ${task.id} dependency-free tasks must use "_Depends:_ none" exactly`,
+    );
+    return;
+  }
+
+  for (const dependency of depends.split(",").map((value) => value.trim())) {
+    if (!/^\d+(?:\.\d+)?$/.test(dependency)) {
+      failures.push(
+        `TASK_ANNOTATION_DRIFT: ${rel(repoRoot, artifactPath)} task ${task.id} has invalid dependency id: ${dependency}`,
+      );
+    } else if (dependency === task.id) {
+      failures.push(`TASK_ANNOTATION_DRIFT: ${rel(repoRoot, artifactPath)} task ${task.id} depends on itself`);
+    } else if (!taskIds.has(dependency)) {
+      failures.push(
+        `TASK_ANNOTATION_DRIFT: ${rel(repoRoot, artifactPath)} task ${task.id} depends on unknown task: ${dependency}`,
+      );
+    }
+  }
+}
+
+function validateTasksArtifact(failures, artifactPath, repoRoot, content) {
+  const tasks = executableTaskBlocks(content);
+  const taskIds = new Set(tasks.map((task) => task.id));
+  const parallelTasks = [];
+  for (const task of tasks) {
+    const boundary = taskAnnotationValue(task.block, "Boundary");
+    const depends = taskAnnotationValue(task.block, "Depends");
+
+    if (!boundary) {
+      failures.push(`TASK_ANNOTATION_DRIFT: ${rel(repoRoot, artifactPath)} task ${task.id} missing _Boundary:_`);
+    } else if (/\(P\)/.test(task.title)) {
+      parallelTasks.push({ id: task.id, boundaries: boundaryNames(boundary) });
+    }
+    if (!depends) {
+      failures.push(`TASK_ANNOTATION_DRIFT: ${rel(repoRoot, artifactPath)} task ${task.id} missing _Depends:_`);
+      continue;
+    }
+
+    validateTaskDependencies(failures, artifactPath, repoRoot, task, depends, taskIds);
+
+    if (/\(P\)/.test(task.title) && depends !== "none") {
+      failures.push(
+        `TASK_ANNOTATION_DRIFT: ${rel(repoRoot, artifactPath)} task ${task.id} uses (P) with non-empty dependencies`,
+      );
+    }
+  }
+
+  for (let leftIndex = 0; leftIndex < parallelTasks.length; leftIndex += 1) {
+    const left = parallelTasks[leftIndex];
+    const leftBoundaries = new Set(left.boundaries);
+    for (const right of parallelTasks.slice(leftIndex + 1)) {
+      const overlap = right.boundaries.filter((boundary) => leftBoundaries.has(boundary));
+      if (overlap.length > 0) {
+        failures.push(
+          `TASK_ANNOTATION_DRIFT: ${rel(repoRoot, artifactPath)} tasks ${left.id} and ${right.id} use (P) with overlapping boundary: ${overlap.join(", ")}`,
+        );
+      }
+    }
+  }
+}
+
+function validateGeneratedArtifacts(repoRoot) {
+  const failures = [];
+  for (const specDir of listSpecDirectories(repoRoot)) {
+    const requirementsPath = join(specDir, "requirements.md");
+    if (existsSync(requirementsPath)) {
+      validateRequirementsArtifact(failures, requirementsPath, repoRoot, readText(requirementsPath));
+    }
+
+    const designPath = join(specDir, "design.md");
+    if (existsSync(designPath)) {
+      validateDesignArtifact(failures, designPath, repoRoot, readText(designPath));
+    }
+
+    const tasksPath = join(specDir, "tasks.md");
+    if (existsSync(tasksPath)) {
+      validateTasksArtifact(failures, tasksPath, repoRoot, readText(tasksPath));
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
+function validateTaskAnnotationContract(repoRoot) {
+  const failures = [];
+  for (const relativePath of taskAnnotationContractPaths) {
+    const path = join(repoRoot, relativePath);
+    if (!existsSync(path)) {
+      failures.push(`TASK_ANNOTATION_DRIFT: ${relativePath} missing task annotation grammar source`);
+      continue;
+    }
+    const content = readText(path);
+    containsAll(content, ["_Boundary:_", "_Depends:_ none"], path, failures, repoRoot, "TASK_ANNOTATION_DRIFT");
+    if (!/(?:every executable task|すべての executable task)/i.test(content)) {
+      failures.push(
+        `TASK_ANNOTATION_DRIFT: ${rel(repoRoot, path)} must require Boundary annotation for every executable task`,
+      );
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
 function validateScopeGuard() {
   return { ok: true, failures: [] };
 }
@@ -647,6 +834,8 @@ export function validateKiroSpecGenerationWorkflows(options = {}) {
     facetFiles: validateFacetFiles(repoRoot),
     lifecycleTerms: validateLifecycleTerms(repoRoot),
     specArtifactLifecycle: validateSpecArtifactLifecycle(repoRoot),
+    generatedArtifacts: validateGeneratedArtifacts(repoRoot),
+    taskAnnotationContract: validateTaskAnnotationContract(repoRoot),
     quickComposition: validateQuickComposition(repoRoot),
     languageParity: validateLanguageParity(repoRoot),
     scopeGuard: validateScopeGuard(),
