@@ -20,7 +20,7 @@
   - _Depends:_ 1.1
 
 - [ ] 3. spec initialization workflow
-- [ ] 3.1 `kiro-spec-init` workflow と instruction facet を追加する
+- [x] 3.1 `kiro-spec-init` workflow と instruction facet を追加する
   - brief がある場合の description source、brief-only directory reuse、template 読み込み、name conflict handling を実装する。
   - `spec.json` と draft `requirements.md` を initialized state として作成する。
   - 完了時点で brief-only directory から初期 spec が作成され、roadmap や OpenSpec artifact が更新されないことを確認できる。

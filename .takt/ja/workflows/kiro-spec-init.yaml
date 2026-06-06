@@ -1,0 +1,51 @@
+name: kiro-spec-init
+description: Kiro - description または brief.md から feature spec を初期化する
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 5
+initial_step: initialize-spec
+
+instructions:
+  kiro-spec-init: ../facets/instructions/kiro-spec-init.md
+
+policies:
+  kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
+  kiro-spec-lifecycle: ../facets/policies/kiro-spec-lifecycle.md
+  kiro-spec-generation: ../facets/policies/kiro-spec-generation.md
+
+report_formats:
+  kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
+
+steps:
+  - name: initialize-spec
+    edit: true
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    required_permission_mode: edit
+    instruction: kiro-spec-init
+    output_contracts:
+      report:
+        - name: kiro-spec-init-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and phase init and spec.json written and requirements.md written and initialized
+        next: COMPLETE
+      - condition: validation.verdict BLOCKED or feature name conflict or template missing
+        next: ABORT
+      - condition: validation.verdict NEEDS_FIX
+        next: ABORT
+
+# validation/review 用の contract notes:
+# - brief.md が存在する場合、description source は brief.md とする。存在しない場合は invocation description を使う。
+# - .kiro/specs/<feature>/ に brief.md だけがある brief-only directory は再利用し、別 feature name を作らない。
+# - initialized artifact を書く前に .kiro/settings/templates/specs/init.json と requirements-init.md の template guidance を読む。
+# - feature name conflict は既存 spec の上書きではなく、supported BLOCKED result として扱う。
+# - initialization が書くのは .kiro/specs/<feature>/spec.json と draft requirements.md だけ。
+# - roadmap や OpenSpec artifacts の更新を成功条件にしない。

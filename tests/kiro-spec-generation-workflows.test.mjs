@@ -66,13 +66,13 @@ test("kiro spec generation validation reports current missing generation surface
   assert.equal(result.ok, false);
   assert.ok(
     result.failures.some((failure) =>
-      failure.includes("WORKFLOW_MISSING") && failure.includes(".takt/en/workflows/kiro-spec-init.yaml"),
+      failure.includes("WORKFLOW_MISSING") && failure.includes(".takt/en/workflows/kiro-spec-requirements.yaml"),
     ),
   );
   assert.ok(
     result.failures.some((failure) =>
       failure.includes("FACET_MISSING") &&
-      failure.includes(".takt/ja/facets/instructions/kiro-spec-init.md"),
+      failure.includes(".takt/ja/facets/instructions/kiro-spec-requirements.md"),
     ),
   );
   assert.ok(
@@ -83,6 +83,41 @@ test("kiro spec generation validation reports current missing generation surface
   assert.equal(result.failures.some((failure) => failure.includes("kiro-discovery")), false);
   assert.equal(result.failures.some((failure) => failure.includes("kiro-spec-batch")), false);
   assert.equal(result.failures.some((failure) => failure.includes("kiro-impl")), false);
+});
+
+test("task 3.1 init workflow captures brief reuse and initialized artifact contract", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  const workflowTerms = [
+    "spec.json",
+    "requirements.md",
+    "initialized",
+    "brief.md",
+    "description source",
+    "brief-only directory",
+    "template",
+    "feature name conflict",
+    "roadmap",
+    "OpenSpec",
+    "kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
+    "kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md",
+  ];
+  const instructionTerms = [
+    "spec.json",
+    "requirements.md",
+    "initialized",
+    "brief.md",
+    "description source",
+    "brief-only directory",
+    "template",
+    "feature name conflict",
+    "roadmap",
+    "OpenSpec",
+  ];
+
+  for (const lang of ["en", "ja"]) {
+    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-init.yaml`, workflowTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-init.md`, instructionTerms);
+  }
 });
 
 test("kiro spec generation validation detects lifecycle drift", () => {
