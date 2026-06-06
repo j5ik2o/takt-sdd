@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { validateKiroSpecGenerationWorkflows } from "../scripts/validate-kiro-spec-generation-workflows.mjs";
@@ -9,10 +9,42 @@ function makeFixture() {
   return mkdtempSync(join(tmpdir(), "kiro-spec-generation-"));
 }
 
+function makeValidationFixture() {
+  const root = makeFixture();
+  const repoRoot = join(import.meta.dirname, "..");
+  symlinkSync(join(repoRoot, ".takt"), join(root, ".takt"), "dir");
+  return root;
+}
+
 function writeFixtureFile(root, path, content) {
   const fullPath = join(root, path);
   mkdirSync(dirname(fullPath), { recursive: true });
   writeFileSync(fullPath, content);
+}
+
+function writeSpecArtifactFixture(root, featureName, spec, artifacts) {
+  writeFixtureFile(root, `.kiro/specs/${featureName}/spec.json`, `${JSON.stringify(spec, null, 2)}\n`);
+  for (const artifact of artifacts) {
+    writeFixtureFile(root, `.kiro/specs/${featureName}/${artifact}`, `# ${artifact}\n`);
+  }
+}
+
+function specState(featureName, phase, overrides = {}) {
+  const approvals = {
+    requirements: { generated: false, approved: false },
+    design: { generated: false, approved: false },
+    tasks: { generated: false, approved: false },
+    ...overrides.approvals,
+  };
+  return {
+    feature_name: featureName,
+    created_at: "2026-06-06T00:00:00Z",
+    updated_at: "2026-06-06T00:00:00Z",
+    language: "ja",
+    phase,
+    approvals,
+    ready_for_implementation: overrides.ready_for_implementation ?? false,
+  };
 }
 
 function assertFacetTerms(root, path, terms) {
@@ -369,6 +401,147 @@ test("task 3.1 init workflow captures brief reuse and initialized artifact contr
     assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-init.yaml`, workflowTerms);
     assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-init.md`, instructionTerms);
   }
+});
+
+test("task 10.1 validation accepts lifecycle and artifact contract fixtures", () => {
+  const root = makeValidationFixture();
+  writeSpecArtifactFixture(
+    root,
+    "initialized-fixture",
+    specState("initialized-fixture", "initialized"),
+    ["requirements.md"],
+  );
+  writeSpecArtifactFixture(
+    root,
+    "requirements-fixture",
+    specState("requirements-fixture", "requirements-generated", {
+      approvals: {
+        requirements: { generated: true, approved: false },
+        design: { generated: false, approved: false },
+        tasks: { generated: false, approved: false },
+      },
+    }),
+    ["requirements.md"],
+  );
+  writeSpecArtifactFixture(
+    root,
+    "design-fixture",
+    specState("design-fixture", "design-generated", {
+      approvals: {
+        requirements: { generated: true, approved: true },
+        design: { generated: true, approved: false },
+        tasks: { generated: false, approved: false },
+      },
+    }),
+    ["requirements.md", "design.md", "research.md"],
+  );
+  writeSpecArtifactFixture(
+    root,
+    "tasks-fixture",
+    specState("tasks-fixture", "tasks-generated", {
+      approvals: {
+        requirements: { generated: true, approved: true },
+        design: { generated: true, approved: true },
+        tasks: { generated: true, approved: false },
+      },
+    }),
+    ["requirements.md", "design.md", "tasks.md"],
+  );
+  writeSpecArtifactFixture(
+    root,
+    "ready-fixture",
+    specState("ready-fixture", "tasks-generated", {
+      approvals: {
+        requirements: { generated: true, approved: true },
+        design: { generated: true, approved: true },
+        tasks: { generated: true, approved: true },
+      },
+      ready_for_implementation: true,
+    }),
+    ["requirements.md", "design.md", "tasks.md"],
+  );
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.equal(result.ok, true, result.failures.join("\n"));
+});
+
+test("task 10.1 validation blocks artifact missing and lifecycle inconsistent fixtures", () => {
+  const root = makeValidationFixture();
+  writeSpecArtifactFixture(
+    root,
+    "missing-design-artifact",
+    specState("missing-design-artifact", "design-generated", {
+      approvals: {
+        requirements: { generated: true, approved: true },
+        design: { generated: true, approved: false },
+        tasks: { generated: false, approved: false },
+      },
+    }),
+    ["requirements.md", "design.md"],
+  );
+  writeSpecArtifactFixture(
+    root,
+    "design-without-requirements-approval",
+    specState("design-without-requirements-approval", "design-generated", {
+      approvals: {
+        requirements: { generated: true, approved: false },
+        design: { generated: true, approved: false },
+        tasks: { generated: false, approved: false },
+      },
+    }),
+    ["requirements.md", "design.md", "research.md"],
+  );
+  writeSpecArtifactFixture(
+    root,
+    "ready-without-task-approval",
+    specState("ready-without-task-approval", "tasks-generated", {
+      approvals: {
+        requirements: { generated: true, approved: true },
+        design: { generated: true, approved: true },
+        tasks: { generated: true, approved: false },
+      },
+      ready_for_implementation: true,
+    }),
+    ["requirements.md", "design.md", "tasks.md"],
+  );
+  writeSpecArtifactFixture(
+    root,
+    "task-approval-without-ready",
+    specState("task-approval-without-ready", "tasks-generated", {
+      approvals: {
+        requirements: { generated: true, approved: true },
+        design: { generated: true, approved: true },
+        tasks: { generated: true, approved: true },
+      },
+    }),
+    ["requirements.md", "design.md", "tasks.md"],
+  );
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) => failure.includes("ARTIFACT_MISSING") && failure.includes("research.md")),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("LIFECYCLE_INCONSISTENT") && failure.includes("approvals.requirements.approved"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("LIFECYCLE_INCONSISTENT") && failure.includes("ready_for_implementation"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("LIFECYCLE_INCONSISTENT") && failure.includes("approvals.tasks.approved"),
+    ),
+    result.failures.join("\n"),
+  );
 });
 
 test("kiro spec generation validation detects lifecycle drift", () => {

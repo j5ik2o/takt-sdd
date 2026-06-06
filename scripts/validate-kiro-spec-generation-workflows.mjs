@@ -109,6 +109,15 @@ const lifecycleTerms = [
   "auto-approve",
 ];
 
+const approvalStages = ["requirements", "design", "tasks"];
+const approvalFields = ["generated", "approved"];
+const phaseArtifactContracts = {
+  initialized: ["requirements.md"],
+  "requirements-generated": ["requirements.md"],
+  "design-generated": ["requirements.md", "design.md", "research.md"],
+  "tasks-generated": ["requirements.md", "design.md", "tasks.md"],
+};
+
 const languageParityFacetKinds = ["instructions", "policies", "output-contracts"];
 const sharedContractTerms = [
   ...new Set([
@@ -455,6 +464,178 @@ function validateQuickComposition(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
+function listSpecDirectories(repoRoot) {
+  const specsRoot = join(repoRoot, ".kiro", "specs");
+  if (!existsSync(specsRoot)) {
+    return [];
+  }
+  return readdirSync(specsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => join(specsRoot, entry.name))
+    .filter((specDir) => existsSync(join(specDir, "spec.json")))
+    .sort();
+}
+
+function readSpecJson(path, failures, repoRoot) {
+  try {
+    return JSON.parse(readText(path));
+  } catch (error) {
+    failures.push(`LIFECYCLE_INCONSISTENT: ${rel(repoRoot, path)} has invalid JSON: ${error.message}`);
+    return null;
+  }
+}
+
+function approvalValue(spec, stage, field) {
+  return spec?.approvals?.[stage]?.[field];
+}
+
+function requireBooleanSpecField(failures, specPath, repoRoot, label, value) {
+  if (typeof value !== "boolean") {
+    failures.push(`LIFECYCLE_INCONSISTENT: ${rel(repoRoot, specPath)} ${label} must be boolean`);
+  }
+}
+
+function requireApproval(failures, specPath, repoRoot, spec, stage, field, expected) {
+  const value = approvalValue(spec, stage, field);
+  requireBooleanSpecField(failures, specPath, repoRoot, `approvals.${stage}.${field}`, value);
+  if (typeof value === "boolean" && value !== expected) {
+    failures.push(
+      `LIFECYCLE_INCONSISTENT: ${rel(repoRoot, specPath)} approvals.${stage}.${field} must be ${expected}`,
+    );
+  }
+}
+
+function validateApprovalShape(failures, specPath, repoRoot, spec) {
+  for (const stage of approvalStages) {
+    for (const field of approvalFields) {
+      requireBooleanSpecField(failures, specPath, repoRoot, `approvals.${stage}.${field}`, approvalValue(spec, stage, field));
+    }
+  }
+  requireBooleanSpecField(failures, specPath, repoRoot, "ready_for_implementation", spec.ready_for_implementation);
+}
+
+function validateGeneratedProgression(failures, specPath, repoRoot, spec) {
+  if (approvalValue(spec, "design", "generated") && !approvalValue(spec, "requirements", "generated")) {
+    failures.push(
+      `LIFECYCLE_INCONSISTENT: ${rel(repoRoot, specPath)} approvals.design.generated requires approvals.requirements.generated`,
+    );
+  }
+  if (approvalValue(spec, "tasks", "generated")) {
+    for (const stage of ["requirements", "design"]) {
+      if (!approvalValue(spec, stage, "generated")) {
+        failures.push(
+          `LIFECYCLE_INCONSISTENT: ${rel(repoRoot, specPath)} approvals.tasks.generated requires approvals.${stage}.generated`,
+        );
+      }
+    }
+  }
+}
+
+function validateApprovedProgression(failures, specPath, repoRoot, spec) {
+  for (const stage of approvalStages) {
+    if (approvalValue(spec, stage, "approved") && !approvalValue(spec, stage, "generated")) {
+      failures.push(
+        `LIFECYCLE_INCONSISTENT: ${rel(repoRoot, specPath)} approvals.${stage}.approved requires approvals.${stage}.generated`,
+      );
+    }
+  }
+}
+
+function validateReadyState(failures, specPath, repoRoot, spec) {
+  if (spec.ready_for_implementation) {
+    for (const stage of approvalStages) {
+      if (!approvalValue(spec, stage, "approved")) {
+        failures.push(
+          `LIFECYCLE_INCONSISTENT: ${rel(repoRoot, specPath)} ready_for_implementation true requires approvals.${stage}.approved true`,
+        );
+      }
+    }
+  }
+  if (approvalValue(spec, "tasks", "approved") && !spec.ready_for_implementation) {
+    failures.push(
+      `LIFECYCLE_INCONSISTENT: ${rel(repoRoot, specPath)} approvals.tasks.approved true requires ready_for_implementation true`,
+    );
+  }
+}
+
+function validatePhaseApprovals(failures, specPath, repoRoot, spec) {
+  switch (spec.phase) {
+    case "initialized":
+      for (const stage of approvalStages) {
+        for (const field of approvalFields) {
+          requireApproval(failures, specPath, repoRoot, spec, stage, field, false);
+        }
+      }
+      if (spec.ready_for_implementation) {
+        failures.push(
+          `LIFECYCLE_INCONSISTENT: ${rel(repoRoot, specPath)} initialized phase requires ready_for_implementation false`,
+        );
+      }
+      break;
+    case "requirements-generated":
+      requireApproval(failures, specPath, repoRoot, spec, "requirements", "generated", true);
+      requireApproval(failures, specPath, repoRoot, spec, "design", "generated", false);
+      requireApproval(failures, specPath, repoRoot, spec, "tasks", "generated", false);
+      if (spec.ready_for_implementation) {
+        failures.push(
+          `LIFECYCLE_INCONSISTENT: ${rel(repoRoot, specPath)} requirements-generated phase requires ready_for_implementation false`,
+        );
+      }
+      break;
+    case "design-generated":
+      requireApproval(failures, specPath, repoRoot, spec, "requirements", "generated", true);
+      requireApproval(failures, specPath, repoRoot, spec, "requirements", "approved", true);
+      requireApproval(failures, specPath, repoRoot, spec, "design", "generated", true);
+      requireApproval(failures, specPath, repoRoot, spec, "tasks", "generated", false);
+      if (spec.ready_for_implementation) {
+        failures.push(
+          `LIFECYCLE_INCONSISTENT: ${rel(repoRoot, specPath)} design-generated phase requires ready_for_implementation false`,
+        );
+      }
+      break;
+    case "tasks-generated":
+      for (const stage of approvalStages) {
+        requireApproval(failures, specPath, repoRoot, spec, stage, "generated", true);
+      }
+      for (const stage of ["requirements", "design"]) {
+        requireApproval(failures, specPath, repoRoot, spec, stage, "approved", true);
+      }
+      break;
+    default:
+      failures.push(`LIFECYCLE_INCONSISTENT: ${rel(repoRoot, specPath)} has unknown phase: ${spec.phase}`);
+  }
+}
+
+function validateSpecArtifactLifecycle(repoRoot) {
+  const failures = [];
+  for (const specDir of listSpecDirectories(repoRoot)) {
+    const specPath = join(specDir, "spec.json");
+    const spec = readSpecJson(specPath, failures, repoRoot);
+    if (!spec) {
+      continue;
+    }
+
+    const requiredArtifacts = phaseArtifactContracts[spec.phase];
+    if (!requiredArtifacts) {
+      failures.push(`LIFECYCLE_INCONSISTENT: ${rel(repoRoot, specPath)} has unsupported phase artifact contract`);
+    } else {
+      for (const artifact of requiredArtifacts) {
+        const artifactPath = join(specDir, artifact);
+        if (!existsSync(artifactPath)) {
+          failures.push(`ARTIFACT_MISSING: ${rel(repoRoot, artifactPath)} required for phase ${spec.phase}`);
+        }
+      }
+    }
+
+    validateApprovalShape(failures, specPath, repoRoot, spec);
+    validateGeneratedProgression(failures, specPath, repoRoot, spec);
+    validateApprovedProgression(failures, specPath, repoRoot, spec);
+    validateReadyState(failures, specPath, repoRoot, spec);
+    validatePhaseApprovals(failures, specPath, repoRoot, spec);
+  }
+  return { ok: failures.length === 0, failures };
+}
+
 function validateScopeGuard() {
   return { ok: true, failures: [] };
 }
@@ -465,6 +646,7 @@ export function validateKiroSpecGenerationWorkflows(options = {}) {
     workflowFiles: validateWorkflowFiles(repoRoot),
     facetFiles: validateFacetFiles(repoRoot),
     lifecycleTerms: validateLifecycleTerms(repoRoot),
+    specArtifactLifecycle: validateSpecArtifactLifecycle(repoRoot),
     quickComposition: validateQuickComposition(repoRoot),
     languageParity: validateLanguageParity(repoRoot),
     scopeGuard: validateScopeGuard(),

@@ -85,7 +85,7 @@
   - _Depends:_ 3.1, 4.1, 5.1, 6.1, 7.1, 8.1
 
 - [ ] 10. lifecycle and artifact fixtures
-- [ ] 10.1 lifecycle と artifact contract の fixture 検証を追加する
+- [x] 10.1 lifecycle と artifact contract の fixture 検証を追加する
   - initialized、requirements-generated、design-generated、tasks-generated、auto-approve ready state の fixtures を検証する。
   - required artifact が欠ける場合と phase/approval が矛盾する場合の blocking result を検証する。
   - 完了時点で `spec.json` lifecycle drift と artifact missing が repository-local test で検出できる。
