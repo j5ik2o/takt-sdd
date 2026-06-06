@@ -1,7 +1,7 @@
 # Implementation Plan
 
 - [ ] 1. spec generation workflow validation foundation
-- [ ] 1.1 spec generation workflow の validation harness を追加する
+- [x] 1.1 spec generation workflow の validation harness を追加する
   - `kiro-spec-*` workflow、facet、output contract、lifecycle terms を検証できる repository-local check を追加する。
   - downstream discovery/batch/implementation workflow が未実装でも failure にしない scope guard を含める。
   - quick workflow が nested `takt` 実行や未確定の `workflow_call` に依存していないことを検証対象に含める。
