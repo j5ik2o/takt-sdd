@@ -1,0 +1,36 @@
+name: kiro-validate-design
+description: Kiro - design readiness を読み取り専用で検証する
+# Boundary Commitments と File Structure Plan を design artifact 変更なしで確認する。
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 5
+initial_step: validate-design
+
+instructions:
+  kiro-validate-design-readiness: ../facets/instructions/kiro-validate-design-readiness.md
+
+report_formats:
+  kiro-validation-result: ../facets/output-contracts/kiro-validation-result.md
+
+steps:
+  - name: validate-design
+    edit: false
+    persona: architecture-reviewer
+    policy: review
+    knowledge: architecture
+    instruction: kiro-validate-design-readiness
+    output_contracts:
+      report:
+        - name: kiro-design-validation-result.md
+          format: kiro-validation-result
+    rules:
+      - condition: verdict PASS
+        next: COMPLETE
+      - condition: verdict NEEDS_FIX
+        next: ABORT
+      - condition: verdict FAIL or verdict BLOCKED
+        next: ABORT

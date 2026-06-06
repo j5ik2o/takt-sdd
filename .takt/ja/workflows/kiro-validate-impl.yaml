@@ -1,0 +1,37 @@
+name: kiro-validate-impl
+description: Kiro - implementation completion を読み取り専用で検証する
+# tasks.md と spec.json.ready_for_implementation を implementation task 実行なしで確認する。
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 5
+initial_step: validate-impl
+
+instructions:
+  kiro-validate-impl-readiness: ../facets/instructions/kiro-validate-impl-readiness.md
+
+report_formats:
+  kiro-validation-result: ../facets/output-contracts/kiro-validation-result.md
+
+steps:
+  - name: validate-impl
+    edit: false
+    persona: supervisor
+    policy:
+      - review
+      - qa
+    instruction: kiro-validate-impl-readiness
+    output_contracts:
+      report:
+        - name: kiro-impl-validation-result.md
+          format: kiro-validation-result
+    rules:
+      - condition: finding category MANUAL_VERIFICATION_REQUIRED
+        next: ABORT
+      - condition: verdict PASS
+        next: COMPLETE
+      - condition: verdict FAIL or verdict NEEDS_FIX or verdict BLOCKED
+        next: ABORT

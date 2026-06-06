@@ -1,0 +1,40 @@
+name: kiro-spec-status
+description: Kiro - spec 状態と readiness を読み取り専用で報告する
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 5
+initial_step: report-status
+
+instructions:
+  kiro-report-spec-status: ../facets/instructions/kiro-report-spec-status.md
+
+report_formats:
+  kiro-status: ../facets/output-contracts/kiro-status.md
+
+steps:
+  - name: report-status
+    edit: false
+    persona: supervisor
+    policy: review
+    instruction: kiro-report-spec-status
+    output_contracts:
+      report:
+        - name: kiro-status-result.md
+          format: kiro-status
+    rules:
+      - condition: status MISSING or error_category FEATURE_NOT_FOUND
+        next: ABORT
+      - condition: status INVALID or readiness INCONSISTENT
+        next: ABORT
+      - condition: error_category ARTIFACT_MISSING or error_category LIFECYCLE_INCONSISTENT
+        next: ABORT
+      - condition: error_category SPEC_JSON_INVALID
+        next: ABORT
+      - condition: status FOUND and readiness NOT_READY
+        next: ABORT
+      - condition: status FOUND and readiness READY
+        next: COMPLETE

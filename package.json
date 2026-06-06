@@ -24,6 +24,8 @@
     "kiro:steering-custom": "node scripts/kiro-staged.mjs kiro-steering-custom --pipeline --skip-git -t",
     "validate:kiro-shared-contracts": "node scripts/validate-kiro-shared-contracts.mjs",
     "test:kiro-shared-contracts": "node --test tests/kiro-shared-workflow-contracts.test.mjs",
+    "validate:kiro-status-validation-workflows": "node scripts/validate-kiro-status-validation-workflows.mjs",
+    "test:kiro-status-validation-workflows": "node --test tests/kiro-status-validation-workflows.test.mjs",
     "cc-sdd:full": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-full -t",
     "cc-sdd:requirements": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-requirements -t",
     "cc-sdd:validate-gap": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-validate-gap -t",
