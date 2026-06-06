@@ -60,19 +60,19 @@ test("task 2.1 shared spec generation policy and result contract are available i
   }
 });
 
-test("kiro spec generation validation reports current missing generation surface without requiring downstream workflows", () => {
+test("kiro spec generation validation reports current missing downstream generation surface", () => {
   const result = validateKiroSpecGenerationWorkflows();
 
   assert.equal(result.ok, false);
   assert.ok(
     result.failures.some((failure) =>
-      failure.includes("WORKFLOW_MISSING") && failure.includes(".takt/en/workflows/kiro-spec-requirements.yaml"),
+      failure.includes("WORKFLOW_MISSING") && failure.includes(".takt/en/workflows/kiro-spec-design.yaml"),
     ),
   );
   assert.ok(
     result.failures.some((failure) =>
       failure.includes("FACET_MISSING") &&
-      failure.includes(".takt/ja/facets/instructions/kiro-spec-requirements.md"),
+      failure.includes(".takt/ja/facets/instructions/kiro-spec-design.md"),
     ),
   );
   assert.ok(
@@ -83,6 +83,53 @@ test("kiro spec generation validation reports current missing generation surface
   assert.equal(result.failures.some((failure) => failure.includes("kiro-discovery")), false);
   assert.equal(result.failures.some((failure) => failure.includes("kiro-spec-batch")), false);
   assert.equal(result.failures.some((failure) => failure.includes("kiro-impl")), false);
+});
+
+test("task 4.1 requirements workflow connects EARS generation, review gate, and lifecycle update", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  const workflowTerms = [
+    "requirements.md",
+    "requirements-generated",
+    "EARS",
+    "kiro-spec-generation-result",
+    "brief.md",
+    "steering context",
+    "existing draft",
+    "requirements rules",
+    "requirements review gate",
+    "scope ambiguity",
+    "acceptance criteria",
+    "numeric IDs",
+    "approvals.requirements.generated",
+    "design component",
+    "workflow YAML",
+    "implementation file",
+    "kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
+    "kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md",
+  ];
+  const instructionTerms = [
+    "requirements.md",
+    "EARS",
+    "requirements-generated",
+    "BLOCKED",
+    "brief.md",
+    "steering context",
+    "existing draft",
+    "requirements rules",
+    "requirements review gate",
+    "scope ambiguity",
+    "acceptance criteria",
+    "numeric IDs",
+    "approvals.requirements.generated",
+    "design component",
+    "workflow YAML",
+    "implementation file",
+  ];
+
+  for (const lang of ["en", "ja"]) {
+    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-requirements.yaml`, workflowTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`, instructionTerms);
+  }
 });
 
 test("task 3.1 init workflow captures brief reuse and initialized artifact contract", () => {

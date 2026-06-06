@@ -29,7 +29,7 @@
   - _Depends:_ 2.1
 
 - [ ] 4. requirements generation workflow
-- [ ] 4.1 requirements 生成 policy と `kiro-spec-requirements` workflow を追加する
+- [x] 4.1 requirements 生成 policy と `kiro-spec-requirements` workflow を追加する
   - context loading、EARS fixed phrase、numeric IDs、requirements review gate、scope ambiguity blocking を workflow に接続する。
   - requirements 成功時に `phase: "requirements-generated"` と requirements generated state を更新する。
   - 完了時点で requirements.md が EARS と numeric IDs を保持し、曖昧な scope では success state へ進まない。
