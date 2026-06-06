@@ -325,6 +325,33 @@ test("task 13.1 validation detects downstream boundary drift", () => {
   );
 });
 
+test("validation detects workflow permission mode drift rejected by TAKT runtime", () => {
+  const root = makeFixture();
+  for (const lang of ["en", "ja"]) {
+    writeFixtureFile(
+      root,
+      `.takt/${lang}/workflows/kiro-spec-quick.yaml`,
+      [
+        "name: kiro-spec-quick",
+        "steps:",
+        "  - name: quick-init",
+        "    required_permission_mode: read-only",
+        "  - name: quick-requirements",
+        "  - name: quick-design",
+        "  - name: quick-tasks",
+        "  - name: quick-sanity-review",
+      ].join("\n"),
+    );
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) => failure.includes("WORKFLOW_DRIFT") && failure.includes("read-only")),
+    result.failures.join("\n"),
+  );
+});
+
 test("task 14.1 validation detects missing built-in facet parent", () => {
   const root = makeFixture();
   for (const lang of ["en", "ja"]) {

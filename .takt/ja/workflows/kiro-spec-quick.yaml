@@ -150,7 +150,7 @@ steps:
       - kiro-spec-lifecycle
       - kiro-spec-generation
       - kiro-spec-task-annotations
-    required_permission_mode: read-only
+    required_permission_mode: readonly
     instruction: kiro-spec-quick
     output_contracts:
       report:

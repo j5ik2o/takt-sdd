@@ -177,6 +177,7 @@ const packageScriptSpecs = [
   },
 ];
 
+const allowedPermissionModes = ["readonly", "edit", "full"];
 const languageParityFacetKinds = ["instructions", "policies", "output-contracts"];
 const sharedContractTerms = [
   ...new Set([
@@ -444,6 +445,15 @@ function validateWorkflowFiles(repoRoot) {
 
       const content = readText(path);
       containsAll(content, spec.requiredTerms, path, failures, repoRoot, "WORKFLOW_DRIFT");
+      for (const block of stepBlocks(content)) {
+        const stepName = stepScalar(block, "name") || "(unknown step)";
+        const permissionMode = stepScalar(block, "required_permission_mode");
+        if (permissionMode && !allowedPermissionModes.includes(permissionMode)) {
+          failures.push(
+            `WORKFLOW_DRIFT: ${rel(repoRoot, path)} step ${stepName} has invalid required_permission_mode: ${permissionMode}`,
+          );
+        }
+      }
 
       for (const facet of spec.instructionFacets) {
         if (!content.includes(`${facet}: ../facets/instructions/${facet}.md`)) {
