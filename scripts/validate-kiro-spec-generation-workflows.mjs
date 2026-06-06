@@ -150,6 +150,47 @@ const downstreamBoundarySpecs = [
   },
 ];
 
+const quickPhaseParitySpecs = [
+  {
+    step: "quick-init",
+    termSets: [["phase init", "spec.json written", "requirements.md written", "initialized"]],
+  },
+  {
+    step: "quick-requirements",
+    termSets: [["phase requirements", "requirements.md written", "requirements-generated", "approvals.requirements.generated true"]],
+  },
+  {
+    step: "quick-design",
+    termSets: [
+      [
+        "phase design",
+        "design.md written",
+        "research.md written",
+        "design-generated",
+        "approvals.requirements.approved true",
+        "approvals.design.generated true",
+      ],
+    ],
+  },
+  {
+    step: "quick-tasks",
+    termSets: [
+      ["auto-approve", "approvals.tasks.approved true", "ready_for_implementation true"],
+      [
+        "not auto-approve",
+        "phase tasks",
+        "tasks.md written",
+        "tasks-generated",
+        "approvals.requirements.approved true",
+        "approvals.design.approved true",
+        "approvals.tasks.generated true",
+        "task plan review PASS",
+        "task graph sanity review PASS",
+      ],
+    ],
+  },
+];
+
 const unsupportedExtendsPattern = /[/:\\]/;
 
 const approvalStages = ["requirements", "design", "tasks"];
@@ -519,6 +560,24 @@ function validateQuickComposition(repoRoot) {
     const content = readText(path);
     const requiredSteps = ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"];
     containsAll(content, requiredSteps, path, failures, repoRoot, "QUICK_COMPOSITION_DRIFT");
+    const blocks = stepBlocks(content);
+    for (const spec of quickPhaseParitySpecs) {
+      const block = blocks.find((candidate) => stepScalar(candidate, "name") === spec.step);
+      if (!block) {
+        failures.push(`QUICK_COMPOSITION_DRIFT: ${rel(repoRoot, path)} missing quick parity step: ${spec.step}`);
+        continue;
+      }
+      const blockContent = block.join("\n");
+      for (const terms of spec.termSets) {
+        for (const term of terms) {
+          if (!blockContent.includes(term)) {
+            failures.push(
+              `QUICK_COMPOSITION_DRIFT: ${rel(repoRoot, path)} step ${spec.step} missing standalone parity term: ${term}`,
+            );
+          }
+        }
+      }
+    }
 
     if (/\bworkflow_call\b/.test(content)) {
       failures.push(`QUICK_COMPOSITION_DRIFT: ${rel(repoRoot, path)} must not depend on workflow_call`);

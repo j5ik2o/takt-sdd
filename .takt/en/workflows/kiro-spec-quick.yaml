@@ -41,9 +41,9 @@ steps:
         - name: kiro-spec-quick-init-result.md
           format: kiro-spec-generation-result
     rules:
-      - condition: validation.verdict PASS and automatic mode and phase init and initialized
+      - condition: validation.verdict PASS and automatic mode and phase init and spec.json written and requirements.md written and initialized
         next: quick-requirements
-      - condition: validation.verdict PASS and interactive mode and phase approval granted for requirements
+      - condition: validation.verdict PASS and interactive mode and phase init and spec.json written and requirements.md written and initialized and phase approval granted for requirements
         next: quick-requirements
       - condition: validation.verdict PASS and interactive mode and phase approval missing
         next: ABORT
@@ -64,9 +64,9 @@ steps:
         - name: kiro-spec-quick-requirements-result.md
           format: kiro-spec-generation-result
     rules:
-      - condition: validation.verdict PASS and automatic mode and phase requirements and requirements-generated
+      - condition: validation.verdict PASS and automatic mode and phase requirements and requirements.md written and requirements-generated and approvals.requirements.generated true
         next: quick-design
-      - condition: validation.verdict PASS and interactive mode and phase approval granted for design
+      - condition: validation.verdict PASS and interactive mode and phase requirements and requirements.md written and requirements-generated and approvals.requirements.generated true and phase approval granted for design
         next: quick-design
       - condition: validation.verdict PASS and interactive mode and phase approval missing
         next: ABORT
@@ -99,9 +99,9 @@ steps:
         - name: kiro-spec-quick-design-result.md
           format: kiro-spec-generation-result
     rules:
-      - condition: validation.verdict PASS and automatic mode and same auto-approve semantics and phase design and design-generated and approvals.requirements.approved true
+      - condition: validation.verdict PASS and automatic mode and same auto-approve semantics and phase design and design.md written and research.md written and design-generated and approvals.requirements.approved true and approvals.design.generated true
         next: quick-tasks
-      - condition: validation.verdict PASS and interactive mode and phase approval granted for tasks and same auto-approve semantics and phase design and design-generated and approvals.requirements.approved true
+      - condition: validation.verdict PASS and interactive mode and phase approval granted for tasks and same auto-approve semantics and phase design and design.md written and research.md written and design-generated and approvals.requirements.approved true and approvals.design.generated true
         next: quick-tasks
       - condition: validation.verdict PASS and interactive mode and phase approval missing
         next: ABORT

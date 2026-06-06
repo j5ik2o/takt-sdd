@@ -386,6 +386,50 @@ test("validation detects quick workflow task annotation policy drift", () => {
   );
 });
 
+test("validation detects quick workflow standalone phase parity drift", () => {
+  const root = makeFixture();
+  for (const lang of ["en", "ja"]) {
+    writeFixtureFile(
+      root,
+      `.takt/${lang}/workflows/kiro-spec-quick.yaml`,
+      [
+        "name: kiro-spec-quick",
+        "policies:",
+        "  kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
+        "  kiro-spec-task-annotations: ../facets/policies/kiro-spec-task-annotations.md",
+        "report_formats:",
+        "  kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md",
+        "  kiro-spec-sanity-review: ../facets/output-contracts/kiro-spec-sanity-review.md",
+        "steps:",
+        "  - name: quick-init",
+        "    rules:",
+        "      - condition: validation.verdict PASS and phase init and spec.json written and requirements.md written and initialized",
+        "        next: quick-requirements",
+        "  - name: quick-requirements",
+        "    rules:",
+        "      - condition: validation.verdict PASS and phase requirements and requirements.md written and requirements-generated and approvals.requirements.generated true",
+        "        next: quick-design",
+        "  - name: quick-design",
+        "    rules:",
+        "      - condition: validation.verdict PASS and phase design and design.md written and research.md written and design-generated and approvals.requirements.approved true and approvals.design.generated true",
+        "        next: quick-tasks",
+        "  - name: quick-tasks",
+        "    rules:",
+        "      - condition: validation.verdict PASS and auto-approve and approvals.tasks.approved true and ready_for_implementation true",
+        "        next: quick-sanity-review",
+        "  - name: quick-sanity-review",
+      ].join("\n"),
+    );
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) => failure.includes("QUICK_COMPOSITION_DRIFT") && failure.includes("not auto-approve")),
+    result.failures.join("\n"),
+  );
+});
+
 test("task 14.1 validation detects missing built-in facet parent", () => {
   const root = makeFixture();
   for (const lang of ["en", "ja"]) {
