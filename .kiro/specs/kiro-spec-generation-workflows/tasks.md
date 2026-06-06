@@ -114,7 +114,7 @@
   - _Depends:_ 9.1, 10.1, 11.1
 
 - [ ] 13. downstream boundary validation
-- [ ] 13.1 下流 spec との境界を最終検証する
+- [x] 13.1 下流 spec との境界を最終検証する
   - `kiro-discovery-batch-workflows` が standalone generation workflow または同じ phase contract を呼ぶだけでよいことを確認する。
   - `kiro-iterative-implementation-workflow` が generated `tasks.md` の annotation と ready state を参照できることを確認する。
   - 完了時点で discovery/batch と implementation の責務を本 spec に取り込んでいないことが design と validation scope から確認できる。
@@ -123,7 +123,7 @@
   - _Depends:_ 8.1, 12.1
 
 - [ ] 14. built-in facet inheritance audit
-- [ ] 14.1 spec generation facets の built-in 継承候補を棚卸しする
+- [x] 14.1 spec generation facets の built-in 継承候補を棚卸しする
   - `node_modules/takt/builtins/{en,ja}/facets` の planning、task-decomposition、output-contract 系 facet を確認し、各 Kiro-specific generation facet の親候補を記録する。
   - 親候補がある facet は shared `BuiltinFacetInheritancePolicy` の `extends` を使い、artifact section、lifecycle update、approval semantics、task annotation だけを差分として記述する。
   - 親候補がない、または full custom が必要な facet は理由を design note または validation finding に残す。

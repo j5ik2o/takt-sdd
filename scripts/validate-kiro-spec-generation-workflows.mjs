@@ -109,6 +109,49 @@ const lifecycleTerms = [
   "auto-approve",
 ];
 
+const builtinInheritanceFacetSpecs = [
+  ...facetSpecs,
+  {
+    kind: "policies",
+    name: "kiro-spec-lifecycle",
+    terms: lifecycleTerms,
+  },
+];
+
+const downstreamBoundarySpecs = [
+  {
+    feature: "kiro-discovery-batch-workflows",
+    path: ".kiro/specs/kiro-discovery-batch-workflows/design.md",
+    requiredTerms: [
+      "kiro-spec-generation-workflows",
+      "kiro-spec-init",
+      "kiro-spec-requirements",
+      "kiro-spec-design",
+      "kiro-spec-tasks",
+      "standalone phase workflow",
+      "generation result contract",
+      "requirements/design/tasks の本文生成 rules",
+      "individual generation の full behavior は scope 外",
+    ],
+  },
+  {
+    feature: "kiro-iterative-implementation-workflow",
+    path: ".kiro/specs/kiro-iterative-implementation-workflow/design.md",
+    requiredTerms: [
+      "kiro-spec-generation-workflows",
+      "tasks.md",
+      "_Boundary:_",
+      "_Depends:_",
+      "numeric requirement coverage",
+      "ready_for_implementation",
+      "artifact generation",
+      "spec generation",
+    ],
+  },
+];
+
+const unsupportedExtendsPattern = /[/:\\]/;
+
 const approvalStages = ["requirements", "design", "tasks"];
 const approvalFields = ["generated", "approved"];
 const phaseArtifactContracts = {
@@ -860,6 +903,61 @@ function validatePackageScripts(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
+function validateDownstreamBoundaries(repoRoot) {
+  const failures = [];
+  for (const spec of downstreamBoundarySpecs) {
+    const path = join(repoRoot, spec.path);
+    if (!existsSync(path)) {
+      continue;
+    }
+
+    containsAll(readText(path), spec.requiredTerms, path, failures, repoRoot, "DOWNSTREAM_BOUNDARY_DRIFT");
+  }
+  return { ok: failures.length === 0, failures };
+}
+
+function extendsParent(content) {
+  return content.match(/^\s*\{extends:\s*([^}]+?)\s*}\s*$/m)?.[1]?.trim();
+}
+
+function validateBuiltinFacetInheritance(repoRoot) {
+  const failures = [];
+  for (const lang of languages) {
+    for (const spec of builtinInheritanceFacetSpecs) {
+      const path = join(repoRoot, ".takt", lang, "facets", spec.kind, `${spec.name}.md`);
+      if (!existsSync(path)) {
+        continue;
+      }
+
+      const content = readText(path);
+      const parent = extendsParent(content);
+      if (!parent) {
+        if (!content.includes("Full custom reason:")) {
+          failures.push(
+            `BUILTIN_FACET_INHERITANCE_DRIFT: ${rel(repoRoot, path)} must use {extends: parent} or state Full custom reason`,
+          );
+        }
+        continue;
+      }
+
+      if (unsupportedExtendsPattern.test(parent)) {
+        failures.push(
+          `BUILTIN_FACET_EXTENDS_UNSUPPORTED: ${rel(repoRoot, path)} uses non-bare parent reference: ${parent}`,
+        );
+        continue;
+      }
+
+      const parentPath = join(repoRoot, "node_modules", "takt", "builtins", lang, "facets", spec.kind, `${parent}.md`);
+      if (!existsSync(parentPath)) {
+        failures.push(
+          `BUILTIN_FACET_NOT_FOUND: ${rel(repoRoot, path)} extends missing built-in facet ${rel(repoRoot, parentPath)}`,
+        );
+      }
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
 function validateScopeGuard() {
   return { ok: true, failures: [] };
 }
@@ -876,6 +974,8 @@ export function validateKiroSpecGenerationWorkflows(options = {}) {
     packageScripts: validatePackageScripts(repoRoot),
     quickComposition: validateQuickComposition(repoRoot),
     languageParity: validateLanguageParity(repoRoot),
+    downstreamBoundaries: validateDownstreamBoundaries(repoRoot),
+    builtinFacetInheritance: validateBuiltinFacetInheritance(repoRoot),
     scopeGuard: validateScopeGuard(),
   };
   const failures = Object.entries(sections).flatMap(([name, result]) =>

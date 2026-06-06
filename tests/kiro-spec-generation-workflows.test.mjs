@@ -13,6 +13,7 @@ function makeValidationFixture() {
   const root = makeFixture();
   const repoRoot = join(import.meta.dirname, "..");
   symlinkSync(join(repoRoot, ".takt"), join(root, ".takt"), "dir");
+  symlinkSync(join(repoRoot, "node_modules"), join(root, "node_modules"), "dir");
   mkdirSync(join(root, ".kiro"), { recursive: true });
   symlinkSync(join(repoRoot, ".kiro", "settings"), join(root, ".kiro", "settings"), "dir");
   writeFixtureFile(
@@ -260,6 +261,8 @@ test("kiro spec generation validation passes current spec generation surface", (
   const result = validateKiroSpecGenerationWorkflows();
 
   assert.equal(result.ok, true, result.failures.join("\n"));
+  assert.equal(result.sections.downstreamBoundaries.ok, true, result.failures.join("\n"));
+  assert.equal(result.sections.builtinFacetInheritance.ok, true, result.failures.join("\n"));
   assert.equal(
     result.failures.some((failure) => failure.includes(".takt/en/workflows/kiro-spec-tasks.yaml")),
     false,
@@ -267,6 +270,105 @@ test("kiro spec generation validation passes current spec generation surface", (
   assert.equal(result.failures.some((failure) => failure.includes("kiro-discovery")), false);
   assert.equal(result.failures.some((failure) => failure.includes("kiro-spec-batch")), false);
   assert.equal(result.failures.some((failure) => failure.includes("kiro-impl")), false);
+});
+
+test("task 13.1 validation detects downstream boundary drift", () => {
+  const root = makeValidationFixture();
+  writeFixtureFile(
+    root,
+    ".kiro/specs/kiro-discovery-batch-workflows/design.md",
+    [
+      "# Design Document",
+      "",
+      "## Boundary Commitments",
+      "",
+      "Discovery batch owns roadmap orchestration only.",
+      "",
+      "## File Structure Plan",
+      "",
+      "Fixture files.",
+      "",
+      "## Requirements Traceability",
+      "",
+      "| Requirement | Component |",
+      "|-------------|-----------|",
+      "| 1.1 | Fixture |",
+    ].join("\n"),
+  );
+  writeFixtureFile(
+    root,
+    ".kiro/specs/kiro-iterative-implementation-workflow/design.md",
+    [
+      "# Design Document",
+      "",
+      "## Boundary Commitments",
+      "",
+      "Implementation workflow consumes approved work.",
+      "",
+      "## File Structure Plan",
+      "",
+      "Fixture files.",
+      "",
+      "## Requirements Traceability",
+      "",
+      "| Requirement | Component |",
+      "|-------------|-----------|",
+      "| 1.1 | Fixture |",
+    ].join("\n"),
+  );
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) => failure.includes("DOWNSTREAM_BOUNDARY_DRIFT")),
+    result.failures.join("\n"),
+  );
+});
+
+test("task 14.1 validation detects missing built-in facet parent", () => {
+  const root = makeFixture();
+  for (const lang of ["en", "ja"]) {
+    writeFixtureFile(
+      root,
+      `.takt/${lang}/facets/instructions/kiro-spec-init.md`,
+      ["{extends: missing-planning-parent}", "", "# Kiro Spec Init", "", "- spec.json"].join("\n"),
+    );
+    writeFixtureFile(
+      root,
+      `node_modules/takt/builtins/${lang}/facets/instructions/plan.md`,
+      "# Built-in Plan\n",
+    );
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) => failure.includes("BUILTIN_FACET_NOT_FOUND")),
+    result.failures.join("\n"),
+  );
+});
+
+test("task 14.1 validation detects unsupported facet extends references", () => {
+  const root = makeFixture();
+  for (const lang of ["en", "ja"]) {
+    writeFixtureFile(
+      root,
+      `.takt/${lang}/facets/instructions/kiro-spec-init.md`,
+      ["{extends: instructions/plan}", "", "# Kiro Spec Init", "", "- spec.json"].join("\n"),
+    );
+    writeFixtureFile(
+      root,
+      `node_modules/takt/builtins/${lang}/facets/instructions/plan.md`,
+      "# Built-in Plan\n",
+    );
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) => failure.includes("BUILTIN_FACET_EXTENDS_UNSUPPORTED")),
+    result.failures.join("\n"),
+  );
 });
 
 test("task 12.1 validation detects missing package script wiring", () => {
