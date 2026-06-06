@@ -10,16 +10,17 @@ This instruction is read-only. Inspect `.kiro/specs/<feature>/` and `.kiro/steer
 
 1. Resolve the target feature directory under `.kiro/specs/<feature>/`.
 2. If `spec.json` is missing, return `status: MISSING`, `readiness: NOT_READY`, and `error_category: FEATURE_NOT_FOUND`.
-3. Read `spec.json`, set `status: FOUND`, and report `phase`, `approvals`, and `ready_for_implementation`.
-4. Check phase artifact consistency:
+3. If `spec.json` is unreadable or invalid JSON, return `status: INVALID`, `readiness: INCONSISTENT`, and `error_category: SPEC_JSON_INVALID`.
+4. Read valid `spec.json`, set `status: FOUND`, and report `phase`, `approvals`, and `ready_for_implementation`.
+5. Check phase artifact consistency:
    - `requirements-generated` requires `requirements.md`.
    - `design-generated` requires `requirements.md` and `design.md`.
    - `tasks-generated` requires `requirements.md`, `design.md`, and `tasks.md`.
-5. Map missing phase artifacts to `error_category: ARTIFACT_MISSING`.
-6. Map contradictory phase and approval state to `error_category: LIFECYCLE_INCONSISTENT`.
-7. Set `readiness: READY` only when `status: FOUND`, all artifacts required by the current phase exist, and `ready_for_implementation` is true.
-8. Set `readiness: NOT_READY` when the feature exists but the current phase or approvals are still incomplete without an inconsistency.
-9. Set `readiness: INCONSISTENT` when lifecycle or artifact state contradicts `spec.json`.
+6. Map missing phase artifacts to `error_category: ARTIFACT_MISSING`.
+7. Map contradictory phase and approval state to `error_category: LIFECYCLE_INCONSISTENT`.
+8. Set `readiness: READY` only when `status: FOUND`, all artifacts required by the current phase exist, and `ready_for_implementation` is true.
+9. Set `readiness: NOT_READY` when the feature exists but the current phase or approvals are still incomplete without an inconsistency.
+10. Set `readiness: INCONSISTENT` when lifecycle or artifact state contradicts `spec.json`.
 
 ## Output mapping
 

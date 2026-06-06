@@ -26,13 +26,15 @@ steps:
         - name: kiro-status-result.md
           format: kiro-status
     rules:
-      - condition: status FOUND and readiness READY
-        next: COMPLETE
-      - condition: status FOUND and readiness NOT_READY
+      - condition: status MISSING or error_category FEATURE_NOT_FOUND
         next: ABORT
       - condition: status INVALID or readiness INCONSISTENT
         next: ABORT
-      - condition: status MISSING or error_category FEATURE_NOT_FOUND
-        next: ABORT
       - condition: error_category ARTIFACT_MISSING or error_category LIFECYCLE_INCONSISTENT
         next: ABORT
+      - condition: error_category SPEC_JSON_INVALID
+        next: ABORT
+      - condition: status FOUND and readiness NOT_READY
+        next: ABORT
+      - condition: status FOUND and readiness READY
+        next: COMPLETE

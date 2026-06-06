@@ -13,7 +13,7 @@ const workflowSpecs = [
     file: "kiro-spec-status.yaml",
     instructions: ["kiro-report-spec-status"],
     reports: ["kiro-status"],
-    requiredTerms: ["kiro-status", "FEATURE_NOT_FOUND", "ARTIFACT_MISSING", "LIFECYCLE_INCONSISTENT", "NOT_READY", "INCONSISTENT"],
+    requiredTerms: ["kiro-status", "FEATURE_NOT_FOUND", "ARTIFACT_MISSING", "LIFECYCLE_INCONSISTENT", "SPEC_JSON_INVALID", "NOT_READY", "INCONSISTENT"],
   },
   {
     file: "kiro-validate-gap.yaml",
@@ -39,7 +39,7 @@ const instructionSpecs = [
   {
     file: "kiro-report-spec-status.md",
     parent: "gather-review",
-    terms: ["spec.json", "phase", "approvals", "ready_for_implementation", "FOUND", "FEATURE_NOT_FOUND", "ARTIFACT_MISSING", "LIFECYCLE_INCONSISTENT", "READY", "NOT_READY", "INCONSISTENT", "kiro-status"],
+    terms: ["spec.json", "phase", "approvals", "ready_for_implementation", "FOUND", "INVALID", "FEATURE_NOT_FOUND", "ARTIFACT_MISSING", "SPEC_JSON_INVALID", "LIFECYCLE_INCONSISTENT", "READY", "NOT_READY", "INCONSISTENT", "kiro-status"],
   },
   {
     file: "kiro-validate-gap-readiness.md",
@@ -171,6 +171,16 @@ function validateWorkflowFiles() {
       const manualIndex = content.indexOf("condition: finding category MANUAL_VERIFICATION_REQUIRED");
       if (manualIndex !== -1 && passIndex !== -1 && passIndex < manualIndex) {
         failures.push(`${rel(path)} must route MANUAL_VERIFICATION_REQUIRED before verdict PASS`);
+      }
+      const readyIndex = content.indexOf("condition: status FOUND and readiness READY");
+      const statusErrorIndexes = [
+        content.indexOf("condition: status MISSING"),
+        content.indexOf("condition: status INVALID"),
+        content.indexOf("condition: error_category ARTIFACT_MISSING"),
+        content.indexOf("condition: error_category SPEC_JSON_INVALID"),
+      ].filter((index) => index !== -1);
+      if (readyIndex !== -1 && statusErrorIndexes.some((index) => readyIndex < index)) {
+        failures.push(`${rel(path)} must route status errors before readiness READY`);
       }
       if (/required_permission_mode:\s*edit|Write|Edit|cc-sdd-|opsx-|OpenSpec/.test(content)) {
         failures.push(`${rel(path)} contains out-of-boundary write or non-Kiro validation reference`);
