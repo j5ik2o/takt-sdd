@@ -66,7 +66,7 @@
 
 ### Architecture Pattern & Boundary Map
 
-Selected pattern: phase-gated workflow bundle。各 standalone workflow は 1 phase の artifact と lifecycle 更新を所有し、quick workflow はそれらを順に呼ぶ composition layer として振る舞います。
+Selected pattern: phase-gated workflow bundle。各 standalone workflow は 1 phase の artifact と lifecycle 更新を所有します。quick workflow は TAKT runtime で未確定な外部 workflow 呼び出しに依存せず、同じ instruction/policy/output contract を参照する phase step を 1 つの YAML 内に直列展開する composition layer として振る舞います。
 
 ```mermaid
 graph TB
@@ -76,10 +76,14 @@ graph TB
     Resolver --> Design[Design workflow]
     Resolver --> Tasks[Tasks workflow]
     Resolver --> Quick[Quick workflow]
-    Quick --> Init
-    Quick --> Requirements
-    Quick --> Design
-    Quick --> Tasks
+    Quick --> QuickInit[Quick init step]
+    Quick --> QuickReq[Quick requirements step]
+    Quick --> QuickDesign[Quick design step]
+    Quick --> QuickTasks[Quick tasks step]
+    QuickInit -. shares contracts .-> Init
+    QuickReq -. shares contracts .-> Requirements
+    QuickDesign -. shares contracts .-> Design
+    QuickTasks -. shares contracts .-> Tasks
     Init --> Workspace[Kiro spec workspace]
     Requirements --> Workspace
     Design --> Workspace
@@ -97,7 +101,7 @@ graph TB
 
 Key decisions:
 
-- standalone workflow を source of truth とし、quick path は同じ workflow を呼ぶだけにする。
+- standalone workflow と quick workflow は同じ Kiro-specific instruction/policy/output contract を source of truth として参照する。quick path は `workflow_call` や shell 経由の `takt -w ...` 再起動に依存せず、同一 YAML 内の phase step として init、requirements、design、tasks、sanity review を直列化する。
 - `spec.json` の更新は shared `SpecLifecycleStateContract` の phase table に沿って行う。
 - `research.md` は design phase の補助 artifact として生成するが、design decision の結論は `design.md` にも残す。
 - task annotation は downstream `kiro-impl` の入力契約になるため、`_Boundary:_` と `_Depends:_` を省略しない。
@@ -108,7 +112,7 @@ Key decisions:
 
 | Layer | Choice / Version | Role in Feature | Notes |
 |-------|------------------|-----------------|-------|
-| Workflow runtime | TAKT workflow YAML | `kiro-spec-*` phase execution と quick composition | `.takt/{en,ja}/workflows/` に配置 |
+| Workflow runtime | TAKT workflow YAML | `kiro-spec-*` phase execution と quick composition | `.takt/{en,ja}/workflows/` に配置。quick は single-YAML phase step 展開 |
 | Facets | TAKT facet Markdown | phase instruction、policy、output contract を定義 | built-in facet 継承を優先し、既存 `cc-sdd-*` facet は参考に留める |
 | Built-in facet inheritance | TAKT builtins facet Markdown | planning/task-decomposition 系の親 facet と差分記述 | shared `BuiltinFacetInheritancePolicy` を参照 |
 | Spec workspace | `.kiro/specs/<feature>` | `spec.json` と Markdown artifact の永続化 | roadmap 更新は out of boundary |
@@ -162,8 +166,14 @@ Key decisions:
 │   │       └── policies/
 │   │           ├── kiro-spec-generation.md
 │   │           └── kiro-spec-task-annotations.md
+├── .kiro/
+│   └── settings/
+│       └── templates/
+│           └── specs/
+│               └── tasks.md
 ├── scripts/
 │   └── validate-kiro-spec-generation-workflows.mjs
+├── package.json
 └── tests/
     └── kiro-spec-generation-workflows.test.mjs
 ```
@@ -174,7 +184,7 @@ Key decisions:
 - `.takt/{en,ja}/workflows/kiro-spec-requirements.yaml` — context loading、EARS generation、requirements review gate、requirements lifecycle update を実行する workflow。
 - `.takt/{en,ja}/workflows/kiro-spec-design.yaml` — requirements approval gate、discovery/research、design synthesis、design review gate、design lifecycle update を実行する workflow。
 - `.takt/{en,ja}/workflows/kiro-spec-tasks.yaml` — approvals gate、task plan generation、task plan review、task graph sanity review、tasks lifecycle update を実行する workflow。
-- `.takt/{en,ja}/workflows/kiro-spec-quick.yaml` — init、requirements、design、tasks を mode に応じて順に呼び、final sanity review を実行する workflow。
+- `.takt/{en,ja}/workflows/kiro-spec-quick.yaml` — init、requirements、design、tasks と final sanity review を同一 YAML 内の phase step として順に実行する workflow。外部 workflow 呼び出しや CLI 再起動は使わない。
 - `.takt/{en,ja}/facets/instructions/kiro-spec-*.md` — 各 phase の生成手順と gate 条件を Kiro-specific に分離した instruction facets。
 - `.takt/{en,ja}/facets/policies/kiro-spec-generation.md` — requirements/design/tasks の phase gate、artifact write、metadata update の共通 policy。
 - `.takt/{en,ja}/facets/policies/kiro-spec-task-annotations.md` — `_Boundary:_`、`_Depends:_`、`(P)`、numeric requirement coverage の task annotation policy。
@@ -185,7 +195,8 @@ Key decisions:
 
 ### Modified Files
 
-- `tests/kiro-spec-generation-workflows.test.*` — spec generation validation を既存 test/check command で検出できる場所に追加する。`kiro:*` public surface、legacy shim、`package.json` script wiring は `kiro-workflow-surface` の責務。
+- `package.json` — repository-local validation wiring として `validate:kiro-spec-generation-workflows` と `test:kiro-spec-generation-workflows` を追加する。public `kiro:*` surface と legacy shim は `kiro-workflow-surface` の責務のまま扱う。
+- `.kiro/settings/templates/specs/tasks.md` — Kiro tasks の canonical annotation grammar に合わせ、全 executable task が `_Boundary:_` と `_Depends:_` を出力できる template guidance へ更新する。
 - `.kiro/specs/<feature>/{spec.json,requirements.md,design.md,research.md,tasks.md}` — runtime で対象 feature spec に生成される artifact。設計上の出力先であり、この spec 実装時に固定の feature directory を作る責務ではない。
 
 ### Component to File Mapping
@@ -233,7 +244,7 @@ graph TB
     Sanity --> Blocked[Blocked result]
 ```
 
-quick path は standalone workflow の composition です。automatic mode では phase 間の user prompt を省略しますが、phase gate、auto-approve update、final sanity review は省略しません。
+quick path は standalone workflow と同じ phase contract を再利用する composition です。automatic mode では phase 間の user prompt を省略しますが、phase gate、auto-approve update、final sanity review は省略しません。TAKT 0.43.x の local schema では `workflow_call` の実行構文を実装根拠として採用しないため、quick workflow は `workflow_call` step や `Bash` による `takt -w kiro-spec-*` 再起動を使わず、`quick-init`、`quick-requirements`、`quick-design`、`quick-tasks`、`quick-sanity-review` の各 step を 1 YAML 内に持ちます。
 
 ## Requirements Traceability
 
@@ -488,6 +499,7 @@ interface SpecLifecycleUpdate {
 
 - requirements/design approvals を確認し、auto-approve mode では両方を明示的に true にする。
 - すべての executable task に requirement coverage、observable completion、`_Boundary:_`、`_Depends:_` を含める。
+- `.kiro/settings/templates/specs/tasks.md` の既存 optional guidance は Kiro-specific canonical grammar で上書きし、Boundary と Depends が optional のまま残らないようにする。
 - dependency がない task は必ず `_Depends:_ none` と書き、parser は `none` を empty dependency set として扱う。
 - `(P)` marker は non-overlapping boundary と明示 dependency に基づく場合だけ付与する。
 - task plan review と lightweight task graph sanity review が落ちた場合は tasks を成功状態にしない。
@@ -516,16 +528,17 @@ interface SpecLifecycleUpdate {
 
 **Responsibilities & Constraints**
 
-- automatic mode は init、requirements、design、tasks を連続実行する。
+- automatic mode は `quick-init`、`quick-requirements`、`quick-design`、`quick-tasks` を同一 YAML 内で連続実行する。
 - interactive mode は phase 間 approval を要求する。
 - design/tasks 呼び出しでは standalone workflow と同じ `-y` semantics を使う。
 - final sanity review で requirements/design/tasks の矛盾、missing prerequisite、task annotation を確認する。
 - discovery/batch/implementation execution は quick path に含めない。
+- `workflow_call`、subprocess 経由の `takt -w ...`、または nested pipeline 起動には依存しない。
 
 **Dependencies**
 
 - Inbound: user invocation — quick generation を開始する (P0)
-- Outbound: `SpecGenerationWorkflowBundle` — standalone workflow 呼び出し (P0)
+- Outbound: `SpecGenerationWorkflowBundle` — standalone workflow と共有する phase contract と result shape (P0)
 - Outbound: `SpecArtifactLifecycleAdapter` — final state 確認 (P0)
 
 **Contracts**: Service [ ] / API [ ] / Event [ ] / Batch [x] / State [ ]
@@ -536,6 +549,7 @@ interface SpecLifecycleUpdate {
 - Input / validation: description または feature name、mode flag。
 - Output / destination: complete spec artifacts and quick summary。
 - Idempotency & recovery: phase failure 時はそこで停止し、manual recovery command を返す。
+- Implementation constraint: quick phase step は standalone workflow と同じ facet basename、result contract、lifecycle policy を参照し、validation harness が step parity を検証する。
 
 ### Validation Layer
 
@@ -551,6 +565,9 @@ interface SpecLifecycleUpdate {
 - en/ja の `kiro-spec-*` workflow と facets の basename parity を検証する。
 - lifecycle update terms が shared `SpecLifecycleStateContract` と矛盾しないことを検証する。
 - generated artifact contract に phase-specific required sections が含まれることを検証する。
+- `kiro-spec-quick` が `workflow_call` や shell 経由の nested `takt` 実行に依存せず、standalone phase workflow と同じ facet/result contract を参照する phase step parity を検証する。
+- `.kiro/settings/templates/specs/tasks.md` と task annotation policy が `_Boundary:_` / `_Depends:_ none` の canonical grammar と矛盾しないことを検証する。
+- `package.json` に repository-local `validate:kiro-spec-generation-workflows` と `test:kiro-spec-generation-workflows` が存在することを検証する。
 - Kiro-specific generation facet が `BuiltinFacetInheritancePolicy` に従い、継承可能な built-in facet を全文コピーしていないことを検証する。
 - downstream discovery/batch と implementation workflow の full behavior を検証しない。
 
@@ -617,20 +634,20 @@ interface SpecGenerationValidationResult {
 - `RequirementsGenerationWorkflow`: EARS fixed phrase、numeric requirement IDs、scope ambiguity blocking を contract-level fixture で検証する。対象: 2.1, 2.2, 2.3, 2.5
 - `DesignGenerationWorkflow`: required design sections、research artifact output、requirements/design gap blocking を fixture で検証する。対象: 3.1, 3.2, 3.3, 3.4
 - `TasksGenerationWorkflow`: `_Boundary:_`、`_Depends:_`、numeric requirement coverage、parallel marker の policy compliance を検証する。対象: 4.1, 4.2, 4.3, 4.4
-- `QuickGenerationWorkflow`: automatic mode の phase order、interactive prompt gate、final sanity review、out-of-boundary guard を検証する。対象: 5.1, 5.2, 5.3, 5.4, 5.5
-- `SpecGenerationValidationHarness`: workflow/facet parity、phase-specific required sections、shared contract drift、downstream full behavior exclusion を検証する。対象: 6.1, 6.2, 6.3, 6.4, 6.5
+- `QuickGenerationWorkflow`: automatic mode の phase order、interactive prompt gate、final sanity review、out-of-boundary guard、nested workflow/CLI call の不使用を検証する。対象: 5.1, 5.2, 5.3, 5.4, 5.5
+- `SpecGenerationValidationHarness`: workflow/facet parity、phase-specific required sections、shared contract drift、task template annotation grammar、package script wiring、downstream full behavior exclusion を検証する。対象: 6.1, 6.2, 6.3, 6.4, 6.5
 - `SpecGenerationValidationHarness`: Kiro-specific facet の `extends` frontmatter が shared `BuiltinFacetInheritancePolicy` に従い、親 built-in facet が存在すること、または full custom の理由があることを検証する。対象: 6.6
 
 ## Integration & Migration Notes
 
 - 既存 `cc-sdd-*` facet は参考実装として利用できるが、Kiro-specific workflow は `kiro-spec-*` 名で作る。
-- public npm script の `kiro:*` 追加、legacy shim、`package.json` script wiring は `kiro-workflow-surface` の実装に従い、本 spec は workflow YAML、facets、既存 test command から検出される validation test を担当する。
+- public npm script の `kiro:*` 追加と legacy shim は `kiro-workflow-surface` の実装に従う。本 spec は public surface ではなく repository-local validation wiring として `package.json` の `validate:kiro-spec-generation-workflows` / `test:kiro-spec-generation-workflows` を担当する。
 - shared contract が未実装の場合、実装順は `kiro-shared-workflow-contracts` の validation harness と lifecycle policy を先に通してから本 spec に進む。
 - built-in facet を継承できる phase instruction/policy/output contract は親候補を棚卸しし、Kiro 固有の artifact section、lifecycle update、approval semantics、task annotation だけを差分として記述する。
-- downstream `kiro-discovery-batch-workflows` は、本 spec の standalone phase workflow を呼ぶだけにし、requirements/design/tasks の生成ロジックを重複実装しない。
+- downstream `kiro-discovery-batch-workflows` は、本 spec の standalone phase workflow または同じ phase contract を呼ぶだけにし、requirements/design/tasks の生成ロジックを重複実装しない。
 
 ## Open Questions / Risks
 
 - `kiro:spec:quick` と `kiro-spec-quick` の mapping は `kiro-workflow-surface` の script catalog と一致させる必要がある。
 - 既存 `cc-sdd-*` workflow からどの facet を再利用し、どれを Kiro-specific に分けるかは実装時に最小差分で判断する。
-- tasks annotation は dependency がない場合に `_Depends:_ none` を canonical grammar とし、下流 parser と cross-spec review も同じ表現を読む。
+- tasks annotation は dependency がない場合に `_Depends:_ none` を canonical grammar とし、下流 parser と cross-spec review も同じ表現を読む。既存 template が optional annotation を示す場合は本 spec で template guidance を更新する。

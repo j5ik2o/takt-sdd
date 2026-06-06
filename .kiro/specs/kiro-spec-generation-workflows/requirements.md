@@ -69,7 +69,7 @@
 
 #### Acceptance Criteria
 
-1. `kiro-spec-quick --auto` が実行される場合、spec generation workflows は init、requirements、design、tasks の順で各 standalone workflow を連続実行する。
+1. `kiro-spec-quick --auto` が実行される場合、spec generation workflows は init、requirements、design、tasks の順で standalone workflow と同じ phase contract を直列実行する。
 2. quick path が interactive mode で実行される場合、spec generation workflows は phase 間で利用者 approval を要求し、承認されない phase へ進まない。
 3. quick path が design または tasks phase を呼ぶ場合、spec generation workflows は standalone workflow と同じ auto-approve semantics を使う。
 4. quick path の全 phase が完了する場合、spec generation workflows は requirements、design、tasks の lightweight sanity review を実行してから completion を報告する。
