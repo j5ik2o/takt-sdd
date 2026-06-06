@@ -40,4 +40,4 @@ Generate `.kiro/specs/<feature>/requirements.md` from initialized Kiro context. 
 
 - On success, return `phase: "requirements"`, `validation.verdict: "PASS"`, `featureName`, and `updatedFiles` containing `requirements.md` and `spec.json`.
 - On lifecycle inconsistency, missing context, scope ambiguity, unverifiable acceptance criteria, or requirements review gate failure, return `BLOCKED` or `NEEDS_FIX` and keep `spec.json` out of the `requirements-generated` success state.
-- Evidence must mention the context loading sources, EARS and numeric IDs checks, requirements review gate result, and whether `spec.json` was updated to `requirements-generated`.
+- `evidence` must mention the context loading sources, EARS and numeric IDs checks, requirements review gate result, and whether `spec.json` was updated to `requirements-generated`.

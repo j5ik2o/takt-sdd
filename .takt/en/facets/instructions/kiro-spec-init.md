@@ -40,4 +40,4 @@ Initialize one `.kiro/specs/<feature>/` directory. The output state is `initiali
 
 - On success, return `phase: "init"`, `validation.verdict: "PASS"`, `featureName`, `updatedFiles` containing `spec.json` and `requirements.md`, and `nextAction` pointing to `kiro-spec-requirements`.
 - On a feature name conflict, template problem, missing description source, or unsafe artifact write, return `validation.verdict: "BLOCKED"` and keep `updatedFiles` empty or limited to files that were already safely written.
-- Evidence must mention the resolved description source, whether a brief-only directory was reused, the template source used, and that roadmap/OpenSpec artifacts were not updated.
+- `evidence` must mention the resolved description source, whether a brief-only directory was reused, the template source used, and that roadmap/OpenSpec artifacts were not updated.

@@ -465,3 +465,135 @@ test("kiro spec generation validation detects nested takt execution with equals 
     ),
   );
 });
+
+test("kiro spec generation validation detects language-only workflow and facet additions", () => {
+  const root = makeFixture();
+  writeFixtureFile(
+    root,
+    ".takt/en/workflows/kiro-spec-extra.yaml",
+    [
+      "name: kiro-spec-extra",
+      "workflow_config:",
+      "  provider_options:",
+      "    codex:",
+      "      network_access: true",
+      "max_steps: 1",
+      "initial_step: extra-step",
+      "steps:",
+      "  - name: extra-step",
+      "    edit: false",
+      "    persona: reviewer",
+      "    required_permission_mode: read-only",
+      "    instruction: kiro-spec-extra",
+      "    rules:",
+      "      - condition: validation.verdict PASS",
+      "        next: COMPLETE",
+    ].join("\n"),
+  );
+  writeFixtureFile(
+    root,
+    ".takt/en/facets/instructions/kiro-spec-extra.md",
+    ["{extends: analysis}", "", "# Extra Instruction", "", "- Keep `phase` stable."].join("\n"),
+  );
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("LANGUAGE_PARITY_DRIFT") &&
+      failure.includes("workflows") &&
+      failure.includes("kiro-spec-extra"),
+    ),
+  );
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("LANGUAGE_PARITY_DRIFT") &&
+      failure.includes("facets/instructions") &&
+      failure.includes("kiro-spec-extra"),
+    ),
+  );
+});
+
+test("kiro spec generation validation detects workflow machine field and markdown contract drift", () => {
+  const root = makeFixture();
+  const workflow = [
+    "name: kiro-spec-drift",
+    "description: ignored for parity",
+    "workflow_config:",
+    "  provider_options:",
+    "    codex:",
+    "      network_access: true",
+    "max_steps: 2",
+    "initial_step: drift-step",
+    "instructions:",
+    "  kiro-spec-drift: ../facets/instructions/kiro-spec-drift.md",
+    "policies:",
+    "  kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
+    "report_formats:",
+    "  kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md",
+    "steps:",
+    "  - name: drift-step",
+    "    edit: false",
+    "    persona: reviewer",
+    "    policy:",
+    "      - kiro-spec-generation",
+    "    required_permission_mode: read-only",
+    "    instruction: kiro-spec-drift",
+    "    output_contracts:",
+    "      report:",
+    "        - name: kiro-spec-drift-result.md",
+    "          format: kiro-spec-generation-result",
+    "    rules:",
+    "      - condition: validation.verdict PASS and phase quick",
+    "        next: COMPLETE",
+  ].join("\n");
+  const driftedWorkflow = workflow
+    .replace("initial_step: drift-step", "initial_step: translated-step")
+    .replace("  - name: drift-step", "  - name: translated-step")
+    .replace("instruction: kiro-spec-drift", "instruction: kiro-spec-translated")
+    .replace("format: kiro-spec-generation-result", "format: kiro-spec-generation-result-ja")
+    .replace("next: COMPLETE", "next: ABORT");
+  writeFixtureFile(root, ".takt/en/workflows/kiro-spec-drift.yaml", workflow);
+  writeFixtureFile(root, ".takt/ja/workflows/kiro-spec-drift.yaml", driftedWorkflow);
+  writeFixtureFile(
+    root,
+    ".takt/en/facets/output-contracts/kiro-spec-drift.md",
+    ["{extends: validation}", "", "- `phase`", "- `featureName`", "- `updatedFiles`"].join("\n"),
+  );
+  writeFixtureFile(
+    root,
+    ".takt/ja/facets/output-contracts/kiro-spec-drift.md",
+    ["{extends: validation}", "", "- `phase`", "- `featureName`", "- `translatedFiles`"].join("\n"),
+  );
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("LANGUAGE_PARITY_DRIFT") &&
+      failure.includes("workflow machine field") &&
+      failure.includes("initial_step"),
+    ),
+  );
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("LANGUAGE_PARITY_DRIFT") &&
+      failure.includes("workflow machine field") &&
+      failure.includes("steps[0].name"),
+    ),
+  );
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("LANGUAGE_PARITY_DRIFT") &&
+      failure.includes("workflow machine field") &&
+      failure.includes("format"),
+    ),
+  );
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("LANGUAGE_PARITY_DRIFT") &&
+      failure.includes("markdown contract terms") &&
+      failure.includes("updatedFiles"),
+    ),
+  );
+});

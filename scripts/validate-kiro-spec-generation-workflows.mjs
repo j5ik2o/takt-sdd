@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -109,6 +109,37 @@ const lifecycleTerms = [
   "auto-approve",
 ];
 
+const languageParityFacetKinds = ["instructions", "policies", "output-contracts"];
+const sharedContractTerms = [
+  ...new Set([
+    ...facetSpecs.flatMap((spec) => spec.terms),
+    ...lifecycleTerms,
+    "init",
+    "requirements",
+    "design",
+    "tasks",
+    "quick",
+    "verdict",
+    "evidence",
+    "findings",
+    "sharedContractValidation",
+    "fix_targets",
+    ".kiro/specs/<feature>",
+    ".kiro/settings/templates/specs/init.json",
+    "requirements-init.md",
+    "kiro-spec-init",
+    "kiro-spec-requirements",
+    "kiro-spec-design",
+    "kiro-spec-tasks",
+    "kiro-spec-quick",
+    "validate:kiro-spec-generation-workflows",
+    "test:kiro-spec-generation-workflows",
+    "takt -w",
+    "takt --workflow",
+    "workflow_call",
+  ]),
+].sort();
+
 function readText(path) {
   return readFileSync(path, "utf8");
 }
@@ -123,6 +154,214 @@ function containsAll(content, terms, path, failures, repoRoot, code) {
       failures.push(`${code}: ${rel(repoRoot, path)} missing required term: ${term}`);
     }
   }
+}
+
+function listBasenames(repoRoot, relativeDir, extension) {
+  const dir = join(repoRoot, relativeDir);
+  if (!existsSync(dir)) {
+    return [];
+  }
+  return readdirSync(dir)
+    .filter((file) => file.startsWith("kiro-spec-") && file.endsWith(extension))
+    .map((file) => file.slice(0, -extension.length))
+    .sort();
+}
+
+function compareSets(failures, scope, enValues, jaValues) {
+  for (const value of enValues) {
+    if (!jaValues.includes(value)) {
+      failures.push(`LANGUAGE_PARITY_DRIFT: ${scope} has ${value} in en only`);
+    }
+  }
+  for (const value of jaValues) {
+    if (!enValues.includes(value)) {
+      failures.push(`LANGUAGE_PARITY_DRIFT: ${scope} has ${value} in ja only`);
+    }
+  }
+}
+
+function canonicalBlock(content, key) {
+  const lines = content.split("\n");
+  const start = lines.findIndex((line) => line === `${key}:`);
+  if (start === -1) {
+    return [];
+  }
+  const block = [];
+  for (let index = start + 1; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (/^\S/.test(line)) {
+      break;
+    }
+    if (line.trim() && !line.trimStart().startsWith("#")) {
+      block.push(line.replace(/\s+$/, ""));
+    }
+  }
+  return block;
+}
+
+function topLevelScalar(content, key) {
+  const match = content.match(new RegExp(`^${key}:\\s*(.+)\\s*$`, "m"));
+  return match?.[1] ?? "";
+}
+
+function topLevelMap(content, key) {
+  const entries = [];
+  for (const line of canonicalBlock(content, key)) {
+    const match = line.match(/^  ([A-Za-z0-9_-]+):\s*(.+)$/);
+    if (match) {
+      entries.push(`${match[1]}=${match[2]}`);
+    }
+  }
+  return entries;
+}
+
+function stepBlocks(content) {
+  const lines = content.split("\n");
+  const blocks = [];
+  let current = null;
+  for (const line of lines) {
+    if (/^  - name:\s+/.test(line)) {
+      if (current) {
+        blocks.push(current);
+      }
+      current = [line];
+    } else if (current) {
+      if (/^\S/.test(line)) {
+        blocks.push(current);
+        current = null;
+      } else {
+        current.push(line);
+      }
+    }
+  }
+  if (current) {
+    blocks.push(current);
+  }
+  return blocks;
+}
+
+function stepScalar(block, key) {
+  if (key === "name") {
+    const nameMatch = block.join("\n").match(/^  - name:\s*(.+)\s*$/m);
+    return nameMatch?.[1] ?? "";
+  }
+  const match = block.join("\n").match(new RegExp(`^    ${key}:\\s*(.+)\\s*$`, "m"));
+  return match?.[1] ?? "";
+}
+
+function indentedList(block, key) {
+  const values = [];
+  const lines = block.join("\n").split("\n");
+  const start = lines.findIndex((line) => line === `    ${key}:`);
+  if (start === -1) {
+    return values;
+  }
+  for (let index = start + 1; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (/^    [A-Za-z_]/.test(line)) {
+      break;
+    }
+    const match = line.match(/^      -\s+(.+)$/);
+    if (match) {
+      values.push(match[1]);
+    }
+  }
+  return values;
+}
+
+function workflowMachineFields(content) {
+  const fields = {
+    name: topLevelScalar(content, "name"),
+    workflow_config: canonicalBlock(content, "workflow_config"),
+    max_steps: topLevelScalar(content, "max_steps"),
+    initial_step: topLevelScalar(content, "initial_step"),
+    instructions: topLevelMap(content, "instructions"),
+    policies: topLevelMap(content, "policies"),
+    report_formats: topLevelMap(content, "report_formats"),
+  };
+  for (const [index, block] of stepBlocks(content).entries()) {
+    fields[`steps[${index}].name`] = stepScalar(block, "name");
+    fields[`steps[${index}].edit`] = stepScalar(block, "edit");
+    fields[`steps[${index}].persona`] = stepScalar(block, "persona");
+    fields[`steps[${index}].policy`] = indentedList(block, "policy");
+    fields[`steps[${index}].knowledge`] = indentedList(block, "knowledge");
+    fields[`steps[${index}].required_permission_mode`] = stepScalar(block, "required_permission_mode");
+    fields[`steps[${index}].instruction`] = stepScalar(block, "instruction");
+    fields[`steps[${index}].output_contract_formats`] = block
+      .filter((line) => /^\s+format:\s+/.test(line))
+      .map((line) => line.trim());
+    fields[`steps[${index}].rules.next`] = block
+      .filter((line) => /^\s+next:\s+/.test(line))
+      .map((line) => line.trim());
+    fields[`steps[${index}].rules.condition`] = block
+      .filter((line) => /^\s+- condition:\s+/.test(line))
+      .map((line) => line.trim());
+  }
+  return fields;
+}
+
+function compareMachineFields(failures, relPath, enFields, jaFields) {
+  const keys = [...new Set([...Object.keys(enFields), ...Object.keys(jaFields)])].sort();
+  for (const key of keys) {
+    const enValue = JSON.stringify(enFields[key] ?? null);
+    const jaValue = JSON.stringify(jaFields[key] ?? null);
+    if (enValue !== jaValue) {
+      failures.push(
+        `LANGUAGE_PARITY_DRIFT: workflow machine field ${relPath} ${key} mismatch: en=${enValue} ja=${jaValue}`,
+      );
+    }
+  }
+}
+
+function contractTerms(content) {
+  return sharedContractTerms.filter((term) => content.includes(term));
+}
+
+function validateLanguageParity(repoRoot) {
+  const failures = [];
+  const enWorkflows = listBasenames(repoRoot, ".takt/en/workflows", ".yaml");
+  const jaWorkflows = listBasenames(repoRoot, ".takt/ja/workflows", ".yaml");
+  compareSets(failures, "workflows", enWorkflows, jaWorkflows);
+
+  for (const name of enWorkflows.filter((workflow) => jaWorkflows.includes(workflow))) {
+    const enPath = join(repoRoot, ".takt", "en", "workflows", `${name}.yaml`);
+    const jaPath = join(repoRoot, ".takt", "ja", "workflows", `${name}.yaml`);
+    compareMachineFields(
+      failures,
+      `.takt/{en,ja}/workflows/${name}.yaml`,
+      workflowMachineFields(readText(enPath)),
+      workflowMachineFields(readText(jaPath)),
+    );
+  }
+
+  for (const kind of languageParityFacetKinds) {
+    const enFacets = listBasenames(repoRoot, `.takt/en/facets/${kind}`, ".md");
+    const jaFacets = listBasenames(repoRoot, `.takt/ja/facets/${kind}`, ".md");
+    compareSets(failures, `facets/${kind}`, enFacets, jaFacets);
+
+    for (const name of enFacets.filter((facet) => jaFacets.includes(facet))) {
+      const enPath = join(repoRoot, ".takt", "en", "facets", kind, `${name}.md`);
+      const jaPath = join(repoRoot, ".takt", "ja", "facets", kind, `${name}.md`);
+      const enTerms = contractTerms(readText(enPath));
+      const jaTerms = contractTerms(readText(jaPath));
+      for (const term of enTerms) {
+        if (!jaTerms.includes(term)) {
+          failures.push(
+            `LANGUAGE_PARITY_DRIFT: markdown contract terms .takt/{en,ja}/facets/${kind}/${name}.md missing in ja: ${term}`,
+          );
+        }
+      }
+      for (const term of jaTerms) {
+        if (!enTerms.includes(term)) {
+          failures.push(
+            `LANGUAGE_PARITY_DRIFT: markdown contract terms .takt/{en,ja}/facets/${kind}/${name}.md missing in en: ${term}`,
+          );
+        }
+      }
+    }
+  }
+
+  return { ok: failures.length === 0, failures };
 }
 
 function validateWorkflowFiles(repoRoot) {
@@ -227,6 +466,7 @@ export function validateKiroSpecGenerationWorkflows(options = {}) {
     facetFiles: validateFacetFiles(repoRoot),
     lifecycleTerms: validateLifecycleTerms(repoRoot),
     quickComposition: validateQuickComposition(repoRoot),
+    languageParity: validateLanguageParity(repoRoot),
     scopeGuard: validateScopeGuard(),
   };
   const failures = Object.entries(sections).flatMap(([name, result]) =>

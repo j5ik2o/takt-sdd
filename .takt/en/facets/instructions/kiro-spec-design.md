@@ -43,4 +43,4 @@ Generate `.kiro/specs/<feature>/design.md` and `.kiro/specs/<feature>/research.m
 
 - On success, return `phase: "design"`, `validation.verdict: "PASS"`, `featureName`, and `updatedFiles` containing `design.md`, `research.md`, and `spec.json`.
 - On missing requirements, lifecycle inconsistency, failed requirements approval gate, failed design review gate, or requirements/design gap, return `BLOCKED` or `NEEDS_FIX` and keep `spec.json` out of the `design-generated` success state.
-- Evidence must mention requirements approval gate handling, `-y` or auto-approve handling, discovery/research sources, design synthesis, design review gate result, required sections, and whether `spec.json` was updated to `design-generated`.
+- `evidence` must mention requirements approval gate handling, `-y` or auto-approve handling, discovery/research sources, design synthesis, design review gate result, required sections, and whether `spec.json` was updated to `design-generated`.

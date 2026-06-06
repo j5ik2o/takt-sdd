@@ -76,7 +76,7 @@
   - _Depends:_ 3.1, 4.1, 5.1, 6.1, 7.1
 
 - [ ] 9. language parity
-- [ ] 9.1 spec generation workflow の en/ja language pair をそろえる
+- [x] 9.1 spec generation workflow の en/ja language pair をそろえる
   - 追加した workflow、instruction、policy、output contract の en/ja basename と machine field をそろえる。
   - 日本語 facet は自然な日本語にしつつ、enum、field、path、script 名は shared contract と一致させる。
   - 完了時点で片言語だけの追加や enum drift が validation failure として見える。
