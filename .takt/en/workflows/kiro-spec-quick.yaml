@@ -14,7 +14,7 @@ instructions:
   kiro-spec-requirements: ../facets/instructions/kiro-spec-requirements.md
   kiro-spec-design: ../facets/instructions/kiro-spec-design.md
   kiro-spec-tasks: ../facets/instructions/kiro-spec-tasks.md
-  kiro-spec-quick: ../facets/instructions/kiro-spec-quick.md
+  kiro-spec-quick-sanity-review: ../facets/instructions/kiro-spec-quick-sanity-review.md
 
 policies:
   kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
@@ -153,7 +153,7 @@ steps:
       - kiro-spec-generation
       - kiro-spec-task-annotations
     required_permission_mode: readonly
-    instruction: kiro-spec-quick
+    instruction: kiro-spec-quick-sanity-review
     output_contracts:
       report:
         - name: kiro-spec-quick-sanity-review.md

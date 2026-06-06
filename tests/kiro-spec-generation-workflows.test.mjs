@@ -120,14 +120,9 @@ function assertFacetTerms(root, path, terms) {
   }
 }
 
-function assertOrderedTerms(content, terms, label) {
-  let previousIndex = -1;
-  for (const term of terms) {
-    const index = content.indexOf(term);
-    assert.notEqual(index, -1, `${label} should include ${term}`);
-    assert.ok(index > previousIndex, `${label} should place ${term} after the previous term`);
-    previousIndex = index;
-  }
+function assertOrderedStepNames(content, stepNames, label) {
+  const actualStepNames = [...content.matchAll(/^  - name:\s*(.+)\s*$/gm)].map((match) => match[1]);
+  assert.deepEqual(actualStepNames, stepNames, `${label} should keep the quick step order`);
 }
 
 test("task 2.1 shared spec generation policy and result contract are available in both languages", () => {
@@ -205,7 +200,7 @@ test("task 8.1 quick workflow composes standalone phase contracts in one YAML", 
     "kiro-spec-requirements: ../facets/instructions/kiro-spec-requirements.md",
     "kiro-spec-design: ../facets/instructions/kiro-spec-design.md",
     "kiro-spec-tasks: ../facets/instructions/kiro-spec-tasks.md",
-    "kiro-spec-quick: ../facets/instructions/kiro-spec-quick.md",
+    "kiro-spec-quick-sanity-review: ../facets/instructions/kiro-spec-quick-sanity-review.md",
     "kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
     "kiro-spec-task-annotations: ../facets/policies/kiro-spec-task-annotations.md",
     "kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md",
@@ -250,12 +245,12 @@ test("task 8.1 quick workflow composes standalone phase contracts in one YAML", 
     const workflowPath = `.takt/${lang}/workflows/kiro-spec-quick.yaml`;
     assertFacetTerms(repoRoot, workflowPath, workflowTerms);
     const workflow = readFileSync(join(repoRoot, workflowPath), "utf8");
-    assertOrderedTerms(workflow, orderedSteps, workflowPath);
+    assertOrderedStepNames(workflow, orderedSteps, workflowPath);
     for (const forbiddenTerm of forbiddenTerms) {
       assert.equal(workflow.includes(forbiddenTerm), false, `${workflowPath} should not include ${forbiddenTerm}`);
     }
 
-    const instructionPath = `.takt/${lang}/facets/instructions/kiro-spec-quick.md`;
+    const instructionPath = `.takt/${lang}/facets/instructions/kiro-spec-quick-sanity-review.md`;
     assertFacetTerms(repoRoot, instructionPath, instructionTerms);
   }
 });

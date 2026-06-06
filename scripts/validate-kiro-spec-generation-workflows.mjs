@@ -40,7 +40,7 @@ const phaseWorkflowSpecs = [
   {
     name: "kiro-spec-quick",
     requiredTerms: ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"],
-    instructionFacets: ["kiro-spec-quick"],
+    instructionFacets: ["kiro-spec-quick-sanity-review"],
     policyFacets: ["kiro-spec-generation", "kiro-spec-task-annotations"],
     outputContracts: ["kiro-spec-generation-result", "kiro-spec-sanity-review"],
   },
@@ -70,6 +70,11 @@ const facetSpecs = [
   {
     kind: "instructions",
     name: "kiro-spec-quick",
+    terms: ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"],
+  },
+  {
+    kind: "instructions",
+    name: "kiro-spec-quick-sanity-review",
     terms: ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"],
   },
   {
@@ -281,6 +286,7 @@ const sharedContractTerms = [
     "kiro-spec-design",
     "kiro-spec-tasks",
     "kiro-spec-quick",
+    "kiro-spec-quick-sanity-review",
     "validate:kiro-spec-generation-workflows",
     "test:kiro-spec-generation-workflows",
     "takt -w",
