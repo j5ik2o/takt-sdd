@@ -1,0 +1,69 @@
+name: kiro-spec-tasks
+description: Kiro - approved requirements と design から implementation-ready な tasks.md を生成する
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 10
+initial_step: generate-tasks
+
+instructions:
+  kiro-spec-tasks: ../facets/instructions/kiro-spec-tasks.md
+
+policies:
+  kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
+  kiro-spec-lifecycle: ../facets/policies/kiro-spec-lifecycle.md
+  kiro-spec-generation: ../facets/policies/kiro-spec-generation.md
+  kiro-spec-task-annotations: ../facets/policies/kiro-spec-task-annotations.md
+
+report_formats:
+  kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
+
+steps:
+  - name: generate-tasks
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+      - kiro-spec-task-annotations
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
+    required_permission_mode: edit
+    instruction: kiro-spec-tasks
+    output_contracts:
+      report:
+        - name: kiro-spec-tasks-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and auto-approve and approvals.tasks.approved true and ready_for_implementation true
+        next: COMPLETE
+      - condition: validation.verdict PASS and not auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and task plan review PASS and task graph sanity review PASS
+        next: COMPLETE
+      - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
+        next: ABORT
+      - condition: validation.verdict NEEDS_FIX or task plan review failed or task graph sanity review failed
+        next: ABORT
+
+# validation/review 用の contract notes:
+# - requirements/design approval gate は task generation 前に requirements.md、design.md、spec.json を確認する。
+# - 通常 mode では未承認 requirements または design で停止する。-y または auto-approve の場合は、続行前に approvals.requirements.approved: true と approvals.design.approved: true を明示的に設定する。
+# - task generation は requirements.md、design.md、existing tasks.md、spec.json、.kiro/settings/templates/specs/tasks.md を読む。
+# - tasks.md のすべての executable task は observable completion detail、numeric requirements、_Boundary:_、_Depends:_ を含める。
+# - dependency がない task は _Depends:_ none を使う。
+# - success metadata の前に task plan review と task graph sanity review を実行する。
+# - (P) は non-overlapping boundary と explicit dependency graph から独立実行可能と判断できる場合だけ使う。
+# - 成功時は spec.json を phase: "tasks-generated" と approvals.tasks.generated: true に更新する。
+# - auto-approve mode では approvals.tasks.approved: true と ready_for_implementation: true も設定する。
+# - 通常 mode では tasks approval が存在するまで ready_for_implementation true にしない。

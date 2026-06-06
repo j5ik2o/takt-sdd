@@ -64,10 +64,9 @@ test("kiro spec generation validation reports current missing downstream generat
   const result = validateKiroSpecGenerationWorkflows();
 
   assert.equal(result.ok, false);
-  assert.ok(
-    result.failures.some((failure) =>
-      failure.includes("WORKFLOW_MISSING") && failure.includes(".takt/en/workflows/kiro-spec-tasks.yaml"),
-    ),
+  assert.equal(
+    result.failures.some((failure) => failure.includes(".takt/en/workflows/kiro-spec-tasks.yaml")),
+    false,
   );
   assert.ok(
     result.failures.some((failure) =>
@@ -130,6 +129,76 @@ test("task 4.1 requirements workflow connects EARS generation, review gate, and 
     assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-requirements.yaml`, workflowTerms);
     assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`, instructionTerms);
   }
+});
+
+test("task 6.1 tasks workflow requires canonical task annotations and ready state handling", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  const workflowTerms = [
+    "tasks.md",
+    "tasks-generated",
+    "_Boundary:_",
+    "_Depends:_",
+    "kiro-spec-generation-result",
+    "kiro-spec-task-annotations: ../facets/policies/kiro-spec-task-annotations.md",
+    "requirements/design approval gate",
+    "task generation",
+    "task plan review",
+    "task graph sanity review",
+    "observable completion",
+    "numeric requirements",
+    "approvals.requirements.approved",
+    "approvals.design.approved",
+    "approvals.tasks.generated",
+    "approvals.tasks.approved",
+    "ready_for_implementation",
+    "auto-approve",
+  ];
+  const instructionTerms = [
+    "tasks.md",
+    "_Boundary:_",
+    "_Depends:_",
+    "tasks-generated",
+    "requirements/design approval gate",
+    "task generation",
+    "task plan review",
+    "task graph sanity review",
+    "observable completion",
+    "numeric requirements",
+    "ready_for_implementation",
+    "auto-approve",
+  ];
+  const policyTerms = [
+    "_Boundary:_",
+    "_Depends:_",
+    "none",
+    "(P)",
+    "executable task",
+    "observable completion",
+    "numeric requirements",
+    "non-overlapping boundary",
+    "dependency graph",
+  ];
+
+  for (const lang of ["en", "ja"]) {
+    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-tasks.yaml`, workflowTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-tasks.md`, instructionTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/policies/kiro-spec-task-annotations.md`, policyTerms);
+
+    const workflow = readFileSync(join(repoRoot, `.takt/${lang}/workflows/kiro-spec-tasks.yaml`), "utf8");
+    const autoApproveRule = "validation.verdict PASS and auto-approve and approvals.tasks.approved true and ready_for_implementation true";
+    const normalRule = "validation.verdict PASS and not auto-approve and phase tasks";
+    assert.ok(workflow.includes(autoApproveRule), `${lang} tasks workflow should require ready state for auto-approve`);
+    assert.ok(workflow.includes(normalRule), `${lang} tasks workflow should exclude auto-approve from normal completion`);
+    assert.ok(workflow.indexOf(autoApproveRule) < workflow.indexOf(normalRule), `${lang} auto-approve rule should run first`);
+  }
+
+  const template = readFileSync(join(repoRoot, ".kiro/settings/templates/specs/tasks.md"), "utf8");
+  assert.ok(template.includes("_Boundary:_ {{COMPONENT_NAMES}}"));
+  assert.ok(template.includes("_Depends:_ {{TASK_IDS_OR_NONE}}"));
+  assert.ok(template.includes("_Depends:_ none"));
+  assert.equal(/\boptional\b/i.test(template), false);
+  assert.equal(/Only for/i.test(template), false);
+  assert.equal(/omit/i.test(template), false);
 });
 
 test("task 5.1 design workflow connects research, required sections, review gate, and lifecycle update", () => {

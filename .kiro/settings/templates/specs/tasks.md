@@ -2,23 +2,28 @@
 
 ## Task Format Template
 
-Use whichever pattern fits the work breakdown:
+Use this canonical annotation grammar for every executable task.
 
-### Major task only
+### Major task with executable work
 - [ ] {{NUMBER}}. {{TASK_DESCRIPTION}}{{PARALLEL_MARK}}
-  - {{DETAIL_ITEM_1}} *(Include details only when needed. If the task stands alone, omit bullet items.)*
-  - _Requirements: {{REQUIREMENT_IDS}}_
+  - {{OBSERVABLE_COMPLETION_ITEM}} *(State the concrete completion signal for this task.)*
+  - _Requirements: {{REQUIREMENT_IDS}}_ *(IDs only; do not add descriptions or parentheses.)*
+  - _Boundary:_ {{COMPONENT_NAMES}}
+  - _Depends:_ {{TASK_IDS_OR_NONE}}
 
-### Major + Sub-task structure
+### Major + sub-task structure
 - [ ] {{MAJOR_NUMBER}}. {{MAJOR_TASK_SUMMARY}}
 - [ ] {{MAJOR_NUMBER}}.{{SUB_NUMBER}} {{SUB_TASK_DESCRIPTION}}{{SUB_PARALLEL_MARK}}
   - {{DETAIL_ITEM_1}}
-  - {{DETAIL_ITEM_2}}
-  - {{OBSERVABLE_COMPLETION_ITEM}} *(At least one detail item should state the observable completion condition for this task.)*
+  - {{OBSERVABLE_COMPLETION_ITEM}} *(State the concrete completion signal for this task.)*
   - _Requirements: {{REQUIREMENT_IDS}}_ *(IDs only; do not add descriptions or parentheses.)*
-  - _Boundary: {{COMPONENT_NAMES}}_ *(Only for (P) tasks. Omit when scope is obvious.)*
-  - _Depends: {{TASK_IDS}}_ *(Only for non-obvious cross-boundary dependencies. Most tasks omit this.)*
+  - _Boundary:_ {{COMPONENT_NAMES}}
+  - _Depends:_ {{TASK_IDS_OR_NONE}}
 
-> **Parallel marker**: Append ` (P)` only to tasks that can be executed in parallel. Omit the marker when running in `--sequential` mode.
->
-> **Optional test coverage**: When a sub-task is deferrable test work tied to acceptance criteria, mark the checkbox as `- [ ]*` and explain the referenced requirements in the detail bullets.
+## Annotation Rules
+
+- `_Requirements: {{REQUIREMENT_IDS}}_` uses numeric requirement IDs.
+- `_Boundary:_ {{COMPONENT_NAMES}}` names the owned component or workflow boundary.
+- `_Depends:_ {{TASK_IDS_OR_NONE}}` uses task IDs when dependencies exist.
+- `_Depends:_ none` is the canonical grammar for no dependencies.
+- ` (P)` is appended only when non-overlapping boundary and an explicit dependency graph show independent execution.

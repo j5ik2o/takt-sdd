@@ -47,7 +47,7 @@
   - _Depends:_ 2.1, 4.1
 
 - [ ] 6. tasks generation workflow
-- [ ] 6.1 task annotation policy と `kiro-spec-tasks` workflow を追加する
+- [x] 6.1 task annotation policy と `kiro-spec-tasks` workflow を追加する
   - requirements/design approval gate、task generation、task plan review、task graph sanity review を workflow に接続する。
   - すべての executable task に observable completion、numeric requirements、Boundary annotation、Depends annotation を要求する。
   - `.kiro/settings/templates/specs/tasks.md` を canonical annotation grammar に更新し、Boundary と Depends が optional のまま残らないようにする。
