@@ -914,8 +914,9 @@ function validateTasksArtifact(failures, artifactPath, repoRoot, content) {
 function validateGeneratedArtifacts(repoRoot) {
   const failures = [];
   for (const specDir of listSpecDirectories(repoRoot)) {
+    const spec = readSpecJson(join(specDir, "spec.json"), failures, repoRoot);
     const requirementsPath = join(specDir, "requirements.md");
-    if (existsSync(requirementsPath)) {
+    if (existsSync(requirementsPath) && spec?.phase !== "initialized") {
       validateRequirementsArtifact(failures, requirementsPath, repoRoot, readText(requirementsPath));
     }
 

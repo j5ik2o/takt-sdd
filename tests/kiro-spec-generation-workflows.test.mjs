@@ -791,6 +791,31 @@ test("task 10.1 validation accepts lifecycle and artifact contract fixtures", ()
   assert.equal(result.ok, true, result.failures.join("\n"));
 });
 
+test("initialized draft requirements are not validated as generated EARS artifacts", () => {
+  const root = makeValidationFixture();
+  const featureName = "initialized-draft-requirements";
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/spec.json`,
+    `${JSON.stringify(specState(featureName, "initialized"), null, 2)}\n`,
+  );
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/requirements.md`,
+    [
+      "# Requirements Document",
+      "",
+      "## Draft",
+      "",
+      "This initialized draft intentionally waits for `kiro-spec-requirements` before EARS criteria exist.",
+    ].join("\n"),
+  );
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.equal(result.ok, true, result.failures.join("\n"));
+});
+
 test("task 10.1 validation blocks artifact missing and lifecycle inconsistent fixtures", () => {
   const root = makeValidationFixture();
   writeSpecArtifactFixture(
