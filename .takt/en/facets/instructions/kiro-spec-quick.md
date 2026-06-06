@@ -1,44 +1,42 @@
-{extends: plan}
+{extends: review-qa}
 
-# Kiro Spec Quick Instruction
+# Kiro Spec Quick Sanity Review Instruction
 
 ## Kiro-specific delta
 
-Compose the Kiro spec generation phases inside one workflow. The quick path runs `quick-init`, `quick-requirements`, `quick-design`, `quick-tasks`, and `quick-sanity-review` in order, using the same standalone workflow instruction, policy, and output contract basenames for each phase. Do not delegate to another workflow runner.
+Review the already completed quick path. This instruction is used only by the final `quick-sanity-review` step after `quick-init`, `quick-requirements`, `quick-design`, and `quick-tasks` have produced their phase results. Do not rerun earlier phases, do not write artifacts, and do not delegate to another workflow runner.
 
 ## Inputs
 
-- Invocation feature description or feature name.
-- Optional `.kiro/specs/<feature>/brief.md`.
-- Existing `.kiro/specs/<feature>/spec.json`, `requirements.md`, `design.md`, `research.md`, and `tasks.md` when a phase resumes.
-- The requested mode: `automatic mode` or `interactive mode`.
-- Explicit `phase approval` decisions when running in interactive mode.
-- Explicit `auto-approve` mode when the caller requests fast-track approval semantics.
+- The completed `quick-init`, `quick-requirements`, `quick-design`, and `quick-tasks` phase results.
+- `.kiro/specs/<feature>/spec.json`, `requirements.md`, `design.md`, `research.md`, and `tasks.md`.
+- The selected `automatic mode` or `interactive mode`.
+- Recorded `phase approval` decisions when interactive mode was used.
+- The explicit `auto-approve` mode used by design/tasks, including the same auto-approve semantics as standalone phases.
 
-## Quick composition procedure
+## Final sanity review procedure
 
-1. Run `quick-init` with the `kiro-spec-init` standalone workflow instruction, `kiro-spec-generation` policy, and `kiro-spec-generation-result` output contract.
-2. Run `quick-requirements` with the `kiro-spec-requirements` standalone workflow instruction, `kiro-spec-generation` policy, and `kiro-spec-generation-result` output contract.
-3. Run `quick-design` with the `kiro-spec-design` standalone workflow instruction, `kiro-spec-generation` policy, and `kiro-spec-generation-result` output contract.
-4. Run `quick-tasks` with the `kiro-spec-tasks` standalone workflow instruction, `kiro-spec-generation` and `kiro-spec-task-annotations` policies, and `kiro-spec-generation-result` output contract.
-5. Run `quick-sanity-review` after tasks generation and use the `kiro-spec-sanity-review` output contract.
-
-## Mode behavior
-
-- In `automatic mode`, continue from `quick-init` to `quick-requirements`, `quick-design`, `quick-tasks`, and `quick-sanity-review` without stopping for user approval between successful phases.
-- In `interactive mode`, require explicit `phase approval` before moving from init to requirements, from requirements to design, and from design to tasks. If approval is missing or denied, stop and report the next approval required.
-- Design and tasks phases use the same auto-approve semantics as their standalone workflow contracts. Design may set `approvals.requirements.approved: true` only when `-y` or `auto-approve` is active. Tasks may set `approvals.requirements.approved: true`, `approvals.design.approved: true`, `approvals.tasks.approved: true`, and `ready_for_implementation: true` only under the same explicit semantics.
+1. Confirm the quick path advanced in this order: `quick-init`, `quick-requirements`, `quick-design`, `quick-tasks`, then `quick-sanity-review`.
+2. Confirm each completed phase used the same standalone workflow instruction, policy, output contract basename, lifecycle semantics, and same auto-approve semantics as its standalone phase contract.
+3. Confirm requirements, design, and tasks are coherent:
+   - requirements keep EARS and numeric requirement IDs after requirements generation.
+   - design records required boundary, file structure, and traceability sections.
+   - tasks include observable completion, numeric requirement coverage, `_Boundary:_`, and `_Depends:_` annotations.
+4. Confirm `quick-tasks` preserves both standalone success paths:
+   - explicit `auto-approve` may set `approvals.tasks.approved: true` and `ready_for_implementation: true`.
+   - `not auto-approve` may proceed to sanity review after `tasks-generated`, task plan review PASS, and task graph sanity review PASS without requiring ready state.
+5. Report `NEEDS_FIX` when coherence, hidden prerequisite, task annotation, or phase parity drift remains.
+6. Report `BLOCKED` when a required phase result or required artifact is missing.
 
 ## Completion gate
 
-- `quick-sanity-review` checks requirements, design, and tasks for coherence, hidden prerequisite drift, and task annotation coverage.
-- `verdict PASS` is the only sanity review result that allows quick workflow completion.
-- `NEEDS_FIX` routes to the reported `fix_targets`.
-- `BLOCKED` stops completion and reports `blockingReason`.
-- The quick path must not call discovery, batch, or implementation execution. It only composes the local spec generation phase contracts.
+- `verdict PASS` is the only result that allows quick-completion.
+- `NEEDS_FIX` must include `fix_targets`.
+- `BLOCKED` must include `blockingReason`.
+- The quick path must not call discovery, batch, or implementation execution.
 
 ## Result mapping
 
-- On completion, return `phase: "tasks"`, `validation.verdict: "PASS"`, `ready_for_implementation` according to the tasks phase auto-approve result, and evidence for `quick-completion`.
-- On any phase failure, return the phase output from the failed standalone contract and do not skip ahead.
-- Evidence must list the five quick steps, the selected mode, every phase approval decision in interactive mode, the auto-approve handling for design/tasks, the final sanity review `verdict`, and that no discovery, batch, or implementation execution was called.
+- On pass, return the `kiro-spec-sanity-review` output contract with `verdict: "PASS"` and evidence for `quick-completion`.
+- On needs-fix, return `verdict: "NEEDS_FIX"` with concrete `fix_targets` for requirements, design, or tasks.
+- On blocked, return `verdict: "BLOCKED"` with the missing phase result, missing artifact, or unsafe boundary as `blockingReason`.

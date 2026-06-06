@@ -1,44 +1,42 @@
-{extends: plan}
+{extends: review-qa}
 
-# Kiro Spec Quick Instruction
+# Kiro Spec Quick Sanity Review Instruction
 
 ## Kiro 固有差分
 
-Kiro spec generation phases を 1 つの workflow 内で compose する。quick path は `quick-init`、`quick-requirements`、`quick-design`、`quick-tasks`、`quick-sanity-review` をこの順に実行し、各 phase は standalone workflow と同じ instruction、policy、output contract の basename を使う。別 workflow runner へ委譲しない。
+完了済みの quick path だけを review する。この instruction は `quick-init`、`quick-requirements`、`quick-design`、`quick-tasks` が phase result を出した後の final `quick-sanity-review` step でだけ使う。過去 phase を再実行せず、artifact を書かず、別 workflow runner へ委譲しない。
 
 ## Inputs
 
-- invocation feature description または feature name。
-- optional の `.kiro/specs/<feature>/brief.md`。
-- phase を再開する場合の existing `.kiro/specs/<feature>/spec.json`、`requirements.md`、`design.md`、`research.md`、`tasks.md`。
-- requested mode: `automatic mode` または `interactive mode`。
-- `interactive mode` で使う明示的な `phase approval` decision。
-- fast-track approval semantics が要求された場合の明示的な `auto-approve` mode。
+- 完了済みの `quick-init`、`quick-requirements`、`quick-design`、`quick-tasks` phase result。
+- `.kiro/specs/<feature>/spec.json`、`requirements.md`、`design.md`、`research.md`、`tasks.md`。
+- selected `automatic mode` または `interactive mode`。
+- interactive mode で使われた `phase approval` decision の記録。
+- design/tasks で使われた明示的な `auto-approve` mode と standalone phase と同じ same auto-approve semantics。
 
-## Quick composition procedure
+## Final sanity review procedure
 
-1. `quick-init` は `kiro-spec-init` standalone workflow instruction、`kiro-spec-generation` policy、`kiro-spec-generation-result` output contract で実行する。
-2. `quick-requirements` は `kiro-spec-requirements` standalone workflow instruction、`kiro-spec-generation` policy、`kiro-spec-generation-result` output contract で実行する。
-3. `quick-design` は `kiro-spec-design` standalone workflow instruction、`kiro-spec-generation` policy、`kiro-spec-generation-result` output contract で実行する。
-4. `quick-tasks` は `kiro-spec-tasks` standalone workflow instruction、`kiro-spec-generation` と `kiro-spec-task-annotations` policies、`kiro-spec-generation-result` output contract で実行する。
-5. tasks generation 後に `quick-sanity-review` を実行し、`kiro-spec-sanity-review` output contract を使う。
-
-## Mode behavior
-
-- `automatic mode` では、成功した phase 間で user approval のために停止せず、`quick-init` から `quick-requirements`、`quick-design`、`quick-tasks`、`quick-sanity-review` へ連続実行する。
-- `interactive mode` では init から requirements、requirements から design、design から tasks へ進む前に明示的な `phase approval` を要求する。approval がない、または拒否された場合は停止し、次に必要な approval を報告する。
-- design と tasks phase は standalone workflow contract と same auto-approve semantics を使う。design は `-y` または `auto-approve` が有効な場合だけ `approvals.requirements.approved: true` を設定できる。tasks は同じ明示 semantics の下でのみ `approvals.requirements.approved: true`、`approvals.design.approved: true`、`approvals.tasks.approved: true`、`ready_for_implementation: true` を設定できる。
+1. quick path が `quick-init`、`quick-requirements`、`quick-design`、`quick-tasks`、`quick-sanity-review` の順で進んだことを確認する。
+2. 各 completed phase が standalone workflow / standalone phase contract と同じ workflow instruction、policy、output contract basename、lifecycle semantics、same auto-approve semantics を使ったことを確認する。
+3. requirements、design、tasks の coherence を確認する。
+   - requirements generation 後の requirements が EARS と numeric requirement IDs を保持している。
+   - design が required boundary、file structure、traceability sections を記録している。
+   - tasks が observable completion、numeric requirement coverage、`_Boundary:_`、`_Depends:_` annotations を含んでいる。
+4. `quick-tasks` が standalone と同じ 2 つの success path を保持していることを確認する。
+   - 明示的な `auto-approve` は `approvals.tasks.approved: true` と `ready_for_implementation: true` を設定できる。
+   - `not auto-approve` は `tasks-generated`、task plan review PASS、task graph sanity review PASS 後に ready state を要求せず sanity review へ進める。
+5. coherence、hidden prerequisite、task annotation、phase parity drift が残る場合は `NEEDS_FIX` を返す。
+6. 必須 phase result または必須 artifact がない場合は `BLOCKED` を返す。
 
 ## Completion gate
 
-- `quick-sanity-review` は requirements、design、tasks の coherence、hidden prerequisite drift、task annotation coverage を確認する。
-- `verdict PASS` だけが quick workflow の completion を許可する。
-- `NEEDS_FIX` は報告された `fix_targets` へ進める。
-- `BLOCKED` は completion を止め、`blockingReason` を報告する。
-- quick path は discovery、batch、implementation execution を呼ばない。local spec generation phase contract の composition だけを扱う。
+- `verdict PASS` だけが quick-completion を許可する。
+- `NEEDS_FIX` は `fix_targets` を含める。
+- `BLOCKED` は `blockingReason` を含める。
+- quick path は discovery、batch、implementation execution を呼ばない。
 
 ## Result mapping
 
-- completion 時は `phase: "tasks"`、`validation.verdict: "PASS"`、tasks phase の auto-approve result に従った `ready_for_implementation`、`quick-completion` の evidence を返す。
-- どれかの phase が失敗した場合は、その standalone contract の phase output を返し、後続 phase を飛ばさない。
-- evidence には 5 つの quick step、selected mode、interactive mode の全 phase approval decision、design/tasks の auto-approve handling、final sanity review `verdict`、discovery、batch、implementation execution を呼んでいないことを記録する。
+- pass の場合、`kiro-spec-sanity-review` output contract で `verdict: "PASS"` と `quick-completion` の evidence を返す。
+- needs-fix の場合、requirements、design、tasks の具体的な `fix_targets` とともに `verdict: "NEEDS_FIX"` を返す。
+- blocked の場合、不足している phase result、artifact、または unsafe boundary を `blockingReason` として `verdict: "BLOCKED"` を返す。
