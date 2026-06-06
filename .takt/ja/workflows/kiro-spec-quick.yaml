@@ -137,6 +137,8 @@ steps:
     rules:
       - condition: validation.verdict PASS and same auto-approve semantics and phase tasks and tasks-generated and approvals.tasks.approved true and ready_for_implementation true
         next: quick-sanity-review
+      - condition: validation.verdict PASS and not auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and task plan review PASS and task graph sanity review PASS
+        next: quick-sanity-review
       - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
         next: ABORT
       - condition: validation.verdict NEEDS_FIX or task plan review failed or task graph sanity review failed

@@ -214,6 +214,9 @@ test("task 8.1 quick workflow composes standalone phase contracts in one YAML", 
     "interactive mode",
     "phase approval",
     "same auto-approve semantics",
+    "not auto-approve",
+    "task plan review PASS",
+    "task graph sanity review PASS",
     "verdict PASS",
     "quick-completion",
   ];
@@ -348,6 +351,37 @@ test("validation detects workflow permission mode drift rejected by TAKT runtime
 
   assert.ok(
     result.failures.some((failure) => failure.includes("WORKFLOW_DRIFT") && failure.includes("read-only")),
+    result.failures.join("\n"),
+  );
+});
+
+test("validation detects quick workflow task annotation policy drift", () => {
+  const root = makeFixture();
+  for (const lang of ["en", "ja"]) {
+    writeFixtureFile(
+      root,
+      `.takt/${lang}/workflows/kiro-spec-quick.yaml`,
+      [
+        "name: kiro-spec-quick",
+        "policies:",
+        "  kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
+        "report_formats:",
+        "  kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md",
+        "  kiro-spec-sanity-review: ../facets/output-contracts/kiro-spec-sanity-review.md",
+        "steps:",
+        "  - name: quick-init",
+        "  - name: quick-requirements",
+        "  - name: quick-design",
+        "  - name: quick-tasks",
+        "  - name: quick-sanity-review",
+      ].join("\n"),
+    );
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) => failure.includes("WORKFLOW_DRIFT") && failure.includes("kiro-spec-task-annotations")),
     result.failures.join("\n"),
   );
 });
@@ -918,6 +952,77 @@ test("task 11.1 validation detects task annotation drift and invalid parallel ma
 
   assert.ok(
     result.failures.some((failure) => failure.includes("TASK_ANNOTATION_DRIFT")),
+    result.failures.join("\n"),
+  );
+});
+
+test("task 11.1 validation detects annotation drift on major executable tasks", () => {
+  const root = makeValidationFixture();
+  const featureName = "major-task-annotation-drift";
+  writeFixtureFile(root, `.kiro/specs/${featureName}/spec.json`, `${JSON.stringify(
+    specState(featureName, "tasks-generated", {
+      approvals: {
+        requirements: { generated: true, approved: true },
+        design: { generated: true, approved: true },
+        tasks: { generated: true, approved: false },
+      },
+    }),
+    null,
+    2,
+  )}\n`);
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/requirements.md`,
+    [
+      "# Requirements Document",
+      "",
+      "## Requirements",
+      "",
+      "### Requirement 1: major task validation",
+      "",
+      "#### Acceptance Criteria",
+      "",
+      "1. validation が実行される場合、harness は major task annotation drift を返す。",
+    ].join("\n"),
+  );
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/design.md`,
+    [
+      "# Design Document",
+      "",
+      "## Boundary Commitments",
+      "",
+      "Boundary details.",
+      "",
+      "## File Structure Plan",
+      "",
+      "File details.",
+      "",
+      "## Requirements Traceability",
+      "",
+      "| Requirement | Component |",
+      "|-------------|-----------|",
+      "| 1.1 | Harness |",
+    ].join("\n"),
+  );
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/tasks.md`,
+    [
+      "# Implementation Plan",
+      "",
+      "- [ ] 1. validate major executable task",
+      "  - Validate major task annotations.",
+      "  - _Requirements: 1.1_",
+      "  - _Depends:_ none",
+    ].join("\n"),
+  );
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) => failure.includes("TASK_ANNOTATION_DRIFT") && failure.includes("task 1 missing _Boundary:_")),
     result.failures.join("\n"),
   );
 });

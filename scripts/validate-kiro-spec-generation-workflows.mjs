@@ -41,7 +41,7 @@ const phaseWorkflowSpecs = [
     name: "kiro-spec-quick",
     requiredTerms: ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"],
     instructionFacets: ["kiro-spec-quick"],
-    policyFacets: ["kiro-spec-generation"],
+    policyFacets: ["kiro-spec-generation", "kiro-spec-task-annotations"],
     outputContracts: ["kiro-spec-generation-result", "kiro-spec-sanity-review"],
   },
 ];
@@ -756,15 +756,21 @@ function validateDesignArtifact(failures, artifactPath, repoRoot, content) {
 }
 
 function executableTaskBlocks(content) {
-  const matches = [...content.matchAll(/^- \[[ xX]\]\s+(\d+\.\d+)\s+(.+)$/gm)];
-  return matches.map((match, index) => {
-    const next = matches[index + 1];
-    return {
-      id: match[1],
-      title: match[2],
-      block: content.slice(match.index, next?.index ?? content.length),
-    };
-  });
+  const matches = [...content.matchAll(/^- \[[ xX]\]\s+(\d+(?:\.\d+)?)(?:\.)?\s+(.+)$/gm)];
+  return matches
+    .filter((match, index) => {
+      const id = match[1];
+      const next = matches[index + 1];
+      return id.includes(".") || !next || !next[1].startsWith(`${id}.`);
+    })
+    .map((match, index, executableMatches) => {
+      const next = executableMatches[index + 1];
+      return {
+        id: match[1],
+        title: match[2],
+        block: content.slice(match.index, next?.index ?? content.length),
+      };
+    });
 }
 
 function taskAnnotationValue(block, label) {
