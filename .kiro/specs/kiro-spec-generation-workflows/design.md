@@ -139,7 +139,7 @@ Key decisions:
 │   │       │   ├── kiro-spec-requirements.md
 │   │       │   ├── kiro-spec-design.md
 │   │       │   ├── kiro-spec-tasks.md
-│   │       │   └── kiro-spec-quick.md
+│   │       │   └── kiro-spec-quick-sanity-review.md
 │   │       ├── output-contracts/
 │   │       │   ├── kiro-spec-generation-result.md
 │   │       │   └── kiro-spec-sanity-review.md
@@ -159,7 +159,7 @@ Key decisions:
 │   │       │   ├── kiro-spec-requirements.md
 │   │       │   ├── kiro-spec-design.md
 │   │       │   ├── kiro-spec-tasks.md
-│   │       │   └── kiro-spec-quick.md
+│   │       │   └── kiro-spec-quick-sanity-review.md
 │   │       ├── output-contracts/
 │   │       │   ├── kiro-spec-generation-result.md
 │   │       │   └── kiro-spec-sanity-review.md
@@ -207,7 +207,7 @@ Key decisions:
 - `RequirementsGenerationWorkflow` — `.takt/{en,ja}/workflows/kiro-spec-requirements.yaml`、`.takt/{en,ja}/facets/instructions/kiro-spec-requirements.md`
 - `DesignGenerationWorkflow` — `.takt/{en,ja}/workflows/kiro-spec-design.yaml`、`.takt/{en,ja}/facets/instructions/kiro-spec-design.md`
 - `TasksGenerationWorkflow` — `.takt/{en,ja}/workflows/kiro-spec-tasks.yaml`、`.takt/{en,ja}/facets/instructions/kiro-spec-tasks.md`、`.takt/{en,ja}/facets/policies/kiro-spec-task-annotations.md`
-- `QuickGenerationWorkflow` — `.takt/{en,ja}/workflows/kiro-spec-quick.yaml`、`.takt/{en,ja}/facets/instructions/kiro-spec-quick.md`、`.takt/{en,ja}/facets/output-contracts/kiro-spec-sanity-review.md`
+- `QuickGenerationWorkflow` — `.takt/{en,ja}/workflows/kiro-spec-quick.yaml`、`.takt/{en,ja}/facets/instructions/kiro-spec-quick-sanity-review.md`、`.takt/{en,ja}/facets/output-contracts/kiro-spec-sanity-review.md`
 - `SpecGenerationValidationHarness` — `scripts/validate-kiro-spec-generation-workflows.mjs`、`tests/kiro-spec-generation-workflows.test.mjs`
 
 ## System Flows

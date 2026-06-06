@@ -80,11 +80,6 @@ const facetSpecs = [
   },
   {
     kind: "instructions",
-    name: "kiro-spec-quick",
-    terms: ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"],
-  },
-  {
-    kind: "instructions",
     name: "kiro-spec-quick-sanity-review",
     terms: ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"],
   },
