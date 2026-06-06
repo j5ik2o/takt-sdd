@@ -17,6 +17,9 @@ This instruction is read-only. Inspect `.kiro/specs/<feature>/` and `.kiro/steer
    - `tasks-generated` requires `requirements.md`, `design.md`, and `tasks.md`.
 5. Map missing phase artifacts to `error_category: ARTIFACT_MISSING`.
 6. Map contradictory phase and approval state to `error_category: LIFECYCLE_INCONSISTENT`.
+7. Set `readiness: READY` only when `status: FOUND`, all artifacts required by the current phase exist, and `ready_for_implementation` is true.
+8. Set `readiness: NOT_READY` when the feature exists but the current phase or approvals are still incomplete without an inconsistency.
+9. Set `readiness: INCONSISTENT` when lifecycle or artifact state contradicts `spec.json`.
 
 ## Output mapping
 

@@ -29,9 +29,9 @@ steps:
         - name: kiro-impl-validation-result.md
           format: kiro-validation-result
     rules:
+      - condition: finding category MANUAL_VERIFICATION_REQUIRED
+        next: ABORT
       - condition: verdict PASS
         next: COMPLETE
       - condition: verdict FAIL or verdict NEEDS_FIX or verdict BLOCKED
-        next: ABORT
-      - condition: finding category MANUAL_VERIFICATION_REQUIRED
         next: ABORT

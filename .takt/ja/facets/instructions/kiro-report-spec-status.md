@@ -17,6 +17,9 @@
    - `tasks-generated` は `requirements.md`、`design.md`、`tasks.md` を要求する。
 5. phase artifact の不足は `error_category: ARTIFACT_MISSING` に写像する。
 6. phase と approval state の矛盾は `error_category: LIFECYCLE_INCONSISTENT` に写像する。
+7. `status: FOUND` で、current phase が要求する artifact がすべて存在し、`ready_for_implementation` が true の場合だけ `readiness: READY` を返す。
+8. feature は存在するが、current phase または approval が不整合なしに未完了の場合は `readiness: NOT_READY` を返す。
+9. lifecycle または artifact state が `spec.json` と矛盾する場合は `readiness: INCONSISTENT` を返す。
 
 ## Output mapping
 

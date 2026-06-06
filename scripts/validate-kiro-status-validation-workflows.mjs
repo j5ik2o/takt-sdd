@@ -13,7 +13,7 @@ const workflowSpecs = [
     file: "kiro-spec-status.yaml",
     instructions: ["kiro-report-spec-status"],
     reports: ["kiro-status"],
-    requiredTerms: ["kiro-status", "FEATURE_NOT_FOUND", "ARTIFACT_MISSING", "LIFECYCLE_INCONSISTENT"],
+    requiredTerms: ["kiro-status", "FEATURE_NOT_FOUND", "ARTIFACT_MISSING", "LIFECYCLE_INCONSISTENT", "NOT_READY", "INCONSISTENT"],
   },
   {
     file: "kiro-validate-gap.yaml",
@@ -39,7 +39,7 @@ const instructionSpecs = [
   {
     file: "kiro-report-spec-status.md",
     parent: "gather-review",
-    terms: ["spec.json", "phase", "approvals", "ready_for_implementation", "FEATURE_NOT_FOUND", "ARTIFACT_MISSING", "LIFECYCLE_INCONSISTENT", "kiro-status"],
+    terms: ["spec.json", "phase", "approvals", "ready_for_implementation", "FEATURE_NOT_FOUND", "ARTIFACT_MISSING", "LIFECYCLE_INCONSISTENT", "READY", "NOT_READY", "INCONSISTENT", "kiro-status"],
   },
   {
     file: "kiro-validate-gap-readiness.md",
@@ -166,6 +166,11 @@ function validateWorkflowFiles() {
       }
       if (/instruction:\s*\n\s*-/.test(content)) {
         failures.push(`${rel(path)} must use a single TAKT instruction reference, not an instruction array`);
+      }
+      const passIndex = content.indexOf("condition: verdict PASS");
+      const manualIndex = content.indexOf("condition: finding category MANUAL_VERIFICATION_REQUIRED");
+      if (manualIndex !== -1 && passIndex !== -1 && passIndex < manualIndex) {
+        failures.push(`${rel(path)} must route MANUAL_VERIFICATION_REQUIRED before verdict PASS`);
       }
       if (/required_permission_mode:\s*edit|Write|Edit|cc-sdd-|opsx-|OpenSpec/.test(content)) {
         failures.push(`${rel(path)} contains out-of-boundary write or non-Kiro validation reference`);

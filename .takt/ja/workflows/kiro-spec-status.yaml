@@ -28,6 +28,10 @@ steps:
     rules:
       - condition: status FOUND and readiness READY
         next: COMPLETE
+      - condition: status FOUND and readiness NOT_READY
+        next: ABORT
+      - condition: status INVALID or readiness INCONSISTENT
+        next: ABORT
       - condition: status MISSING or error_category FEATURE_NOT_FOUND
         next: ABORT
       - condition: error_category ARTIFACT_MISSING or error_category LIFECYCLE_INCONSISTENT
