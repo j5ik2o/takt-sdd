@@ -13,6 +13,7 @@ This instruction is read-only. Inspect `.kiro/specs/<feature>/` and `.kiro/steer
 3. If `spec.json` is unreadable or invalid JSON, return `status: INVALID`, `readiness: INCONSISTENT`, and `error_category: SPEC_JSON_INVALID`.
 4. Read valid `spec.json`, set `status: FOUND`, and report `phase`, `approvals`, and `ready_for_implementation`.
 5. Check phase artifact consistency:
+   - `initialized` requires a `requirements.md` draft.
    - `requirements-generated` requires `requirements.md`.
    - `design-generated` requires `requirements.md` and `design.md`.
    - `tasks-generated` requires `requirements.md`, `design.md`, and `tasks.md`.

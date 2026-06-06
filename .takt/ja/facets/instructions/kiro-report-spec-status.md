@@ -13,6 +13,7 @@
 3. `spec.json` を読めない、または JSON として invalid な場合は、`status: INVALID`、`readiness: INCONSISTENT`、`error_category: SPEC_JSON_INVALID` を返す。
 4. valid な `spec.json` を読み、`status: FOUND` を設定し、`phase`、`approvals`、`ready_for_implementation` を報告する。
 5. phase artifact consistency を確認する:
+   - `initialized` は draft の `requirements.md` を要求する。
    - `requirements-generated` は `requirements.md` を要求する。
    - `design-generated` は `requirements.md` と `design.md` を要求する。
    - `tasks-generated` は `requirements.md`、`design.md`、`tasks.md` を要求する。

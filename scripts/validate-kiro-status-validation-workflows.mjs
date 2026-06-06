@@ -39,7 +39,7 @@ const instructionSpecs = [
   {
     file: "kiro-report-spec-status.md",
     parent: "gather-review",
-    terms: ["spec.json", "phase", "approvals", "ready_for_implementation", "FOUND", "INVALID", "FEATURE_NOT_FOUND", "ARTIFACT_MISSING", "SPEC_JSON_INVALID", "LIFECYCLE_INCONSISTENT", "READY", "NOT_READY", "INCONSISTENT", "kiro-status"],
+    terms: ["spec.json", "phase", "approvals", "ready_for_implementation", "initialized", "FOUND", "INVALID", "FEATURE_NOT_FOUND", "ARTIFACT_MISSING", "SPEC_JSON_INVALID", "LIFECYCLE_INCONSISTENT", "READY", "NOT_READY", "INCONSISTENT", "kiro-status"],
   },
   {
     file: "kiro-validate-gap-readiness.md",
