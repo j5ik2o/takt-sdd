@@ -175,7 +175,19 @@ const quickPhaseParitySpecs = [
   {
     step: "quick-tasks",
     termSets: [
-      ["auto-approve", "approvals.tasks.approved true", "ready_for_implementation true"],
+      [
+        "same auto-approve semantics",
+        "phase tasks",
+        "tasks.md written",
+        "tasks-generated",
+        "approvals.requirements.approved true",
+        "approvals.design.approved true",
+        "approvals.tasks.generated true",
+        "approvals.tasks.approved true",
+        "ready_for_implementation true",
+        "task plan review PASS",
+        "task graph sanity review PASS",
+      ],
       [
         "not auto-approve",
         "phase tasks",
@@ -189,6 +201,33 @@ const quickPhaseParitySpecs = [
       ],
     ],
   },
+];
+
+const taskWorkflowCompletionTermSets = [
+  [
+    "auto-approve",
+    "phase tasks",
+    "tasks.md written",
+    "tasks-generated",
+    "approvals.requirements.approved true",
+    "approvals.design.approved true",
+    "approvals.tasks.generated true",
+    "approvals.tasks.approved true",
+    "ready_for_implementation true",
+    "task plan review PASS",
+    "task graph sanity review PASS",
+  ],
+  [
+    "not auto-approve",
+    "phase tasks",
+    "tasks.md written",
+    "tasks-generated",
+    "approvals.requirements.approved true",
+    "approvals.design.approved true",
+    "approvals.tasks.generated true",
+    "task plan review PASS",
+    "task graph sanity review PASS",
+  ],
 ];
 
 const unsupportedExtendsPattern = /[/:\\]/;
@@ -357,6 +396,18 @@ function stepScalar(block, key) {
   }
   const match = block.join("\n").match(new RegExp(`^    ${key}:\\s*(.+)\\s*$`, "m"));
   return match?.[1] ?? "";
+}
+
+function conditionLines(block) {
+  return block
+    .join("\n")
+    .split("\n")
+    .map((line) => line.match(/^\s*-\s+condition:\s*(.+)\s*$/)?.[1])
+    .filter(Boolean);
+}
+
+function hasConditionWithTerms(conditions, terms) {
+  return conditions.some((condition) => terms.every((term) => condition.includes(term)));
 }
 
 function indentedList(block, key) {
@@ -567,14 +618,12 @@ function validateQuickComposition(repoRoot) {
         failures.push(`QUICK_COMPOSITION_DRIFT: ${rel(repoRoot, path)} missing quick parity step: ${spec.step}`);
         continue;
       }
-      const blockContent = block.join("\n");
+      const conditions = conditionLines(block);
       for (const terms of spec.termSets) {
-        for (const term of terms) {
-          if (!blockContent.includes(term)) {
-            failures.push(
-              `QUICK_COMPOSITION_DRIFT: ${rel(repoRoot, path)} step ${spec.step} missing standalone parity term: ${term}`,
-            );
-          }
+        if (!hasConditionWithTerms(conditions, terms)) {
+          failures.push(
+            `QUICK_COMPOSITION_DRIFT: ${rel(repoRoot, path)} step ${spec.step} missing standalone parity condition with terms: ${terms.join(", ")}`,
+          );
         }
       }
     }
@@ -587,6 +636,35 @@ function validateQuickComposition(repoRoot) {
     }
     if (/\bkiro-(?:discovery|spec-batch|impl)\b/.test(content)) {
       failures.push(`QUICK_COMPOSITION_DRIFT: ${rel(repoRoot, path)} must keep discovery, batch, and implementation out of quick path`);
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
+function validateTaskWorkflowCompletion(repoRoot) {
+  const failures = [];
+  for (const lang of languages) {
+    const path = join(repoRoot, ".takt", lang, "workflows", "kiro-spec-tasks.yaml");
+    if (!existsSync(path)) {
+      failures.push(`TASK_WORKFLOW_DRIFT: ${rel(repoRoot, path)} missing`);
+      continue;
+    }
+
+    const content = readText(path);
+    const blocks = stepBlocks(content);
+    const block = blocks.find((candidate) => stepScalar(candidate, "name") === "generate-tasks");
+    if (!block) {
+      failures.push(`TASK_WORKFLOW_DRIFT: ${rel(repoRoot, path)} missing generate-tasks step`);
+      continue;
+    }
+
+    const conditions = conditionLines(block);
+    for (const terms of taskWorkflowCompletionTermSets) {
+      if (!hasConditionWithTerms(conditions, terms)) {
+        failures.push(
+          `TASK_WORKFLOW_DRIFT: ${rel(repoRoot, path)} generate-tasks missing completion condition with terms: ${terms.join(", ")}`,
+        );
+      }
     }
   }
   return { ok: failures.length === 0, failures };
@@ -1049,6 +1127,7 @@ export function validateKiroSpecGenerationWorkflows(options = {}) {
     taskAnnotationContract: validateTaskAnnotationContract(repoRoot),
     packageScripts: validatePackageScripts(repoRoot),
     quickComposition: validateQuickComposition(repoRoot),
+    taskWorkflowCompletion: validateTaskWorkflowCompletion(repoRoot),
     languageParity: validateLanguageParity(repoRoot),
     downstreamBoundaries: validateDownstreamBoundaries(repoRoot),
     builtinFacetInheritance: validateBuiltinFacetInheritance(repoRoot),

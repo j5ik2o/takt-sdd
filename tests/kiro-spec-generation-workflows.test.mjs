@@ -415,7 +415,7 @@ test("validation detects quick workflow standalone phase parity drift", () => {
         "        next: quick-tasks",
         "  - name: quick-tasks",
         "    rules:",
-        "      - condition: validation.verdict PASS and auto-approve and approvals.tasks.approved true and ready_for_implementation true",
+        "      - condition: validation.verdict PASS and same auto-approve semantics and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true and task plan review PASS and task graph sanity review PASS",
         "        next: quick-sanity-review",
         "  - name: quick-sanity-review",
       ].join("\n"),
@@ -426,6 +426,35 @@ test("validation detects quick workflow standalone phase parity drift", () => {
 
   assert.ok(
     result.failures.some((failure) => failure.includes("QUICK_COMPOSITION_DRIFT") && failure.includes("not auto-approve")),
+    result.failures.join("\n"),
+  );
+});
+
+test("task workflow validation detects auto-approve task review drift", () => {
+  const root = makeFixture();
+  for (const lang of ["en", "ja"]) {
+    writeFixtureFile(
+      root,
+      `.takt/${lang}/workflows/kiro-spec-tasks.yaml`,
+      [
+        "name: kiro-spec-tasks",
+        "steps:",
+        "  - name: generate-tasks",
+        "    rules:",
+        "      - condition: validation.verdict PASS and auto-approve and approvals.tasks.approved true and ready_for_implementation true",
+        "        next: COMPLETE",
+        "      - condition: validation.verdict PASS and not auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and task plan review PASS and task graph sanity review PASS",
+        "        next: COMPLETE",
+      ].join("\n"),
+    );
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some(
+      (failure) => failure.includes("TASK_WORKFLOW_DRIFT") && failure.includes("task plan review PASS"),
+    ),
     result.failures.join("\n"),
   );
 });
@@ -632,9 +661,10 @@ test("task 6.1 tasks workflow requires canonical task annotations and ready stat
     assertFacetTerms(repoRoot, `.takt/${lang}/facets/policies/kiro-spec-task-annotations.md`, policyTerms);
 
     const workflow = readFileSync(join(repoRoot, `.takt/${lang}/workflows/kiro-spec-tasks.yaml`), "utf8");
-    const autoApproveRule = "validation.verdict PASS and auto-approve and approvals.tasks.approved true and ready_for_implementation true";
+    const autoApproveRule =
+      "validation.verdict PASS and auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true and task plan review PASS and task graph sanity review PASS";
     const normalRule = "validation.verdict PASS and not auto-approve and phase tasks";
-    assert.ok(workflow.includes(autoApproveRule), `${lang} tasks workflow should require ready state for auto-approve`);
+    assert.ok(workflow.includes(autoApproveRule), `${lang} tasks workflow should require reviewed tasks for auto-approve`);
     assert.ok(workflow.includes(normalRule), `${lang} tasks workflow should exclude auto-approve from normal completion`);
     assert.ok(workflow.indexOf(autoApproveRule) < workflow.indexOf(normalRule), `${lang} auto-approve rule should run first`);
   }
