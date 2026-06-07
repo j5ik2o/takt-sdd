@@ -11,7 +11,8 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 - `completed_task_refs`: complete として扱える task reference。
 - `remaining_work`: 不足 evidence、未解決 finding、未完了作業の配列。
 - `verification_evidence`: test、build、review、manual verification の fact。
-- `blocked_reason`: `STATUS` が `MANUAL_VERIFY_REQUIRED` または `verdict` が `BLOCKED` の場合は必須。
+- `manual_verification_reason`: `STATUS` が `MANUAL_VERIFY_REQUIRED` の場合は必須。blocked work と扱わず、人間が確認すべき evidence を説明する。
+- `blocked_reason`: `verdict` が `BLOCKED` の場合だけ必須。
 - `safe_to_update_progress`: boolean。`STATUS` が `VERIFIED` で、remaining work がない場合だけ true。
 - `summary`: 人間向け completion explanation のみ。
 

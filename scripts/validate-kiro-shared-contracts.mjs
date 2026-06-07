@@ -36,7 +36,7 @@ const outputContracts = [
   },
   {
     file: "kiro-completion-verification.md",
-    fields: ["STATUS", "verdict", "completed_task_refs", "remaining_work", "verification_evidence", "blocked_reason", "safe_to_update_progress", "summary"],
+    fields: ["STATUS", "verdict", "completed_task_refs", "remaining_work", "verification_evidence", "manual_verification_reason", "blocked_reason", "safe_to_update_progress", "summary"],
     enums: ["VERIFIED", "NOT_VERIFIED", "MANUAL_VERIFY_REQUIRED", "COMPLETE", "INCOMPLETE", "BLOCKED"],
   },
 ];
