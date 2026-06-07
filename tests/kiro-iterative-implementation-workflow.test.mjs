@@ -78,6 +78,20 @@ test("staged Kiro wrapper resolves configured language workflow path", () => {
   ]);
 });
 
+test("validator accepts single-quoted Kiro skill frontmatter values", () => {
+  const root = makeCurrentSurfaceFixture();
+  const facetPath = join(root, ".takt", "en", "facets", "instructions", "kiro-impl-execute-task.md");
+  const facet = readFileSync(facetPath, "utf8").replace(
+    'extends_skill_section: "## Step 3: Execute Implementation"',
+    "extends_skill_section: '## Step 3: Execute Implementation'",
+  );
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-impl-execute-task.md", facet);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, true, result.failures.join("\n"));
+});
+
 test("validator reports missing kiro-impl workflow and package wiring", () => {
   const root = makeRepoFixture({});
   mkdirSync(join(root, ".takt", "en", "workflows"), { recursive: true });

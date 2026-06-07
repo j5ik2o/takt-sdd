@@ -299,7 +299,7 @@ function parseFrontmatter(content) {
     if (!match) {
       continue;
     }
-    result[match[1].trim()] = match[2].trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)"$/, "$1");
+    result[match[1].trim()] = match[2].trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1");
   }
   return result;
 }
