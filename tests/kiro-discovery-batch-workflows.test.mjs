@@ -233,3 +233,33 @@ test("roadmap dependency wave policy keeps awareness-only sections out of batch 
     }
   }
 });
+
+test("kiro-spec-batch workflow uses dynamic worker dispatch without workflow reuse shims", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  for (const lang of ["en", "ja"]) {
+    const workflowPath = `.takt/${lang}/workflows/kiro-spec-batch.yaml`;
+    assert.equal(existsSync(join(repoRoot, workflowPath)), true, `${workflowPath} should exist`);
+    const workflow = readFileSync(join(repoRoot, workflowPath), "utf8");
+    for (const step of [
+      "parse-roadmap",
+      "plan-waves",
+      "dispatch-wave",
+      "cross-spec-review",
+      "coordinate-remediation",
+      "finalize-batch",
+    ]) {
+      assert.ok(workflow.includes(`name: ${step}`), `${workflowPath} should include ${step}`);
+    }
+    assert.ok(workflow.includes("dynamic subagent dispatch"));
+    assert.ok(workflow.includes("loop_monitors.threshold"));
+    assert.equal(/\btakt\s+-w\b|\btakt\s+.*\s-w\s+/.test(workflow), false);
+    assert.equal(workflow.includes("workflow_call"), false);
+
+    const instructionPath = `.takt/${lang}/facets/instructions/kiro-spec-batch.md`;
+    assert.equal(existsSync(join(repoRoot, instructionPath)), true, `${instructionPath} should exist`);
+    const instruction = readFileSync(join(repoRoot, instructionPath), "utf8");
+    assert.ok(instruction.includes("extends_skill: kiro-spec-batch"));
+    assert.ok(instruction.includes('extends_skill_section: "## Step 2: Build Dependency Waves"'));
+    assert.ok(instruction.includes("kiro-spec-generation-workflows"));
+  }
+});

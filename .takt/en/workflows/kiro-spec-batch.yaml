@@ -1,0 +1,141 @@
+name: kiro-spec-batch
+description: Kiro - Generate specs by roadmap dependency waves and review cross-spec consistency
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 24
+initial_step: parse-roadmap
+
+instructions:
+  kiro-spec-batch: ../facets/instructions/kiro-spec-batch.md
+  kiro-cross-spec-review: ../facets/instructions/kiro-cross-spec-review.md
+
+policies:
+  kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
+  kiro-spec-lifecycle: ../facets/policies/kiro-spec-lifecycle.md
+  kiro-roadmap-dependency-waves: ../facets/policies/kiro-roadmap-dependency-waves.md
+  kiro-cross-spec-boundaries: ../facets/policies/kiro-cross-spec-boundaries.md
+
+report_formats:
+  kiro-batch-summary: ../facets/output-contracts/kiro-batch-summary.md
+  kiro-cross-spec-review: ../facets/output-contracts/kiro-cross-spec-review.md
+
+loop_monitors:
+  - cycle:
+      - cross-spec-review
+      - coordinate-remediation
+    threshold: 3
+    judge:
+      persona: supervisor
+      instruction: kiro-spec-batch
+      rules:
+        - condition: Healthy (issues are converging and loop_monitors.threshold not reached)
+          next: cross-spec-review
+        - condition: Unproductive (loop_monitors.threshold reached or same issue repeats)
+          next: finalize-batch
+
+steps:
+  - name: parse-roadmap
+    edit: false
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-roadmap-dependency-waves
+    required_permission_mode: readonly
+    instruction: kiro-spec-batch
+    rules:
+      - condition: roadmap parsed from ## Specs (dependency order) and awareness-only sections separated
+        next: plan-waves
+      - condition: roadmap missing or missing dependency or circular dependency or missing brief.md
+        next: finalize-batch
+
+  - name: plan-waves
+    edit: false
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-roadmap-dependency-waves
+    required_permission_mode: readonly
+    instruction: kiro-spec-batch
+    rules:
+      - condition: dependency waves planned and pending feature count greater than zero
+        next: dispatch-wave
+      - condition: all roadmap specs already complete
+        next: finalize-batch
+      - condition: wave planning blocked
+        next: finalize-batch
+
+  - name: dispatch-wave
+    edit: true
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-roadmap-dependency-waves
+    required_permission_mode: edit
+    instruction: kiro-spec-batch
+    rules:
+      - condition: dynamic subagent dispatch completed for current wave and worker feature results aggregated and next wave remains
+        next: dispatch-wave
+      - condition: dynamic subagent dispatch completed for all waves and generated specs exist
+        next: cross-spec-review
+      - condition: worker failure results exist and no more waves are eligible
+        next: cross-spec-review
+
+  - name: cross-spec-review
+    edit: false
+    persona: architecture-reviewer
+    policy:
+      - kiro-artifact-operations
+      - kiro-cross-spec-boundaries
+    knowledge: architecture
+    required_permission_mode: readonly
+    instruction: kiro-cross-spec-review
+    output_contracts:
+      report:
+        - name: kiro-cross-spec-review-result.md
+          format: kiro-cross-spec-review
+    rules:
+      - condition: crossSpecReview PASS and no remediation required
+        next: finalize-batch
+      - condition: crossSpecReview NEEDS_FIX and local remediation possible
+        next: coordinate-remediation
+      - condition: crossSpecReview DECOMPOSITION_RETURN or blocking issue remains
+        next: finalize-batch
+
+  - name: coordinate-remediation
+    edit: true
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-roadmap-dependency-waves
+      - kiro-cross-spec-boundaries
+    required_permission_mode: edit
+    instruction: kiro-spec-batch
+    rules:
+      - condition: local remediation attempted and loop_monitors.threshold not reached
+        next: cross-spec-review
+      - condition: DECOMPOSITION_RETURN or loop_monitors.threshold reached
+        next: finalize-batch
+
+  - name: finalize-batch
+    edit: true
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-roadmap-dependency-waves
+      - kiro-cross-spec-boundaries
+    required_permission_mode: edit
+    instruction: kiro-spec-batch
+    output_contracts:
+      report:
+        - name: kiro-batch-summary.md
+          format: kiro-batch-summary
+    rules:
+      - condition: batch summary emitted and implementationReady true
+        next: COMPLETE
+      - condition: batch summary emitted and implementationReady false
+        next: ABORT
