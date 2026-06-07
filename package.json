@@ -22,6 +22,8 @@
     "kiro:validate:impl": "node scripts/kiro-staged.mjs kiro-validate-impl --pipeline --skip-git -t",
     "kiro:steering": "node scripts/kiro-staged.mjs kiro-steering --pipeline --skip-git -t",
     "kiro:steering-custom": "node scripts/kiro-staged.mjs kiro-steering-custom --pipeline --skip-git -t",
+    "validate:kiro-workflow-surface": "node scripts/validate-kiro-workflow-surface.mjs",
+    "test:kiro-workflow-surface": "node --test tests/kiro-workflow-surface.test.mjs",
     "validate:kiro-shared-contracts": "node scripts/validate-kiro-shared-contracts.mjs",
     "test:kiro-shared-contracts": "node --test tests/kiro-shared-workflow-contracts.test.mjs",
     "validate:kiro-status-validation-workflows": "node scripts/validate-kiro-status-validation-workflows.mjs",

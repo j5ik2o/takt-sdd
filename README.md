@@ -86,26 +86,28 @@ npx -y skills add j5ik2o/ai-tools --skill takt-task-builder
 
 ## Kiro Compatibility Workflow
 
-SDD executes the following phases in order:
+Use `kiro:*` scripts for new SDD workflow usage. Legacy `cc-sdd:*` scripts remain available for existing projects during migration, but new documentation and agent guidance should prefer the Kiro surface.
 
-| Phase | Workflow | Description |
-|-------|-------|-------------|
-| 1 | `cc-sdd-requirements` | Requirements document generation in EARS format |
-| 1.5 | `cc-sdd-validate-gap` | Gap analysis between requirements and existing codebase |
-| 2 | `cc-sdd-design` | Technical design and discovery log generation based on requirements |
-| 2.5 | `cc-sdd-validate-design` | Design quality review with GO/NO-GO decision, including auto-fix on NO-GO |
-| 3 | `cc-sdd-tasks` | Implementation task list generation |
-| 4 | `cc-sdd-impl` | Adaptive batch implementation (sequential/parallel worker support) |
-| 5 | `cc-sdd-validate-impl` | Parallel architecture, QA, and implementation review, including auto-fix on NO-GO |
+| Phase | npm script | Workflow identity | Description |
+|-------|------------|-------------------|-------------|
+| Discovery | `kiro:discovery` | `kiro-discovery` | Route a feature idea, update brief/roadmap when needed |
+| Spec quick path | `kiro:spec:quick` | `kiro-spec-quick` | Generate requirements, design, and tasks through the closed-loop path |
+| Requirements | `kiro:spec:requirements` | `kiro-spec-requirements` | Generate requirements in EARS format |
+| Gap validation | `kiro:validate:gap` | `kiro-validate-gap` | Compare requirements with the current codebase |
+| Design | `kiro:spec:design` | `kiro-spec-design` | Generate technical design and discovery notes |
+| Design validation | `kiro:validate:design` | `kiro-validate-design` | Review design quality and return a GO/NO-GO decision |
+| Tasks | `kiro:spec:tasks` | `kiro-spec-tasks` | Generate implementation tasks |
+| Batch specs | `kiro:spec:batch` | `kiro-spec-batch` | Generate multiple specs from roadmap dependency order |
+| Status | `kiro:spec:status` | `kiro-spec-status` | Report spec phase, approvals, and readiness |
+| Implementation | `kiro:impl` | `kiro-impl` | Implement approved tasks with review/debug/verify gates |
+| Implementation validation | `kiro:validate:impl` | `kiro-validate-impl` | Validate implementation evidence and remaining manual checks |
 
-Use the full-auto workflow `cc-sdd-full` to run Phases 1–5 in a single automated sequence.
+### Quick Execution
 
-### Full-Auto Execution
-
-Run requirements → gap analysis → design → design validation → implementation → implementation validation all at once.
+Run requirements → design → tasks through the quick path:
 
 ```bash
-npm run cc-sdd:full -- "description of requirements..."
+npm run kiro:spec:quick -- "description of requirements..."
 ```
 
 ### Phase-by-Phase Execution
@@ -113,44 +115,62 @@ npm run cc-sdd:full -- "description of requirements..."
 Run each phase workflow individually, allowing human intervention between phases.
 
 ```bash
-# Phase 1: Requirements generation
-npm run cc-sdd:requirements -- "description of requirements..."
+# Optional discovery
+npm run kiro:discovery -- "feature idea..."
+
+# Requirements generation
+npm run kiro:spec:requirements -- "description of requirements..."
 # Check the {feature} name in .kiro/specs/{feature}
 
-# Phase 1.5: Gap analysis (only when existing code exists)
-npm run cc-sdd:validate-gap -- "feature={feature}"
+# Gap analysis (only when existing code exists)
+npm run kiro:validate:gap -- "feature={feature}"
 
-# Phase 2: Design generation
-npm run cc-sdd:design -- "feature={feature}"
+# Design generation
+npm run kiro:spec:design -- "feature={feature}"
 
-# Phase 2.5: Design validation (auto-fix → re-validate on NO-GO)
-npm run cc-sdd:validate-design -- "feature={feature}"
+# Design validation
+npm run kiro:validate:design -- "feature={feature}"
 
-# Phase 3: Task generation
-npm run cc-sdd:tasks -- "feature={feature}"
+# Task generation
+npm run kiro:spec:tasks -- "feature={feature}"
 
-# Phase 4: Implementation
-npm run cc-sdd:impl -- "feature={feature}"
+# Implementation
+npm run kiro:impl -- "feature={feature}"
 
-# Phase 5: Implementation validation (auto-fix → re-validate on failure)
-npm run cc-sdd:validate-impl -- "feature={feature}"
+# Implementation validation
+npm run kiro:validate:impl -- "feature={feature}"
 ```
+
+### Migration from legacy `cc-sdd:*` scripts
+
+Legacy scripts are compatibility entrypoints. They continue to call the existing `cc-sdd-*` workflows and are not aliases for `kiro:*`.
+
+| Legacy script | New Kiro script |
+|---------------|-----------------|
+| `cc-sdd:full` | `kiro:spec:quick` |
+| `cc-sdd:requirements` | `kiro:spec:requirements` |
+| `cc-sdd:validate-gap` | `kiro:validate:gap` |
+| `cc-sdd:design` | `kiro:spec:design` |
+| `cc-sdd:validate-design` | `kiro:validate:design` |
+| `cc-sdd:tasks` | `kiro:spec:tasks` |
+| `cc-sdd:impl` | `kiro:impl` |
+| `cc-sdd:validate-impl` | `kiro:validate:impl` |
+| `cc-sdd:steering` | `kiro:steering` |
+| `cc-sdd:steering-custom` | `kiro:steering-custom` |
 
 <details>
-<summary>Using takt commands directly</summary>
+<summary>Legacy CC-SDD scripts</summary>
 
 ```bash
-takt --pipeline --skip-git -w cc-sdd-full -t "description of requirements..."
-takt --pipeline --skip-git -w cc-sdd-requirements -t "description of requirements..."
-takt --pipeline --skip-git -w cc-sdd-validate-gap -t "feature={feature}"
-takt --pipeline --skip-git -w cc-sdd-design -t "feature={feature}"
-takt --pipeline --skip-git -w cc-sdd-validate-design -t "feature={feature}"
-takt --pipeline --skip-git -w cc-sdd-tasks -t "feature={feature}"
-takt --pipeline --skip-git -w cc-sdd-impl -t "feature={feature}"
-takt --pipeline --skip-git -w cc-sdd-validate-impl -t "feature={feature}"
+npm run cc-sdd:full -- "description of requirements..."
+npm run cc-sdd:requirements -- "description of requirements..."
+npm run cc-sdd:validate-gap -- "feature={feature}"
+npm run cc-sdd:design -- "feature={feature}"
+npm run cc-sdd:validate-design -- "feature={feature}"
+npm run cc-sdd:tasks -- "feature={feature}"
+npm run cc-sdd:impl -- "feature={feature}"
+npm run cc-sdd:validate-impl -- "feature={feature}"
 ```
-
-For interactive mode, run `takt -w {workflow-name}`.
 
 </details>
 
@@ -174,8 +194,8 @@ Separate from the SDD workflow, workflows are provided to manage `.kiro/steering
 
 | Workflow | Description |
 |-------|-------------|
-| `cc-sdd-steering` | Generation and sync of core steering files (product.md / tech.md / structure.md) |
-| `cc-sdd-steering-custom` | Creation of domain-specific custom steering files |
+| `kiro-steering` | Generation and sync of core steering files (product.md / tech.md / structure.md) |
+| `kiro-steering-custom` | Creation of domain-specific custom steering files |
 
 ### steering
 
@@ -184,10 +204,10 @@ Analyzes the codebase and records the project's purpose, tech stack, and structu
 For greenfield projects (no existing code), skeleton files with placeholders are generated so developers can fill in their decisions.
 
 ```bash
-npm run cc-sdd:steering -- "sync steering"
+npm run kiro:steering -- "sync steering"
 
 # Greenfield: specify product direction and tech choices upfront
-npm run cc-sdd:steering -- "REST API server with TypeScript, Express, PostgreSQL"
+npm run kiro:steering -- "REST API server with TypeScript, Express, PostgreSQL"
 ```
 
 ### steering-custom
@@ -195,7 +215,7 @@ npm run cc-sdd:steering -- "REST API server with TypeScript, Express, PostgreSQL
 Creates steering files for specific domains such as architecture policies, API standards, and testing strategies. Templates are available in `.takt/knowledge/steering-custom-template-files/`.
 
 ```bash
-npm run cc-sdd:steering:custom -- "architecture"
+npm run kiro:steering-custom -- "architecture"
 # Specify the {name} from .takt/knowledge/steering-custom-template-files/{name}.md
 ```
 
@@ -214,28 +234,28 @@ Available templates:
 
 #### Greenfield Support (Projects with No Existing Code)
 
-Both `cc-sdd:steering` and `cc-sdd:steering-custom` support greenfield projects. Skeleton files can be generated even when the codebase is empty. Steering files are generated based on the template structure with placeholders (`[choice]`, `[rationale]`, etc.) for developers to fill in.
+Both `kiro:steering` and `kiro:steering-custom` support greenfield projects. Skeleton files can be generated even when the codebase is empty. Steering files are generated based on the template structure with placeholders (`[choice]`, `[rationale]`, etc.) for developers to fill in.
 
 To specify policies upfront, add them to the command:
 
 ```bash
 # Generate core steering skeletons (product.md / tech.md / structure.md)
-npm run cc-sdd:steering -- "generate steering"
+npm run kiro:steering -- "generate steering"
 
 # Specify product direction and tech choices upfront
-npm run cc-sdd:steering -- "REST API server with TypeScript, Express, PostgreSQL"
+npm run kiro:steering -- "REST API server with TypeScript, Express, PostgreSQL"
 
 # Custom steering: specify architecture policies
-npm run cc-sdd:steering:custom -- "architecture: hexagonal architecture, actor model"
+npm run kiro:steering-custom -- "architecture: hexagonal architecture, actor model"
 
 # Custom steering: specify testing strategy
-npm run cc-sdd:steering:custom -- "testing: Vitest, E2E with Playwright, 80%+ coverage"
+npm run kiro:steering-custom -- "testing: Vitest, E2E with Playwright, 80%+ coverage"
 
 # Custom steering: specify database policies
-npm run cc-sdd:steering:custom -- "database: PostgreSQL, Prisma ORM, automated migrations"
+npm run kiro:steering-custom -- "database: PostgreSQL, Prisma ORM, automated migrations"
 
 # Custom steering: generate skeleton only (fill in manually later)
-npm run cc-sdd:steering:custom -- "testing"
+npm run kiro:steering-custom -- "testing"
 ```
 
 Generated steering files are automatically referenced during design phases (`sdd:design`, `sdd:validate-design`, etc.).
