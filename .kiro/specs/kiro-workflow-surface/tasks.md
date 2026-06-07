@@ -22,7 +22,7 @@
     - OpenSpec の `opsx:*` は別入口として残っていることを確認する。
     - _Requirements: 1.1, 1.4, 2.2_
     - _Boundary:_ ReleaseSurfaceMetadata, CanonicalKiroScripts
-    - _Depends:_ 1
+    - _Depends:_ 1.2
 
 - [ ] 2. installer が配る script catalog を `kiro:*` canonical set に更新する
   - [x] 2.1 installer の SDD script catalog に canonical `kiro:*` set を追加する
