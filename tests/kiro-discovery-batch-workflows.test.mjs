@@ -27,6 +27,11 @@ function copyCurrentTaktFixture() {
   return root;
 }
 
+function writeSkillFixtures(root, specBatchContent = "## Step 2: Build Dependency Waves\n\n## Step 4: Cross-Spec Review\n") {
+  writeFixtureFile(root, ".agents/skills/kiro-discovery/SKILL.md", "## Step 2: Determine Action Path\n");
+  writeFixtureFile(root, ".agents/skills/kiro-spec-batch/SKILL.md", specBatchContent);
+}
+
 test("validation harness reports missing discovery/batch workflow bundle", () => {
   const root = makeFixture();
   const result = validateKiroDiscoveryBatchWorkflows({ repoRoot: root });
@@ -363,4 +368,14 @@ test("validation rejects missing built-in facet parent", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("missing-parent")));
+});
+
+test("validation rejects missing skill adapter section", () => {
+  const root = copyCurrentTaktFixture();
+  writeSkillFixtures(root, "## Step 2: Build Dependency Waves\n");
+
+  const result = validateKiroDiscoveryBatchWorkflows({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("## Step 4: Cross-Spec Review")));
 });

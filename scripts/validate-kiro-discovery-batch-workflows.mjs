@@ -213,6 +213,14 @@ function validateFacet(repoRoot, lang, spec) {
   if (spec.skillSection && frontmatter.extends_skill_section !== spec.skillSection) {
     failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must declare extends_skill_section: "${spec.skillSection}"`);
   }
+  if (spec.skill && existsSync(join(repoRoot, ".agents"))) {
+    const skillPath = join(repoRoot, ".agents", "skills", spec.skill, "SKILL.md");
+    if (!existsSync(skillPath)) {
+      failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} references missing skill ${rel(repoRoot, skillPath)}`);
+    } else if (spec.skillSection && !readText(skillPath).includes(`${spec.skillSection}\n`)) {
+      failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} references missing skill section ${spec.skillSection}`);
+    }
+  }
   const actualParent = parseFacetParent(content);
   if (actualParent !== spec.parent) {
     failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must extend built-in ${spec.kind}/${spec.parent}`);

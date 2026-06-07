@@ -106,7 +106,7 @@
   - _Boundary:_ DiscoveryBatchValidationHarness
   - _Depends:_ 2, 3, 8, 9, 10, 11, 12
 
-- [ ] 14. Kiro skill thin adapter へ discovery/batch facets を再整合する
+- [x] 14. Kiro skill thin adapter へ discovery/batch facets を再整合する
   - `kiro-discovery` と `kiro-spec-batch` の instruction facet に `extends_skill` と `extends_skill_section` を持たせる。
   - Kiro skill 本文をコピーせず、TAKT artifact input、worker dispatch input、output summary、rule condition だけを差分として記述する。
   - `kiro-spec-batch` を quick path ではなく roadmap dependency-wave controller として扱う。
