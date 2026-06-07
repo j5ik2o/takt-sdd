@@ -25,7 +25,7 @@
     - _Boundary:_ ReleaseSurfaceMetadata, CanonicalKiroScripts
     - _Depends:_ 1.2
 
-- [ ] 2. installer が配る script catalog を `kiro:*` canonical set に更新する
+- [x] 2. installer が配る script catalog を `kiro:*` canonical set に更新する
   - [x] 2.1 installer の SDD script catalog に canonical `kiro:*` set を追加する
     - 既存 project への script merge で `kiro:*` が追加対象になる。
     - 新規 `package.json` 生成時にも `kiro:*` と `opsx:*` が含まれる。
@@ -49,7 +49,7 @@
     - _Boundary:_ InstallerScriptCatalog, SurfaceValidation
     - _Depends:_ 2
 
-- [ ] 3. 旧 `cc-sdd:*` の非推奨方針と migration mapping を定義する
+- [x] 3. 旧 `cc-sdd:*` の非推奨方針と migration mapping を定義する
   - [x] 3.1 既知の旧 script 名に対する migration mapping を文書化する
     - 旧 script 名ごとに `Script Mapping` 表で定義された `kiro:*` 移行先を表示する。
     - `cc-sdd:full` は `kiro:spec:quick` を案内し、legacy phase 名から `kiro:<phase>` を文字列補間しない。
@@ -65,7 +65,7 @@
     - _Boundary:_ LegacyDeprecationPolicy
     - _Depends:_ 3
 
-- [ ] 4. root package と installer の legacy script 維持を検証する
+- [x] 4. root package と installer の legacy script 維持を検証する
   - [x] 4.1 root `package.json` の旧 `cc-sdd:*` scripts を既存 workflow 参照として維持する
     - root `package.json` の旧 `cc-sdd:*` scripts は既存 `cc-sdd-*` workflow を呼ぶ形で維持する。
     - `cc-sdd:*` が `kiro:*` の alias になっていないことを確認する。
@@ -81,7 +81,7 @@
     - _Boundary:_ InstallerScriptCatalog, LegacyDeprecationPolicy
     - _Depends:_ 2, 4.1
 
-- [ ] 5. README の Kiro workflow 説明と migration table を更新する
+- [x] 5. README の Kiro workflow 説明と migration table を更新する
   - [x] 5.1 README の Kiro compatibility workflow section を `kiro:*` canonical の説明へ更新する
     - Kiro compatibility workflow section を `kiro:*` canonical の説明へ更新する。
     - OpenSpec `opsx:*` は別 workflow として維持されることを説明する。
@@ -98,7 +98,7 @@
     - _Boundary:_ MigrationDocumentation
     - _Depends:_ 3, 5
 
-- [ ] 6. README.ja の Kiro workflow 説明を自然な日本語で更新する
+- [x] 6. README.ja の Kiro workflow 説明を自然な日本語で更新する
   - [x] 6.1 README.ja に README.md と同じ migration policy を反映する
     - README.md と同じ migration policy を日本語 README に反映する。
     - 破壊的変更であることと移行先を曖昧にせず説明する。
@@ -114,7 +114,7 @@
     - _Boundary:_ MigrationDocumentation
     - _Depends:_ 6
 
-- [ ] 7. agent guidance を `kiro:*` / `$kiro-*` 正規 surface にそろえる
+- [x] 7. agent guidance を `kiro:*` / `$kiro-*` 正規 surface にそろえる
   - [x] 7.1 Codex/Claude/common guidance の Kiro workflow 説明を更新する
     - Codex/Claude/common guidance の Kiro workflow 説明を確認し、旧 `cc-sdd:*` 正規入口表現を置き換える。
     - agent guidance から `$kiro-*` / `kiro:*` を正規入口として判断できる。
@@ -129,7 +129,7 @@
     - _Boundary:_ AgentGuidanceSurface
     - _Depends:_ 7
 
-- [ ] 8. 公開 surface の script 整合性テストを追加する
+- [x] 8. 公開 surface の script 整合性テストを追加する
   - [x] 8.1 root package と installer catalog の canonical script set を検証する
     - root `package.json` と installer catalog から canonical `kiro:*` key set を検証する。
     - `opsx:*` が Kiro canonical set に混入していないことを検証する。
@@ -146,7 +146,7 @@
     - _Boundary:_ SurfaceValidation, LegacyDeprecationPolicy
     - _Depends:_ 4, 8
 
-- [ ] 9. README/agent guidance の旧 canonical 表現を検出するテストを追加する
+- [x] 9. README/agent guidance の旧 canonical 表現を検出するテストを追加する
   - [x] 9.1 README/README.ja の `kiro:*` 実行例と migration table を検証する
     - README/README.ja に `kiro:*` 実行例と migration table があることを検証する。
     - 個別 `kiro-*` workflow YAML/facet の存在をこのテストの必須条件にしない。
@@ -161,7 +161,7 @@
     - _Boundary:_ SurfaceValidation, AgentGuidanceSurface
     - _Depends:_ 7, 9
 
-- [ ] 10. surface migration 全体を統合検証する
+- [x] 10. surface migration 全体を統合検証する
   - [x] 10.1 package、installer、README、agent guidance の変更をまとめて実行確認する
     - package、installer、README、agent guidance の変更をまとめて実行確認する。
     - `kiro:*` が canonical、`cc-sdd:*` が既存互換の非推奨入口、`opsx:*` が分離入口であることを確認する。
@@ -177,7 +177,7 @@
     - _Boundary:_ SurfaceValidation, CanonicalKiroScripts
     - _Depends:_ 10
 
-- [ ] 11. cross-spec release gate を後続 spec と既存 steering 系実装に照合する
+- [x] 11. cross-spec release gate を後続 spec と既存 steering 系実装に照合する
   - [x] 11.1 downstream spec と既存 steering 系実装の public workflow ownership を照合する
     - `kiro-spec-generation-workflows`、`kiro-status-validation-workflows`、`kiro-discovery-batch-workflows`、`kiro-iterative-implementation-workflow` と既存 steering 系実装が所有する public workflow identity と `CanonicalKiroScripts` の mapping を照合する。
     - workflow YAML/facet の実装が同一 PR stack に存在しない public `kiro:*` は、staged migration の明示的な案内へ接続されていることを確認する。
