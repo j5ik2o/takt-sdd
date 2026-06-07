@@ -62,7 +62,7 @@ steps:
         - name: kiro-spec-design-result.md
           format: kiro-spec-generation-result
     rules:
-      - condition: validation.verdict PASS and phase design and design.md written and research.md written and design-generated and approvals.requirements.approved true and approvals.design.generated true
+      - condition: validation.verdict PASS and phase design and design draft ready and research draft ready and design review gate pending
         next: review-design
       - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
         next: ABORT
@@ -86,7 +86,7 @@ steps:
           format: kiro-review-verdict
     rules:
       - condition: VERDICT APPROVED and design review gate passed
-        next: COMPLETE
+        next: finalize-design
       - condition: VERDICT REJECTED and local repair possible
         next: repair-design
       - condition: VERDICT REJECTED and requirements/design gap remains
@@ -108,12 +108,35 @@ steps:
         - name: kiro-spec-design-repair-result.md
           format: kiro-spec-generation-result
     rules:
-      - condition: validation.verdict PASS and design.md written and research.md written and design-generated and approvals.design.generated true
+      - condition: validation.verdict PASS and design draft repaired and research draft repaired
         next: review-design
       - condition: validation.verdict NEEDS_FIX and local repair attempted
         next: review-design
       - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
         next: ABORT
+
+  - name: finalize-design
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    knowledge:
+      - architecture
+    required_permission_mode: edit
+    instruction: kiro-spec-design
+    output_contracts:
+      report:
+        - name: kiro-spec-design-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and phase design and design.md written and research.md written and design-generated and approvals.requirements.approved true and approvals.design.generated true
+        next: COMPLETE
+      - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
+        next: ABORT
+      - condition: validation.verdict NEEDS_FIX
+        next: repair-design
 
 # Contract notes for validation and reviewers:
 # - The requirements approval gate checks requirements.md and spec.json before design generation.
@@ -122,6 +145,6 @@ steps:
 # - Write research.md as the design phase supplemental artifact and write final implementation decisions to design.md.
 # - design.md must include required sections: Boundary Commitments, File Structure Plan, and Requirements Traceability.
 # - The design review gate checks requirement coverage, architecture readiness, boundary readiness, File Structure Plan concreteness, and Requirements Traceability.
-# - The workflow uses generate -> review -> repair -> review as a closed loop; the repeat bound is only loop_monitors.threshold.
+# - The workflow uses generate -> review -> repair -> review -> finalize as a closed loop; the repeat bound is only loop_monitors.threshold.
 # - If a real requirements/design gap remains, return BLOCKED or NEEDS_FIX and do not advance to design-generated.
 # - On success, update spec.json to phase: "design-generated", approvals.requirements.approved: true, and approvals.design.generated: true.
