@@ -115,7 +115,7 @@
   - _Boundary:_ DiscoveryRoutingWorkflow, BatchWorkflow, DiscoveryBatchValidationHarness
   - _Depends:_ 13
 
-- [ ] 15. dynamic worker dispatch と cross-spec remediation loop を実装する
+- [x] 15. dynamic worker dispatch と cross-spec remediation loop を実装する
   - wave 内 feature を static TAKT step に展開せず、batch worker dispatch step が dynamic subagent input と result aggregation を管理する。
   - worker は `kiro-spec-generation-workflows` の phase contract と adapter を参照し、batch workflow は requirements/design/tasks 本文生成を再実装しない。
   - cross-spec review issue を affected specs、issue category、repair target、roadmap/decomposition return として machine-readable に返す。

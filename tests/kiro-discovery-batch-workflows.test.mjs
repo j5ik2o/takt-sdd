@@ -379,3 +379,18 @@ test("validation rejects missing skill adapter section", () => {
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("## Step 4: Cross-Spec Review")));
 });
+
+test("validation rejects independent remediation retry counters", () => {
+  const root = copyCurrentTaktFixture();
+  const path = ".takt/en/workflows/kiro-spec-batch.yaml";
+  writeFixtureFile(
+    root,
+    path,
+    `${readFileSync(join(root, path), "utf8")}\nretryCount: 3\n`,
+  );
+
+  const result = validateKiroDiscoveryBatchWorkflows({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("independent retry counter")));
+});
