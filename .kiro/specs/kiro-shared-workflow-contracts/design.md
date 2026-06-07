@@ -581,6 +581,7 @@ Kiro skill が構造化出力を定義している場合、TAKT rule の primary
 | `kiro-status` | `status` | `FOUND`, `MISSING`, `INVALID` |
 | `kiro-status` | `readiness` | `READY`, `NOT_READY`, `INCONSISTENT` |
 | `kiro-impl` implementer | `STATUS` | `READY_FOR_REVIEW`, `BLOCKED`, `NEEDS_CONTEXT` |
+| `kiro-completion-verification` | `STATUS` | `VERIFIED`, `NOT_VERIFIED`, `MANUAL_VERIFY_REQUIRED` |
 | `kiro-review` reviewer | `VERDICT` | `APPROVED`, `REJECTED` |
 | `kiro-debug` debugger | `NEXT_ACTION` | `RETRY_TASK`, `BLOCK_TASK`, `STOP_FOR_HUMAN` |
 | `kiro-validate-impl` feature validator | `DECISION` | `GO`, `NO-GO`, `MANUAL_VERIFY_REQUIRED` |
