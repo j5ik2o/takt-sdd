@@ -285,9 +285,21 @@ function validateKiroSkillFieldContract() {
     const reviewPath = join(repoRoot, ".takt", lang, "facets", "output-contracts", "kiro-review-verdict.md");
     const debugPath = join(repoRoot, ".takt", lang, "facets", "output-contracts", "kiro-debug-decision.md");
     const validationPath = join(repoRoot, ".takt", lang, "facets", "output-contracts", "kiro-validation-result.md");
-    containsAll(readText(reviewPath), ["VERDICT", "APPROVED", "REJECTED", "workflow branching"], reviewPath, failures);
-    containsAll(readText(debugPath), ["NEXT_ACTION", "RETRY_TASK", "BLOCK_TASK", "STOP_FOR_HUMAN", "workflow branching"], debugPath, failures);
-    containsAll(readText(validationPath), ["DECISION", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "primary field"], validationPath, failures);
+    if (!existsSync(reviewPath)) {
+      failures.push(`${rel(reviewPath)} missing`);
+    } else {
+      containsAllContractTerms(readText(reviewPath), ["VERDICT", "APPROVED", "REJECTED", "workflow branching"], reviewPath, failures);
+    }
+    if (!existsSync(debugPath)) {
+      failures.push(`${rel(debugPath)} missing`);
+    } else {
+      containsAllContractTerms(readText(debugPath), ["NEXT_ACTION", "RETRY_TASK", "BLOCK_TASK", "STOP_FOR_HUMAN", "workflow branching"], debugPath, failures);
+    }
+    if (!existsSync(validationPath)) {
+      failures.push(`${rel(validationPath)} missing`);
+    } else {
+      containsAllContractTerms(readText(validationPath), ["DECISION", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "primary field"], validationPath, failures);
+    }
 
     const workflowDir = join(repoRoot, ".takt", lang, "workflows");
     for (const workflow of listFilesRecursive(workflowDir).filter((path) => basename(path).startsWith("kiro-") && path.endsWith(".yaml"))) {
