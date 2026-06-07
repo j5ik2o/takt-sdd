@@ -199,6 +199,18 @@ test("validator rejects progress updates that omit routing status outputs", () =
   assert.ok(result.failures.some((failure) => failure.includes("kiro-impl-update-progress.md")));
 });
 
+test("validator rejects progress routing that drops task set status", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replaceAll("task_set_status", "task summary");
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("update-progress")));
+});
+
 test("validator rejects workflow references to missing persona resources", () => {
   const root = makeCurrentSurfaceFixture();
   const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");

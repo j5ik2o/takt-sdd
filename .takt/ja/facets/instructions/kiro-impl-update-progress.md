@@ -24,6 +24,7 @@ completion verificationまたはblocker decisionの後に、selected task progre
 `tasks.md` を書いた後は、workflow routing用に以下のmachine statusのいずれかを返す。
 
 - selected task checkboxまたはblocker noteを正常に更新し、次gateへ進める場合は `STATUS: READY_FOR_REVIEW`。
+- `tasks.md` を再読した後の `task_set_status: ALL_TASKS_COMPLETE | REMAINING_TASKS_EXIST | N/A`。checkboxを完了していない場合は `N/A` を使う。
 - stale task stateやwrite evidence不足によりselected taskを安全に更新できない場合は `STATUS: BLOCKED`。
 - progressまたはblocker noteを書く前に人間の入力が必要な場合は `STATUS: NEEDS_CONTEXT`。
 

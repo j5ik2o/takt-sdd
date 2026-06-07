@@ -247,9 +247,9 @@ steps:
         - name: kiro-task-progress-update.md
           format: kiro-implementation-result
     rules:
-      - condition: STATUS READY_FOR_REVIEW and selected task checkbox updated and all tasks complete
+      - condition: STATUS READY_FOR_REVIEW and selected task checkbox updated and task_set_status ALL_TASKS_COMPLETE
         next: validate-impl-final
-      - condition: STATUS READY_FOR_REVIEW and selected task checkbox updated and remaining tasks exist
+      - condition: STATUS READY_FOR_REVIEW and selected task checkbox updated and task_set_status REMAINING_TASKS_EXIST
         next: COMPLETE
       - condition: STATUS BLOCKED and selected task blocker note written
         next: ABORT

@@ -24,6 +24,7 @@ Update only the selected task progress after completion verification or blocker 
 After writing `tasks.md`, emit one of these machine statuses for workflow routing:
 
 - `STATUS: READY_FOR_REVIEW` when the selected task checkbox or blocker note was updated successfully and the workflow may move to the next gate.
+- `task_set_status: ALL_TASKS_COMPLETE | REMAINING_TASKS_EXIST | N/A` after re-reading `tasks.md`; use `N/A` when no checkbox was completed.
 - `STATUS: BLOCKED` when the selected task cannot be updated safely, including stale task state or missing write evidence.
 - `STATUS: NEEDS_CONTEXT` when human input is required before any progress or blocker note can be written.
 

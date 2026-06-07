@@ -11,6 +11,7 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 - `selected_task`: このiterationで選択したsingle task。選択できない場合は `N/A`。
 - `blocker_note_required`: `update-progress` がselected-task blocker noteを書く必要があるかを示すboolean。
 - `implementation_plan`: selected taskのboundary、dependencies、requirement coverage、file scope、validation commands。
+- `task_set_status`: `ALL_TASKS_COMPLETE`、`REMAINING_TASKS_EXIST`、`N/A` のいずれか。
 - `changed_files`: selected taskで編集したfiles。
 - `validation_evidence`: commands、exit codes、fresh outputs。
 - `RED_PHASE_OUTPUT`: behavioral tasksのfailing test evidence、または `N/A`。

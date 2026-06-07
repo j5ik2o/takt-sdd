@@ -52,6 +52,7 @@ const instructionSpecs = [
       "READY_FOR_REVIEW",
       "BLOCKED",
       "NEEDS_CONTEXT",
+      "task_set_status",
       "VERIFIED",
       "safe_to_update_progress",
       "selected task",
@@ -103,6 +104,7 @@ const outputContractSpecs = [
       "selected_task",
       "blocker_note_required",
       "implementation_plan",
+      "task_set_status",
       "changed_files",
       "validation_evidence",
       "missing_context",
@@ -411,8 +413,11 @@ function validateWorkflowFiles(repoRoot) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} verify-task-completion must gate progress on VERIFIED and safe_to_update_progress true`);
     }
     const updateBlock = blocks.get("update-progress") ?? [];
-    if (!hasRuleWithTerms(updateBlock, ["STATUS READY_FOR_REVIEW", "selected task checkbox updated", "next: validate-impl-final"])) {
+    if (!hasRuleWithTerms(updateBlock, ["STATUS READY_FOR_REVIEW", "selected task checkbox updated", "task_set_status ALL_TASKS_COMPLETE", "next: validate-impl-final"])) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must route successful final checkbox updates to validate-impl-final`);
+    }
+    if (!hasRuleWithTerms(updateBlock, ["STATUS READY_FOR_REVIEW", "selected task checkbox updated", "task_set_status REMAINING_TASKS_EXIST", "next: COMPLETE"])) {
+      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must complete non-final checkbox updates without feature validation`);
     }
     if (!hasRuleWithTerms(updateBlock, ["STATUS BLOCKED", "selected task blocker note written", "next: ABORT"])) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must route written blocker notes to ABORT`);
