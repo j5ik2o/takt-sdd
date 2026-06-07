@@ -244,6 +244,8 @@ const quickPhaseParitySpecs = [
       [
         "same auto-approve semantics",
         "phase tasks",
+        "draft_status WRITTEN",
+        "review_gate PASSED",
         "tasks.md written",
         "tasks-generated",
         "approvals.requirements.approved true",
@@ -251,19 +253,17 @@ const quickPhaseParitySpecs = [
         "approvals.tasks.generated true",
         "approvals.tasks.approved true",
         "ready_for_implementation true",
-        "task plan review PASS",
-        "task graph sanity review PASS",
       ],
       [
         "not auto-approve",
         "phase tasks",
+        "draft_status WRITTEN",
+        "review_gate PASSED",
         "tasks.md written",
         "tasks-generated",
         "approvals.requirements.approved true",
         "approvals.design.approved true",
         "approvals.tasks.generated true",
-        "task plan review PASS",
-        "task graph sanity review PASS",
       ],
     ],
   },
@@ -273,6 +273,8 @@ const taskWorkflowCompletionTermSets = [
   [
     "auto-approve",
     "phase tasks",
+    "draft_status WRITTEN",
+    "review_gate PASSED",
     "tasks.md written",
     "tasks-generated",
     "approvals.requirements.approved true",
@@ -280,19 +282,17 @@ const taskWorkflowCompletionTermSets = [
     "approvals.tasks.generated true",
     "approvals.tasks.approved true",
     "ready_for_implementation true",
-    "task plan review PASS",
-    "task graph sanity review PASS",
   ],
   [
     "not auto-approve",
     "phase tasks",
+    "draft_status WRITTEN",
+    "review_gate PASSED",
     "tasks.md written",
     "tasks-generated",
     "approvals.requirements.approved true",
     "approvals.design.approved true",
     "approvals.tasks.generated true",
-    "task plan review PASS",
-    "task graph sanity review PASS",
   ],
 ];
 
@@ -719,9 +719,9 @@ function validateTaskWorkflowCompletion(repoRoot) {
 
     const content = readText(path);
     const blocks = stepBlocks(content);
-    const block = blocks.find((candidate) => stepScalar(candidate, "name") === "generate-tasks");
+    const block = blocks.find((candidate) => stepScalar(candidate, "name") === "finalize-tasks");
     if (!block) {
-      failures.push(`TASK_WORKFLOW_DRIFT: ${rel(repoRoot, path)} missing generate-tasks step`);
+      failures.push(`TASK_WORKFLOW_DRIFT: ${rel(repoRoot, path)} missing finalize-tasks step`);
       continue;
     }
 
@@ -729,8 +729,21 @@ function validateTaskWorkflowCompletion(repoRoot) {
     for (const terms of taskWorkflowCompletionTermSets) {
       if (!hasConditionWithTerms(conditions, terms)) {
         failures.push(
-          `TASK_WORKFLOW_DRIFT: ${rel(repoRoot, path)} generate-tasks missing completion condition with terms: ${terms.join(", ")}`,
+          `TASK_WORKFLOW_DRIFT: ${rel(repoRoot, path)} finalize-tasks missing completion condition with terms: ${terms.join(", ")}`,
         );
+      }
+    }
+
+    for (const candidate of blocks.filter((step) =>
+      ["generate-tasks", "repair-tasks", "finalize-tasks"].includes(stepScalar(step, "name")),
+    )) {
+      const stepName = stepScalar(candidate, "name");
+      for (const condition of conditionLines(candidate)) {
+        if (condition.includes("task plan review PASS") || condition.includes("task graph sanity review PASS")) {
+          failures.push(
+            `TASK_WORKFLOW_DRIFT: ${rel(repoRoot, path)} step ${stepName} must not branch on review-only fields in kiro-spec-generation-result`,
+          );
+        }
       }
     }
   }

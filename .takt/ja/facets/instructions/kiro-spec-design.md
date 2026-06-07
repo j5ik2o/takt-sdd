@@ -46,8 +46,7 @@ approved Kiro requirements から `.kiro/specs/<feature>/design.md` と `.kiro/s
 
 ## Result mapping
 
-- draft generation または repair step では read-only review step が読む draft artifact として `design.md` と `research.md` を書く、または更新する。ただし `spec.json` を `design-generated` へ promotion してはならない。draft が review に進める場合は `draft_status: "READY_FOR_REVIEW"` と `review_gate: "PENDING"` を返す。
-- 成功時は `phase: "design"`、`validation.verdict: "PASS"`、`featureName`、`updatedFiles` に `design.md`、`research.md`、`spec.json` を含める。
-- design review gate 通過後の finalize step では、artifact update とともに `draft_status: "WRITTEN"` と `review_gate: "PASSED"` を返す。
+- draft generation または repair step では read-only review step が読む draft artifact として `design.md` と `research.md` を書く、または更新する。ただし `spec.json` を `design-generated` へ promotion してはならない。draft が review に進める場合は `phase: "design"`、`validation.verdict: "PASS"`、`draft_status: "READY_FOR_REVIEW"`、`review_gate: "PENDING"`、`featureName`、`updatedFiles` に `design.md` と `research.md` のみを含めて返す。
+- design review gate 通過後の finalize step では、`phase: "design"`、`validation.verdict: "PASS"`、`draft_status: "WRITTEN"`、`review_gate: "PASSED"`、`featureName`、`updatedFiles` に `design.md`、`research.md`、`spec.json` を含めて返す。
 - missing requirements、lifecycle inconsistency、requirements approval gate failure、design review gate failure、requirements/design gap がある場合は `BLOCKED` または `NEEDS_FIX` を返し、`spec.json` を `design-generated` success state にしない。
 - evidence には requirements approval gate handling、`-y` または auto-approve handling、discovery/research sources、design synthesis、design review gate result、required sections、`spec.json` を `design-generated` に更新したかを記録する。

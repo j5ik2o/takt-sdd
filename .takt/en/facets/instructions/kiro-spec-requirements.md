@@ -43,8 +43,7 @@ Generate `.kiro/specs/<feature>/requirements.md` from initialized Kiro context. 
 
 ## Result mapping
 
-- In draft generation or repair steps, write or update `requirements.md` as a draft artifact for the read-only review step, but do not promote `spec.json` to `requirements-generated`. Return `draft_status: "READY_FOR_REVIEW"` and `review_gate: "PENDING"` when the draft is ready for review.
-- On success, return `phase: "requirements"`, `validation.verdict: "PASS"`, `featureName`, and `updatedFiles` containing `requirements.md` and `spec.json`.
-- In finalize steps after the requirements review gate passed, return `draft_status: "WRITTEN"` and `review_gate: "PASSED"` with the artifact updates.
+- In draft generation or repair steps, write or update `requirements.md` as a draft artifact for the read-only review step, but do not promote `spec.json` to `requirements-generated`. When the draft is ready for review, return `phase: "requirements"`, `validation.verdict: "PASS"`, `draft_status: "READY_FOR_REVIEW"`, `review_gate: "PENDING"`, `featureName`, and `updatedFiles` containing `requirements.md` only.
+- In finalize steps after the requirements review gate passed, return `phase: "requirements"`, `validation.verdict: "PASS"`, `draft_status: "WRITTEN"`, `review_gate: "PASSED"`, `featureName`, and `updatedFiles` containing `requirements.md` and `spec.json`.
 - On lifecycle inconsistency, missing context, scope ambiguity, unverifiable acceptance criteria, or requirements review gate failure, return `BLOCKED` or `NEEDS_FIX` and keep `spec.json` out of the `requirements-generated` success state.
 - `evidence` must mention the context loading sources, EARS and numeric IDs checks, requirements review gate result, and whether `spec.json` was updated to `requirements-generated`.

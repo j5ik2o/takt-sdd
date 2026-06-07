@@ -65,13 +65,9 @@ steps:
     rules:
       - condition: validation.verdict PASS and phase tasks and draft_status READY_FOR_REVIEW and review_gate PENDING
         next: review-tasks
-      - condition: validation.verdict PASS and auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true and task plan review PASS and task graph sanity review PASS
-        next: review-tasks
-      - condition: validation.verdict PASS and not auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and task plan review PASS and task graph sanity review PASS
-        next: review-tasks
       - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
         next: ABORT
-      - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW
+      - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW and review_gate PENDING
         next: review-tasks
 
   - name: review-tasks
@@ -117,11 +113,9 @@ steps:
         - name: kiro-spec-tasks-repair-result.md
           format: kiro-spec-generation-result
     rules:
-      - condition: validation.verdict PASS and draft_status READY_FOR_REVIEW
+      - condition: validation.verdict PASS and phase tasks and draft_status READY_FOR_REVIEW and review_gate PENDING
         next: review-tasks
-      - condition: validation.verdict PASS and tasks.md written and tasks-generated and task plan review PASS and task graph sanity review PASS
-        next: review-tasks
-      - condition: validation.verdict NEEDS_FIX and local repair attempted
+      - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW and review_gate PENDING and local repair attempted
         next: review-tasks
       - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
         next: ABORT
@@ -143,9 +137,9 @@ steps:
         - name: kiro-spec-tasks-result.md
           format: kiro-spec-generation-result
     rules:
-      - condition: validation.verdict PASS and auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true and task plan review PASS and task graph sanity review PASS
+      - condition: validation.verdict PASS and auto-approve and phase tasks and draft_status WRITTEN and review_gate PASSED and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true
         next: COMPLETE
-      - condition: validation.verdict PASS and not auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and task plan review PASS and task graph sanity review PASS
+      - condition: validation.verdict PASS and not auto-approve and phase tasks and draft_status WRITTEN and review_gate PASSED and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true
         next: COMPLETE
       - condition: validation.verdict NEEDS_FIX
         next: repair-tasks
