@@ -107,7 +107,7 @@
   - _Boundary:_ StatusValidationWorkflowValidationHarness
   - _Depends:_ 7
 
-- [ ] 14. read-only multi-step workflow shape へ再作成する
+- [x] 14. read-only multi-step workflow shape へ再作成する
   - `kiro-spec-status`、`kiro-validate-gap`、`kiro-validate-design`、`kiro-validate-impl` を evidence collection、classification/validation、report の step sequence として再作成する。
   - 単一 prompt step wrapper、artifact write step、repair step、debug step を validation failure として検出する。
   - read-only workflow が `.kiro/*` と repository evidence を読むだけで、tasks.md checkbox や design.md を更新しないことを確認する。
@@ -115,7 +115,7 @@
   - _Boundary:_ KiroSpecStatusWorkflow, KiroGapValidationWorkflow, KiroDesignValidationWorkflow, KiroImplValidationWorkflow, StatusValidationWorkflowValidationHarness
   - _Depends:_ 13
 
-- [ ] 15. Kiro validation skill thin adapter へ facets を再整合する
+- [x] 15. Kiro validation skill thin adapter へ facets を再整合する
   - `kiro-validate-gap`、`kiro-validate-design`、`kiro-validate-impl` の instruction facet に `extends_skill` と `extends_skill_section` を持たせる。
   - Kiro skill 本文を facet にコピーせず、TAKT input/output/rule mapping と read-only boundary だけを差分として記述する。
   - en/ja facet の Kiro skill section、machine field、enum が一致することを validation に追加する。
@@ -124,7 +124,7 @@
   - _Boundary:_ StatusValidationWorkflowValidationHarness, KiroValidationOutputMapper
   - _Depends:_ 14
 
-- [ ] 16. Kiro skill field contract に output mapping を合わせる
+- [x] 16. Kiro skill field contract に output mapping を合わせる
   - `kiro-validate-impl` の `DECISION: GO | NO-GO | MANUAL_VERIFY_REQUIRED` を primary machine field として workflow rule に接続する。
   - `validation.verdict` は補助分類に限定し、Kiro skill field を上書きしない。
   - `kiro-validate-design` と `kiro-validate-gap` も参照元 skill が定義する field を primary として扱う。
