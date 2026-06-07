@@ -11,7 +11,8 @@
 
   - [x] 1.2 root package に canonical `kiro:*` script set を追加する
     - `kiro:discovery`、`kiro:spec:init`、`kiro:spec:requirements`、`kiro:validate:gap`、`kiro:spec:design`、`kiro:validate:design`、`kiro:spec:tasks`、`kiro:spec:quick`、`kiro:spec:batch`、`kiro:spec:status`、`kiro:impl`、`kiro:validate:impl`、`kiro:steering`、`kiro:steering-custom` を root scripts に追加する。
-    - script value は `takt --pipeline --skip-git -w kiro-* -t` 形式の canonical workflow identity に接続する。
+    - script value は `node scripts/kiro-staged.mjs <workflow-name> --pipeline --skip-git -t` 形式の public wrapper に接続し、workflow identity を第一引数として保持する。
+    - wrapper は実装済み workflow を TAKT workflow path へ解決し、未提供 workflow では staged migration guidance を返す。
     - `cc-sdd:*` や `opsx:*` を canonical Kiro set に混入させない。
     - _Requirements: 1.1, 1.4, 2.1, 2.2_
     - _Boundary:_ ReleaseSurfaceMetadata, CanonicalKiroScripts
@@ -197,7 +198,7 @@
   - README/README.ja/agent guidance では、旧 `cc-sdd:*` を既存互換、`kiro:*` を新規推奨として説明する。
   - unreleased の既存 `kiro-*` workflow/facet は互換維持対象にせず、Kiro skill 継承の closed-loop workflow として削除または再作成する。
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 6.1, 6.2, 6.3, 6.4_
-  - _Boundary:_ SurfaceValidation, AgentGuidanceSurface, ScriptSurfaceCatalog
+  - _Boundary:_ SurfaceValidation, AgentGuidanceSurface, CanonicalKiroScripts, InstallerScriptCatalog
   - _Depends:_ none
 
 ## Implementation Notes

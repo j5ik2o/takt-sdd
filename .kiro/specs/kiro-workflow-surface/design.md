@@ -213,7 +213,7 @@ Key decisions:
 **Responsibilities & Constraints**
 
 - `kiro:discovery`、`kiro:spec:init`、`kiro:spec:requirements`、`kiro:validate:gap`、`kiro:spec:design`、`kiro:validate:design`、`kiro:spec:tasks`、`kiro:spec:quick`、`kiro:spec:batch`、`kiro:spec:status`、`kiro:impl`、`kiro:validate:impl`、`kiro:steering`、`kiro:steering-custom` を canonical set とする。
-- script value は TAKT workflow 実行形式を使う。ただし個別 workflow の YAML 実装内容はこの spec の責務ではない。
+- script value は `node scripts/kiro-staged.mjs <workflow-name> --pipeline --skip-git -t` 形式の staged public wrapper を使う。wrapper は実装済み workflow を TAKT workflow path へ解決し、未提供 workflow では利用者向け staged migration guidance を返す。
 - 旧 `cc-sdd:*` と同名の workflow を canonical として参照しない。
 - public `kiro:*` scripts は後続 spec または既存 steering 系が所有する workflow identity へ接続し、release readiness では workflow 実装済みまたは staged migration guidance 済みであることを確認する。
 
@@ -221,7 +221,7 @@ Key decisions:
 
 - Inbound: `ReleaseSurfaceMetadata`、`InstallerScriptCatalog` — script catalog として使用する (P0)
 - Outbound: future `kiro-*` workflow YAML — 実行先名として参照する (P1)
-- External: `takt` CLI — npm script から workflow を起動する (P0)
+- External: `scripts/kiro-staged.mjs` と `takt` CLI — npm script の public wrapper と workflow runtime として使用する (P0)
 
 **Contracts**: Service [x] / API [ ] / Event [ ] / Batch [ ] / State [x]
 
@@ -251,7 +251,7 @@ interface KiroScriptCatalog {
 ```
 
 - Preconditions: script catalog は root package と installer で同じ canonical key set を持つ。
-- Postconditions: `kiro:*` scripts は `takt --pipeline --skip-git -w kiro-* -t` 形式で起動できる。
+- Postconditions: `kiro:*` scripts は `node scripts/kiro-staged.mjs <workflow-name> --pipeline --skip-git -t` 形式で起動できる。workflow 実装が存在する場合、wrapper は `.takt/{lang}/workflows/<workflow-name>.yaml` または `.takt/workflows/<workflow-name>.yaml` を `takt` の `-w` 引数へ渡す。
 - Invariants: `opsx:*` scripts は canonical Kiro set に含めない。
 - Release invariant: public `kiro:*` scripts は、対応する `kiro-*` workflow が後続 spec または既存 steering 系実装として存在するか、staged migration として明示的な案内を返す。素の workflow missing error を release-ready と扱わない。
 
@@ -393,6 +393,7 @@ interface InstallerScriptCatalogService {
 **Responsibilities & Constraints**
 
 - root `package.json` と installer catalog の `kiro:*` canonical key set が一致することを検証する。
+- root `package.json` と installer catalog の public `kiro:*` script value が `scripts/kiro-staged.mjs` wrapper を使い、workflow identity を第一引数として保持することを検証する。
 - README/README.ja/agent guidance に旧 `cc-sdd:*` を canonical として案内する表現が残っていないことを検証する。
 - 旧 `cc-sdd:*` scripts が `kiro:*` alias または実行時失敗専用入口へ置換されていないことを検証する。
 - installer fixture で legacy scripts が module-not-found にならず既存 `cc-sdd-*` workflow を指すことを検証する。
