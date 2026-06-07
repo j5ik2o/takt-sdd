@@ -79,12 +79,30 @@ const phaseWorkflowSpecs = [
   },
   {
     name: "kiro-spec-quick",
-    requiredTerms: ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"],
+    requiredTerms: [
+      "quick-init",
+      "quick-requirements",
+      "quick-review-requirements",
+      "quick-repair-requirements",
+      "quick-finalize-requirements",
+      "quick-design",
+      "quick-review-design",
+      "quick-repair-design",
+      "quick-finalize-design",
+      "quick-tasks",
+      "quick-review-tasks",
+      "quick-repair-tasks",
+      "quick-finalize-tasks",
+      "quick-sanity-review",
+    ],
     instructionFacets: [
       "kiro-spec-init",
       "kiro-spec-requirements",
+      "kiro-spec-requirements-review",
       "kiro-spec-design",
+      "kiro-validate-design-readiness",
       "kiro-spec-tasks",
+      "kiro-spec-tasks-review",
       "kiro-spec-quick-sanity-review",
     ],
     policyFacets: [
@@ -93,7 +111,12 @@ const phaseWorkflowSpecs = [
       "kiro-spec-generation",
       "kiro-spec-task-annotations",
     ],
-    outputContracts: ["kiro-spec-generation-result", "kiro-spec-sanity-review"],
+    outputContracts: [
+      "kiro-spec-generation-result",
+      "kiro-validation-result",
+      "kiro-spec-tasks-review-result",
+      "kiro-spec-sanity-review",
+    ],
   },
 ];
 
@@ -223,10 +246,18 @@ const quickPhaseParitySpecs = [
   },
   {
     step: "quick-requirements",
+    termSets: [["phase requirements", "draft_status READY_FOR_REVIEW", "review_gate PENDING"]],
+  },
+  {
+    step: "quick-finalize-requirements",
     termSets: [["phase requirements", "requirements.md written", "requirements-generated", "approvals.requirements.generated true"]],
   },
   {
     step: "quick-design",
+    termSets: [["phase design", "draft_status READY_FOR_REVIEW", "review_gate PENDING"]],
+  },
+  {
+    step: "quick-finalize-design",
     termSets: [
       [
         "phase design",
@@ -240,6 +271,10 @@ const quickPhaseParitySpecs = [
   },
   {
     step: "quick-tasks",
+    termSets: [["phase tasks", "draft_status READY_FOR_REVIEW", "review_gate PENDING"]],
+  },
+  {
+    step: "quick-finalize-tasks",
     termSets: [
       [
         "same auto-approve semantics",
@@ -693,7 +728,22 @@ function validateQuickComposition(repoRoot) {
     }
 
     const content = readText(path);
-    const requiredSteps = ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"];
+    const requiredSteps = [
+      "quick-init",
+      "quick-requirements",
+      "quick-review-requirements",
+      "quick-repair-requirements",
+      "quick-finalize-requirements",
+      "quick-design",
+      "quick-review-design",
+      "quick-repair-design",
+      "quick-finalize-design",
+      "quick-tasks",
+      "quick-review-tasks",
+      "quick-repair-tasks",
+      "quick-finalize-tasks",
+      "quick-sanity-review",
+    ];
     containsAll(content, requiredSteps, path, failures, repoRoot, "QUICK_COMPOSITION_DRIFT");
     const blocks = stepBlocks(content);
     for (const spec of quickPhaseParitySpecs) {

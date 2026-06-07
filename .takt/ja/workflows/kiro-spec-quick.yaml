@@ -6,14 +6,17 @@ workflow_config:
       network_access: true
     opencode:
       network_access: true
-max_steps: 14
+max_steps: 24
 initial_step: quick-init
 
 instructions:
   kiro-spec-init: ../facets/instructions/kiro-spec-init.md
   kiro-spec-requirements: ../facets/instructions/kiro-spec-requirements.md
+  kiro-spec-requirements-review: ../facets/instructions/kiro-spec-requirements-review.md
   kiro-spec-design: ../facets/instructions/kiro-spec-design.md
+  kiro-validate-design-readiness: ../facets/instructions/kiro-validate-design-readiness.md
   kiro-spec-tasks: ../facets/instructions/kiro-spec-tasks.md
+  kiro-spec-tasks-review: ../facets/instructions/kiro-spec-tasks-review.md
   kiro-spec-quick-sanity-review: ../facets/instructions/kiro-spec-quick-sanity-review.md
 
 policies:
@@ -24,7 +27,47 @@ policies:
 
 report_formats:
   kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
+  kiro-validation-result: ../facets/output-contracts/kiro-validation-result.md
+  kiro-spec-tasks-review-result: ../facets/output-contracts/kiro-spec-tasks-review-result.md
   kiro-spec-sanity-review: ../facets/output-contracts/kiro-spec-sanity-review.md
+
+loop_monitors:
+  - cycle:
+      - quick-review-requirements
+      - quick-repair-requirements
+    threshold: 2
+    judge:
+      persona: supervisor
+      instruction: kiro-spec-requirements
+      rules:
+        - condition: Healthy (review findings are converging)
+          next: quick-review-requirements
+        - condition: Unproductive (same finding repeats or no improvement)
+          next: ABORT
+  - cycle:
+      - quick-review-design
+      - quick-repair-design
+    threshold: 2
+    judge:
+      persona: supervisor
+      instruction: kiro-spec-design
+      rules:
+        - condition: Healthy (review findings are converging)
+          next: quick-review-design
+        - condition: Unproductive (same finding repeats or no improvement)
+          next: ABORT
+  - cycle:
+      - quick-review-tasks
+      - quick-repair-tasks
+    threshold: 2
+    judge:
+      persona: supervisor
+      instruction: kiro-spec-tasks
+      rules:
+        - condition: Healthy (review findings are converging)
+          next: quick-review-tasks
+        - condition: Unproductive (same finding repeats or no improvement)
+          next: ABORT
 
 steps:
   - name: quick-init
@@ -64,14 +107,79 @@ steps:
         - name: kiro-spec-quick-requirements-result.md
           format: kiro-spec-generation-result
     rules:
+      - condition: validation.verdict PASS and phase requirements and draft_status READY_FOR_REVIEW and review_gate PENDING
+        next: quick-review-requirements
+      - condition: validation.verdict BLOCKED or scope ambiguity remains or acceptance criteria not verifiable
+        next: ABORT
+      - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW
+        next: quick-review-requirements
+
+  - name: quick-review-requirements
+    edit: false
+    persona: reviewer
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    required_permission_mode: readonly
+    instruction: kiro-spec-requirements-review
+    output_contracts:
+      report:
+        - name: kiro-spec-quick-requirements-review.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and requirements review gate passed
+        next: quick-finalize-requirements
+      - condition: validation.verdict NEEDS_FIX and local repair possible
+        next: quick-repair-requirements
+      - condition: validation.verdict BLOCKED or scope ambiguity remains
+        next: ABORT
+
+  - name: quick-repair-requirements
+    edit: true
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    required_permission_mode: edit
+    instruction: kiro-spec-requirements
+    output_contracts:
+      report:
+        - name: kiro-spec-quick-requirements-repair-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and draft_status READY_FOR_REVIEW
+        next: quick-review-requirements
+      - condition: validation.verdict NEEDS_FIX and local repair attempted
+        next: quick-review-requirements
+      - condition: validation.verdict BLOCKED or scope ambiguity remains or acceptance criteria not verifiable
+        next: ABORT
+
+  - name: quick-finalize-requirements
+    edit: true
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    required_permission_mode: edit
+    instruction: kiro-spec-requirements
+    output_contracts:
+      report:
+        - name: kiro-spec-quick-requirements-result.md
+          format: kiro-spec-generation-result
+    rules:
       - condition: validation.verdict PASS and automatic mode and phase requirements and requirements.md written and requirements-generated and approvals.requirements.generated true
         next: quick-design
       - condition: validation.verdict PASS and interactive mode and phase requirements and requirements.md written and requirements-generated and approvals.requirements.generated true and phase approval granted for design
         next: quick-design
       - condition: validation.verdict PASS and interactive mode and phase approval missing
         next: ABORT
-      - condition: validation.verdict BLOCKED or validation.verdict NEEDS_FIX
+      - condition: validation.verdict BLOCKED or scope ambiguity remains or acceptance criteria not verifiable
         next: ABORT
+      - condition: validation.verdict NEEDS_FIX
+        next: quick-repair-requirements
 
   - name: quick-design
     edit: true
@@ -99,6 +207,77 @@ steps:
         - name: kiro-spec-quick-design-result.md
           format: kiro-spec-generation-result
     rules:
+      - condition: validation.verdict PASS and phase design and draft_status READY_FOR_REVIEW and review_gate PENDING
+        next: quick-review-design
+      - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
+        next: ABORT
+      - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW
+        next: quick-review-design
+
+  - name: quick-review-design
+    edit: false
+    persona: architecture-reviewer
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    knowledge:
+      - architecture
+    required_permission_mode: readonly
+    instruction: kiro-validate-design-readiness
+    output_contracts:
+      report:
+        - name: kiro-spec-quick-design-review.md
+          format: kiro-validation-result
+    rules:
+      - condition: DECISION GO and design review gate passed
+        next: quick-finalize-design
+      - condition: DECISION NO-GO and local repair possible
+        next: quick-repair-design
+      - condition: DECISION NO-GO and requirements/design gap remains
+        next: ABORT
+      - condition: DECISION MANUAL_VERIFY_REQUIRED
+        next: ABORT
+
+  - name: quick-repair-design
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    knowledge:
+      - architecture
+    required_permission_mode: edit
+    instruction: kiro-spec-design
+    output_contracts:
+      report:
+        - name: kiro-spec-quick-design-repair-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and draft_status READY_FOR_REVIEW
+        next: quick-review-design
+      - condition: validation.verdict NEEDS_FIX and local repair attempted
+        next: quick-review-design
+      - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
+        next: ABORT
+
+  - name: quick-finalize-design
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    knowledge:
+      - architecture
+    required_permission_mode: edit
+    instruction: kiro-spec-design
+    output_contracts:
+      report:
+        - name: kiro-spec-quick-design-result.md
+          format: kiro-spec-generation-result
+    rules:
       - condition: validation.verdict PASS and automatic mode and same auto-approve semantics and phase design and design.md written and research.md written and design-generated and approvals.requirements.approved true and approvals.design.generated true
         next: quick-tasks
       - condition: validation.verdict PASS and interactive mode and phase approval granted for tasks and same auto-approve semantics and phase design and design.md written and research.md written and design-generated and approvals.requirements.approved true and approvals.design.generated true
@@ -107,8 +286,8 @@ steps:
         next: ABORT
       - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
         next: ABORT
-      - condition: validation.verdict NEEDS_FIX or design review gate failed
-        next: ABORT
+      - condition: validation.verdict NEEDS_FIX
+        next: quick-repair-design
 
   - name: quick-tasks
     edit: true
@@ -135,13 +314,87 @@ steps:
         - name: kiro-spec-quick-tasks-result.md
           format: kiro-spec-generation-result
     rules:
-      - condition: validation.verdict PASS and same auto-approve semantics and phase tasks and draft_status WRITTEN and review_gate PASSED and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true
+      - condition: validation.verdict PASS and phase tasks and draft_status READY_FOR_REVIEW and review_gate PENDING
+        next: quick-review-tasks
+      - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
+        next: ABORT
+      - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW and review_gate PENDING
+        next: quick-review-tasks
+
+  - name: quick-review-tasks
+    edit: false
+    persona: reviewer
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+      - kiro-spec-task-annotations
+    knowledge:
+      - architecture
+    required_permission_mode: readonly
+    instruction: kiro-spec-tasks-review
+    output_contracts:
+      report:
+        - name: kiro-spec-quick-tasks-review.md
+          format: kiro-spec-tasks-review-result
+    rules:
+      - condition: task_plan_review PASS and task_graph_sanity_review PASS
+        next: quick-finalize-tasks
+      - condition: task_plan_review NEEDS_FIXES or task_graph_sanity_review NEEDS_FIXES
+        next: quick-repair-tasks
+      - condition: task_plan_review RETURN_TO_DESIGN or task_graph_sanity_review RETURN_TO_DESIGN
+        next: ABORT
+      - condition: hidden prerequisite remains or boundary overlap remains or coverage gap remains
+        next: ABORT
+
+  - name: quick-repair-tasks
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+      - kiro-spec-task-annotations
+    knowledge:
+      - architecture
+    required_permission_mode: edit
+    instruction: kiro-spec-tasks
+    output_contracts:
+      report:
+        - name: kiro-spec-quick-tasks-repair-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and phase tasks and draft_status READY_FOR_REVIEW and review_gate PENDING
+        next: quick-review-tasks
+      - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW and review_gate PENDING and local repair attempted
+        next: quick-review-tasks
+      - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
+        next: ABORT
+
+  - name: quick-finalize-tasks
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+      - kiro-spec-task-annotations
+    knowledge:
+      - architecture
+    required_permission_mode: edit
+    instruction: kiro-spec-tasks
+    output_contracts:
+      report:
+        - name: kiro-spec-quick-tasks-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and same auto-approve semantics and auto-approve and phase tasks and draft_status WRITTEN and review_gate PASSED and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true
         next: quick-sanity-review
       - condition: validation.verdict PASS and not auto-approve and phase tasks and draft_status WRITTEN and review_gate PASSED and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true
         next: quick-sanity-review
+      - condition: validation.verdict NEEDS_FIX
+        next: quick-repair-tasks
       - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
-        next: ABORT
-      - condition: validation.verdict NEEDS_FIX or review_gate FAILED
         next: ABORT
 
   - name: quick-sanity-review
@@ -167,9 +420,9 @@ steps:
         next: ABORT
 
 # validation/review 用の contract notes:
-# - automatic mode は quick-init、quick-requirements、quick-design、quick-tasks、quick-sanity-review を成功 phase 間の user prompt なしで連続実行する。
+# - automatic mode は phase finalizer 成功の間に user prompt を挟まず、init、requirements、design、tasks、sanity review を連続実行する。
 # - interactive mode は init -> requirements、requirements -> design、design -> tasks の間で phase approval を要求し、phase approval がなければ quick path を停止する。
-# - quick-design と quick-tasks は standalone workflow と same auto-approve semantics を使う。
+# - quick requirements、design、tasks は、この YAML 内で standalone workflow と同じ generate -> review -> repair -> finalize pattern を使う。
 # - この single YAML は phase steps を直接 compose する。外部 workflow orchestration や shell command による TAKT 再起動は使わない。
 # - quick path は discovery/batch/implementation behavior を呼ばない。
 # - final sanity review の verdict PASS だけが quick-completion と COMPLETE を許可する。

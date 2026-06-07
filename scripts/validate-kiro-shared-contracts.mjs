@@ -547,7 +547,8 @@ function validateKiroWorkflowShapeRules() {
         if (stepCount < 3) {
           failures.push(`${rel(workflow)} must not be a single-step generation wrapper`);
         }
-        containsAllContractTerms(content, ["loop_monitors", "threshold", "review", "repair"], workflow, failures);
+        containsAllContractTerms(content, ["loop_monitors", "threshold"], workflow, failures);
+        containsAll(content, ["review", "repair"], workflow, failures);
       }
     }
   }
