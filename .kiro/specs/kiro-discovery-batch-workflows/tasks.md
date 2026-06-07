@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. discovery/batch workflow の validation harness を追加する
+- [x] 1. discovery/batch workflow の validation harness を追加する
   - `kiro-discovery`、`kiro-spec-batch`、関連 facet、output contract、roadmap parser fixture を検証できる repository-local check を追加する。
   - downstream `kiro-impl` や individual generation body が未実装でも failure にしない scope guard を含める。
   - 完了時点で missing workflow/facet、action path enum drift、cross-spec output contract drift が validation finding として確認できる。
