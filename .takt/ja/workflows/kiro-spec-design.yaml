@@ -11,6 +11,7 @@ initial_step: generate-design
 
 instructions:
   kiro-spec-design: ../facets/instructions/kiro-spec-design.md
+  kiro-validate-design-readiness: ../facets/instructions/kiro-validate-design-readiness.md
 
 policies:
   kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
@@ -19,7 +20,7 @@ policies:
 
 report_formats:
   kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
-  kiro-review-verdict: ../facets/output-contracts/kiro-review-verdict.md
+  kiro-validation-result: ../facets/output-contracts/kiro-validation-result.md
 
 loop_monitors:
   - cycle:
@@ -79,17 +80,19 @@ steps:
     knowledge:
       - architecture
     required_permission_mode: readonly
-    instruction: kiro-spec-design
+    instruction: kiro-validate-design-readiness
     output_contracts:
       report:
         - name: kiro-spec-design-review.md
-          format: kiro-review-verdict
+          format: kiro-validation-result
     rules:
-      - condition: VERDICT APPROVED and design review gate passed
+      - condition: DECISION GO and design review gate passed
         next: finalize-design
-      - condition: VERDICT REJECTED and local repair possible
+      - condition: DECISION NO-GO and local repair possible
         next: repair-design
-      - condition: VERDICT REJECTED and requirements/design gap remains
+      - condition: DECISION NO-GO and requirements/design gap remains
+        next: ABORT
+      - condition: DECISION MANUAL_VERIFY_REQUIRED
         next: ABORT
 
   - name: repair-design
