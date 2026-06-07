@@ -1,0 +1,292 @@
+name: kiro-impl
+description: Kiro - Implement exactly one eligible task from an approved spec, then review, debug, verify, and update progress
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 30
+initial_step: plan-one-task
+
+instructions:
+  kiro-impl-plan-one-task: ../facets/instructions/kiro-impl-plan-one-task.md
+  kiro-impl-execute-task: ../facets/instructions/kiro-impl-execute-task.md
+  kiro-impl-update-progress: ../facets/instructions/kiro-impl-update-progress.md
+  kiro-review-task: ../facets/instructions/kiro-review-task.md
+  kiro-debug-task: ../facets/instructions/kiro-debug-task.md
+  kiro-verify-task-completion: ../facets/instructions/kiro-verify-task-completion.md
+  kiro-validate-impl-final: ../facets/instructions/kiro-validate-impl-final.md
+
+policies:
+  kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
+  kiro-spec-lifecycle: ../facets/policies/kiro-spec-lifecycle.md
+  kiro-spec-task-annotations: ../facets/policies/kiro-spec-task-annotations.md
+  kiro-impl-task-progress: ../facets/policies/kiro-impl-task-progress.md
+
+report_formats:
+  kiro-implementation-result: ../facets/output-contracts/kiro-implementation-result.md
+  kiro-review-verdict: ../facets/output-contracts/kiro-review-verdict.md
+  kiro-debug-decision: ../facets/output-contracts/kiro-debug-decision.md
+  kiro-completion-verification: ../facets/output-contracts/kiro-completion-verification.md
+  kiro-validation-result: ../facets/output-contracts/kiro-validation-result.md
+
+loop_monitors:
+  - cycle:
+      - execute-task
+      - debug-task
+    threshold: 2
+    judge:
+      persona: supervisor
+      instruction: kiro-debug-task
+      rules:
+        - condition: Healthy (NEXT_ACTION RETRY_TASK has a concrete FIX_PLAN and selected task scope is unchanged)
+          next: execute-task
+        - condition: Unproductive (loop_monitors.threshold reached for execute-task and debug-task)
+          next: update-progress
+
+  - cycle:
+      - execute-task
+      - review-task
+      - debug-task
+    threshold: 2
+    judge:
+      persona: supervisor
+      instruction: kiro-debug-task
+      rules:
+        - condition: Healthy (review findings are converging toward VERDICT APPROVED)
+          next: execute-task
+        - condition: Unproductive (loop_monitors.threshold reached for execute-task, review-task, and debug-task)
+          next: update-progress
+
+steps:
+  - name: plan-one-task
+    edit: false
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-task-annotations
+      - kiro-impl-task-progress
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+    required_permission_mode: readonly
+    instruction: kiro-impl-plan-one-task
+    output_contracts:
+      report:
+        - name: kiro-implementation-plan.md
+          format: kiro-implementation-result
+    rules:
+      - condition: STATUS READY_FOR_REVIEW and ready_for_implementation true and exactly one selected task and implementation plan emitted
+        next: execute-task
+      - condition: STATUS BLOCKED and no eligible task or readiness gate failed or task annotation missing
+        next: ABORT
+      - condition: STATUS NEEDS_CONTEXT
+        next: ABORT
+
+  - name: execute-task
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+      - kiro-artifact-operations
+      - kiro-impl-task-progress
+    session: refresh
+    knowledge:
+      - backend
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Write
+          - Bash
+    required_permission_mode: edit
+    instruction: kiro-impl-execute-task
+    output_contracts:
+      report:
+        - name: kiro-task-implementation-result.md
+          format: kiro-implementation-result
+    rules:
+      - condition: STATUS READY_FOR_REVIEW
+        next: review-task
+      - condition: STATUS BLOCKED
+        next: debug-task
+      - condition: STATUS NEEDS_CONTEXT
+        next: debug-task
+
+  - name: review-task
+    edit: false
+    persona: coding-reviewer
+    policy:
+      - review
+      - qa
+      - kiro-artifact-operations
+      - kiro-impl-task-progress
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+    required_permission_mode: readonly
+    instruction: kiro-review-task
+    output_contracts:
+      report:
+        - name: kiro-task-review-verdict.md
+          format: kiro-review-verdict
+    rules:
+      - condition: VERDICT APPROVED
+        next: verify-task-completion
+      - condition: VERDICT REJECTED
+        next: debug-task
+
+  - name: debug-task
+    edit: false
+    persona: supervisor
+    policy:
+      - review
+      - kiro-artifact-operations
+      - kiro-impl-task-progress
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+          - WebSearch
+          - WebFetch
+    required_permission_mode: readonly
+    pass_previous_response: false
+    instruction: kiro-debug-task
+    output_contracts:
+      report:
+        - name: kiro-task-debug-decision.md
+          format: kiro-debug-decision
+    rules:
+      - condition: NEXT_ACTION RETRY_TASK
+        next: execute-task
+      - condition: NEXT_ACTION BLOCK_TASK
+        next: update-progress
+      - condition: NEXT_ACTION STOP_FOR_HUMAN
+        next: update-progress
+
+  - name: verify-task-completion
+    edit: false
+    persona: supervisor
+    policy:
+      - review
+      - qa
+      - kiro-artifact-operations
+      - kiro-impl-task-progress
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+    required_permission_mode: readonly
+    pass_previous_response: false
+    instruction: kiro-verify-task-completion
+    output_contracts:
+      report:
+        - name: kiro-task-completion-verification.md
+          format: kiro-completion-verification
+    rules:
+      - condition: STATUS VERIFIED and safe_to_update_progress true
+        next: update-progress
+      - condition: STATUS NOT_VERIFIED
+        next: debug-task
+      - condition: STATUS MANUAL_VERIFY_REQUIRED
+        next: debug-task
+
+  - name: update-progress
+    edit: true
+    persona: coder
+    policy:
+      - kiro-artifact-operations
+      - kiro-impl-task-progress
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Write
+          - Bash
+    required_permission_mode: edit
+    pass_previous_response: false
+    instruction: kiro-impl-update-progress
+    output_contracts:
+      report:
+        - name: kiro-task-progress-update.md
+          format: kiro-implementation-result
+    rules:
+      - condition: STATUS READY_FOR_REVIEW and selected task checkbox updated and all tasks complete
+        next: validate-impl-final
+      - condition: STATUS READY_FOR_REVIEW and selected task checkbox updated and remaining tasks exist
+        next: COMPLETE
+      - condition: STATUS BLOCKED
+        next: ABORT
+      - condition: STATUS NEEDS_CONTEXT
+        next: ABORT
+
+  - name: validate-impl-final
+    edit: false
+    persona: supervisor
+    policy:
+      - review
+      - qa
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-impl-task-progress
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+    required_permission_mode: readonly
+    pass_previous_response: false
+    instruction: kiro-validate-impl-final
+    output_contracts:
+      report:
+        - name: kiro-final-implementation-validation.md
+          format: kiro-validation-result
+    rules:
+      - condition: DECISION GO
+        next: COMPLETE
+      - condition: DECISION NO-GO
+        next: ABORT
+      - condition: DECISION MANUAL_VERIFY_REQUIRED
+        next: ABORT
+
+# Contract notes:
+# - This workflow executes at most one selected task per run.
+# - kiro-review, kiro-debug, kiro-verify-completion, and kiro-validate-impl are adapter steps here, not standalone workflows.
+# - Workflow rules branch on STATUS, VERDICT, NEXT_ACTION, and DECISION as the primary machine fields.
+# - Re-execution bounds are represented only by loop_monitors.threshold.

@@ -10,7 +10,7 @@
 
 - `kiro-impl` が実装開始前に readiness と task annotation を確認できる
 - 1 iteration で 1 task のみを実行し、boundary/dependency/validation plan を固定できる
-- `kiro-review`、`kiro-debug`、`kiro-verify-completion` を internal sub-workflow として接続できる
+- `kiro-review`、`kiro-debug`、`kiro-verify-completion` を `kiro-impl.yaml` 内の internal adapter step として接続できる
 - implementation/debug/review の再実行ループは TAKT runtime の `loop_monitors` で監視し、独自 retry 管理を持たない
 - completion verification の `STATUS` が `VERIFIED` になるまで checkbox と実装メモを更新しない
 - workflow/facet/contract drift を repository-local validation で検出できる
@@ -75,8 +75,8 @@ graph TB
     ImplWorkflow --> ReadinessGate
     ReadinessGate --> TaskPlanner
     TaskPlanner --> TaskExecutor
-    TaskExecutor -->|validation PASS| ReviewStep
-    TaskExecutor -->|validation failed| DebugStep
+    TaskExecutor -->|STATUS READY_FOR_REVIEW| ReviewStep
+    TaskExecutor -->|STATUS BLOCKED or NEEDS_CONTEXT| DebugStep
     ReviewStep --> CompletionVerifier
     ReviewStep --> DebugStep
     DebugStep -->|RETRY_TASK| TaskExecutor
@@ -98,8 +98,8 @@ graph TB
 Key decisions:
 
 - `TaskPlanner` は実行可能な 1 task だけを選ぶ。複数 task の batch は扱わない。
-- `TaskExecutor` は code edit と validation evidence 収集を行うが、checkbox は更新しない。
-- `TaskExecutor` の validation failure は review を経由せず、直接 `kiro-debug` adapter step に渡す。
+- `TaskExecutor` は code edit と validation evidence 収集を行い、`STATUS: READY_FOR_REVIEW | BLOCKED | NEEDS_CONTEXT` を primary machine field として返すが、checkbox は更新しない。
+- `TaskExecutor` の `STATUS: BLOCKED` または `STATUS: NEEDS_CONTEXT` は review を経由せず、直接 `kiro-debug` adapter step に渡す。
 - `kiro-review`、`kiro-debug`、`kiro-verify-completion`、`kiro-validate-impl` は別 workflow を起動せず、`kiro-impl.yaml` 内の thin adapter step として接続する。
 - `kiro-review` adapter は `VERDICT: APPROVED | REJECTED`、`kiro-debug` adapter は `NEXT_ACTION: RETRY_TASK | BLOCK_TASK | STOP_FOR_HUMAN`、`kiro-validate-impl` adapter は `DECISION: GO | NO-GO | MANUAL_VERIFY_REQUIRED` を primary machine field として使う。
 - `kiro-debug` adapter は root cause と次 action を返すが、retry 回数や loop health は管理しない。
@@ -141,6 +141,8 @@ Key decisions:
 │   │       │   ├── kiro-debug-task.md
 │   │       │   ├── kiro-verify-task-completion.md
 │   │       │   └── kiro-validate-impl-final.md
+│   │       ├── output-contracts/
+│   │       │   └── kiro-implementation-result.md
 │   │       └── policies/
 │   │           └── kiro-impl-task-progress.md
 │   ├── ja/
@@ -155,6 +157,8 @@ Key decisions:
 │   │       │   ├── kiro-debug-task.md
 │   │       │   ├── kiro-verify-task-completion.md
 │   │       │   └── kiro-validate-impl-final.md
+│   │       ├── output-contracts/
+│   │       │   └── kiro-implementation-result.md
 │   │       └── policies/
 │   │           └── kiro-impl-task-progress.md
 ├── scripts/
@@ -173,13 +177,14 @@ Key decisions:
 - `.takt/{en,ja}/facets/instructions/kiro-debug-task.md` — root-cause-first debug decision 作成手順。
 - `.takt/{en,ja}/facets/instructions/kiro-verify-task-completion.md` — completion verification evidence と remaining work の判定手順。
 - `.takt/{en,ja}/facets/instructions/kiro-validate-impl-final.md` — feature-level final validation の `DECISION` を progress completion 後に確認する手順。
+- `.takt/{en,ja}/facets/output-contracts/kiro-implementation-result.md` — implementer `STATUS: READY_FOR_REVIEW | BLOCKED | NEEDS_CONTEXT`、changed files、validation evidence、missing context を返す execution result contract。
 - `.takt/{en,ja}/facets/policies/kiro-impl-task-progress.md` — checkbox 更新前の completion gate、selected task 限定更新、blocker/notes 形式の policy。
 - `scripts/validate-kiro-iterative-implementation-workflow.mjs` — workflow/facet references、shared contract reference、one-task gate order、boundary exclusions を検証する script。
 - `tests/kiro-iterative-implementation-workflow.test.mjs` — validation script を repository-local test runner から実行する regression test。
 
 ### Modified Files
 
-- `tests/kiro-iterative-implementation-workflow.test.*` — implementation workflow validation を既存 test/check command で検出できる場所に追加する。`package.json` の script wiring と `kiro:*` public surface の追加は本 spec では扱わない。
+- `package.json` — public `kiro:*` surface ではなく repository-local validation wiring として `validate:kiro-iterative-implementation-workflow` と `test:kiro-iterative-implementation-workflow` を追加する。
 
 ### Component to File Mapping
 
@@ -214,7 +219,7 @@ sequenceDiagram
     Impl->>Impl: select one eligible task
     Impl->>Executor: execute selected task
     Executor-->>Impl: changes, evidence, validation status
-    alt validation PASS
+    alt STATUS READY_FOR_REVIEW
         Impl->>Review: review task result
         Review-->>Impl: APPROVED or REJECTED
         alt APPROVED
@@ -228,7 +233,7 @@ sequenceDiagram
         else REJECTED
             Impl->>Debug: investigate review findings
         end
-    else validation failed
+    else STATUS BLOCKED or NEEDS_CONTEXT
         Impl->>Debug: investigate validation failure
     end
     Debug-->>Impl: retry block or stop
@@ -245,8 +250,8 @@ stateDiagram-v2
     ReadyCheck --> Planned: ready
     Planned --> Executing: one task selected
     Planned --> Blocked: no eligible task
-    Executing --> Reviewing: evidence collected
-    Executing --> Debugging: validation failed
+    Executing --> Reviewing: STATUS READY_FOR_REVIEW
+    Executing --> Debugging: STATUS BLOCKED or NEEDS_CONTEXT
     Reviewing --> Verifying: APPROVED
     Reviewing --> Debugging: REJECTED
     Debugging --> Executing: RETRY_TASK
@@ -275,7 +280,7 @@ stateDiagram-v2
 | 3.3 | design boundary 矛盾の block | KiroOneTaskPlanner, KiroDebugAdapterStep | Debug decision contract | Task State |
 | 3.4 | unverified item の分離 | KiroTaskExecutor, KiroCompletionVerifier | Evidence contract | One Task Implementation |
 | 4.1 | selected task の code edit | KiroTaskExecutor | Service workflow | One Task Implementation |
-| 4.2 | validation evidence collection | KiroTaskExecutor | Validation result contract | One Task Implementation |
+| 4.2 | validation evidence collection | KiroTaskExecutor | Implementation result contract | One Task Implementation |
 | 4.3 | validation failure で checkbox 更新しない | KiroTaskExecutor, KiroTaskProgressUpdater | Progress policy | Task State |
 | 4.4 | selected task 限定更新 | KiroTaskProgressUpdater | Artifact policy | One Task Implementation |
 | 5.1 | review verdict | KiroReviewAdapterStep | Kiro review field | One Task Implementation |
@@ -302,7 +307,7 @@ stateDiagram-v2
 | KiroImplementationWorkflow | Workflow | implementation loop 全体の step、分岐、`loop_monitors` を制御する | 2.2, 2.4, 5.5, 5.6 | shared contracts P0, loop_monitors P0 | Service |
 | KiroImplementationReadinessGate | Workflow | feature と artifact が実装可能か確認する | 1.1, 1.2, 1.4 | status validation P0, artifact policy P0 | Service, State |
 | KiroOneTaskPlanner | Workflow | eligible な 1 task と execution plan を決める | 1.3, 2.1, 2.2, 2.3, 3.1, 3.3 | tasks.md P0, design.md P0 | Service, State |
-| KiroTaskExecutor | Workflow | selected task の実装と evidence 収集を行う | 3.2, 3.4, 4.1, 4.2, 4.3 | validation plan P0 | Service, Batch |
+| KiroTaskExecutor | Workflow | selected task の実装と evidence 収集を行い implementer `STATUS` を返す | 3.2, 3.4, 4.1, 4.2, 4.3, 6.4, 8.2 | validation plan P0 | Service, Batch |
 | KiroLoopMonitorConfig | Workflow | runtime `loop_monitors.threshold` で再実行ループの上限を管理する | 5.3, 5.4, 5.5, 5.6, 7.2 | TAKT loop_monitors P0 | Service |
 | KiroReviewAdapterStep | Workflow | `kiro-review` skill field を返す | 5.1, 5.2, 6.4, 8.3 | kiro-review skill P0 | Service |
 | KiroDebugAdapterStep | Workflow | `kiro-debug` skill field を返す | 2.3, 3.3, 5.3, 5.4, 8.3 | kiro-debug skill P0 | Service |
@@ -331,7 +336,7 @@ stateDiagram-v2
 
 - Inbound: caller — feature 名を渡す (P0)
 - Outbound: shared output contracts — rule condition の machine verdict を参照する (P0)
-- Outbound: internal sub-workflows — review/debug/verify を呼ぶ (P0)
+- Outbound: internal adapter steps — review/debug/verify を `kiro-impl.yaml` 内の step として呼ぶ (P0)
 
 **Contracts**: Service [x] / API [ ] / Event [ ] / Batch [ ] / State [ ]
 
@@ -418,7 +423,8 @@ interface KiroOneTaskPlanner {
 
 - plan に含まれる変更範囲だけを実装する。
 - task に対応する test/build/check を実行し、command、result、未確認項目を分ける。
-- validation failure では progress update を呼ばず、debug に必要な context を返す。
+- `## Status Report` block の `STATUS: READY_FOR_REVIEW | BLOCKED | NEEDS_CONTEXT` を workflow rule が参照する primary machine field として返す。
+- `STATUS: BLOCKED` または `STATUS: NEEDS_CONTEXT` では progress update を呼ばず、debug に必要な context を返す。
 
 **Dependencies**
 
@@ -432,7 +438,7 @@ interface KiroOneTaskPlanner {
 
 - Trigger: selected task が確定したとき。
 - Input / validation: task boundary、dependency、validation plan、feature flag prerequisite。
-- Output / destination: implementation result、changed files、validation evidence、manual verification requirement。
+- Output / destination: `kiro-implementation-result` の `STATUS`、changed files、validation evidence、manual verification requirement、missing context。
 - Idempotency & recovery: retry 候補は `KiroDebugAdapterStep` の `NEXT_ACTION: RETRY_TASK` decision がある場合に限定する。ただし retry 回数、loop health、再実行上限は TAKT runtime の `loop_monitors.threshold` が担い、executor/debug facet は独自 counter を持たない。
 
 #### KiroLoopMonitorConfig
@@ -579,7 +585,7 @@ interface KiroOneTaskPlanner {
 
 ## Integration and Validation Notes
 
-- validation test は既存 test/check command で検出される場所に追加し、`package.json` の script wiring と `kiro:*` script surface の追加は行わない。
+- validation test は `package.json` の repository-local script として追加し、既存の `validate:kiro-*` / `test:kiro-*` pattern にそろえる。public `kiro:*` script surface の追加・変更は行わない。
 - validation harness は shared contract 実装が未作成の場合に missing reference を明示するが、下流 PR/CI 状態は見ない。
 - built-in facet を継承できる planning/execution/review/debug/verify instruction は親候補を棚卸しし、Kiro 固有の task boundary、checkbox 更新 gate、completion verification だけを差分として記述する。
 - implementation workflow は他 worker の進捗と競合しうるため、progress update 前に `tasks.md` の selected task section を再読し、checkbox が変わっていれば更新を停止する。

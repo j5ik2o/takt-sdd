@@ -86,7 +86,7 @@
 
 ### Requirement 7: workflow drift と境界違反を検出できる
 
-**Objective:** maintainer として、implementation workflow、internal sub-workflow、task progress update の contract drift を検出したい。そうすることで、code edit workflow の安全性が後続変更で崩れた場合に早期に気づける。
+**Objective:** maintainer として、implementation workflow、internal adapter step、task progress update の contract drift を検出したい。そうすることで、code edit workflow の安全性が後続変更で崩れた場合に早期に気づける。
 
 #### Acceptance Criteria
 
