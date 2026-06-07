@@ -1,3 +1,8 @@
+---
+extends_skill: kiro-spec-status
+extends_skill_section: "### Step 3: Generate Report"
+---
+
 {extends: gather-review}
 
 # Kiro Spec Status Reporting

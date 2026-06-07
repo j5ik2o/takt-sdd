@@ -1,3 +1,8 @@
+---
+extends_skill: kiro-validate-design
+extends_skill_section: "## Execution Steps"
+---
+
 {extends: review-arch}
 
 # Kiro Design Validation Readiness

@@ -17,17 +17,17 @@ const outputContracts = [
   },
   {
     file: "kiro-validation-result.md",
-    fields: ["verdict", "scope", "checked_items", "findings", "error_category", "evidence", "summary"],
-    enums: ["PASS", "FAIL", "NEEDS_FIX", "BLOCKED"],
+    fields: ["verdict", "DECISION", "scope", "checked_items", "findings", "error_category", "evidence", "summary"],
+    enums: ["PASS", "FAIL", "NEEDS_FIX", "BLOCKED", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED"],
   },
   {
     file: "kiro-review-verdict.md",
-    fields: ["verdict", "review_scope", "findings", "requirement_refs", "task_refs", "boundary_violations", "evidence", "summary"],
-    enums: ["GO", "NO_GO"],
+    fields: ["VERDICT", "verdict", "review_scope", "findings", "requirement_refs", "task_refs", "boundary_violations", "evidence", "summary"],
+    enums: ["APPROVED", "REJECTED"],
   },
   {
     file: "kiro-debug-decision.md",
-    fields: ["decision", "root_cause", "failure_category", "retry_eligible", "abort_reason", "affected_task_refs", "evidence", "summary"],
+    fields: ["NEXT_ACTION", "decision", "root_cause", "failure_category", "retry_eligible", "abort_reason", "affected_task_refs", "evidence", "summary"],
     enums: ["RETRY_TASK", "BLOCK_TASK", "STOP_FOR_HUMAN"],
   },
   {
@@ -90,6 +90,27 @@ function containsAll(content, terms, path, failures) {
   }
 }
 
+function parseFrontmatter(content) {
+  if (!content.startsWith("---\n")) {
+    return {};
+  }
+  const end = content.indexOf("\n---", 4);
+  if (end === -1) {
+    return {};
+  }
+  const frontmatter = content.slice(4, end).trim();
+  const result = {};
+  for (const line of frontmatter.split(/\r?\n/)) {
+    const match = line.match(/^([^:#][^:]*):\s*(.*)$/);
+    if (!match) continue;
+    const key = match[1].trim();
+    let value = match[2].trim();
+    value = value.replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1");
+    result[key] = value;
+  }
+  return result;
+}
+
 function normalizeSkillExpression(input) {
   let expression = input.trim();
   if (expression.startsWith("npm run ")) {
@@ -127,6 +148,87 @@ function validateOutputContracts() {
         failures.push(`${rel(path)} must separate human summary from machine fields`);
       }
     }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
+function validateKiroSkillInheritance() {
+  const failures = [];
+  const byLanguage = new Map();
+  for (const lang of languages) {
+    const dir = join(repoRoot, ".takt", lang, "facets", "instructions");
+    for (const path of listFilesRecursive(dir).filter((file) => basename(file).startsWith("kiro-"))) {
+      const content = readText(path);
+      const frontmatter = parseFrontmatter(content);
+      const customReason = frontmatter["Full custom skill reason"];
+      if (customReason) {
+        byLanguage.set(`${lang}:${basename(path)}`, { customReason });
+        continue;
+      }
+      const skill = frontmatter.extends_skill;
+      const section = frontmatter.extends_skill_section;
+      if (!skill || !section) {
+        failures.push(`${rel(path)} missing extends_skill or extends_skill_section frontmatter`);
+        continue;
+      }
+      if (!supportedSkills.has(skill)) {
+        failures.push(`${rel(path)} has unsupported extends_skill: ${skill}`);
+        continue;
+      }
+      const skillPath = [".agents/skills", ".claude/skills"]
+        .map((root) => join(repoRoot, root, skill, "SKILL.md"))
+        .find((candidate) => existsSync(candidate));
+      if (!skillPath) {
+        failures.push(`SKILL_SOURCE_MISSING: ${rel(path)} extends ${skill}`);
+        continue;
+      }
+      const skillContent = readText(skillPath);
+      if (!skillContent.includes(section)) {
+        failures.push(`SKILL_SECTION_NOT_FOUND: ${rel(path)} references ${skill} section ${section}`);
+      }
+      const suspiciousCopies = [
+        "<background_information>",
+        "<instructions>",
+        "Safety & Fallback",
+        "Critical Constraints",
+      ].filter((term) => skillContent.includes(term) && content.includes(term));
+      if (suspiciousCopies.length > 0) {
+        failures.push(`SKILL_BODY_COPY_DETECTED: ${rel(path)} repeats skill body markers ${suspiciousCopies.join(", ")}`);
+      }
+      byLanguage.set(`${lang}:${basename(path)}`, { skill, section });
+    }
+  }
+
+  const basenames = new Set([...byLanguage.keys()].map((key) => key.slice(3)));
+  for (const file of basenames) {
+    const en = byLanguage.get(`en:${file}`);
+    const ja = byLanguage.get(`ja:${file}`);
+    if (!en || !ja) {
+      failures.push(`LANGUAGE_PAIR_DRIFT: instruction facet ${file} must exist in both languages`);
+      continue;
+    }
+    if (en.customReason || ja.customReason) {
+      if (en.customReason !== ja.customReason) {
+        failures.push(`SKILL_CUSTOM_REASON_DRIFT: ${file} custom skill reasons differ between languages`);
+      }
+      continue;
+    }
+    if (en.skill !== ja.skill || en.section !== ja.section) {
+      failures.push(`SKILL_ADAPTER_DRIFT: ${file} en=${JSON.stringify(en)} ja=${JSON.stringify(ja)}`);
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
+function validateKiroSkillFieldContract() {
+  const failures = [];
+  for (const lang of languages) {
+    const reviewPath = join(repoRoot, ".takt", lang, "facets", "output-contracts", "kiro-review-verdict.md");
+    const debugPath = join(repoRoot, ".takt", lang, "facets", "output-contracts", "kiro-debug-decision.md");
+    const validationPath = join(repoRoot, ".takt", lang, "facets", "output-contracts", "kiro-validation-result.md");
+    containsAll(readText(reviewPath), ["VERDICT", "APPROVED", "REJECTED", "workflow branching"], reviewPath, failures);
+    containsAll(readText(debugPath), ["NEXT_ACTION", "RETRY_TASK", "BLOCK_TASK", "STOP_FOR_HUMAN", "workflow branching"], debugPath, failures);
+    containsAll(readText(validationPath), ["DECISION", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "primary field"], validationPath, failures);
   }
   return { ok: failures.length === 0, failures };
 }
@@ -283,12 +385,35 @@ function validateWorkflowFacetReferences() {
   return { ok: failures.length === 0, failures };
 }
 
+function validateKiroWorkflowShapeRules() {
+  const failures = [];
+  for (const lang of languages) {
+    const workflowDir = join(repoRoot, ".takt", lang, "workflows");
+    for (const workflow of listFilesRecursive(workflowDir).filter((path) => basename(path).startsWith("kiro-") && path.endsWith(".yaml"))) {
+      const content = readText(workflow);
+      if (/\bworkflow_call\b/.test(content)) {
+        failures.push(`${rel(workflow)} must not use workflow_call for Kiro workflow reuse`);
+      }
+      if (/\btakt\s+-w\b|\btakt\s+.*\s-w\b/.test(content)) {
+        failures.push(`${rel(workflow)} must not shell out to takt -w for Kiro workflow reuse`);
+      }
+      if (/retryCount|maxAttempts|max-attempt|loop-health|loop health/i.test(content)) {
+        failures.push(`${rel(workflow)} must not define custom retry or loop-health source of truth`);
+      }
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
 export function validateKiroSharedContracts() {
   const sections = {
     outputContracts: validateOutputContracts(),
     skillIdentityFixtures: validateSkillIdentityFixtures(),
     artifactLifecycleTerms: validateArtifactLifecycleTerms(),
     facetInheritance: validateFacetInheritance(),
+    kiroSkillInheritance: validateKiroSkillInheritance(),
+    kiroSkillFieldContract: validateKiroSkillFieldContract(),
+    kiroWorkflowShapeRules: validateKiroWorkflowShapeRules(),
     workflowFacetReferences: validateWorkflowFacetReferences(),
   };
   const failures = Object.entries(sections).flatMap(([name, result]) =>

@@ -1,3 +1,7 @@
+---
+Full custom skill reason: common evidence helper shared by multiple validation skills, not a direct Kiro skill section adapter
+---
+
 {extends: gather-review}
 
 # Kiro Validation Evidence Collection

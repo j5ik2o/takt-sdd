@@ -1,3 +1,8 @@
+---
+extends_skill: kiro-validate-impl
+extends_skill_section: "### 3. Execute Integration Validation"
+---
+
 {extends: supervise}
 
 # Kiro Implementation Validation Readiness

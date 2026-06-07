@@ -1,3 +1,7 @@
+---
+Full custom skill reason: shared resolver for command expressions and host skill roots, not a direct Kiro skill section adapter
+---
+
 # Kiro Skill Identity Resolution
 
 Full custom reason: built-in instruction facets do not define Kiro host skill roots or npm-script-to-skill normalization.

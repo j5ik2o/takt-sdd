@@ -1,3 +1,8 @@
+---
+extends_skill: kiro-validate-gap
+extends_skill_section: "## Execution Steps"
+---
+
 {extends: review-qa}
 
 # Kiro Gap Validation Readiness

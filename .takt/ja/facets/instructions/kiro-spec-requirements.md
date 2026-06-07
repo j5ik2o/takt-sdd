@@ -1,3 +1,8 @@
+---
+extends_skill: kiro-spec-requirements
+extends_skill_section: "4. **Review Requirements Draft**:"
+---
+
 {extends: review-requirements}
 
 # Kiro Spec Requirements Instruction

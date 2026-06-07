@@ -1,3 +1,8 @@
+---
+extends_skill: kiro-spec-design
+extends_skill_section: "### Step 5: Review Design Draft"
+---
+
 {extends: architect}
 
 # Kiro Spec Design Instruction
