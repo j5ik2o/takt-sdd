@@ -347,6 +347,154 @@ const taskAnnotationContractPaths = [
   ".takt/en/facets/policies/kiro-spec-task-annotations.md",
   ".takt/ja/facets/policies/kiro-spec-task-annotations.md",
 ];
+const skillAdapterFacetSpecs = [
+  {
+    name: "kiro-spec-requirements-review",
+    extendsSkill: "kiro-spec-requirements",
+    extendsSkillSection: "### Step 4: Review Requirements Draft",
+    machineFields: ["validation.verdict"],
+    enums: ["PASS", "NEEDS_FIX", "BLOCKED"],
+  },
+  {
+    name: "kiro-spec-tasks-review",
+    extendsSkill: "kiro-spec-tasks",
+    extendsSkillSection: "### Step 3: Review Task Plan",
+    extendsSkillAdditionalSection: "### Step 3.5: Run Task-Graph Sanity Review",
+    machineFields: ["task_plan_review", "task_graph_sanity_review"],
+    enums: ["PASS", "NEEDS_FIXES", "RETURN_TO_DESIGN"],
+  },
+  {
+    name: "kiro-validate-design-readiness",
+    extendsSkill: "kiro-validate-design",
+    extendsSkillSection: "## Execution Steps",
+    machineFields: ["DECISION"],
+    enums: ["GO", "NO-GO", "MANUAL_VERIFY_REQUIRED"],
+  },
+  {
+    name: "kiro-spec-quick-sanity-review",
+    extendsSkill: "kiro-spec-quick",
+    extendsSkillSection: "#### Final Sanity Review",
+    machineFields: ["verdict"],
+    enums: ["PASS", "NEEDS_FIX", "BLOCKED"],
+  },
+];
+
+const generationWorkflowStepSpecs = [
+  {
+    name: "kiro-spec-requirements",
+    steps: ["generate-requirements", "review-requirements", "repair-requirements", "finalize-requirements"],
+  },
+  {
+    name: "kiro-spec-design",
+    steps: ["generate-design", "review-design", "repair-design", "finalize-design"],
+  },
+  {
+    name: "kiro-spec-tasks",
+    steps: ["generate-tasks", "review-tasks", "repair-tasks", "finalize-tasks"],
+  },
+  {
+    name: "kiro-spec-quick",
+    steps: [
+      "quick-init",
+      "quick-requirements",
+      "quick-review-requirements",
+      "quick-repair-requirements",
+      "quick-finalize-requirements",
+      "quick-design",
+      "quick-review-design",
+      "quick-repair-design",
+      "quick-finalize-design",
+      "quick-tasks",
+      "quick-review-tasks",
+      "quick-repair-tasks",
+      "quick-finalize-tasks",
+      "quick-sanity-review",
+    ],
+  },
+];
+
+const reviewStepFieldContractSpecs = [
+  {
+    workflow: "kiro-spec-requirements",
+    step: "review-requirements",
+    outputContract: "kiro-spec-generation-result",
+    requiredConditionTermSets: [
+      ["validation.verdict", "PASS"],
+      ["validation.verdict", "NEEDS_FIX"],
+      ["validation.verdict", "BLOCKED"],
+    ],
+    forbiddenFields: ["review.verdict"],
+  },
+  {
+    workflow: "kiro-spec-design",
+    step: "review-design",
+    outputContract: "kiro-validation-result",
+    requiredConditionTermSets: [
+      ["DECISION", "GO"],
+      ["DECISION", "NO-GO"],
+      ["DECISION", "MANUAL_VERIFY_REQUIRED"],
+    ],
+    forbiddenFields: ["validation.verdict", "review.verdict"],
+  },
+  {
+    workflow: "kiro-spec-tasks",
+    step: "review-tasks",
+    outputContract: "kiro-spec-tasks-review-result",
+    requiredConditionTermSets: [
+      ["task_plan_review", "PASS", "task_graph_sanity_review", "PASS"],
+      ["task_plan_review", "NEEDS_FIXES", "task_graph_sanity_review", "NEEDS_FIXES"],
+      ["task_plan_review", "RETURN_TO_DESIGN", "task_graph_sanity_review", "RETURN_TO_DESIGN"],
+    ],
+    forbiddenFields: ["validation.verdict", "review.verdict"],
+  },
+  {
+    workflow: "kiro-spec-quick",
+    step: "quick-review-requirements",
+    outputContract: "kiro-spec-generation-result",
+    requiredConditionTermSets: [
+      ["validation.verdict", "PASS"],
+      ["validation.verdict", "NEEDS_FIX"],
+      ["validation.verdict", "BLOCKED"],
+    ],
+    forbiddenFields: ["review.verdict"],
+  },
+  {
+    workflow: "kiro-spec-quick",
+    step: "quick-review-design",
+    outputContract: "kiro-validation-result",
+    requiredConditionTermSets: [
+      ["DECISION", "GO"],
+      ["DECISION", "NO-GO"],
+      ["DECISION", "MANUAL_VERIFY_REQUIRED"],
+    ],
+    forbiddenFields: ["validation.verdict", "review.verdict"],
+  },
+  {
+    workflow: "kiro-spec-quick",
+    step: "quick-review-tasks",
+    outputContract: "kiro-spec-tasks-review-result",
+    requiredConditionTermSets: [
+      ["task_plan_review", "PASS", "task_graph_sanity_review", "PASS"],
+      ["task_plan_review", "NEEDS_FIXES", "task_graph_sanity_review", "NEEDS_FIXES"],
+      ["task_plan_review", "RETURN_TO_DESIGN", "task_graph_sanity_review", "RETURN_TO_DESIGN"],
+    ],
+    forbiddenFields: ["validation.verdict", "review.verdict"],
+  },
+  {
+    workflow: "kiro-spec-quick",
+    step: "quick-sanity-review",
+    outputContract: "kiro-spec-sanity-review",
+    requiredConditionTermSets: [
+      ["verdict", "PASS"],
+      ["verdict", "NEEDS_FIX"],
+      ["verdict", "BLOCKED"],
+    ],
+    forbiddenFields: ["validation.verdict", "review.verdict"],
+  },
+];
+
+const outOfBoundaryKiroSpecInstructionFacets = new Set(["kiro-spec-batch", "kiro-spec-status"]);
+
 const packageScriptSpecs = [
   {
     name: "validate:kiro-spec-generation-workflows",
@@ -455,6 +603,22 @@ function topLevelScalar(content, key) {
   return match?.[1] ?? "";
 }
 
+function frontMatterFields(content) {
+  const match = content.match(/^---\n([\s\S]*?)\n---\n/);
+  if (!match) {
+    return {};
+  }
+
+  const fields = {};
+  for (const line of match[1].split("\n")) {
+    const fieldMatch = line.match(/^([A-Za-z0-9_-]+):\s*(.+?)\s*$/);
+    if (fieldMatch) {
+      fields[fieldMatch[1]] = fieldMatch[2].replace(/^"|"$/g, "");
+    }
+  }
+  return fields;
+}
+
 function topLevelMap(content, key) {
   const entries = [];
   for (const line of canonicalBlock(content, key)) {
@@ -508,8 +672,17 @@ function conditionLines(block) {
     .filter(Boolean);
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function hasExactTerm(content, term) {
+  const tokenChars = "A-Za-z0-9_.-";
+  return new RegExp(`(^|[^${tokenChars}])${escapeRegExp(term)}($|[^${tokenChars}])`).test(content);
+}
+
 function hasConditionWithTerms(conditions, terms) {
-  return conditions.some((condition) => terms.every((term) => condition.includes(term)));
+  return conditions.some((condition) => terms.every((term) => hasExactTerm(condition, term)));
 }
 
 function indentedList(block, key) {
@@ -1208,6 +1381,208 @@ function validateTaskAnnotationContract(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
+function adapterSignature(content, spec) {
+  const frontMatter = frontMatterFields(content);
+  return {
+    extends_skill: frontMatter.extends_skill ?? "",
+    extends_skill_section: frontMatter.extends_skill_section ?? "",
+    extends_skill_additional_section: frontMatter.extends_skill_additional_section ?? "",
+    machineFields: spec.machineFields.filter((field) => hasExactTerm(content, field)).sort(),
+    enums: spec.enums.filter((value) => hasExactTerm(content, value)).sort(),
+  };
+}
+
+function compareAdapterSignatures(failures, spec, enSignature, jaSignature) {
+  for (const key of ["extends_skill", "extends_skill_section", "extends_skill_additional_section"]) {
+    if (enSignature[key] !== jaSignature[key]) {
+      failures.push(
+        `SKILL_ADAPTER_DRIFT: .takt/{en,ja}/facets/instructions/${spec.name}.md ${key} mismatch: en=${JSON.stringify(enSignature[key])} ja=${JSON.stringify(jaSignature[key])}`,
+      );
+    }
+  }
+
+  for (const key of ["machineFields", "enums"]) {
+    const enValue = JSON.stringify(enSignature[key]);
+    const jaValue = JSON.stringify(jaSignature[key]);
+    if (enValue !== jaValue) {
+      failures.push(
+        `SKILL_ADAPTER_DRIFT: .takt/{en,ja}/facets/instructions/${spec.name}.md ${key} mismatch: en=${enValue} ja=${jaValue}`,
+      );
+    }
+  }
+}
+
+function validateSkillAdapterFacets(repoRoot) {
+  const failures = [];
+  for (const spec of skillAdapterFacetSpecs) {
+    const signatures = {};
+    for (const lang of languages) {
+      const path = join(repoRoot, ".takt", lang, "facets", "instructions", `${spec.name}.md`);
+      if (!existsSync(path)) {
+        failures.push(`SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} missing`);
+        continue;
+      }
+
+      const content = readText(path);
+      const frontMatter = frontMatterFields(content);
+      const expectedFrontMatter = {
+        extends_skill: spec.extendsSkill,
+        extends_skill_section: spec.extendsSkillSection,
+      };
+      if (spec.extendsSkillAdditionalSection) {
+        expectedFrontMatter.extends_skill_additional_section = spec.extendsSkillAdditionalSection;
+      }
+
+      for (const [field, expected] of Object.entries(expectedFrontMatter)) {
+        if (frontMatter[field] !== expected) {
+          failures.push(
+            `SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} ${field} must equal ${JSON.stringify(expected)}`,
+          );
+        }
+      }
+
+      for (const field of spec.machineFields) {
+        if (!hasExactTerm(content, field)) {
+          failures.push(`SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} missing machine field: ${field}`);
+        }
+      }
+      for (const value of spec.enums) {
+        if (!hasExactTerm(content, value)) {
+          failures.push(`SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} missing enum: ${value}`);
+        }
+      }
+      signatures[lang] = adapterSignature(content, spec);
+    }
+
+    if (signatures.en && signatures.ja) {
+      compareAdapterSignatures(failures, spec, signatures.en, signatures.ja);
+    }
+  }
+
+  return { ok: failures.length === 0, failures };
+}
+
+function generationInstructionFacetNames() {
+  return [
+    ...new Set(
+      phaseWorkflowSpecs
+        .flatMap((spec) => spec.instructionFacets)
+        .filter((name) => name.startsWith("kiro-spec-")),
+    ),
+  ].sort();
+}
+
+function workflowInstructionReferences(content) {
+  return topLevelMap(content, "instructions").map((entry) => entry.split("=")[0]);
+}
+
+function validateLegacyKiroGenerationSurface(repoRoot) {
+  const failures = [];
+  const expectedInstructionFacets = generationInstructionFacetNames();
+
+  for (const lang of languages) {
+    const referencedInstructionFacets = new Set();
+    for (const spec of phaseWorkflowSpecs) {
+      const workflowPath = join(repoRoot, ".takt", lang, "workflows", `${spec.name}.yaml`);
+      if (!existsSync(workflowPath)) {
+        continue;
+      }
+      for (const reference of workflowInstructionReferences(readText(workflowPath))) {
+        referencedInstructionFacets.add(reference);
+      }
+    }
+
+    for (const spec of generationWorkflowStepSpecs) {
+      const workflowPath = join(repoRoot, ".takt", lang, "workflows", `${spec.name}.yaml`);
+      if (!existsSync(workflowPath)) {
+        continue;
+      }
+      const actualSteps = stepBlocks(readText(workflowPath)).map((block) => stepScalar(block, "name"));
+      for (const step of spec.steps) {
+        if (!actualSteps.includes(step)) {
+          failures.push(
+            `LEGACY_KIRO_GENERATION_DRIFT: ${rel(repoRoot, workflowPath)} must be a Kiro skill adapter step sequence and include step ${step}`,
+          );
+        }
+      }
+    }
+
+    for (const facet of expectedInstructionFacets) {
+      const facetPath = join(repoRoot, ".takt", lang, "facets", "instructions", `${facet}.md`);
+      if (!existsSync(facetPath)) {
+        continue;
+      }
+      const frontMatter = frontMatterFields(readText(facetPath));
+      if (!frontMatter.extends_skill) {
+        failures.push(
+          `LEGACY_KIRO_GENERATION_DRIFT: ${rel(repoRoot, facetPath)} must declare extends_skill for thin Kiro skill adapter reuse`,
+        );
+      }
+    }
+
+    const instructionFacetDir = join(repoRoot, ".takt", lang, "facets", "instructions");
+    for (const facet of listBasenames(repoRoot, rel(repoRoot, instructionFacetDir), ".md")) {
+      if (outOfBoundaryKiroSpecInstructionFacets.has(facet)) {
+        continue;
+      }
+      const facetPath = join(instructionFacetDir, `${facet}.md`);
+      if (!referencedInstructionFacets.has(facet)) {
+        failures.push(
+          `LEGACY_KIRO_GENERATION_DRIFT: ${rel(repoRoot, facetPath)} is an unreferenced Kiro-specific instruction facet`,
+        );
+      }
+    }
+  }
+
+  return { ok: failures.length === 0, failures };
+}
+
+function validateReviewFieldContracts(repoRoot) {
+  const failures = [];
+  for (const lang of languages) {
+    for (const spec of reviewStepFieldContractSpecs) {
+      const workflowPath = join(repoRoot, ".takt", lang, "workflows", `${spec.workflow}.yaml`);
+      if (!existsSync(workflowPath)) {
+        continue;
+      }
+
+      const block = stepBlocks(readText(workflowPath)).find((candidate) => stepScalar(candidate, "name") === spec.step);
+      if (!block) {
+        failures.push(
+          `REVIEW_FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} missing review step ${spec.step}`,
+        );
+        continue;
+      }
+
+      const blockText = block.join("\n");
+      if (!blockText.includes(`format: ${spec.outputContract}`)) {
+        failures.push(
+          `REVIEW_OUTPUT_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} step ${spec.step} must emit ${spec.outputContract}`,
+        );
+      }
+
+      const conditions = conditionLines(block);
+      for (const terms of spec.requiredConditionTermSets) {
+        if (!hasConditionWithTerms(conditions, terms)) {
+          failures.push(
+            `REVIEW_FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} step ${spec.step} must branch on Kiro skill field terms: ${terms.join(", ")}`,
+          );
+        }
+      }
+
+      for (const forbiddenField of spec.forbiddenFields) {
+        if (conditions.some((condition) => condition.includes(forbiddenField))) {
+          failures.push(
+            `REVIEW_FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} step ${spec.step} must not route review result through ${forbiddenField}`,
+          );
+        }
+      }
+    }
+  }
+
+  return { ok: failures.length === 0, failures };
+}
+
 function validatePackageScripts(repoRoot) {
   const failures = [];
   const packagePath = join(repoRoot, "package.json");
@@ -1303,6 +1678,9 @@ export function validateKiroSpecGenerationWorkflows(options = {}) {
     specArtifactLifecycle: validateSpecArtifactLifecycle(repoRoot),
     generatedArtifacts: validateGeneratedArtifacts(repoRoot),
     taskAnnotationContract: validateTaskAnnotationContract(repoRoot),
+    skillAdapterFacets: validateSkillAdapterFacets(repoRoot),
+    legacyGenerationSurface: validateLegacyKiroGenerationSurface(repoRoot),
+    reviewFieldContracts: validateReviewFieldContracts(repoRoot),
     packageScripts: validatePackageScripts(repoRoot),
     quickComposition: validateQuickComposition(repoRoot),
     taskWorkflowCompletion: validateTaskWorkflowCompletion(repoRoot),
