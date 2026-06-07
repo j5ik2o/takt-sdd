@@ -11,6 +11,7 @@ initial_step: generate-tasks
 
 instructions:
   kiro-spec-tasks: ../facets/instructions/kiro-spec-tasks.md
+  kiro-spec-tasks-review: ../facets/instructions/kiro-spec-tasks-review.md
 
 policies:
   kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
@@ -83,7 +84,7 @@ steps:
     knowledge:
       - architecture
     required_permission_mode: readonly
-    instruction: kiro-spec-tasks
+    instruction: kiro-spec-tasks-review
     output_contracts:
       report:
         - name: kiro-spec-tasks-review.md

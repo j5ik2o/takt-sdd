@@ -668,6 +668,17 @@ test("task 6.1 tasks workflow requires canonical task annotations and ready stat
   for (const lang of ["en", "ja"]) {
     assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-tasks.yaml`, workflowTerms);
     assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-tasks.md`, instructionTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-tasks-review.md`, [
+      "Review Task Plan",
+      "task plan review",
+      "task graph sanity review",
+      "read-only",
+      "tasks.md",
+      "spec.json",
+      "PASS",
+      "NEEDS_FIXES",
+      "RETURN_TO_DESIGN",
+    ]);
     assertFacetTerms(repoRoot, `.takt/${lang}/facets/policies/kiro-spec-task-annotations.md`, policyTerms);
 
     const workflow = readFileSync(join(repoRoot, `.takt/${lang}/workflows/kiro-spec-tasks.yaml`), "utf8");
@@ -677,6 +688,11 @@ test("task 6.1 tasks workflow requires canonical task annotations and ready stat
     assert.ok(workflow.includes(autoApproveRule), `${lang} tasks workflow should require reviewed tasks for auto-approve`);
     assert.ok(workflow.includes(normalRule), `${lang} tasks workflow should exclude auto-approve from normal completion`);
     assert.ok(workflow.indexOf(autoApproveRule) < workflow.indexOf(normalRule), `${lang} auto-approve rule should run first`);
+    assert.match(
+      workflow,
+      /name: review-tasks[\s\S]*required_permission_mode: readonly[\s\S]*instruction: kiro-spec-tasks-review/,
+      `${lang} read-only review-tasks step should use the review-only adapter`,
+    );
   }
 
   const template = readFileSync(join(repoRoot, ".kiro/settings/templates/specs/tasks.md"), "utf8");
