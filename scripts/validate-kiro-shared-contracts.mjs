@@ -191,23 +191,25 @@ function validateKiroSkillInheritance() {
         failures.push(`${rel(path)} has unsupported extends_skill: ${skill}`);
         continue;
       }
-      const skillPath = [".agents/skills", ".claude/skills"]
+      const skillPaths = [".agents/skills", ".claude/skills"]
         .map((root) => join(repoRoot, root, skill, "SKILL.md"))
-        .find((candidate) => existsSync(candidate));
-      if (!skillPath) {
+        .filter((candidate) => existsSync(candidate));
+      if (skillPaths.length === 0) {
         failures.push(`SKILL_SOURCE_MISSING: ${rel(path)} extends ${skill}`);
         continue;
       }
-      const skillContent = readText(skillPath);
-      if (!skillContent.includes(section)) {
-        failures.push(`SKILL_SECTION_NOT_FOUND: ${rel(path)} references ${skill} section ${section}`);
+      const skillContents = skillPaths.map((skillPath) => ({ path: skillPath, content: readText(skillPath) }));
+      for (const skillSource of skillContents) {
+        if (!skillSource.content.includes(section)) {
+          failures.push(`SKILL_SECTION_NOT_FOUND: ${rel(path)} references ${skill} section ${section} missing from ${rel(skillSource.path)}`);
+        }
       }
       const suspiciousCopies = [
         "<background_information>",
         "<instructions>",
         "Safety & Fallback",
         "Critical Constraints",
-      ].filter((term) => skillContent.includes(term) && content.includes(term));
+      ].filter((term) => skillContents.some((skillSource) => skillSource.content.includes(term)) && content.includes(term));
       if (suspiciousCopies.length > 0) {
         failures.push(`SKILL_BODY_COPY_DETECTED: ${rel(path)} repeats skill body markers ${suspiciousCopies.join(", ")}`);
       }

@@ -61,6 +61,8 @@ steps:
         - name: kiro-spec-tasks-result.md
           format: kiro-spec-generation-result
     rules:
+      - condition: validation.verdict PASS and phase tasks and tasks draft ready and task plan review pending and task graph sanity review pending
+        next: review-tasks
       - condition: validation.verdict PASS and auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true and task plan review PASS and task graph sanity review PASS
         next: review-tasks
       - condition: validation.verdict PASS and not auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and task plan review PASS and task graph sanity review PASS
@@ -113,6 +115,8 @@ steps:
         - name: kiro-spec-tasks-repair-result.md
           format: kiro-spec-generation-result
     rules:
+      - condition: validation.verdict PASS and tasks draft repaired and task plan review pending and task graph sanity review pending
+        next: review-tasks
       - condition: validation.verdict PASS and tasks.md written and tasks-generated and task plan review PASS and task graph sanity review PASS
         next: review-tasks
       - condition: validation.verdict NEEDS_FIX and local repair attempted
