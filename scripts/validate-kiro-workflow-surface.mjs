@@ -185,6 +185,11 @@ function includesAll(content, terms) {
   return terms.every((term) => content.includes(term));
 }
 
+function includesMigrationTableRow(content, legacy, canonical) {
+  const rowPattern = new RegExp(`\\|\\s*\`${escapeRegExp(legacy)}\`\\s*\\|\\s*\`${escapeRegExp(canonical)}\`\\s*\\|`);
+  return rowPattern.test(content);
+}
+
 function validateMigrationDoc(repoRoot, path, oldCanonicalPattern, requiredTerms) {
   const failures = [];
   const fullPath = join(repoRoot, path);
@@ -193,7 +198,7 @@ function validateMigrationDoc(repoRoot, path, oldCanonicalPattern, requiredTerms
     failures.push(`GUIDANCE_DRIFT: ${path} missing required Kiro migration terms`);
   }
   for (const [legacy, canonical] of migrationPairs) {
-    if (!content.includes(legacy) || !content.includes(canonical)) {
+    if (!includesMigrationTableRow(content, legacy, canonical)) {
       failures.push(`GUIDANCE_DRIFT: ${path} missing migration mapping ${legacy} -> ${canonical}`);
     }
   }
