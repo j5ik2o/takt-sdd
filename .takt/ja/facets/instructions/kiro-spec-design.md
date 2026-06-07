@@ -1,6 +1,6 @@
 ---
 extends_skill: kiro-spec-design
-extends_skill_section: "### Step 5: Review Design Draft"
+extends_skill_section: "## Execution Steps"
 ---
 
 {extends: architect}

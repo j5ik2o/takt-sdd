@@ -90,6 +90,22 @@ function containsAll(content, terms, path, failures) {
   }
 }
 
+function escapeRegExp(term) {
+  return term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function containsContractTerm(content, term) {
+  return new RegExp(`(^|[^A-Za-z0-9_-])${escapeRegExp(term)}([^A-Za-z0-9_-]|$)`).test(content);
+}
+
+function containsAllContractTerms(content, terms, path, failures) {
+  for (const term of terms) {
+    if (!containsContractTerm(content, term)) {
+      failures.push(`${rel(path)} missing required term: ${term}`);
+    }
+  }
+}
+
 function parseFrontmatter(content) {
   if (!content.startsWith("---\n")) {
     return {};
@@ -142,8 +158,8 @@ function validateOutputContracts() {
         continue;
       }
       const content = readText(path);
-      containsAll(content, contract.fields, path, failures);
-      containsAll(content, contract.enums, path, failures);
+      containsAllContractTerms(content, contract.fields, path, failures);
+      containsAllContractTerms(content, contract.enums, path, failures);
       if (!content.includes("summary") || !/not be used|使ってはならない|参照して分岐/.test(content)) {
         failures.push(`${rel(path)} must separate human summary from machine fields`);
       }
@@ -387,10 +403,12 @@ function validateWorkflowFacetReferences() {
 
 function validateKiroWorkflowShapeRules() {
   const failures = [];
+  const closedLoopWorkflowPattern = /^kiro-spec-(requirements|design|tasks)\.yaml$/;
   for (const lang of languages) {
     const workflowDir = join(repoRoot, ".takt", lang, "workflows");
     for (const workflow of listFilesRecursive(workflowDir).filter((path) => basename(path).startsWith("kiro-") && path.endsWith(".yaml"))) {
       const content = readText(workflow);
+      const workflowName = basename(workflow);
       if (/\bworkflow_call\b/.test(content)) {
         failures.push(`${rel(workflow)} must not use workflow_call for Kiro workflow reuse`);
       }
@@ -399,6 +417,13 @@ function validateKiroWorkflowShapeRules() {
       }
       if (/retryCount|maxAttempts|max-attempt|loop-health|loop health/i.test(content)) {
         failures.push(`${rel(workflow)} must not define custom retry or loop-health source of truth`);
+      }
+      if (closedLoopWorkflowPattern.test(workflowName)) {
+        const stepCount = (content.match(/^  - name:/gm) ?? []).length;
+        if (stepCount < 3) {
+          failures.push(`${rel(workflow)} must not be a single-step generation wrapper`);
+        }
+        containsAllContractTerms(content, ["loop_monitors", "threshold", "review", "repair"], workflow, failures);
       }
     }
   }

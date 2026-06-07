@@ -1,6 +1,6 @@
 ---
 extends_skill: kiro-spec-tasks
-extends_skill_section: "### Step 3.5: Run Task-Graph Sanity Review"
+extends_skill_section: "## Execution Steps"
 ---
 
 {extends: plan}

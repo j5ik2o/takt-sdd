@@ -19,6 +19,21 @@ policies:
 
 report_formats:
   kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
+  kiro-review-verdict: ../facets/output-contracts/kiro-review-verdict.md
+
+loop_monitors:
+  - cycle:
+      - review-design
+      - repair-design
+    threshold: 2
+    judge:
+      persona: supervisor
+      instruction: kiro-spec-design
+      rules:
+        - condition: Healthy (review findings are converging)
+          next: review-design
+        - condition: Unproductive (same finding repeats or no improvement)
+          next: ABORT
 
 steps:
   - name: generate-design
@@ -48,10 +63,56 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: validation.verdict PASS and phase design and design.md written and research.md written and design-generated and approvals.requirements.approved true and approvals.design.generated true
-        next: COMPLETE
+        next: review-design
       - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
         next: ABORT
       - condition: validation.verdict NEEDS_FIX or design review gate failed
+        next: repair-design
+
+  - name: review-design
+    edit: false
+    persona: architecture-reviewer
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    knowledge:
+      - architecture
+    required_permission_mode: readonly
+    instruction: kiro-spec-design
+    output_contracts:
+      report:
+        - name: kiro-spec-design-review.md
+          format: kiro-review-verdict
+    rules:
+      - condition: VERDICT APPROVED and design review gate passed
+        next: COMPLETE
+      - condition: VERDICT REJECTED and local repair possible
+        next: repair-design
+      - condition: VERDICT REJECTED and requirements/design gap remains
+        next: ABORT
+
+  - name: repair-design
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    knowledge:
+      - architecture
+    required_permission_mode: edit
+    instruction: kiro-spec-design
+    output_contracts:
+      report:
+        - name: kiro-spec-design-repair-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and design.md written and research.md written and design-generated and approvals.design.generated true
+        next: review-design
+      - condition: validation.verdict NEEDS_FIX and local repair attempted
+        next: review-design
+      - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
         next: ABORT
 
 # validation/review 用の contract notes:
@@ -61,5 +122,6 @@ steps:
 # - research.md は design phase の補助 artifact として書き、最終的な実装判断は design.md にも残す。
 # - design.md は required sections として Boundary Commitments、File Structure Plan、Requirements Traceability を含める。
 # - design review gate は requirement coverage、architecture readiness、boundary readiness、File Structure Plan の具体性、Requirements Traceability を確認する。
+# - workflow は generate -> review -> repair -> review の closed loop を使い、repeat bound は loop_monitors.threshold だけに置く。
 # - real requirements/design gap が残る場合は BLOCKED または NEEDS_FIX を返し、design-generated へ進めない。
 # - 成功時は spec.json を phase: "design-generated"、approvals.requirements.approved: true、approvals.design.generated: true に更新する。

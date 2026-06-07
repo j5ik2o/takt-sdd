@@ -19,6 +19,21 @@ policies:
 
 report_formats:
   kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
+  kiro-review-verdict: ../facets/output-contracts/kiro-review-verdict.md
+
+loop_monitors:
+  - cycle:
+      - review-requirements
+      - repair-requirements
+    threshold: 2
+    judge:
+      persona: supervisor
+      instruction: kiro-spec-requirements
+      rules:
+        - condition: Healthy (review findings are converging)
+          next: review-requirements
+        - condition: Unproductive (same finding repeats or no improvement)
+          next: ABORT
 
 steps:
   - name: generate-requirements
@@ -36,16 +51,59 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: validation.verdict PASS and phase requirements and requirements.md written and requirements-generated and approvals.requirements.generated true
-        next: COMPLETE
+        next: review-requirements
       - condition: validation.verdict BLOCKED or scope ambiguity remains or acceptance criteria not verifiable
         next: ABORT
       - condition: validation.verdict NEEDS_FIX or requirements review gate failed
+        next: repair-requirements
+
+  - name: review-requirements
+    edit: false
+    persona: reviewer
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    required_permission_mode: readonly
+    instruction: kiro-spec-requirements
+    output_contracts:
+      report:
+        - name: kiro-spec-requirements-review.md
+          format: kiro-review-verdict
+    rules:
+      - condition: VERDICT APPROVED and requirements review gate passed
+        next: COMPLETE
+      - condition: VERDICT REJECTED and local repair possible
+        next: repair-requirements
+      - condition: VERDICT REJECTED and scope ambiguity remains
+        next: ABORT
+
+  - name: repair-requirements
+    edit: true
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    required_permission_mode: edit
+    instruction: kiro-spec-requirements
+    output_contracts:
+      report:
+        - name: kiro-spec-requirements-repair-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and requirements.md written and requirements-generated and approvals.requirements.generated true
+        next: review-requirements
+      - condition: validation.verdict NEEDS_FIX and local repair attempted
+        next: review-requirements
+      - condition: validation.verdict BLOCKED or scope ambiguity remains or acceptance criteria not verifiable
         next: ABORT
 
 # validation/review 用の contract notes:
 # - Context loading は .kiro/specs/<feature>/brief.md、existing draft requirements.md、既存 spec.json、steering context、requirements rules を読む。
 # - requirements.md は EARS fixed phrase と numeric IDs のみで生成する。
 # - requirements review gate は metadata update 前に EARS 準拠、numeric IDs、検証可能な acceptance criteria、scope ambiguity を確認する。
+# - workflow は generate -> review -> repair -> review の closed loop を使い、repeat bound は loop_monitors.threshold だけに置く。
 # - 成功時は spec.json を phase: "requirements-generated" と approvals.requirements.generated: true に更新する。
 # - scope ambiguity または検証不能な acceptance criteria が残る場合は BLOCKED または NEEDS_FIX を返し、requirements-generated へ進めない。
 # - requirements phase では design component ownership、workflow YAML ownership、implementation file ownership を決めない。
