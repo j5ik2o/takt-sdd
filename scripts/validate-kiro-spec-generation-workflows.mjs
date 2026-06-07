@@ -26,9 +26,9 @@ const phaseWorkflowSpecs = [
   {
     name: "kiro-spec-design",
     requiredTerms: ["design.md", "research.md", "design-generated", "Boundary Commitments", "File Structure Plan"],
-    instructionFacets: ["kiro-spec-design"],
+    instructionFacets: ["kiro-spec-design", "kiro-validate-design-readiness"],
     policyFacets: ["kiro-spec-generation"],
-    outputContracts: ["kiro-spec-generation-result"],
+    outputContracts: ["kiro-spec-generation-result", "kiro-validation-result"],
   },
   {
     name: "kiro-spec-tasks",

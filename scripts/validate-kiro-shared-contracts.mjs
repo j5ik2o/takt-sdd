@@ -32,8 +32,8 @@ const outputContracts = [
   },
   {
     file: "kiro-completion-verification.md",
-    fields: ["verdict", "completed_task_refs", "remaining_work", "verification_evidence", "blocked_reason", "safe_to_update_progress", "summary"],
-    enums: ["COMPLETE", "INCOMPLETE", "BLOCKED"],
+    fields: ["STATUS", "verdict", "completed_task_refs", "remaining_work", "verification_evidence", "blocked_reason", "safe_to_update_progress", "summary"],
+    enums: ["VERIFIED", "NOT_VERIFIED", "MANUAL_VERIFY_REQUIRED", "COMPLETE", "INCOMPLETE", "BLOCKED"],
   },
 ];
 
@@ -285,6 +285,7 @@ function validateKiroSkillFieldContract() {
     const reviewPath = join(repoRoot, ".takt", lang, "facets", "output-contracts", "kiro-review-verdict.md");
     const debugPath = join(repoRoot, ".takt", lang, "facets", "output-contracts", "kiro-debug-decision.md");
     const validationPath = join(repoRoot, ".takt", lang, "facets", "output-contracts", "kiro-validation-result.md");
+    const completionPath = join(repoRoot, ".takt", lang, "facets", "output-contracts", "kiro-completion-verification.md");
     if (!existsSync(reviewPath)) {
       failures.push(`${rel(reviewPath)} missing`);
     } else {
@@ -299,6 +300,16 @@ function validateKiroSkillFieldContract() {
       failures.push(`${rel(validationPath)} missing`);
     } else {
       containsAllContractTerms(readText(validationPath), ["DECISION", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "primary field"], validationPath, failures);
+    }
+    if (!existsSync(completionPath)) {
+      failures.push(`${rel(completionPath)} missing`);
+    } else {
+      containsAllContractTerms(
+        readText(completionPath),
+        ["STATUS", "VERIFIED", "NOT_VERIFIED", "MANUAL_VERIFY_REQUIRED", "primary field"],
+        completionPath,
+        failures,
+      );
     }
 
     const workflowDir = join(repoRoot, ".takt", lang, "workflows");
@@ -320,6 +331,9 @@ function validateKiroSkillFieldContract() {
           if (/\bvalidation\.verdict\b|\bverdict\s+(?:PASS|FAIL|NEEDS_FIX|BLOCKED)\b|finding category MANUAL_VERIFICATION_REQUIRED/.test(conditions)) {
             failures.push(`${rel(workflow)} step ${stepName} must not branch on legacy validation verdict fields for kiro-validation-result`);
           }
+        }
+        if (workflowStepUsesFormat(block, "kiro-completion-verification") && !/\bSTATUS\b/.test(conditions)) {
+          failures.push(`${rel(workflow)} step ${stepName} must branch on STATUS for kiro-completion-verification`);
         }
       }
     }
