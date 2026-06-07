@@ -50,11 +50,11 @@ steps:
         - name: kiro-spec-requirements-result.md
           format: kiro-spec-generation-result
     rules:
-      - condition: validation.verdict PASS and phase requirements and requirements draft ready and requirements review gate pending
+      - condition: validation.verdict PASS and phase requirements and draft_status READY_FOR_REVIEW and review_gate PENDING
         next: review-requirements
       - condition: validation.verdict BLOCKED or scope ambiguity remains or acceptance criteria not verifiable
         next: ABORT
-      - condition: validation.verdict NEEDS_FIX and requirements draft ready
+      - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW
         next: review-requirements
 
   - name: review-requirements
@@ -92,7 +92,7 @@ steps:
         - name: kiro-spec-requirements-repair-result.md
           format: kiro-spec-generation-result
     rules:
-      - condition: validation.verdict PASS and requirements draft repaired
+      - condition: validation.verdict PASS and draft_status READY_FOR_REVIEW
         next: review-requirements
       - condition: validation.verdict NEEDS_FIX and local repair attempted
         next: review-requirements

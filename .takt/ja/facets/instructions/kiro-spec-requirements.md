@@ -43,6 +43,8 @@ initialized 済みの Kiro context から `.kiro/specs/<feature>/requirements.md
 
 ## Result mapping
 
+- draft generation または repair step では `requirements.md` の書き込みや `spec.json` の promotion をしない。draft が read-only review step に進める場合は `draft_status: "READY_FOR_REVIEW"` と `review_gate: "PENDING"` を返す。
 - 成功時は `phase: "requirements"`、`validation.verdict: "PASS"`、`featureName`、`updatedFiles` に `requirements.md` と `spec.json` を含める。
+- requirements review gate 通過後の finalize step では、artifact update とともに `draft_status: "WRITTEN"` と `review_gate: "PASSED"` を返す。
 - lifecycle inconsistency、missing context、scope ambiguity、検証不能な acceptance criteria、requirements review gate failure がある場合は `BLOCKED` または `NEEDS_FIX` を返し、`spec.json` を `requirements-generated` success state にしない。
 - evidence には context loading source、EARS と numeric IDs の確認、requirements review gate result、`spec.json` を `requirements-generated` に更新したかを記録する。
