@@ -1,0 +1,13 @@
+provider: claude
+language: ja
+model: claude-opus-4-8
+concurrency: 1
+base_branch: main
+submodules: all
+
+provider_options:
+  codex:
+    reasoning_effort: high
+
+workflow_command_gates:
+  custom_scripts: true
