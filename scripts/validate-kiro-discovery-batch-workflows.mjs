@@ -138,6 +138,11 @@ function parseFrontmatter(content) {
   return fields;
 }
 
+function parseFacetParent(content) {
+  const match = content.match(/^\{extends:\s*([A-Za-z0-9._-]+)\s*\}$/m);
+  return match ? match[1] : null;
+}
+
 function getStepNames(content) {
   return [...content.matchAll(/^  - name:\s*(.+)\s*$/gm)].map((match) => match[1]);
 }
@@ -208,12 +213,18 @@ function validateFacet(repoRoot, lang, spec) {
   if (spec.skillSection && frontmatter.extends_skill_section !== spec.skillSection) {
     failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must declare extends_skill_section: "${spec.skillSection}"`);
   }
-  if (!new RegExp(`^\\{extends:\\s*${spec.parent}\\s*\\}$`, "m").test(content)) {
+  const actualParent = parseFacetParent(content);
+  if (actualParent !== spec.parent) {
     failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must extend built-in ${spec.kind}/${spec.parent}`);
   }
-  const parentPath = join(repoRoot, "node_modules", "takt", "builtins", lang, "facets", spec.kind, `${spec.parent}.md`);
-  if (existsSync(join(repoRoot, "node_modules")) && !existsSync(parentPath)) {
-    failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} extends missing built-in parent ${rel(repoRoot, parentPath)}`);
+  if (!actualParent) {
+    failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must declare a built-in facet parent`);
+  }
+  if (actualParent && existsSync(join(repoRoot, "node_modules"))) {
+    const parentPath = join(repoRoot, "node_modules", "takt", "builtins", lang, "facets", spec.kind, `${actualParent}.md`);
+    if (!existsSync(parentPath)) {
+      failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} extends missing built-in parent ${rel(repoRoot, parentPath)}`);
+    }
   }
   containsAll(content, spec.terms, path, failures, repoRoot, "FACET_DRIFT");
   return failures;

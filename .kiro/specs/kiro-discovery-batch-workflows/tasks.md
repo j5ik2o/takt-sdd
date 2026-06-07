@@ -97,7 +97,7 @@
   - _Boundary:_ DiscoveryBatchValidationHarness
   - _Depends:_ 6, 8, 9, 10, 11
 
-- [ ] 13. discovery/batch facets の built-in 継承候補を棚卸しする
+- [x] 13. discovery/batch facets の built-in 継承候補を棚卸しする
   - `node_modules/takt/builtins/{en,ja}/facets` の research、planning、review 系 facet を確認し、各 Kiro-specific discovery/batch facet の親候補を記録する。
   - 親候補がある facet は shared `BuiltinFacetInheritancePolicy` の `extends` を使い、action path、roadmap dependency wave、cross-spec review だけを差分として記述する。
   - 親候補がない、または full custom が必要な facet は理由を design note または validation finding に残す。

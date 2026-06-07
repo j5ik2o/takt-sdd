@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import {
@@ -346,4 +346,21 @@ test("package exposes discovery batch validation commands", () => {
     scripts["test:kiro-discovery-batch-workflows"],
     "node --test tests/kiro-discovery-batch-workflows.test.mjs",
   );
+});
+
+test("validation rejects missing built-in facet parent", () => {
+  const root = copyCurrentTaktFixture();
+  const repoRoot = join(import.meta.dirname, "..");
+  symlinkSync(join(repoRoot, "node_modules"), join(root, "node_modules"), "dir");
+  const path = ".takt/en/facets/instructions/kiro-discovery.md";
+  writeFixtureFile(
+    root,
+    path,
+    readFileSync(join(root, path), "utf8").replace("{extends: plan}", "{extends: missing-parent}"),
+  );
+
+  const result = validateKiroDiscoveryBatchWorkflows({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("missing-parent")));
 });
