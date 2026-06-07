@@ -90,11 +90,11 @@ steps:
         - name: kiro-spec-tasks-review.md
           format: kiro-spec-generation-result
     rules:
-      - condition: task plan review PASS and task graph sanity review PASS
+      - condition: validation.verdict PASS and task plan review evidence present and task graph sanity review evidence present
         next: finalize-tasks
-      - condition: task plan review NEEDS_FIXES or task graph sanity review NEEDS_FIXES
+      - condition: validation.verdict NEEDS_FIX
         next: repair-tasks
-      - condition: task plan review RETURN_TO_DESIGN or task graph sanity review RETURN_TO_DESIGN
+      - condition: validation.verdict BLOCKED or task plan review RETURN_TO_DESIGN or task graph sanity review RETURN_TO_DESIGN
         next: ABORT
       - condition: hidden prerequisite remains or boundary overlap remains or coverage gap remains
         next: ABORT

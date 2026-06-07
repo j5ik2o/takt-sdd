@@ -15,7 +15,7 @@ Review the draft `.kiro/specs/<feature>/requirements.md` before lifecycle metada
 
 1. Load the generated requirements draft, `spec.json`, steering context, and requirements rules.
 2. Check EARS fixed phrases, numeric IDs, testable acceptance criteria, duplicate behavior, combined behavior, and remaining scope ambiguity.
-3. Return `validation.verdict: "PASS"` only when the requirements review gate passed and the draft is ready for the finalize step.
+3. Because this Kiro skill section does not define a dedicated uppercase review machine field, return `validation.verdict: "PASS"` only when the requirements review gate passed and the draft is ready for the finalize step.
 4. Return `validation.verdict: "NEEDS_FIX"` when local repair is possible.
 5. Return `validation.verdict: "BLOCKED"` when scope ambiguity or unverifiable acceptance criteria require human clarification.
 

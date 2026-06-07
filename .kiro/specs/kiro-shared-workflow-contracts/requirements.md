@@ -134,5 +134,6 @@
 2. Kiro review adapter が reviewer output を読む場合、Kiro contract set は `VERDICT: APPROVED | REJECTED` を source of truth として扱う。
 3. Kiro debug adapter が debugger output を読む場合、Kiro contract set は `NEXT_ACTION: RETRY_TASK | BLOCK_TASK | STOP_FOR_HUMAN` を source of truth として扱う。
 4. Kiro implementation validation adapter が feature validation output を読む場合、Kiro contract set は `DECISION: GO | NO-GO | MANUAL_VERIFY_REQUIRED` を source of truth として扱う。
-5. spec generation review adapter が Kiro spec skill の review step を読む場合、Kiro contract set は該当 skill section が定義する review result を source of truth とし、独自の `validation.verdict` や `review.verdict` へ翻訳しない。
-6. 既存 `kiro-validation-result`、`kiro-review-verdict`、`kiro-debug-decision` などの shared output contract は、人間向け補助形式として残す場合でも Kiro skill field を上書きせず、workflow rule の primary field は Kiro skill field に一致させる。
+5. spec generation review adapter が Kiro spec skill の review step を読み、その skill section が専用の構造化 review result を定義している場合、Kiro contract set はその review result を source of truth とし、独自の `validation.verdict` や `review.verdict` へ翻訳しない。
+6. spec generation review adapter が読む Kiro spec skill section に専用の構造化 review result が存在しない場合、Kiro contract set は shared generation result の `validation.verdict` を補助 machine field として使い、その理由を adapter facet に明記する。
+7. 既存 `kiro-validation-result`、`kiro-review-verdict`、`kiro-debug-decision` などの shared output contract は、人間向け補助形式として残す場合でも Kiro skill field を上書きせず、workflow rule の primary field は Kiro skill field に一致させる。
