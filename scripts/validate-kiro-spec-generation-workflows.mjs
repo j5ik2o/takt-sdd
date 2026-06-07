@@ -347,6 +347,37 @@ const taskAnnotationContractPaths = [
   ".takt/en/facets/policies/kiro-spec-task-annotations.md",
   ".takt/ja/facets/policies/kiro-spec-task-annotations.md",
 ];
+const skillAdapterFacetSpecs = [
+  {
+    name: "kiro-spec-requirements-review",
+    extendsSkill: "kiro-spec-requirements",
+    extendsSkillSection: "### Step 4: Review Requirements Draft",
+    machineFields: ["validation.verdict"],
+    enums: ["PASS", "NEEDS_FIX", "BLOCKED"],
+  },
+  {
+    name: "kiro-spec-tasks-review",
+    extendsSkill: "kiro-spec-tasks",
+    extendsSkillSection: "### Step 3: Review Task Plan",
+    extendsSkillAdditionalSection: "### Step 3.5: Run Task-Graph Sanity Review",
+    machineFields: ["task_plan_review", "task_graph_sanity_review"],
+    enums: ["PASS", "NEEDS_FIXES", "RETURN_TO_DESIGN"],
+  },
+  {
+    name: "kiro-validate-design-readiness",
+    extendsSkill: "kiro-validate-design",
+    extendsSkillSection: "## Execution Steps",
+    machineFields: ["DECISION"],
+    enums: ["GO", "NO-GO", "MANUAL_VERIFY_REQUIRED"],
+  },
+  {
+    name: "kiro-spec-quick-sanity-review",
+    extendsSkill: "kiro-spec-quick",
+    extendsSkillSection: "#### Final Sanity Review",
+    machineFields: ["verdict"],
+    enums: ["PASS", "NEEDS_FIX", "BLOCKED"],
+  },
+];
 const packageScriptSpecs = [
   {
     name: "validate:kiro-spec-generation-workflows",
@@ -453,6 +484,22 @@ function canonicalBlock(content, key) {
 function topLevelScalar(content, key) {
   const match = content.match(new RegExp(`^${key}:\\s*(.+)\\s*$`, "m"));
   return match?.[1] ?? "";
+}
+
+function frontMatterFields(content) {
+  const match = content.match(/^---\n([\s\S]*?)\n---\n/);
+  if (!match) {
+    return {};
+  }
+
+  const fields = {};
+  for (const line of match[1].split("\n")) {
+    const fieldMatch = line.match(/^([A-Za-z0-9_-]+):\s*(.+?)\s*$/);
+    if (fieldMatch) {
+      fields[fieldMatch[1]] = fieldMatch[2].replace(/^"|"$/g, "");
+    }
+  }
+  return fields;
 }
 
 function topLevelMap(content, key) {
@@ -1208,6 +1255,87 @@ function validateTaskAnnotationContract(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
+function adapterSignature(content, spec) {
+  const frontMatter = frontMatterFields(content);
+  return {
+    extends_skill: frontMatter.extends_skill ?? "",
+    extends_skill_section: frontMatter.extends_skill_section ?? "",
+    extends_skill_additional_section: frontMatter.extends_skill_additional_section ?? "",
+    machineFields: spec.machineFields.filter((field) => content.includes(field)).sort(),
+    enums: spec.enums.filter((value) => content.includes(value)).sort(),
+  };
+}
+
+function compareAdapterSignatures(failures, spec, enSignature, jaSignature) {
+  for (const key of ["extends_skill", "extends_skill_section", "extends_skill_additional_section"]) {
+    if (enSignature[key] !== jaSignature[key]) {
+      failures.push(
+        `SKILL_ADAPTER_DRIFT: .takt/{en,ja}/facets/instructions/${spec.name}.md ${key} mismatch: en=${JSON.stringify(enSignature[key])} ja=${JSON.stringify(jaSignature[key])}`,
+      );
+    }
+  }
+
+  for (const key of ["machineFields", "enums"]) {
+    const enValue = JSON.stringify(enSignature[key]);
+    const jaValue = JSON.stringify(jaSignature[key]);
+    if (enValue !== jaValue) {
+      failures.push(
+        `SKILL_ADAPTER_DRIFT: .takt/{en,ja}/facets/instructions/${spec.name}.md ${key} mismatch: en=${enValue} ja=${jaValue}`,
+      );
+    }
+  }
+}
+
+function validateSkillAdapterFacets(repoRoot) {
+  const failures = [];
+  for (const spec of skillAdapterFacetSpecs) {
+    const signatures = {};
+    for (const lang of languages) {
+      const path = join(repoRoot, ".takt", lang, "facets", "instructions", `${spec.name}.md`);
+      if (!existsSync(path)) {
+        failures.push(`SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} missing`);
+        continue;
+      }
+
+      const content = readText(path);
+      const frontMatter = frontMatterFields(content);
+      const expectedFrontMatter = {
+        extends_skill: spec.extendsSkill,
+        extends_skill_section: spec.extendsSkillSection,
+      };
+      if (spec.extendsSkillAdditionalSection) {
+        expectedFrontMatter.extends_skill_additional_section = spec.extendsSkillAdditionalSection;
+      }
+
+      for (const [field, expected] of Object.entries(expectedFrontMatter)) {
+        if (frontMatter[field] !== expected) {
+          failures.push(
+            `SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} ${field} must equal ${JSON.stringify(expected)}`,
+          );
+        }
+      }
+
+      for (const field of spec.machineFields) {
+        if (!content.includes(field)) {
+          failures.push(`SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} missing machine field: ${field}`);
+        }
+      }
+      for (const value of spec.enums) {
+        if (!content.includes(value)) {
+          failures.push(`SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} missing enum: ${value}`);
+        }
+      }
+      signatures[lang] = adapterSignature(content, spec);
+    }
+
+    if (signatures.en && signatures.ja) {
+      compareAdapterSignatures(failures, spec, signatures.en, signatures.ja);
+    }
+  }
+
+  return { ok: failures.length === 0, failures };
+}
+
 function validatePackageScripts(repoRoot) {
   const failures = [];
   const packagePath = join(repoRoot, "package.json");
@@ -1303,6 +1431,7 @@ export function validateKiroSpecGenerationWorkflows(options = {}) {
     specArtifactLifecycle: validateSpecArtifactLifecycle(repoRoot),
     generatedArtifacts: validateGeneratedArtifacts(repoRoot),
     taskAnnotationContract: validateTaskAnnotationContract(repoRoot),
+    skillAdapterFacets: validateSkillAdapterFacets(repoRoot),
     packageScripts: validatePackageScripts(repoRoot),
     quickComposition: validateQuickComposition(repoRoot),
     taskWorkflowCompletion: validateTaskWorkflowCompletion(repoRoot),

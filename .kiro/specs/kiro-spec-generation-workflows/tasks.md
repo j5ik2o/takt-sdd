@@ -132,7 +132,7 @@
   - _Boundary:_ SpecGenerationValidationHarness
   - _Depends:_ 3.1, 4.1, 5.1, 6.1, 11.1, 12.1
 
-- [ ] 15. Kiro skill thin adapter へ spec generation facets を再整合する
+- [x] 15. Kiro skill thin adapter へ spec generation facets を再整合する
   - `kiro-spec-requirements` の `Review Requirements Draft`、`kiro-spec-tasks` の `Step 3: Review Task Plan` と `Step 3.5: Run Task-Graph Sanity Review`、`kiro-spec-quick` の `Final Sanity Review` を `extends_skill_section` で参照する。
   - `kiro-spec-design` の review gate は独自 review ではなく `kiro-validate-design` skill protocol の adapter step として接続する。
   - Kiro skill 本文を instruction facet にコピーせず、TAKT input/output/rule mapping だけを差分として記述する。

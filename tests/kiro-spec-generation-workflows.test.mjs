@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { validateKiroSpecGenerationWorkflows } from "../scripts/validate-kiro-spec-generation-workflows.mjs";
@@ -13,6 +13,30 @@ function makeValidationFixture() {
   const root = makeFixture();
   const repoRoot = join(import.meta.dirname, "..");
   symlinkSync(join(repoRoot, ".takt"), join(root, ".takt"), "dir");
+  symlinkSync(join(repoRoot, "node_modules"), join(root, "node_modules"), "dir");
+  mkdirSync(join(root, ".kiro"), { recursive: true });
+  symlinkSync(join(repoRoot, ".kiro", "settings"), join(root, ".kiro", "settings"), "dir");
+  writeFixtureFile(
+    root,
+    "package.json",
+    `${JSON.stringify(
+      {
+        scripts: {
+          "validate:kiro-spec-generation-workflows": "node scripts/validate-kiro-spec-generation-workflows.mjs",
+          "test:kiro-spec-generation-workflows": "node --test tests/kiro-spec-generation-workflows.test.mjs",
+        },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  return root;
+}
+
+function makeWritableValidationFixture() {
+  const root = makeFixture();
+  const repoRoot = join(import.meta.dirname, "..");
+  cpSync(join(repoRoot, ".takt"), join(root, ".takt"), { recursive: true });
   symlinkSync(join(repoRoot, "node_modules"), join(root, "node_modules"), "dir");
   mkdirSync(join(root, ".kiro"), { recursive: true });
   symlinkSync(join(repoRoot, ".kiro", "settings"), join(root, ".kiro", "settings"), "dir");
@@ -876,6 +900,45 @@ test("task 6.1 tasks workflow requires canonical task annotations and ready stat
   assert.equal(/\boptional\b/i.test(template), false);
   assert.equal(/Only for/i.test(template), false);
   assert.equal(/omit/i.test(template), false);
+});
+
+test("task 15 adapter validation detects skill section, field, and enum drift", () => {
+  const root = makeWritableValidationFixture();
+  const requirementsReviewPath = ".takt/ja/facets/instructions/kiro-spec-requirements-review.md";
+  const tasksReviewPath = ".takt/ja/facets/instructions/kiro-spec-tasks-review.md";
+  const requirementsReview = readFileSync(join(root, requirementsReviewPath), "utf8")
+    .replace('extends_skill_section: "### Step 4: Review Requirements Draft"', 'extends_skill_section: "### Step 4: Draft Review"')
+    .replaceAll("validation.verdict", "validation.status");
+  const tasksReview = readFileSync(join(root, tasksReviewPath), "utf8").replace("RETURN_TO_DESIGN", "RETURN_TO_REQUIREMENTS");
+  writeFixtureFile(root, requirementsReviewPath, requirementsReview);
+  writeFixtureFile(root, tasksReviewPath, tasksReview);
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("SKILL_ADAPTER_DRIFT") &&
+      failure.includes("kiro-spec-requirements-review.md") &&
+      failure.includes("extends_skill_section"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("SKILL_ADAPTER_DRIFT") &&
+      failure.includes("kiro-spec-requirements-review.md") &&
+      failure.includes("validation.verdict"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("SKILL_ADAPTER_DRIFT") &&
+      failure.includes("kiro-spec-tasks-review.md") &&
+      failure.includes("RETURN_TO_DESIGN"),
+    ),
+    result.failures.join("\n"),
+  );
 });
 
 test("task 5.1 design workflow connects research, required sections, review gate, and lifecycle update", () => {
