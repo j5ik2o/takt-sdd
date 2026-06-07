@@ -17,7 +17,7 @@
 ## Result Rules
 
 - `PASS` は、報告された `phase` の artifact write と `spec.json` metadata update が成功したことを表す。
-- `READY_FOR_REVIEW` と `review_gate: PENDING` の組み合わせは、draft が workflow context 上で review 可能であり、artifact write や lifecycle promotion の前に dedicated read-only review step へ進めることを表す。
+- `READY_FOR_REVIEW` と `review_gate: PENDING` の組み合わせは、dedicated read-only review step が読む draft artifacts が存在し、`spec.json` lifecycle promotion はまだ行われていないことを表す。
 - `WRITTEN` と `review_gate: PASSED` の組み合わせは、review gate 通過後に finalize step が phase artifacts と lifecycle metadata を書いたことを表す。
 - `NEEDS_FIX` は、review 可能な output はあるが、finding を修正するまで lifecycle metadata を進めてはいけないことを表す。
 - `BLOCKED` は、workflow が artifact を安全に書けない、または lifecycle metadata を進められないことを表す。

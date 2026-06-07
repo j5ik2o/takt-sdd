@@ -17,7 +17,7 @@
 ## Result Rules
 
 - `PASS` means the phase artifact write and `spec.json` metadata update succeeded for the reported `phase`.
-- `READY_FOR_REVIEW` with `review_gate: PENDING` means a draft is ready in the workflow context and must route to the dedicated read-only review step before artifact writes or lifecycle promotion.
+- `READY_FOR_REVIEW` with `review_gate: PENDING` means draft artifacts are available for the dedicated read-only review step, but `spec.json` lifecycle promotion has not happened yet.
 - `WRITTEN` with `review_gate: PASSED` means the finalize step wrote phase artifacts and lifecycle metadata after the review gate passed.
 - `NEEDS_FIX` means the phase produced reviewable output, but lifecycle metadata must not advance until the findings are corrected.
 - `BLOCKED` means the workflow could not safely write artifacts or advance lifecycle metadata.
