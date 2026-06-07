@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const repoRoot = join(__dirname, "..");
+const defaultRepoRoot = join(__dirname, "..");
+let repoRoot = defaultRepoRoot;
 const languages = ["en", "ja"];
 
 const workflowSpecs = [
@@ -13,24 +14,31 @@ const workflowSpecs = [
     file: "kiro-spec-status.yaml",
     instructions: ["kiro-report-spec-status"],
     reports: ["kiro-status"],
+    expectedSteps: ["collect-status-evidence", "classify-status", "report-status"],
     requiredTerms: ["kiro-status", "FEATURE_NOT_FOUND", "ARTIFACT_MISSING", "LIFECYCLE_INCONSISTENT", "SPEC_JSON_INVALID", "NOT_READY", "INCONSISTENT"],
   },
   {
     file: "kiro-validate-gap.yaml",
     instructions: ["kiro-validate-gap-readiness"],
     reports: ["kiro-validation-result"],
+    expectedSteps: ["collect-gap-evidence", "validate-gap", "report-gap"],
+    primaryField: "DECISION",
     requiredTerms: ["kiro-validation-result", "DECISION", "MANUAL_VERIFY_REQUIRED", "GO", "NO-GO"],
   },
   {
     file: "kiro-validate-design.yaml",
     instructions: ["kiro-validate-design-readiness"],
     reports: ["kiro-validation-result"],
+    expectedSteps: ["collect-design-evidence", "validate-design", "report-design"],
+    primaryField: "DECISION",
     requiredTerms: ["kiro-validation-result", "Boundary Commitments", "File Structure Plan", "DECISION", "NO-GO"],
   },
   {
     file: "kiro-validate-impl.yaml",
     instructions: ["kiro-validate-impl-readiness"],
     reports: ["kiro-validation-result"],
+    expectedSteps: ["collect-impl-evidence", "validate-impl", "report-impl"],
+    primaryField: "DECISION",
     requiredTerms: ["kiro-validation-result", "DECISION", "MANUAL_VERIFY_REQUIRED", "tasks.md", "ready_for_implementation"],
   },
 ];
@@ -39,21 +47,35 @@ const instructionSpecs = [
   {
     file: "kiro-report-spec-status.md",
     parent: "gather-review",
+    skill: "kiro-spec-status",
+    skillSection: "### Step 3: Generate Report",
     terms: ["spec.json", "phase", "approvals", "ready_for_implementation", "initialized", "FOUND", "INVALID", "FEATURE_NOT_FOUND", "ARTIFACT_MISSING", "SPEC_JSON_INVALID", "LIFECYCLE_INCONSISTENT", "READY", "NOT_READY", "INCONSISTENT", "kiro-status"],
   },
   {
     file: "kiro-validate-gap-readiness.md",
     parent: "review-qa",
+    skill: "kiro-validate-gap",
+    skillSection: "## Core Task",
+    primaryField: "DECISION",
+    primaryEnums: ["GO", "NO-GO", "MANUAL_VERIFY_REQUIRED"],
     terms: ["requirements.md", "existing implementation", "missing components", "integration points", "recommended next action", "observed evidence", "missing evidence", "findings", "evidence", "DECISION", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "MANUAL_VERIFICATION_REQUIRED", "kiro-validation-result"],
   },
   {
     file: "kiro-validate-design-readiness.md",
     parent: "review-arch",
+    skill: "kiro-validate-design",
+    skillSection: "## Execution Steps",
+    primaryField: "DECISION",
+    primaryEnums: ["GO", "NO-GO", "MANUAL_VERIFY_REQUIRED"],
     terms: ["requirements coverage", "Boundary Commitments", "File Structure Plan", "validation hooks", "boundary violation", "DECISION", "DECISION:", "machine field", "GO/NO-GO", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "kiro-validation-result"],
   },
   {
     file: "kiro-validate-impl-readiness.md",
     parent: "supervise",
+    skill: "kiro-validate-impl",
+    skillSection: "## Execution Steps",
+    primaryField: "DECISION",
+    primaryEnums: ["GO", "NO-GO", "MANUAL_VERIFY_REQUIRED"],
     terms: ["tasks.md", "ready_for_implementation", "DECISION", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "ARTIFACT_MISSING", "LIFECYCLE_INCONSISTENT", "task checkbox", "test/build evidence", "evidence mismatch", "observed evidence", "missing evidence", "findings", "evidence", "MANUAL_VERIFICATION_REQUIRED", "kiro-validation-result"],
   },
   {
@@ -70,6 +92,21 @@ const sharedContractFiles = [
   ".takt/{lang}/facets/policies/kiro-spec-lifecycle.md",
 ];
 
+const downstreamFieldContractSpecs = [
+  {
+    file: "kiro-spec-design.yaml",
+    instruction: "kiro-validate-design-readiness",
+  },
+  {
+    file: "kiro-spec-quick.yaml",
+    instruction: "kiro-validate-design-readiness",
+  },
+  {
+    file: "kiro-impl.yaml",
+    instruction: "kiro-validate-impl-final",
+  },
+];
+
 function readText(path) {
   return readFileSync(path, "utf8");
 }
@@ -84,6 +121,48 @@ function containsAll(content, terms, path, failures) {
       failures.push(`${rel(path)} missing required term: ${term}`);
     }
   }
+}
+
+function parseFrontmatter(content) {
+  if (!content.startsWith("---\n")) return {};
+  const end = content.indexOf("\n---", 4);
+  if (end === -1) return {};
+  const fields = {};
+  for (const line of content.slice(4, end).split("\n")) {
+    const match = line.match(/^([A-Za-z0-9_-]+):\s*(.+)\s*$/);
+    if (!match) continue;
+    fields[match[1]] = match[2].replace(/^"|"$/g, "");
+  }
+  return fields;
+}
+
+function getStepNames(content) {
+  return [...content.matchAll(/^  - name:\s*(.+)\s*$/gm)].map((match) => match[1]);
+}
+
+function getStepBlocks(content) {
+  const matches = [...content.matchAll(/^  - name:\s*(.+)\s*$/gm)];
+  return matches.map((match, index) => {
+    const start = match.index;
+    const end = matches[index + 1]?.index ?? content.length;
+    return { name: match[1], content: content.slice(start, end) };
+  });
+}
+
+function getInstructionStepBlocks(content, instruction) {
+  return getStepBlocks(content).filter((step) =>
+    new RegExp(`^\\s+instruction:\\s*${instruction}\\s*$`, "m").test(step.content),
+  );
+}
+
+function conditionsForStep(stepContent) {
+  return [...stepContent.matchAll(/^\s+- condition:\s*(.+)\s*$/gm)].map((match) => match[1]);
+}
+
+function hasAllDecisionRoutes(conditions) {
+  return ["DECISION GO", "DECISION NO-GO", "DECISION MANUAL_VERIFY_REQUIRED"].every((term) =>
+    conditions.some((condition) => condition.includes(term)),
+  );
 }
 
 function listFilesRecursive(dir) {
@@ -123,6 +202,13 @@ function validateInstructionFacets() {
         continue;
       }
       const content = readText(path);
+      const frontmatter = parseFrontmatter(content);
+      if (spec.skill && frontmatter.extends_skill !== spec.skill) {
+        failures.push(`${rel(path)} must declare extends_skill: ${spec.skill}`);
+      }
+      if (spec.skillSection && frontmatter.extends_skill_section !== spec.skillSection) {
+        failures.push(`${rel(path)} must declare extends_skill_section: "${spec.skillSection}"`);
+      }
       const extendsPattern = new RegExp(`^\\{extends:\\s*${spec.parent}\\s*\\}$`, "m");
       if (!extendsPattern.test(content)) {
         failures.push(`${rel(path)} must extend built-in instructions/${spec.parent} with {extends: ${spec.parent}}`);
@@ -132,8 +218,74 @@ function validateInstructionFacets() {
         failures.push(`${rel(path)} extends missing built-in parent ${rel(parentPath)}`);
       }
       containsAll(content, spec.terms, path, failures);
+      if (spec.primaryField && !content.includes(`primary field`) && !content.includes(`primary workflow-routing field`)) {
+        failures.push(`${rel(path)} must describe ${spec.primaryField} as the primary machine field`);
+      }
+      for (const enumValue of spec.primaryEnums ?? []) {
+        if (!content.includes(enumValue)) {
+          failures.push(`${rel(path)} missing primary ${spec.primaryField} enum: ${enumValue}`);
+        }
+      }
       if (!/read-only|読み取り専用|更新しない|変更しない/.test(content)) {
         failures.push(`${rel(path)} must state the read-only validation boundary`);
+      }
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
+function validateSkillAdapterParity() {
+  const failures = [];
+  for (const spec of instructionSpecs.filter((instruction) => instruction.skill)) {
+    const frontmatters = languages.map((lang) => {
+      const path = join(repoRoot, ".takt", lang, "facets", "instructions", spec.file);
+      return { path, frontmatter: existsSync(path) ? parseFrontmatter(readText(path)) : {} };
+    });
+    const [first, ...rest] = frontmatters;
+    for (const candidate of rest) {
+      for (const field of ["extends_skill", "extends_skill_section"]) {
+        if (candidate.frontmatter[field] !== first.frontmatter[field]) {
+          failures.push(
+            `${rel(candidate.path)} ${field} must match ${rel(first.path)} for Kiro skill adapter parity`,
+          );
+        }
+      }
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
+function validateReadOnlyWorkflowShape() {
+  const failures = [];
+  for (const lang of languages) {
+    for (const spec of workflowSpecs) {
+      const path = join(repoRoot, ".takt", lang, "workflows", spec.file);
+      if (!existsSync(path)) continue;
+      const content = readText(path);
+      const stepNames = getStepNames(content);
+      if (stepNames.length < 3) {
+        failures.push(`${rel(path)} must use read-only collect -> classify/validate -> report steps, not a single prompt wrapper`);
+      }
+      if (spec.expectedSteps && stepNames.join("\n") !== spec.expectedSteps.join("\n")) {
+        failures.push(`${rel(path)} must keep read-only step order: ${spec.expectedSteps.join(" -> ")}`);
+      }
+      for (const step of getStepBlocks(content)) {
+        if (!/^\s+edit:\s*false\s*$/m.test(step.content)) {
+          failures.push(`${rel(path)} step ${step.name} must use edit: false`);
+        }
+        if (!/^\s+required_permission_mode:\s*readonly\s*$/m.test(step.content)) {
+          failures.push(`${rel(path)} step ${step.name} must use required_permission_mode: readonly`);
+        }
+        if (/(repair|debug|write|update|execute|retry|finalize)/i.test(step.name)) {
+          failures.push(`${rel(path)} step ${step.name} violates read-only validation shape`);
+        }
+      }
+      const reportStep = getStepBlocks(content).at(-1);
+      if (reportStep && !/^\s+output_contracts:\s*$/m.test(reportStep.content)) {
+        failures.push(`${rel(path)} final report step must emit the parseable report contract`);
+      }
+      if (/workflow_call|takt\s+-w|required_permission_mode:\s*edit|\bWrite\b|\bEdit\b|repair-|debug-|update-progress|tasks\.md checkbox update|design\.md update/.test(content)) {
+        failures.push(`${rel(path)} contains artifact mutation, nested workflow, repair, or debug behavior`);
       }
     }
   }
@@ -167,6 +319,18 @@ function validateWorkflowFiles() {
       if (/instruction:\s*\n\s*-/.test(content)) {
         failures.push(`${rel(path)} must use a single TAKT instruction reference, not an instruction array`);
       }
+      const stepBlocks = getStepBlocks(content);
+      for (const step of stepBlocks) {
+        const conditions = conditionsForStep(step.content);
+        if (spec.primaryField === "DECISION" && /^\s+output_contracts:\s*$/m.test(step.content)) {
+          if (!hasAllDecisionRoutes(conditions)) {
+            failures.push(`${rel(path)} step ${step.name} must route GO, NO-GO, and MANUAL_VERIFY_REQUIRED with DECISION`);
+          }
+          if (conditions.some((condition) => /validation\.verdict|review\.verdict/.test(condition))) {
+            failures.push(`${rel(path)} step ${step.name} must not route Kiro skill adapter results through validation.verdict or review.verdict`);
+          }
+        }
+      }
       const passIndex = content.indexOf("condition: DECISION GO");
       const manualIndex = content.indexOf("condition: DECISION MANUAL_VERIFY_REQUIRED");
       if (manualIndex !== -1 && passIndex !== -1 && passIndex < manualIndex) {
@@ -184,6 +348,35 @@ function validateWorkflowFiles() {
       }
       if (/required_permission_mode:\s*edit|Write|Edit|cc-sdd-|opsx-|OpenSpec/.test(content)) {
         failures.push(`${rel(path)} contains out-of-boundary write or non-Kiro validation reference`);
+      }
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
+function validateDownstreamFieldContracts() {
+  const failures = [];
+  for (const lang of languages) {
+    for (const spec of downstreamFieldContractSpecs) {
+      const path = join(repoRoot, ".takt", lang, "workflows", spec.file);
+      if (!existsSync(path)) {
+        failures.push(`${rel(path)} missing for downstream Kiro field contract validation`);
+        continue;
+      }
+      const content = readText(path);
+      const adapterSteps = getInstructionStepBlocks(content, spec.instruction);
+      if (adapterSteps.length === 0) {
+        failures.push(`${rel(path)} must contain adapter step using ${spec.instruction}`);
+        continue;
+      }
+      for (const step of adapterSteps) {
+        const conditions = conditionsForStep(step.content);
+        if (!hasAllDecisionRoutes(conditions)) {
+          failures.push(`${rel(path)} step ${step.name} must route Kiro validation adapter with DECISION GO, DECISION NO-GO, and DECISION MANUAL_VERIFY_REQUIRED`);
+        }
+        if (conditions.some((condition) => /validation\.verdict|review\.verdict/.test(condition))) {
+          failures.push(`${rel(path)} step ${step.name} must keep DECISION as the primary Kiro skill field, not validation.verdict or review.verdict`);
+        }
       }
     }
   }
@@ -238,19 +431,32 @@ function validateNoBoundaryLeaks() {
   return { ok: failures.length === 0, failures };
 }
 
-export function validateKiroStatusValidationWorkflows() {
-  const sections = {
-    sharedContracts: validateSharedContractsExist(),
-    languageParity: validateLanguageParity(),
-    instructionFacets: validateInstructionFacets(),
-    workflowFiles: validateWorkflowFiles(),
-    packageScripts: validatePackageScripts(),
-    boundaryLeaks: validateNoBoundaryLeaks(),
-  };
-  const failures = Object.entries(sections).flatMap(([name, result]) =>
-    result.failures.map((failure) => `${name}: ${failure}`),
-  );
-  return { ok: failures.length === 0, failures, sections };
+export function validateKiroStatusValidationWorkflows(options = {}) {
+  return validateKiroStatusValidationWorkflowsWithOptions(options);
+}
+
+export function validateKiroStatusValidationWorkflowsWithOptions(options = {}) {
+  const previousRepoRoot = repoRoot;
+  repoRoot = options.repoRoot ?? defaultRepoRoot;
+  try {
+    const sections = {
+      sharedContracts: validateSharedContractsExist(),
+      languageParity: validateLanguageParity(),
+      instructionFacets: validateInstructionFacets(),
+      skillAdapterParity: validateSkillAdapterParity(),
+      workflowFiles: validateWorkflowFiles(),
+      readOnlyWorkflowShape: validateReadOnlyWorkflowShape(),
+      downstreamFieldContracts: validateDownstreamFieldContracts(),
+      packageScripts: validatePackageScripts(),
+      boundaryLeaks: validateNoBoundaryLeaks(),
+    };
+    const failures = Object.entries(sections).flatMap(([name, result]) =>
+      result.failures.map((failure) => `${name}: ${failure}`),
+    );
+    return { ok: failures.length === 0, failures, sections };
+  } finally {
+    repoRoot = previousRepoRoot;
+  }
 }
 
 if (process.argv[1] && __filename === resolve(process.argv[1])) {
