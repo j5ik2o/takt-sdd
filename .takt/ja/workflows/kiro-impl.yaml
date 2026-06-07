@@ -183,8 +183,10 @@ steps:
         - name: kiro-task-debug-decision.md
           format: kiro-debug-decision
     rules:
-      - condition: NEXT_ACTION RETRY_TASK
+      - condition: NEXT_ACTION RETRY_TASK and retry_eligible true
         next: execute-task
+      - condition: NEXT_ACTION RETRY_TASK and retry_eligible false
+        next: update-progress
       - condition: NEXT_ACTION BLOCK_TASK
         next: update-progress
       - condition: NEXT_ACTION STOP_FOR_HUMAN

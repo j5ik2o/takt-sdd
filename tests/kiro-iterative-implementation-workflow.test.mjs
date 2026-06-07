@@ -33,6 +33,7 @@ function makeCurrentSurfaceFixture() {
   symlinkSync(join(repoRoot, ".agents"), join(root, ".agents"), "dir");
   symlinkSync(join(repoRoot, ".kiro"), join(root, ".kiro"), "dir");
   symlinkSync(join(repoRoot, "node_modules"), join(root, "node_modules"), "dir");
+  symlinkSync(join(repoRoot, "tests"), join(root, "tests"), "dir");
   writeFixtureFile(
     root,
     "package.json",
@@ -154,6 +155,21 @@ test("validator rejects completion-before-checkbox gate drift", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("verify-task-completion")));
+});
+
+test("validator rejects debug retry routing without retry eligibility", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    "NEXT_ACTION RETRY_TASK and retry_eligible true",
+    "NEXT_ACTION RETRY_TASK",
+  );
+  writeFixtureFile(root, ".takt/ja/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("retry-eligible RETRY_TASK")));
 });
 
 test("validator rejects plan blockers that bypass progress blocker notes", () => {

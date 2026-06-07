@@ -99,6 +99,10 @@ const outputContractSpecs = [
       "READY_FOR_REVIEW",
       "BLOCKED",
       "NEEDS_CONTEXT",
+      "ready_for_implementation",
+      "selected_task",
+      "blocker_note_required",
+      "implementation_plan",
       "changed_files",
       "validation_evidence",
       "missing_context",
@@ -405,8 +409,11 @@ function validateWorkflowFiles(repoRoot) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} review-task must branch REJECTED to debug-task`);
     }
     const debugBlock = blocks.get("debug-task") ?? [];
-    if (!hasRuleWithTerms(debugBlock, ["NEXT_ACTION RETRY_TASK", "next: execute-task"])) {
-      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} debug-task must branch RETRY_TASK to execute-task`);
+    if (!hasRuleWithTerms(debugBlock, ["NEXT_ACTION RETRY_TASK", "retry_eligible true", "next: execute-task"])) {
+      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} debug-task must branch retry-eligible RETRY_TASK to execute-task`);
+    }
+    if (!hasRuleWithTerms(debugBlock, ["NEXT_ACTION RETRY_TASK", "retry_eligible false", "next: update-progress"])) {
+      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} debug-task must route non-retryable RETRY_TASK to update-progress`);
     }
     if (!hasRuleWithTerms(debugBlock, ["NEXT_ACTION BLOCK_TASK", "next: update-progress"])) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} debug-task must branch BLOCK_TASK to update-progress`);
@@ -593,6 +600,29 @@ function validateSpecTasks(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
+function validateTaskFixtureCoverage(repoRoot) {
+  const failures = [];
+  const testPath = join(repoRoot, "tests", "kiro-iterative-implementation-workflow.test.mjs");
+  if (!existsSync(testPath)) {
+    return { ok: false, failures: [`TASK_FIXTURE_COVERAGE_MISSING: ${rel(repoRoot, testPath)} missing`] };
+  }
+  const content = readText(testPath);
+  containsAll(
+    content,
+    [
+      "validator rejects completion-before-checkbox gate drift",
+      "validator rejects plan blockers that bypass progress blocker notes",
+      "validator rejects progress updates that omit routing status outputs",
+      "validator rejects progress policy drift that loses selected task guard",
+    ],
+    testPath,
+    failures,
+    repoRoot,
+    "TASK_FIXTURE_COVERAGE_DRIFT",
+  );
+  return { ok: failures.length === 0, failures };
+}
+
 export function validateKiroIterativeImplementationWorkflow(options = {}) {
   const repoRoot = options.repoRoot ?? defaultRepoRoot;
   const sections = {
@@ -603,6 +633,7 @@ export function validateKiroIterativeImplementationWorkflow(options = {}) {
     packageScripts: validatePackageScripts(repoRoot),
     packageScope: validatePackageScope(repoRoot),
     specTasks: validateSpecTasks(repoRoot),
+    taskFixtureCoverage: validateTaskFixtureCoverage(repoRoot),
   };
   const failures = Object.entries(sections).flatMap(([name, result]) =>
     result.failures.map((failure) => `${name}: ${failure}`),

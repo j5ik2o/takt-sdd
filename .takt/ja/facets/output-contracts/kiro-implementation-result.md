@@ -7,6 +7,10 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 ## Machine Fields
 
 - `STATUS`: primary implementation field。`READY_FOR_REVIEW`、`BLOCKED`、`NEEDS_CONTEXT` のいずれか。
+- `ready_for_implementation`: planning outputで使うboolean readiness gate result。
+- `selected_task`: このiterationで選択したsingle task。選択できない場合は `N/A`。
+- `blocker_note_required`: `update-progress` がselected-task blocker noteを書く必要があるかを示すboolean。
+- `implementation_plan`: selected taskのboundary、dependencies、requirement coverage、file scope、validation commands。
 - `changed_files`: selected taskで編集したfiles。
 - `validation_evidence`: commands、exit codes、fresh outputs。
 - `RED_PHASE_OUTPUT`: behavioral tasksのfailing test evidence、または `N/A`。
@@ -17,4 +21,4 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 
 ## Branching Rule
 
-workflow rulesは `STATUS` で分岐する。`summary` はroutingに使わない。
+workflow rulesは `STATUS` と上記machine fieldsで分岐する。`summary` はroutingに使わない。
