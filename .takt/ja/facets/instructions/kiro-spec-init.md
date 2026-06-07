@@ -1,3 +1,8 @@
+---
+extends_skill: kiro-spec-init
+extends_skill_section: "## Execution Steps"
+---
+
 {extends: plan}
 
 # Kiro Spec Init Instruction

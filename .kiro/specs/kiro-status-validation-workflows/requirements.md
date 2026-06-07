@@ -80,3 +80,27 @@
 3. `kiro-spec-generation-workflows` または `kiro-iterative-implementation-workflow` が status/validation result を参照する場合、Kiro status validation workflows は 個別 workflow の内部 task selection や generation prompt を要求しない。
 4. Kiro status validation workflows は OpenSpec strict validation workflow を置き換えず、Kiro-compatible `.kiro/*` artifact validation に責務を限定する。
 5. Kiro status validation workflows が Kiro-specific instruction facet を追加する場合、workflow は shared `BuiltinFacetInheritancePolicy` に従い、TAKT built-in facet を継承できるものは差分だけを記述する。
+
+### Requirement 7: status/validation workflow は read-only multi-step adapter として動作する
+
+**Objective:** workflow 利用者として、validation workflow が単発 prompt ではなく、証拠収集、判定、レポートの明確な段階で結果を返してほしい。そうすることで、検証結果の根拠と限界を後続 workflow が安定して読める。
+
+#### Acceptance Criteria
+
+1. `kiro-spec-status` workflow が実行される場合、Kiro status validation workflows は artifact collection、lifecycle classification、status report の複数 step を持ち、artifact を更新しない。
+2. `kiro-validate-gap` workflow が実行される場合、Kiro status validation workflows は Kiro skill section を thin adapter facet で継承し、existing implementation evidence と spec artifact evidence を分けて report する。
+3. `kiro-validate-design` workflow が実行される場合、Kiro status validation workflows は `kiro-validate-design` skill protocol を thin adapter facet で継承し、design を自動修正せず validation report だけを返す。
+4. `kiro-validate-impl` workflow が実行される場合、Kiro status validation workflows は `kiro-validate-impl` の `DECISION: GO | NO-GO | MANUAL_VERIFY_REQUIRED` を primary machine field として扱い、task checkbox や implementation files を更新しない。
+5. status/validation workflow は修正 loop、debug loop、implementation retry loop を持たず、必要な修正は downstream generation/implementation workflow の責務として報告する。
+
+### Requirement 8: 既存 unreleased status/validation workflow を再作成対象として扱う
+
+**Objective:** maintainer として、過去に作られた単発 `kiro-validate-*` workflow を互換維持せず、Kiro skill adapter と read-only shape に合わせて整理したい。そうすることで、validation が実装や artifact 更新を暗黙に始める事故を防げる。
+
+#### Acceptance Criteria
+
+1. status validation implementation が既存 `.takt/{en,ja}/workflows/kiro-validate-*.yaml` または `kiro-spec-status.yaml` を検出する場合、single prompt step wrapper は validation failure として扱う。
+2. Kiro-specific validation instruction facet が `extends_skill` と `extends_skill_section` を持たない場合、status validation implementation は削除または thin adapter への再作成を要求する。
+3. workflow が `validation.verdict` を primary field として使う場合、status validation implementation は Kiro skill field contract に合うよう rule condition を修正する。
+4. read-only workflow が artifact write step、repair step、debug step を含む場合、status validation validation は boundary violation として検出する。
+5. TAKT built-in facet を継承できる policy/output/persona を残す場合、workflow から結線されていることを検証し、未使用 facet を残さない。

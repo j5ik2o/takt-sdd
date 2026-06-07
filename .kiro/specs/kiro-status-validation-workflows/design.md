@@ -4,12 +4,12 @@
 
 `kiro-status-validation-workflows` は、Kiro-compatible SDD workspace の状態確認と検証判定を TAKT workflow として提供します。対象ユーザーは spec generation workflow、implementation workflow、reviewer、maintainer です。これらの利用者は `kiro-spec-status` と `kiro-validate-*` の結果を読んで、次 phase へ進めるか、人間の修正が必要か、または external evidence が不足しているかを判断します。
 
-この spec は read-only validation layer です。`.kiro/specs/<feature>/` と `.kiro/steering/` を読み、`kiro-shared-workflow-contracts` の status / validation result contract に従って `PASS`、`FAIL`、`NEEDS_FIX`、`BLOCKED` を返します。spec artifact の生成、設計修正、implementation task execution、tasks.md checkbox 更新は扱いません。
+この spec は read-only validation layer です。`.kiro/specs/<feature>/` と `.kiro/steering/` を読み、Kiro validation skill が定義する primary field と `kiro-shared-workflow-contracts` の補助 status / validation result contract に従って結果を返します。spec artifact の生成、設計修正、implementation task execution、tasks.md checkbox 更新は扱いません。
 
 ### Goals
 
 - `kiro-spec-status` で phase、approval、artifact consistency、ready-for-implementation を安定して報告する
-- `kiro-validate-gap`、`kiro-validate-design`、`kiro-validate-impl` で後続 workflow が使える validation verdict を返す
+- `kiro-validate-gap`、`kiro-validate-design`、`kiro-validate-impl` で後続 workflow が使える Kiro skill field と validation supplement を返す
 - evidence と manual verification requirement を分け、検証不能な項目を成功扱いにしない
 - 既存 `cc-sdd-validate-*` workflow/facet の配置規約を保ちながら、Kiro-specific な workflow 名と shared contract 参照へ移行する
 
@@ -96,7 +96,11 @@ Key decisions:
 
 - `kiro-spec-status` は status contract を使い、`kiro-validate-*` は validation result contract を使う。
 - workflow は `.kiro/*` artifact を読むだけにし、不整合を見つけても修復は提案に留める。
+- workflow は単一 prompt step wrapper にせず、evidence collection、classification/validation、report の step に分ける。
 - implementation validation は task execution を行わず、task completion と evidence の整合性だけを判定する。
+- `kiro-validate-impl` は Kiro skill の `DECISION: GO | NO-GO | MANUAL_VERIFY_REQUIRED` を primary machine field として扱い、shared `verdict` は補助分類に限定する。
+- `kiro-validate-design` と `kiro-validate-gap` も Kiro skill section を `extends_skill` / `extends_skill_section` で継承した thin adapter とし、Kiro skill 本文はコピーしない。
+- read-only workflow には修正 loop、debug loop、implementation retry loop を入れない。修正が必要な場合は generation/implementation workflow に戻す next action を report する。
 - validation harness は workflow/facet reference と read-only boundary を検証し、個別 feature の実装完了までは検証しない。
 - Kiro-specific instruction facet は shared `BuiltinFacetInheritancePolicy` に従い、`node_modules/takt/builtins/{lang}/facets` の validation/review 系 built-in facet を継承できる場合は差分だけを書く。
 
@@ -107,6 +111,7 @@ Key decisions:
 | Workflow runtime | TAKT workflow YAML | `kiro-spec-status` と `kiro-validate-*` の step / facet orchestration | `.takt/{en,ja}/workflows/` に配置 |
 | Prompt/facet contract | TAKT facet Markdown | status / validation 手順と output contract 参照 | `.takt/{en,ja}/facets/` に配置 |
 | Built-in facet inheritance | TAKT builtins facet Markdown | validation/review 系の親 facet と差分記述 | shared `BuiltinFacetInheritancePolicy` を参照 |
+| Kiro skill adapter | TAKT instruction facet | Kiro validation skill section と TAKT input/output/rule の写像 | `extends_skill` / `extends_skill_section` を使う |
 | Shared contract | Kiro shared facets | machine verdict、artifact policy、lifecycle semantics | 上流 spec の成果物を参照 |
 | Spec workspace | `.kiro/steering/`, `.kiro/specs/` | status と validation の read-only input | OpenSpec artifact は対象外 |
 | Validation | Node.js 22+ script/test | workflow existence、facet reference、read-only boundary の drift detection | 個別 feature completion は対象外 |
@@ -181,6 +186,23 @@ Key decisions:
 
 ## System Flows
 
+### Read-Only Step Shape
+
+```mermaid
+sequenceDiagram
+    participant Workflow
+    participant Collector
+    participant Validator
+    participant Reporter
+
+    Workflow->>Collector: Read .kiro artifacts and evidence
+    Collector-->>Validator: Artifact state and evidence bundle
+    Validator-->>Reporter: Kiro skill field and findings
+    Reporter-->>Workflow: Read-only report
+```
+
+この flow は artifact write step を持ちません。validation が `NO-GO`、`BLOCKED`、manual verification を返す場合でも、この spec は修正を実行せず、修正先 workflow と理由だけを report します。
+
 ### Status Flow
 
 ```mermaid
@@ -216,6 +238,19 @@ sequenceDiagram
 ```
 
 Validation workflow は artifact state と evidence を分けて扱います。証跡がない項目は shared validation result contract の `findings` に `category: "MANUAL_VERIFICATION_REQUIRED"` として写像し、`PASS` verdict の根拠には含めません。
+
+## Data Models
+
+### Kiro Validation Adapter Map
+
+| Workflow | Kiro skill source | Primary machine field | Read-only output |
+|----------|-------------------|-----------------------|------------------|
+| `kiro-spec-status` | `kiro-spec-status` | status/readiness fields | feature existence、phase、approval、artifact inconsistency |
+| `kiro-validate-gap` | `kiro-validate-gap` | skill-defined validation result | existing implementation evidence、missing components、manual verification |
+| `kiro-validate-design` | `kiro-validate-design` | skill-defined validation result | requirements coverage、boundary findings、design gaps |
+| `kiro-validate-impl` | `kiro-validate-impl` | `DECISION` | task completion、test/build evidence、manual verification |
+
+shared validation supplement の `verdict` は後続 workflow の人間向け分類に使えますが、Kiro skill が `DECISION` などの field を定義している場合はその field を rule condition の primary にします。
 
 ## Requirements Traceability
 

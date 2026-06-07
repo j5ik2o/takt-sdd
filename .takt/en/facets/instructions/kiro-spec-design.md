@@ -1,3 +1,8 @@
+---
+extends_skill: kiro-spec-design
+extends_skill_section: "## Execution Steps"
+---
+
 {extends: architect}
 
 # Kiro Spec Design Instruction
@@ -18,7 +23,7 @@ Generate `.kiro/specs/<feature>/design.md` and `.kiro/specs/<feature>/research.m
 
 1. Resolve the canonical feature directory as `.kiro/specs/<feature>/`.
 2. Run the requirements approval gate before generating design output. If requirements are not approved, return `validation.verdict: "BLOCKED"` unless `-y` or `auto-approve` mode is explicitly active.
-3. When `-y` or `auto-approve` mode is active, explicitly update `approvals.requirements.approved: true` as part of the successful design phase; do not imply approval silently.
+3. When `-y` or `auto-approve` mode is active, explicitly update `approvals.requirements.approved: true` in the finalize step of the successful design phase; do not imply approval silently.
 4. Perform discovery/research from `requirements.md`, `spec.json`, relevant steering context, existing `design.md`, optional `research.md`, and code patterns before design synthesis.
 5. Write or update `research.md` with discovery findings, synthesis decisions, investigated alternatives, and risks that shaped the design.
 6. Apply design synthesis after discovery/research. Record build-vs-adopt, simplification, and boundary decisions in `research.md`, then carry the implementation conclusions into `design.md`.
@@ -29,10 +34,10 @@ Generate `.kiro/specs/<feature>/design.md` and `.kiro/specs/<feature>/research.m
 8. In `Boundary Commitments`, state owned behavior, out-of-boundary behavior, allowed dependencies, and revalidation triggers.
 9. In `File Structure Plan`, list concrete repository paths and the responsibility of each path. Do not leave undecided placeholders, placeholder-only entries, or vague ownership.
 10. In `Requirements Traceability`, map every numeric requirement ID from `requirements.md` to concrete components, files, interfaces, or workflow decisions.
-11. Run the design review gate before writing success metadata. The gate must check coverage, architecture readiness, boundary readiness, File Structure Plan concreteness, and Requirements Traceability.
+11. In generate/repair steps, do not run the final design review gate; make the drafts reviewable and route to the dedicated read-only review step. That review step checks coverage, architecture readiness, boundary readiness, File Structure Plan concreteness, and Requirements Traceability.
 12. If a real requirements/design gap remains, return `validation.verdict: "BLOCKED"` or `validation.verdict: "NEEDS_FIX"` with findings and do not write the `design-generated` success state.
-13. If the design review gate passes, write `.kiro/specs/<feature>/design.md` and `.kiro/specs/<feature>/research.md`.
-14. Update `.kiro/specs/<feature>/spec.json` in the same successful result:
+13. In the finalize step only, after the design review gate passes, keep `.kiro/specs/<feature>/design.md` and `.kiro/specs/<feature>/research.md` as accepted design artifacts.
+14. In the finalize step only, update `.kiro/specs/<feature>/spec.json` in the same successful result:
    - `phase`: `design-generated`.
    - `approvals.requirements.approved`: true.
    - `approvals.design.generated`: true.
@@ -41,6 +46,7 @@ Generate `.kiro/specs/<feature>/design.md` and `.kiro/specs/<feature>/research.m
 
 ## Result mapping
 
-- On success, return `phase: "design"`, `validation.verdict: "PASS"`, `featureName`, and `updatedFiles` containing `design.md`, `research.md`, and `spec.json`.
+- In draft generation or repair steps, return draft design and research content in the step report for the read-only review step; do not write `design.md` or `research.md`, and do not promote `spec.json` to `design-generated`. When the drafts are ready for review, return `phase: "design"`, `validation.verdict: "PASS"`, `draft_status: "READY_FOR_REVIEW"`, `review_gate: "PENDING"`, `featureName`, and an empty `updatedFiles` array.
+- In finalize steps after the design review gate passed, return `phase: "design"`, `validation.verdict: "PASS"`, `draft_status: "WRITTEN"`, `review_gate: "PASSED"`, `featureName`, and `updatedFiles` containing `design.md`, `research.md`, and `spec.json`.
 - On missing requirements, lifecycle inconsistency, failed requirements approval gate, failed design review gate, or requirements/design gap, return `BLOCKED` or `NEEDS_FIX` and keep `spec.json` out of the `design-generated` success state.
 - `evidence` must mention requirements approval gate handling, `-y` or auto-approve handling, discovery/research sources, design synthesis, design review gate result, required sections, and whether `spec.json` was updated to `design-generated`.

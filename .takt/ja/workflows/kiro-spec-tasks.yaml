@@ -11,6 +11,7 @@ initial_step: generate-tasks
 
 instructions:
   kiro-spec-tasks: ../facets/instructions/kiro-spec-tasks.md
+  kiro-spec-tasks-review: ../facets/instructions/kiro-spec-tasks-review.md
 
 policies:
   kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
@@ -20,6 +21,22 @@ policies:
 
 report_formats:
   kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
+  kiro-spec-tasks-review-result: ../facets/output-contracts/kiro-spec-tasks-review-result.md
+
+loop_monitors:
+  - cycle:
+      - review-tasks
+      - repair-tasks
+      - finalize-tasks
+    threshold: 2
+    judge:
+      persona: supervisor
+      instruction: kiro-spec-tasks
+      rules:
+        - condition: Healthy (review findings are converging)
+          next: review-tasks
+        - condition: Unproductive (same finding repeats or no improvement)
+          next: ABORT
 
 steps:
   - name: generate-tasks
@@ -47,13 +64,87 @@ steps:
         - name: kiro-spec-tasks-result.md
           format: kiro-spec-generation-result
     rules:
-      - condition: validation.verdict PASS and auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true and task plan review PASS and task graph sanity review PASS
-        next: COMPLETE
-      - condition: validation.verdict PASS and not auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and task plan review PASS and task graph sanity review PASS
-        next: COMPLETE
+      - condition: validation.verdict PASS and phase tasks and draft_status READY_FOR_REVIEW and review_gate PENDING
+        next: review-tasks
       - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
         next: ABORT
-      - condition: validation.verdict NEEDS_FIX or task plan review failed or task graph sanity review failed
+      - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW and review_gate PENDING
+        next: review-tasks
+
+  - name: review-tasks
+    edit: false
+    persona: reviewer
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+      - kiro-spec-task-annotations
+    knowledge:
+      - architecture
+    required_permission_mode: readonly
+    instruction: kiro-spec-tasks-review
+    output_contracts:
+      report:
+        - name: kiro-spec-tasks-review.md
+          format: kiro-spec-tasks-review-result
+    rules:
+      - condition: task_plan_review PASS and task_graph_sanity_review PASS
+        next: finalize-tasks
+      - condition: task_plan_review NEEDS_FIXES or task_graph_sanity_review NEEDS_FIXES
+        next: repair-tasks
+      - condition: task_plan_review RETURN_TO_DESIGN or task_graph_sanity_review RETURN_TO_DESIGN
+        next: ABORT
+      - condition: hidden prerequisite remains or boundary overlap remains or coverage gap remains
+        next: ABORT
+
+  - name: repair-tasks
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+      - kiro-spec-task-annotations
+    knowledge:
+      - architecture
+    required_permission_mode: edit
+    instruction: kiro-spec-tasks
+    output_contracts:
+      report:
+        - name: kiro-spec-tasks-repair-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and phase tasks and draft_status READY_FOR_REVIEW and review_gate PENDING
+        next: review-tasks
+      - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW and review_gate PENDING and local repair attempted
+        next: review-tasks
+      - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
+        next: ABORT
+
+  - name: finalize-tasks
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+      - kiro-spec-task-annotations
+    knowledge:
+      - architecture
+    required_permission_mode: edit
+    instruction: kiro-spec-tasks
+    output_contracts:
+      report:
+        - name: kiro-spec-tasks-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and auto-approve and phase tasks and draft_status WRITTEN and review_gate PASSED and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true
+        next: COMPLETE
+      - condition: validation.verdict PASS and not auto-approve and phase tasks and draft_status WRITTEN and review_gate PASSED and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true
+        next: COMPLETE
+      - condition: validation.verdict NEEDS_FIX
+        next: repair-tasks
+      - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
         next: ABORT
 
 # validation/review 用の contract notes:
@@ -64,6 +155,7 @@ steps:
 # - dependency がない task は _Depends:_ none を使う。
 # - success metadata の前に task plan review と task graph sanity review を実行する。
 # - (P) は non-overlapping boundary と explicit dependency graph から独立実行可能と判断できる場合だけ使う。
+# - workflow は generate -> review -> repair -> review -> finalize を使い、finalize からの repair 戻りも監視対象に含め、repeat bound は loop_monitors.threshold だけに置く。
 # - 成功時は spec.json を phase: "tasks-generated" と approvals.tasks.generated: true に更新する。
 # - auto-approve mode では approvals.tasks.approved: true と ready_for_implementation: true も設定する。
 # - 通常 mode では tasks approval が存在するまで ready_for_implementation true にしない。

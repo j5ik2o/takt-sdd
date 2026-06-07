@@ -6,7 +6,8 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 
 ## Machine Fields
 
-- `verdict`: one of `GO`, `NO_GO`.
+- `VERDICT`: one of `APPROVED`, `REJECTED`.
+- `verdict`: optional supplement mirroring `VERDICT`; workflow branching must use `VERDICT`.
 - `review_scope`: selected task, feature, or contract boundary under review.
 - `findings`: array of actionable findings.
 - `requirement_refs`: array of original requirement numbers.
@@ -17,4 +18,4 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 
 ## Branching Rule
 
-Workflow rules must branch on `verdict`, not on `summary`.
+Workflow rules must branch on `VERDICT`, not on `verdict` or `summary`.

@@ -11,6 +11,7 @@ initial_step: generate-design
 
 instructions:
   kiro-spec-design: ../facets/instructions/kiro-spec-design.md
+  kiro-validate-design-readiness: ../facets/instructions/kiro-validate-design-readiness.md
 
 policies:
   kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
@@ -19,6 +20,22 @@ policies:
 
 report_formats:
   kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
+  kiro-validation-result: ../facets/output-contracts/kiro-validation-result.md
+
+loop_monitors:
+  - cycle:
+      - review-design
+      - repair-design
+      - finalize-design
+    threshold: 2
+    judge:
+      persona: supervisor
+      instruction: kiro-spec-design
+      rules:
+        - condition: Healthy (review findings are converging)
+          next: review-design
+        - condition: Unproductive (same finding repeats or no improvement)
+          next: ABORT
 
 steps:
   - name: generate-design
@@ -47,12 +64,83 @@ steps:
         - name: kiro-spec-design-result.md
           format: kiro-spec-generation-result
     rules:
+      - condition: validation.verdict PASS and phase design and draft_status READY_FOR_REVIEW and review_gate PENDING
+        next: review-design
+      - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
+        next: ABORT
+      - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW
+        next: review-design
+
+  - name: review-design
+    edit: false
+    persona: architecture-reviewer
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    knowledge:
+      - architecture
+    required_permission_mode: readonly
+    instruction: kiro-validate-design-readiness
+    output_contracts:
+      report:
+        - name: kiro-spec-design-review.md
+          format: kiro-validation-result
+    rules:
+      - condition: DECISION GO and design review gate passed
+        next: finalize-design
+      - condition: DECISION NO-GO and local repair possible
+        next: repair-design
+      - condition: DECISION NO-GO and requirements/design gap remains
+        next: ABORT
+      - condition: DECISION MANUAL_VERIFY_REQUIRED
+        next: ABORT
+
+  - name: repair-design
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    knowledge:
+      - architecture
+    required_permission_mode: edit
+    instruction: kiro-spec-design
+    output_contracts:
+      report:
+        - name: kiro-spec-design-repair-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and draft_status READY_FOR_REVIEW
+        next: review-design
+      - condition: validation.verdict NEEDS_FIX and local repair attempted
+        next: review-design
+      - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
+        next: ABORT
+
+  - name: finalize-design
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    knowledge:
+      - architecture
+    required_permission_mode: edit
+    instruction: kiro-spec-design
+    output_contracts:
+      report:
+        - name: kiro-spec-design-result.md
+          format: kiro-spec-generation-result
+    rules:
       - condition: validation.verdict PASS and phase design and design.md written and research.md written and design-generated and approvals.requirements.approved true and approvals.design.generated true
         next: COMPLETE
       - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
         next: ABORT
-      - condition: validation.verdict NEEDS_FIX or design review gate failed
-        next: ABORT
+      - condition: validation.verdict NEEDS_FIX
+        next: repair-design
 
 # validation/review 用の contract notes:
 # - requirements approval gate は design generation 前に requirements.md と spec.json を確認する。
@@ -61,5 +149,6 @@ steps:
 # - research.md は design phase の補助 artifact として書き、最終的な実装判断は design.md にも残す。
 # - design.md は required sections として Boundary Commitments、File Structure Plan、Requirements Traceability を含める。
 # - design review gate は requirement coverage、architecture readiness、boundary readiness、File Structure Plan の具体性、Requirements Traceability を確認する。
+# - workflow は generate -> review -> repair -> review -> finalize を使い、finalize からの repair 戻りも監視対象に含め、repeat bound は loop_monitors.threshold だけに置く。
 # - real requirements/design gap が残る場合は BLOCKED または NEEDS_FIX を返し、design-generated へ進めない。
 # - 成功時は spec.json を phase: "design-generated"、approvals.requirements.approved: true、approvals.design.generated: true に更新する。

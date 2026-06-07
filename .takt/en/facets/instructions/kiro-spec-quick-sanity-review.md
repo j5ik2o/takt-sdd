@@ -1,3 +1,8 @@
+---
+extends_skill: kiro-spec-quick
+extends_skill_section: "#### Final Sanity Review"
+---
+
 {extends: review-qa}
 
 # Kiro Spec Quick Sanity Review Instruction

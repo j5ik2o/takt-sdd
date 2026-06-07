@@ -6,11 +6,12 @@ workflow_config:
       network_access: true
     opencode:
       network_access: true
-max_steps: 7
+max_steps: 10
 initial_step: generate-requirements
 
 instructions:
   kiro-spec-requirements: ../facets/instructions/kiro-spec-requirements.md
+  kiro-spec-requirements-review: ../facets/instructions/kiro-spec-requirements-review.md
 
 policies:
   kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
@@ -20,8 +21,86 @@ policies:
 report_formats:
   kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
 
+loop_monitors:
+  - cycle:
+      - review-requirements
+      - repair-requirements
+      - finalize-requirements
+    threshold: 2
+    judge:
+      persona: supervisor
+      instruction: kiro-spec-requirements
+      rules:
+        - condition: Healthy (review findings are converging)
+          next: review-requirements
+        - condition: Unproductive (same finding repeats or no improvement)
+          next: ABORT
+
 steps:
   - name: generate-requirements
+    edit: true
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    required_permission_mode: edit
+    instruction: kiro-spec-requirements
+    output_contracts:
+      report:
+        - name: kiro-spec-requirements-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and phase requirements and draft_status READY_FOR_REVIEW and review_gate PENDING
+        next: review-requirements
+      - condition: validation.verdict BLOCKED or scope ambiguity remains or acceptance criteria not verifiable
+        next: ABORT
+      - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW
+        next: review-requirements
+
+  - name: review-requirements
+    edit: false
+    persona: reviewer
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    required_permission_mode: readonly
+    instruction: kiro-spec-requirements-review
+    output_contracts:
+      report:
+        - name: kiro-spec-requirements-review.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and requirements review gate passed
+        next: finalize-requirements
+      - condition: validation.verdict NEEDS_FIX and local repair possible
+        next: repair-requirements
+      - condition: validation.verdict BLOCKED or scope ambiguity remains
+        next: ABORT
+
+  - name: repair-requirements
+    edit: true
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    required_permission_mode: edit
+    instruction: kiro-spec-requirements
+    output_contracts:
+      report:
+        - name: kiro-spec-requirements-repair-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and draft_status READY_FOR_REVIEW
+        next: review-requirements
+      - condition: validation.verdict NEEDS_FIX and local repair attempted
+        next: review-requirements
+      - condition: validation.verdict BLOCKED or scope ambiguity remains or acceptance criteria not verifiable
+        next: ABORT
+
+  - name: finalize-requirements
     edit: true
     persona: supervisor
     policy:
@@ -39,13 +118,14 @@ steps:
         next: COMPLETE
       - condition: validation.verdict BLOCKED or scope ambiguity remains or acceptance criteria not verifiable
         next: ABORT
-      - condition: validation.verdict NEEDS_FIX or requirements review gate failed
-        next: ABORT
+      - condition: validation.verdict NEEDS_FIX
+        next: repair-requirements
 
 # Contract notes for validation and reviewers:
 # - Context loading reads .kiro/specs/<feature>/brief.md, existing draft requirements.md, existing spec.json, steering context, and requirements rules.
 # - Generate requirements.md with EARS fixed phrases and numeric IDs only.
 # - The requirements review gate checks EARS conformance, numeric IDs, testable acceptance criteria, and scope ambiguity before metadata update.
+# - The workflow uses generate -> review -> repair -> review -> finalize, and finalize repair returns stay inside the monitored loop; the repeat bound is only loop_monitors.threshold.
 # - On success, update spec.json to phase: "requirements-generated" and approvals.requirements.generated: true.
 # - If scope ambiguity or unverifiable acceptance criteria remain, return BLOCKED or NEEDS_FIX and do not advance to requirements-generated.
 # - The requirements phase does not decide design component ownership, workflow YAML ownership, or implementation file ownership.

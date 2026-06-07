@@ -8,7 +8,7 @@
 
 ## Boundary Context
 
-- **In scope**: `kiro-impl` planning、eligible task selection、one-task execution、task boundary/dependency/validation guidance、internal `kiro-review` / `kiro-debug` / `kiro-verify-completion`、completion gate、`tasks.md` checkbox/blocker/implementation notes 更新、implementation workflow validation
+- **In scope**: `kiro-impl` planning、eligible task selection、one-task execution、task boundary/dependency/validation guidance、`kiro-review` / `kiro-debug` / `kiro-verify-completion` / `kiro-validate-impl` の thin adapter step、completion gate、`tasks.md` checkbox/blocker/implementation notes 更新、implementation workflow validation
 - **Out of scope**: requirements/design/tasks の生成、`brief.md` や roadmap の作成・更新、dependency wave batch orchestration、`kiro:*` script namespace や major-version migration の説明、PR monitoring や CI gate の実行
 - **Adjacent expectations**: `kiro-spec-generation-workflows` は `_Boundary:_`、`_Depends:_`、numeric requirement coverage を含む tasks を生成し、`kiro-status-validation-workflows` は implementation readiness と post-implementation validation を read-only に返す。`kiro-impl` はそれらを参照するが、生成 workflow や status/validation workflow の内部責務を吸収しない。
 
@@ -56,7 +56,7 @@
 
 1. one-task execution が開始される場合、Kiro implementation workflow は 選択 task の boundary 内で必要な code edit と test update を行う。
 2. code edit が完了する場合、Kiro implementation workflow は task の validation plan に沿って test/build/check を実行し、実行コマンド、結果、未確認項目を evidence として記録する。
-3. validation command が失敗する場合、Kiro implementation workflow は checkbox を更新せず、失敗 evidence と retry/debug 判断に必要な context を返す。
+3. validation command が失敗する場合、Kiro implementation workflow は checkbox を更新せず、失敗 evidence と debug 判断に必要な context を返す。
 4. Kiro implementation workflow は 選択 task 外の checkbox、blocker、implementation notes を更新しない。
 
 ### Requirement 5: internal review と debug decision で失敗を分岐する
@@ -65,10 +65,12 @@
 
 #### Acceptance Criteria
 
-1. task implementation と validation plan が成功し、完了候補になる場合、Kiro implementation workflow は internal `kiro-review` を実行し、shared review verdict contract の `GO` または `NO_GO` を使って分岐する。
-2. review verdict が `NO_GO` である場合、Kiro implementation workflow は actionable findings を対象 task と requirement に結びつけ、修正対象を明示する。
-3. validation failure または review finding が修正を必要とする場合、Kiro implementation workflow は internal `kiro-debug` を使って root cause、`RETRY_TASK`、`BLOCK_TASK`、`STOP_FOR_HUMAN` の decision を返す。
+1. task implementation と validation plan が成功し、完了候補になる場合、Kiro implementation workflow は `kiro-review` skill の thin adapter step を実行し、`VERDICT: APPROVED | REJECTED` を使って分岐する。
+2. review verdict が `REJECTED` である場合、Kiro implementation workflow は actionable findings を対象 task と requirement に結びつけ、修正対象を明示する。
+3. validation failure または review finding が修正を必要とする場合、Kiro implementation workflow は `kiro-debug` skill の thin adapter step を使って root cause と `NEXT_ACTION: RETRY_TASK | BLOCK_TASK | STOP_FOR_HUMAN` を返す。
 4. Kiro implementation workflow は debug decision が `STOP_FOR_HUMAN` の場合に追加実装を続けず、必要な人間確認事項を blocker として残す。
+5. Kiro implementation workflow が implementation/debug/review の再実行ループを持つ場合、workflow は TAKT runtime の `loop_monitors` を使って健全性を監視し、facet や validator 内の独自 retry counter、独自 loop-health 判定、独自 max-attempt 管理で代替しない。
+6. `loop_monitors` が非生産的ループと判定する場合、Kiro implementation workflow は追加実装へ戻らず、selected task の blocker note または `STOP_FOR_HUMAN` 相当の停止結果へ分岐する。
 
 ### Requirement 6: completion verification が通るまで完了更新しない
 
@@ -76,10 +78,11 @@
 
 #### Acceptance Criteria
 
-1. implementation、validation、review が完了候補になる場合、Kiro implementation workflow は internal `kiro-verify-completion` を実行し、shared completion verification contract の verdict を確認する。
-2. completion verification が `COMPLETE` でない場合、Kiro implementation workflow は checkbox を更新せず、remaining work と missing evidence を返す。
-3. completion verification が `COMPLETE` である場合、Kiro implementation workflow は 選択 task の checkbox を `- [x]` に更新し、実装メモと検証証跡を `tasks.md` の該当 task へ追記または更新する。
+1. implementation、validation、review が完了候補になる場合、Kiro implementation workflow は `kiro-verify-completion` skill の thin adapter step を実行し、skill-defined completion field を確認する。
+2. completion verification が complete state でない場合、Kiro implementation workflow は checkbox を更新せず、remaining work と missing evidence を返す。
+3. completion verification が complete state である場合、Kiro implementation workflow は 選択 task の checkbox を `- [x]` に更新し、実装メモと検証証跡を `tasks.md` の該当 task へ追記または更新する。
 4. Kiro implementation workflow は review/debug/completion の machine verdict と人間向け summary を混在させず、workflow rule が参照する field を明示する。
+5. feature-level completion を判断する場合、Kiro implementation workflow は `kiro-validate-impl` skill の thin adapter step を使い、`DECISION: GO | NO-GO | MANUAL_VERIFY_REQUIRED` を final validation の primary machine field として扱う。
 
 ### Requirement 7: workflow drift と境界違反を検出できる
 
@@ -87,8 +90,21 @@
 
 #### Acceptance Criteria
 
-1. repository validation が実行される場合、implementation workflow validation は `kiro-impl`、`kiro-review`、`kiro-debug`、`kiro-verify-completion` の workflow/facet references と shared contract references を検証する。
+1. repository validation が実行される場合、implementation workflow validation は `kiro-impl`、`kiro-review`、`kiro-debug`、`kiro-verify-completion`、`kiro-validate-impl` の thin adapter facet references と shared contract references を検証する。
 2. repository validation が実行される場合、implementation workflow validation は one-task selection、readiness gate、completion-before-checkbox-update の順序が workflow/facet 上で表現されていることを検証する。
 3. workflow が spec generation、roadmap batch orchestration、major-version surface の責務を参照している場合、implementation workflow validation は boundary violation として検出する。
 4. implementation workflow validation は PR monitoring、CI 上の review thread 対応、OpenSpec workflow の完了判定をこの spec の成功条件に含めない。
 5. implementation workflow validation は Kiro-specific facet が shared `BuiltinFacetInheritancePolicy` に従い、TAKT built-in facet を継承できるものは差分だけを記述していることを検出する。
+6. implementation workflow validation は `kiro-impl` が implementation/debug/review の再実行経路を持つ場合に workflow YAML の `loop_monitors.threshold` を持つこと、かつ facet、validator、frontmatter に独自 retry counter や独自 loop-health 管理を持たないことを検出する。
+
+### Requirement 8: implementation workflow は Kiro skill 継承 adapter として実装する
+
+**Objective:** workflow 実装者として、`kiro-impl` の autonomous/manual algorithm と関連 review/debug/verification skill を TAKT にコピーせず、thin adapter step として接続したい。そうすることで、Kiro skill 更新時に TAKT 側の保守範囲を mapping に限定できる。
+
+#### Acceptance Criteria
+
+1. implementation instruction facet が Kiro skill の手順を参照する場合、frontmatter に `extends_skill` と `extends_skill_section` を持つ。
+2. `kiro-impl` の autonomous loop は `kiro-impl` skill の algorithm section を source of truth とし、実装、review、debug、task reread、final validation の順序を TAKT step に写像する。
+3. `kiro-review`、`kiro-debug`、`kiro-verify-completion`、`kiro-validate-impl` は別 workflow を shell や workflow call で起動せず、`kiro-impl.yaml` 内の adapter step として接続する。
+4. adapter facet は Kiro skill 本文をコピーせず、input artifacts、output fields、rule condition、artifact write boundary だけを記述する。
+5. 既存 unreleased の `kiro-impl` / `kiro-review` / `kiro-debug` / `kiro-verify-completion` workflow/facet がこの shape に合わない場合、implementation workflow validation は削除または再作成を要求する。

@@ -7,6 +7,26 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const defaultRepoRoot = join(__dirname, "..");
 const languages = ["en", "ja"];
+const draftReviewRoutingTerms = ["draft_status", "review_gate", "READY_FOR_REVIEW", "PENDING"];
+const generationResultContractTerms = [
+  "phase",
+  "validation",
+  "featureName",
+  "updatedFiles",
+  "nextAction",
+  "blockingReason",
+  "draft_status",
+  "review_gate",
+  "READY_FOR_REVIEW",
+  "NEEDS_FIX",
+  "BLOCKED",
+  "WRITTEN",
+  "PENDING",
+  "PASSED",
+  "FAILED",
+  "NOT_APPLICABLE",
+  "PASS",
+];
 
 const phaseWorkflowSpecs = [
   {
@@ -18,33 +38,71 @@ const phaseWorkflowSpecs = [
   },
   {
     name: "kiro-spec-requirements",
-    requiredTerms: ["requirements.md", "requirements-generated", "EARS", "kiro-spec-generation-result"],
-    instructionFacets: ["kiro-spec-requirements"],
+    requiredTerms: [
+      "requirements.md",
+      "requirements-generated",
+      "EARS",
+      "kiro-spec-generation-result",
+      ...draftReviewRoutingTerms,
+    ],
+    instructionFacets: ["kiro-spec-requirements", "kiro-spec-requirements-review"],
     policyFacets: ["kiro-spec-generation"],
     outputContracts: ["kiro-spec-generation-result"],
   },
   {
     name: "kiro-spec-design",
-    requiredTerms: ["design.md", "research.md", "design-generated", "Boundary Commitments", "File Structure Plan"],
-    instructionFacets: ["kiro-spec-design"],
+    requiredTerms: [
+      "design.md",
+      "research.md",
+      "design-generated",
+      "Boundary Commitments",
+      "File Structure Plan",
+      ...draftReviewRoutingTerms,
+    ],
+    instructionFacets: ["kiro-spec-design", "kiro-validate-design-readiness"],
     policyFacets: ["kiro-spec-generation"],
-    outputContracts: ["kiro-spec-generation-result"],
+    outputContracts: ["kiro-spec-generation-result", "kiro-validation-result"],
   },
   {
     name: "kiro-spec-tasks",
-    requiredTerms: ["tasks.md", "tasks-generated", "_Boundary:_", "_Depends:_", "kiro-spec-generation-result"],
-    instructionFacets: ["kiro-spec-tasks"],
+    requiredTerms: [
+      "tasks.md",
+      "tasks-generated",
+      "_Boundary:_",
+      "_Depends:_",
+      "kiro-spec-generation-result",
+      ...draftReviewRoutingTerms,
+    ],
+    instructionFacets: ["kiro-spec-tasks", "kiro-spec-tasks-review"],
     policyFacets: ["kiro-spec-generation", "kiro-spec-task-annotations"],
-    outputContracts: ["kiro-spec-generation-result"],
+    outputContracts: ["kiro-spec-generation-result", "kiro-spec-tasks-review-result"],
   },
   {
     name: "kiro-spec-quick",
-    requiredTerms: ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"],
+    requiredTerms: [
+      "quick-init",
+      "quick-requirements",
+      "quick-review-requirements",
+      "quick-repair-requirements",
+      "quick-finalize-requirements",
+      "quick-design",
+      "quick-review-design",
+      "quick-repair-design",
+      "quick-finalize-design",
+      "quick-tasks",
+      "quick-review-tasks",
+      "quick-repair-tasks",
+      "quick-finalize-tasks",
+      "quick-sanity-review",
+    ],
     instructionFacets: [
       "kiro-spec-init",
       "kiro-spec-requirements",
+      "kiro-spec-requirements-review",
       "kiro-spec-design",
+      "kiro-validate-design-readiness",
       "kiro-spec-tasks",
+      "kiro-spec-tasks-review",
       "kiro-spec-quick-sanity-review",
     ],
     policyFacets: [
@@ -53,7 +111,12 @@ const phaseWorkflowSpecs = [
       "kiro-spec-generation",
       "kiro-spec-task-annotations",
     ],
-    outputContracts: ["kiro-spec-generation-result", "kiro-spec-sanity-review"],
+    outputContracts: [
+      "kiro-spec-generation-result",
+      "kiro-validation-result",
+      "kiro-spec-tasks-review-result",
+      "kiro-spec-sanity-review",
+    ],
   },
 ];
 
@@ -70,6 +133,11 @@ const facetSpecs = [
   },
   {
     kind: "instructions",
+    name: "kiro-spec-requirements-review",
+    terms: ["Review Requirements Draft", "requirements review gate", "read-only", "validation.verdict", "PASS", "NEEDS_FIX", "BLOCKED"],
+  },
+  {
+    kind: "instructions",
     name: "kiro-spec-design",
     terms: ["design.md", "research.md", "Boundary Commitments", "File Structure Plan"],
   },
@@ -77,6 +145,16 @@ const facetSpecs = [
     kind: "instructions",
     name: "kiro-spec-tasks",
     terms: ["tasks.md", "_Boundary:_", "_Depends:_", "tasks-generated"],
+  },
+  {
+    kind: "instructions",
+    name: "kiro-spec-tasks-review",
+    terms: ["Review Task Plan", "task_plan_review", "task_graph_sanity_review", "read-only", "PASS", "NEEDS_FIXES", "RETURN_TO_DESIGN"],
+  },
+  {
+    kind: "output-contracts",
+    name: "kiro-spec-tasks-review-result",
+    terms: ["task_plan_review", "task_graph_sanity_review", "PASS", "NEEDS_FIXES", "RETURN_TO_DESIGN", "summary"],
   },
   {
     kind: "instructions",
@@ -96,7 +174,7 @@ const facetSpecs = [
   {
     kind: "output-contracts",
     name: "kiro-spec-generation-result",
-    terms: ["phase", "validation", "featureName", "updatedFiles", "nextAction", "blockingReason", "PASS", "NEEDS_FIX", "BLOCKED"],
+    terms: generationResultContractTerms,
   },
   {
     kind: "output-contracts",
@@ -168,10 +246,18 @@ const quickPhaseParitySpecs = [
   },
   {
     step: "quick-requirements",
+    termSets: [["phase requirements", "draft_status READY_FOR_REVIEW", "review_gate PENDING"]],
+  },
+  {
+    step: "quick-finalize-requirements",
     termSets: [["phase requirements", "requirements.md written", "requirements-generated", "approvals.requirements.generated true"]],
   },
   {
     step: "quick-design",
+    termSets: [["phase design", "draft_status READY_FOR_REVIEW", "review_gate PENDING"]],
+  },
+  {
+    step: "quick-finalize-design",
     termSets: [
       [
         "phase design",
@@ -185,10 +271,16 @@ const quickPhaseParitySpecs = [
   },
   {
     step: "quick-tasks",
+    termSets: [["phase tasks", "draft_status READY_FOR_REVIEW", "review_gate PENDING"]],
+  },
+  {
+    step: "quick-finalize-tasks",
     termSets: [
       [
         "same auto-approve semantics",
         "phase tasks",
+        "draft_status WRITTEN",
+        "review_gate PASSED",
         "tasks.md written",
         "tasks-generated",
         "approvals.requirements.approved true",
@@ -196,19 +288,17 @@ const quickPhaseParitySpecs = [
         "approvals.tasks.generated true",
         "approvals.tasks.approved true",
         "ready_for_implementation true",
-        "task plan review PASS",
-        "task graph sanity review PASS",
       ],
       [
         "not auto-approve",
         "phase tasks",
+        "draft_status WRITTEN",
+        "review_gate PASSED",
         "tasks.md written",
         "tasks-generated",
         "approvals.requirements.approved true",
         "approvals.design.approved true",
         "approvals.tasks.generated true",
-        "task plan review PASS",
-        "task graph sanity review PASS",
       ],
     ],
   },
@@ -218,6 +308,8 @@ const taskWorkflowCompletionTermSets = [
   [
     "auto-approve",
     "phase tasks",
+    "draft_status WRITTEN",
+    "review_gate PASSED",
     "tasks.md written",
     "tasks-generated",
     "approvals.requirements.approved true",
@@ -225,19 +317,17 @@ const taskWorkflowCompletionTermSets = [
     "approvals.tasks.generated true",
     "approvals.tasks.approved true",
     "ready_for_implementation true",
-    "task plan review PASS",
-    "task graph sanity review PASS",
   ],
   [
     "not auto-approve",
     "phase tasks",
+    "draft_status WRITTEN",
+    "review_gate PASSED",
     "tasks.md written",
     "tasks-generated",
     "approvals.requirements.approved true",
     "approvals.design.approved true",
     "approvals.tasks.generated true",
-    "task plan review PASS",
-    "task graph sanity review PASS",
   ],
 ];
 
@@ -593,9 +683,26 @@ function validateFacetFiles(repoRoot) {
       if (!/^\s*\{extends:\s*[^}]+}\s*$/m.test(content) && !content.includes("Full custom reason:")) {
         failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must use {extends: parent} or state Full custom reason`);
       }
+      if (spec.kind === "output-contracts" && spec.name === "kiro-spec-generation-result") {
+        validateGenerationResultContractShape(content, path, failures, repoRoot);
+      }
     }
   }
   return { ok: failures.length === 0, failures };
+}
+
+function validateGenerationResultContractShape(content, path, failures, repoRoot) {
+  const draftStatusLine = content.match(/^- `draft_status`:[^\n]*/m)?.[0] ?? "";
+  if (/\b(?:NEEDS_FIX|BLOCKED)\b/.test(draftStatusLine)) {
+    failures.push(
+      `FACET_DRIFT: ${rel(repoRoot, path)} must not list validation verdict values NEEDS_FIX or BLOCKED as draft_status states`,
+    );
+  }
+  if (/^- `(?:NEEDS_FIX|BLOCKED)`\s/m.test(content)) {
+    failures.push(
+      `FACET_DRIFT: ${rel(repoRoot, path)} must describe NEEDS_FIX and BLOCKED as validation.verdict values`,
+    );
+  }
 }
 
 function validateLifecycleTerms(repoRoot) {
@@ -621,7 +728,22 @@ function validateQuickComposition(repoRoot) {
     }
 
     const content = readText(path);
-    const requiredSteps = ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"];
+    const requiredSteps = [
+      "quick-init",
+      "quick-requirements",
+      "quick-review-requirements",
+      "quick-repair-requirements",
+      "quick-finalize-requirements",
+      "quick-design",
+      "quick-review-design",
+      "quick-repair-design",
+      "quick-finalize-design",
+      "quick-tasks",
+      "quick-review-tasks",
+      "quick-repair-tasks",
+      "quick-finalize-tasks",
+      "quick-sanity-review",
+    ];
     containsAll(content, requiredSteps, path, failures, repoRoot, "QUICK_COMPOSITION_DRIFT");
     const blocks = stepBlocks(content);
     for (const spec of quickPhaseParitySpecs) {
@@ -664,9 +786,9 @@ function validateTaskWorkflowCompletion(repoRoot) {
 
     const content = readText(path);
     const blocks = stepBlocks(content);
-    const block = blocks.find((candidate) => stepScalar(candidate, "name") === "generate-tasks");
+    const block = blocks.find((candidate) => stepScalar(candidate, "name") === "finalize-tasks");
     if (!block) {
-      failures.push(`TASK_WORKFLOW_DRIFT: ${rel(repoRoot, path)} missing generate-tasks step`);
+      failures.push(`TASK_WORKFLOW_DRIFT: ${rel(repoRoot, path)} missing finalize-tasks step`);
       continue;
     }
 
@@ -674,8 +796,21 @@ function validateTaskWorkflowCompletion(repoRoot) {
     for (const terms of taskWorkflowCompletionTermSets) {
       if (!hasConditionWithTerms(conditions, terms)) {
         failures.push(
-          `TASK_WORKFLOW_DRIFT: ${rel(repoRoot, path)} generate-tasks missing completion condition with terms: ${terms.join(", ")}`,
+          `TASK_WORKFLOW_DRIFT: ${rel(repoRoot, path)} finalize-tasks missing completion condition with terms: ${terms.join(", ")}`,
         );
+      }
+    }
+
+    for (const candidate of blocks.filter((step) =>
+      ["generate-tasks", "repair-tasks", "finalize-tasks"].includes(stepScalar(step, "name")),
+    )) {
+      const stepName = stepScalar(candidate, "name");
+      for (const condition of conditionLines(candidate)) {
+        if (condition.includes("task plan review PASS") || condition.includes("task graph sanity review PASS")) {
+          failures.push(
+            `TASK_WORKFLOW_DRIFT: ${rel(repoRoot, path)} step ${stepName} must not branch on review-only fields in kiro-spec-generation-result`,
+          );
+        }
       }
     }
   }

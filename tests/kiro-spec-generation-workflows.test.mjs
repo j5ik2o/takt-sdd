@@ -142,10 +142,18 @@ test("task 2.1 shared spec generation policy and result contract are available i
   const resultTerms = [
     "phase",
     "validation",
+    "draft_status",
+    "review_gate",
     "featureName",
     "updatedFiles",
     "nextAction",
     "blockingReason",
+    "READY_FOR_REVIEW",
+    "WRITTEN",
+    "PENDING",
+    "PASSED",
+    "FAILED",
+    "NOT_APPLICABLE",
     "PASS",
     "NEEDS_FIX",
     "BLOCKED",
@@ -194,26 +202,48 @@ test("task 7.1 quick sanity review contract exposes machine-readable verdict and
 
 test("task 8.1 quick workflow composes standalone phase contracts in one YAML", () => {
   const repoRoot = join(import.meta.dirname, "..");
-  const orderedSteps = ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"];
+  const orderedSteps = [
+    "quick-init",
+    "quick-requirements",
+    "quick-review-requirements",
+    "quick-repair-requirements",
+    "quick-finalize-requirements",
+    "quick-design",
+    "quick-review-design",
+    "quick-repair-design",
+    "quick-finalize-design",
+    "quick-tasks",
+    "quick-review-tasks",
+    "quick-repair-tasks",
+    "quick-finalize-tasks",
+    "quick-sanity-review",
+  ];
   const workflowTerms = [
     "kiro-spec-init: ../facets/instructions/kiro-spec-init.md",
     "kiro-spec-requirements: ../facets/instructions/kiro-spec-requirements.md",
+    "kiro-spec-requirements-review: ../facets/instructions/kiro-spec-requirements-review.md",
     "kiro-spec-design: ../facets/instructions/kiro-spec-design.md",
+    "kiro-validate-design-readiness: ../facets/instructions/kiro-validate-design-readiness.md",
     "kiro-spec-tasks: ../facets/instructions/kiro-spec-tasks.md",
+    "kiro-spec-tasks-review: ../facets/instructions/kiro-spec-tasks-review.md",
     "kiro-spec-quick-sanity-review: ../facets/instructions/kiro-spec-quick-sanity-review.md",
     "kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md",
     "kiro-spec-lifecycle: ../facets/policies/kiro-spec-lifecycle.md",
     "kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
     "kiro-spec-task-annotations: ../facets/policies/kiro-spec-task-annotations.md",
     "kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md",
+    "kiro-validation-result: ../facets/output-contracts/kiro-validation-result.md",
+    "kiro-spec-tasks-review-result: ../facets/output-contracts/kiro-spec-tasks-review-result.md",
     "kiro-spec-sanity-review: ../facets/output-contracts/kiro-spec-sanity-review.md",
+    "draft_status READY_FOR_REVIEW",
+    "review_gate PENDING",
     "automatic mode",
     "interactive mode",
     "phase approval",
     "same auto-approve semantics",
     "not auto-approve",
-    "task plan review PASS",
-    "task graph sanity review PASS",
+    "draft_status WRITTEN",
+    "review_gate PASSED",
     "verdict PASS",
     "quick-completion",
   ];
@@ -272,6 +302,93 @@ test("kiro spec generation validation passes current spec generation surface", (
   assert.equal(result.failures.some((failure) => failure.includes("kiro-discovery")), false);
   assert.equal(result.failures.some((failure) => failure.includes("kiro-spec-batch")), false);
   assert.equal(result.failures.some((failure) => failure.includes("kiro-impl")), false);
+});
+
+test("kiro spec generation validation detects generation result draft routing drift", () => {
+  const root = makeFixture();
+  const driftedGenerationResult = [
+    "{extends: validation}",
+    "",
+    "- `phase`",
+    "- `validation`",
+    "- `review_gate`",
+    "- `featureName`",
+    "- `updatedFiles`",
+    "- `nextAction`",
+    "- `blockingReason`",
+    "- `READY_FOR_REVIEW`",
+    "- `NEEDS_FIX`",
+    "- `BLOCKED`",
+    "- `WRITTEN`",
+    "- `PENDING`",
+    "- `PASSED`",
+    "- `FAILED`",
+    "- `NOT_APPLICABLE`",
+    "- `PASS`",
+  ].join("\n");
+  for (const lang of ["en", "ja"]) {
+    writeFixtureFile(
+      root,
+      `.takt/${lang}/facets/output-contracts/kiro-spec-generation-result.md`,
+      driftedGenerationResult,
+    );
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some(
+      (failure) => failure.includes("FACET_DRIFT") && failure.includes("missing required term: draft_status"),
+    ),
+    result.failures.join("\n"),
+  );
+});
+
+test("kiro spec generation validation rejects verdict values as draft status states", () => {
+  const root = makeFixture();
+  const invalidGenerationResult = [
+    "{extends: validation}",
+    "",
+    "- `phase`: one of `init`, `requirements`, `design`, `tasks`, or `quick`.",
+    "- `validation`: object with `verdict`, `evidence`, `findings`, and optional `sharedContractValidation`.",
+    "- `validation.verdict`: one of `PASS`, `NEEDS_FIX`, or `BLOCKED`.",
+    "- `draft_status`: one of `READY_FOR_REVIEW`, `NEEDS_FIX`, `BLOCKED`, or `WRITTEN`.",
+    "- `review_gate`: one of `PENDING`, `PASSED`, `FAILED`, or `NOT_APPLICABLE`.",
+    "- `featureName`: canonical feature directory name.",
+    "- `updatedFiles`: array of files written by the current step.",
+    "- `nextAction`: optional next approval, correction, or phase command.",
+    "- `blockingReason`: required when `validation.verdict` is `BLOCKED`.",
+    "",
+    "- `PASS` means the current step succeeded.",
+    "- `NEEDS_FIX` means the phase needs correction.",
+    "- `BLOCKED` means the workflow could not safely continue.",
+  ].join("\n");
+  for (const lang of ["en", "ja"]) {
+    writeFixtureFile(
+      root,
+      `.takt/${lang}/facets/output-contracts/kiro-spec-generation-result.md`,
+      invalidGenerationResult,
+    );
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("FACET_DRIFT") &&
+        failure.includes("must not list validation verdict values NEEDS_FIX or BLOCKED as draft_status states"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("FACET_DRIFT") &&
+        failure.includes("must describe NEEDS_FIX and BLOCKED as validation.verdict values"),
+    ),
+    result.failures.join("\n"),
+  );
 });
 
 test("task 13.1 validation detects downstream boundary drift", () => {
@@ -393,11 +510,24 @@ test("validation detects quick workflow standalone phase parity drift", () => {
       `.takt/${lang}/workflows/kiro-spec-quick.yaml`,
       [
         "name: kiro-spec-quick",
+        "instructions:",
+        "  kiro-spec-init: ../facets/instructions/kiro-spec-init.md",
+        "  kiro-spec-requirements: ../facets/instructions/kiro-spec-requirements.md",
+        "  kiro-spec-requirements-review: ../facets/instructions/kiro-spec-requirements-review.md",
+        "  kiro-spec-design: ../facets/instructions/kiro-spec-design.md",
+        "  kiro-validate-design-readiness: ../facets/instructions/kiro-validate-design-readiness.md",
+        "  kiro-spec-tasks: ../facets/instructions/kiro-spec-tasks.md",
+        "  kiro-spec-tasks-review: ../facets/instructions/kiro-spec-tasks-review.md",
+        "  kiro-spec-quick-sanity-review: ../facets/instructions/kiro-spec-quick-sanity-review.md",
         "policies:",
+        "  kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md",
+        "  kiro-spec-lifecycle: ../facets/policies/kiro-spec-lifecycle.md",
         "  kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
         "  kiro-spec-task-annotations: ../facets/policies/kiro-spec-task-annotations.md",
         "report_formats:",
         "  kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md",
+        "  kiro-validation-result: ../facets/output-contracts/kiro-validation-result.md",
+        "  kiro-spec-tasks-review-result: ../facets/output-contracts/kiro-spec-tasks-review-result.md",
         "  kiro-spec-sanity-review: ../facets/output-contracts/kiro-spec-sanity-review.md",
         "steps:",
         "  - name: quick-init",
@@ -406,15 +536,51 @@ test("validation detects quick workflow standalone phase parity drift", () => {
         "        next: quick-requirements",
         "  - name: quick-requirements",
         "    rules:",
+        "      - condition: validation.verdict PASS and phase requirements and draft_status READY_FOR_REVIEW and review_gate PENDING",
+        "        next: quick-review-requirements",
+        "  - name: quick-review-requirements",
+        "    rules:",
+        "      - condition: validation.verdict PASS and requirements review gate passed",
+        "        next: quick-finalize-requirements",
+        "  - name: quick-repair-requirements",
+        "    rules:",
+        "      - condition: validation.verdict PASS and draft_status READY_FOR_REVIEW",
+        "        next: quick-review-requirements",
+        "  - name: quick-finalize-requirements",
+        "    rules:",
         "      - condition: validation.verdict PASS and phase requirements and requirements.md written and requirements-generated and approvals.requirements.generated true",
         "        next: quick-design",
         "  - name: quick-design",
+        "    rules:",
+        "      - condition: validation.verdict PASS and phase design and draft_status READY_FOR_REVIEW and review_gate PENDING",
+        "        next: quick-review-design",
+        "  - name: quick-review-design",
+        "    rules:",
+        "      - condition: DECISION GO and design review gate passed",
+        "        next: quick-finalize-design",
+        "  - name: quick-repair-design",
+        "    rules:",
+        "      - condition: validation.verdict PASS and draft_status READY_FOR_REVIEW",
+        "        next: quick-review-design",
+        "  - name: quick-finalize-design",
         "    rules:",
         "      - condition: validation.verdict PASS and phase design and design.md written and research.md written and design-generated and approvals.requirements.approved true and approvals.design.generated true",
         "        next: quick-tasks",
         "  - name: quick-tasks",
         "    rules:",
-        "      - condition: validation.verdict PASS and same auto-approve semantics and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true and task plan review PASS and task graph sanity review PASS",
+        "      - condition: validation.verdict PASS and phase tasks and draft_status READY_FOR_REVIEW and review_gate PENDING",
+        "        next: quick-review-tasks",
+        "  - name: quick-review-tasks",
+        "    rules:",
+        "      - condition: task_plan_review PASS and task_graph_sanity_review PASS",
+        "        next: quick-finalize-tasks",
+        "  - name: quick-repair-tasks",
+        "    rules:",
+        "      - condition: validation.verdict PASS and phase tasks and draft_status READY_FOR_REVIEW and review_gate PENDING",
+        "        next: quick-review-tasks",
+        "  - name: quick-finalize-tasks",
+        "    rules:",
+        "      - condition: validation.verdict PASS and same auto-approve semantics and auto-approve and phase tasks and draft_status WRITTEN and review_gate PASSED and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true",
         "        next: quick-sanity-review",
         "  - name: quick-sanity-review",
       ].join("\n"),
@@ -429,7 +595,7 @@ test("validation detects quick workflow standalone phase parity drift", () => {
   );
 });
 
-test("task workflow validation detects auto-approve task review drift", () => {
+test("task workflow validation detects finalize task result drift", () => {
   const root = makeFixture();
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
@@ -438,11 +604,11 @@ test("task workflow validation detects auto-approve task review drift", () => {
       [
         "name: kiro-spec-tasks",
         "steps:",
-        "  - name: generate-tasks",
+        "  - name: finalize-tasks",
         "    rules:",
         "      - condition: validation.verdict PASS and auto-approve and approvals.tasks.approved true and ready_for_implementation true",
         "        next: COMPLETE",
-        "      - condition: validation.verdict PASS and not auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and task plan review PASS and task graph sanity review PASS",
+        "      - condition: validation.verdict PASS and not auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true",
         "        next: COMPLETE",
       ].join("\n"),
     );
@@ -452,7 +618,7 @@ test("task workflow validation detects auto-approve task review drift", () => {
 
   assert.ok(
     result.failures.some(
-      (failure) => failure.includes("TASK_WORKFLOW_DRIFT") && failure.includes("task plan review PASS"),
+      (failure) => failure.includes("TASK_WORKFLOW_DRIFT") && failure.includes("draft_status WRITTEN"),
     ),
     result.failures.join("\n"),
   );
@@ -580,6 +746,8 @@ test("task 4.1 requirements workflow connects EARS generation, review gate, and 
     "implementation file",
     "kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
     "kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md",
+    "kiro-spec-requirements-review: ../facets/instructions/kiro-spec-requirements-review.md",
+    "instruction: kiro-spec-requirements-review",
   ];
   const instructionTerms = [
     "requirements.md",
@@ -603,6 +771,15 @@ test("task 4.1 requirements workflow connects EARS generation, review gate, and 
   for (const lang of ["en", "ja"]) {
     assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-requirements.yaml`, workflowTerms);
     assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`, instructionTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-requirements-review.md`, [
+      "Review Requirements Draft",
+      "requirements review gate",
+      "read-only",
+      "validation.verdict",
+      "PASS",
+      "NEEDS_FIX",
+      "BLOCKED",
+    ]);
   }
 });
 
@@ -657,15 +834,39 @@ test("task 6.1 tasks workflow requires canonical task annotations and ready stat
   for (const lang of ["en", "ja"]) {
     assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-tasks.yaml`, workflowTerms);
     assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-tasks.md`, instructionTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-tasks-review.md`, [
+      "Review Task Plan",
+      "task_plan_review",
+      "task_graph_sanity_review",
+      "read-only",
+      "tasks.md",
+      "spec.json",
+      "PASS",
+      "NEEDS_FIXES",
+      "RETURN_TO_DESIGN",
+    ]);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/output-contracts/kiro-spec-tasks-review-result.md`, [
+      "task_plan_review",
+      "task_graph_sanity_review",
+      "PASS",
+      "NEEDS_FIXES",
+      "RETURN_TO_DESIGN",
+      "summary",
+    ]);
     assertFacetTerms(repoRoot, `.takt/${lang}/facets/policies/kiro-spec-task-annotations.md`, policyTerms);
 
     const workflow = readFileSync(join(repoRoot, `.takt/${lang}/workflows/kiro-spec-tasks.yaml`), "utf8");
     const autoApproveRule =
-      "validation.verdict PASS and auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true and task plan review PASS and task graph sanity review PASS";
-    const normalRule = "validation.verdict PASS and not auto-approve and phase tasks";
+      "validation.verdict PASS and auto-approve and phase tasks and draft_status WRITTEN and review_gate PASSED and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true";
+    const normalRule = "validation.verdict PASS and not auto-approve and phase tasks and draft_status WRITTEN and review_gate PASSED";
     assert.ok(workflow.includes(autoApproveRule), `${lang} tasks workflow should require reviewed tasks for auto-approve`);
     assert.ok(workflow.includes(normalRule), `${lang} tasks workflow should exclude auto-approve from normal completion`);
     assert.ok(workflow.indexOf(autoApproveRule) < workflow.indexOf(normalRule), `${lang} auto-approve rule should run first`);
+    assert.match(
+      workflow,
+      /name: review-tasks[\s\S]*required_permission_mode: readonly[\s\S]*instruction: kiro-spec-tasks-review[\s\S]*format: kiro-spec-tasks-review-result[\s\S]*task_plan_review PASS and task_graph_sanity_review PASS/,
+      `${lang} read-only review-tasks step should use the review-only adapter`,
+    );
   }
 
   const template = readFileSync(join(repoRoot, ".kiro/settings/templates/specs/tasks.md"), "utf8");

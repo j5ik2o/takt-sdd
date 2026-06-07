@@ -6,7 +6,8 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 
 ## Machine Fields
 
-- `verdict`: `GO`, `NO_GO` のいずれか。
+- `VERDICT`: `APPROVED`, `REJECTED` のいずれか。
+- `verdict`: `VERDICT` を補足的に写像する任意 field。workflow branching では `VERDICT` を使う。
 - `review_scope`: review 対象の selected task、feature、または contract boundary。
 - `findings`: actionable finding の配列。
 - `requirement_refs`: 元の requirement 番号の配列。
@@ -17,4 +18,4 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 
 ## Branching Rule
 
-workflow rule は `verdict` を参照して分岐する。`summary` は machine verdict ではない。
+workflow rule は `VERDICT` を参照して分岐する。`verdict` と `summary` は primary machine field ではない。

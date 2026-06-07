@@ -63,6 +63,8 @@
 
 この spec は、そのさらに上位に位置します。`kiro-discovery` は spec generation の前段で action path と artifact plan を決め、`kiro-spec-batch` は生成済み roadmap を読んで individual generation workflow を wave ごとに呼びます。batch は generation logic を持たず、roadmap dependency と cross-spec review だけを所有します。
 
+`kiro-spec-batch` は `kiro-spec-quick` の一括版ではありません。`.kiro/steering/roadmap.md` を読み、dependency wave を作り、wave ごとに dynamic subagent dispatch を管理し、cross-spec review と remediation loop を通過してから batch completion を返す controller workflow です。
+
 ### Architecture Pattern & Boundary Map
 
 Selected pattern: orchestration controller with artifact-backed routing。discovery は action path と artifact を作り、batch は roadmap から wave を作り、個別 spec は上流 generation workflow に委譲します。
@@ -95,7 +97,11 @@ Key decisions:
 - discovery は routing と source artifact 作成だけを行い、spec 本文生成を始めるかどうかは action path と user intent に従う。
 - roadmap parser は `## Specs (dependency order)` を batch の唯一の authoritative input とし、他 section は awareness-only にする。
 - worker dispatch は same-wave parallel を許すが、wave ordering は strict に守る。
+- wave execution は feature 数に応じた static TAKT step を生成せず、dispatcher step が dynamic subagent dispatch を管理する。
 - cross-spec review は generated design を主入力にし、tasks は `_Boundary:_` annotation を優先して読む。
+- cross-spec remediation は workflow YAML の `loop_monitors.threshold` で最大 3 回に制限し、facet や validator に独自 retry counter を置かない。
+- `kiro-discovery` と `kiro-spec-batch` の instruction facet は `extends_skill` / `extends_skill_section` を持つ thin adapter とし、Kiro skill 本文をコピーしない。
+- batch の phase reuse は `workflow_call` や shell `takt -w` ではなく、worker dispatch が `kiro-spec-generation-workflows` の adapter/contract を参照する形に限定する。
 - decomposition 問題は affected spec の局所修正ではなく discovery/roadmap へ戻す。
 - Kiro-specific discovery/batch facets は shared `BuiltinFacetInheritancePolicy` に従い、`node_modules/takt/builtins/{lang}/facets` の research/planning/review 系 built-in facet を継承できる場合は差分だけを書く。
 
@@ -106,6 +112,8 @@ Key decisions:
 | Workflow runtime | TAKT workflow YAML | `kiro-discovery` と `kiro-spec-batch` の routing/controller 実行 | `.takt/{en,ja}/workflows/` に配置 |
 | Facets | TAKT facet Markdown | discovery instruction、batch policy、cross-spec review contract | built-in facet 継承を優先し、en/ja の machine fields をそろえる |
 | Built-in facet inheritance | TAKT builtins facet Markdown | research/planning/review 系の親 facet と差分記述 | shared `BuiltinFacetInheritancePolicy` を参照 |
+| Kiro skill adapter | TAKT instruction facet | `kiro-discovery` / `kiro-spec-batch` skill section と TAKT orchestration の写像 | `extends_skill` / `extends_skill_section` を使う |
+| Loop monitoring | TAKT workflow YAML | cross-spec remediation loop の上限管理 | `loop_monitors.threshold` だけに上限を置く |
 | Shared contracts | Kiro shared facets | artifact access、lifecycle、skill identity、error shape | 上流 spec を参照 |
 | Spec generation | `kiro-spec-generation-workflows` | individual spec phase generation | batch worker が呼び出すだけ |
 | Spec workspace | `.kiro/steering/`, `.kiro/specs/` | `roadmap.md`、`brief.md`、generated specs の永続化 | OpenSpec artifacts とは分離 |
@@ -588,6 +596,31 @@ interface DiscoveryBatchValidationResult {
 - Preconditions: repository root から validation script が実行される。
 - Postconditions: discovery/batch の workflow/facet/parser contract drift が finding として返る。
 - Invariants: downstream implementation workflow 未実装は failure にしない。
+
+## Data Models
+
+### Kiro Discovery/Batch Adapter Map
+
+| Workflow step | Kiro skill source | Section source | TAKT mapping |
+|---------------|-------------------|----------------|--------------|
+| discovery routing | `kiro-discovery` | routing section | user request、existing specs、steering を読み action path と artifact plan を返す |
+| roadmap parsing | `kiro-spec-batch` | roadmap validation / wave planning section | `## Specs (dependency order)` を dependency graph と wave に変換する |
+| wave execution | `kiro-spec-batch` | parallel subagent dispatch section | same-wave features を dynamic worker input として dispatch する |
+| cross-spec review | `kiro-spec-batch` | cross-spec review section | generated specs、roadmap、task boundaries を読み issue と repair target を返す |
+| remediation | `kiro-spec-batch` | remediation section | local repair 可能 issue を affected spec worker へ戻し、再 review を要求する |
+| finalize roadmap | `kiro-spec-batch` | finalize section | review/remediation 通過後だけ batch summary と roadmap completion を確定する |
+
+adapter facet は `extends_skill` と `extends_skill_section` を持ち、Kiro skill 本文をコピーしません。section heading は参照元 `SKILL.md` の原文を使い、日本語 facet でも翻訳しません。
+
+### Dynamic Worker Dispatch Contract
+
+batch workflow は feature 数ごとの static step を持ちません。`wave-dispatch` step が wave 内 feature list、dependencies、brief path、auto-approve mode、worker output contract を subagent input として渡し、worker result を `feature`, `status`, `generated_artifacts`, `blocking_reason`, `next_action` の配列として集約します。
+
+worker は `kiro-spec-generation-workflows` の phase contract を使って individual spec を生成します。batch workflow は requirements/design/tasks 本文生成 rule を再実装せず、worker result と artifact paths だけを扱います。
+
+### Cross-Spec Remediation Loop Contract
+
+cross-spec review が local remediation 可能な issue を返す場合、batch workflow は remediation step と再 review step を接続します。上限は `loop_monitors.threshold: 3` だけで表現し、facet や validator に `retryCount` を持たせません。`DECOMPOSITION_RETURN` または 3 回後に残る blocking issue は implementation-ready を確定せず、discovery/roadmap return または human stop として返します。
 
 ## Error Handling
 
