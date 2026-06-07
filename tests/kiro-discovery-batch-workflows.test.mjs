@@ -333,3 +333,17 @@ test("validation rejects en/ja machine enum drift", () => {
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("MIXED_DECOMPOSITION")));
 });
+
+test("package exposes discovery batch validation commands", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  const scripts = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8")).scripts;
+
+  assert.equal(
+    scripts["validate:kiro-discovery-batch-workflows"],
+    "node scripts/validate-kiro-discovery-batch-workflows.mjs",
+  );
+  assert.equal(
+    scripts["test:kiro-discovery-batch-workflows"],
+    "node --test tests/kiro-discovery-batch-workflows.test.mjs",
+  );
+});

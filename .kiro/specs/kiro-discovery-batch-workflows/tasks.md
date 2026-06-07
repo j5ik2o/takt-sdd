@@ -89,7 +89,7 @@
   - _Boundary:_ DiscoveryWorkflow, BatchWorkerDispatcher, CrossSpecReviewWorkflow, DiscoveryBatchValidationHarness
   - _Depends:_ 2, 3, 8, 9, 10
 
-- [ ] 12. repository-local test command に discovery/batch validation を接続する
+- [x] 12. repository-local test command に discovery/batch validation を接続する
   - validation script を test runner から実行できる regression test として接続する。
   - roadmap parser fixture、workflow/facet parity、generation workflow reference、cross-spec output contract、scope guard をまとめて検証する。
   - 完了時点で discovery/batch workflow の drift が通常検証で検出できる。
