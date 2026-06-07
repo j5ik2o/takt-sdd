@@ -24,7 +24,7 @@ Generate `.kiro/specs/<feature>/tasks.md` from approved requirements and design.
 
 1. Resolve the canonical feature directory as `.kiro/specs/<feature>/`.
 2. Run the requirements/design approval gate before generating task output. If requirements or design are not approved, return `validation.verdict: "BLOCKED"` unless `-y` or `auto-approve` mode is explicitly active.
-3. When `-y` or `auto-approve` mode is active, explicitly update `approvals.requirements.approved: true` and `approvals.design.approved: true` as part of the successful tasks phase; do not imply approval silently.
+3. When `-y` or `auto-approve` mode is active, explicitly update `approvals.requirements.approved: true` and `approvals.design.approved: true` in the finalize step of the successful tasks phase; do not imply approval silently.
 4. Perform task generation from `requirements.md`, `design.md`, `spec.json`, existing `tasks.md`, and `.kiro/settings/templates/specs/tasks.md`.
 5. Produce `tasks.md` as an implementation-ready plan. Every executable task must include:
    - observable completion detail in a task detail bullet.
@@ -32,12 +32,12 @@ Generate `.kiro/specs/<feature>/tasks.md` from approved requirements and design.
    - the canonical boundary annotation label `_Boundary:_`.
    - the canonical dependency annotation label `_Depends:_`.
 6. Use `_Depends:_ none` when an executable task has no dependency. Use task IDs when dependencies exist.
-7. Run task plan review before writing success metadata. The review must check executable task size, observable completion, numeric requirements, hidden prerequisites, and requirement coverage.
-8. Run task graph sanity review before writing success metadata. The review must check Boundary annotation coverage, Depends annotation coverage, dependency graph validity, boundary overlap, and `(P)` marker validity.
+7. In generate/repair steps, do not run the final task plan review; make the draft task graph reviewable and route to the dedicated read-only review step. That review step checks executable task size, observable completion, numeric requirements, hidden prerequisites, and requirement coverage.
+8. The dedicated read-only review step also runs task graph sanity review for Boundary annotation coverage, Depends annotation coverage, dependency graph validity, boundary overlap, and `(P)` marker validity.
 9. Use `(P)` only when non-overlapping boundary and explicit dependency graph evidence show the task can run independently.
 10. If hidden prerequisite, boundary overlap, coverage gap, invalid dependency, or invalid `(P)` marker remains, return `validation.verdict: "BLOCKED"` or `validation.verdict: "NEEDS_FIX"` and do not write the `tasks-generated` success state.
-11. If both reviews pass, write `.kiro/specs/<feature>/tasks.md`.
-12. Update `.kiro/specs/<feature>/spec.json` in the same successful result:
+11. In the finalize step only, after both reviews pass, keep `.kiro/specs/<feature>/tasks.md` as the accepted tasks artifact.
+12. In the finalize step only, update `.kiro/specs/<feature>/spec.json` in the same successful result:
    - `phase`: `tasks-generated`.
    - `approvals.requirements.approved`: true when approval already existed or explicit auto-approve handling applies.
    - `approvals.design.approved`: true when approval already existed or explicit auto-approve handling applies.

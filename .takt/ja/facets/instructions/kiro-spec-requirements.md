@@ -31,10 +31,10 @@ initialized 済みの Kiro context から `.kiro/specs/<feature>/requirements.md
    - `[望ましくないイベント]が発生した場合、[システム]は[応答]しなければならない`
    - `[機能/オプション]を含む場合、[システム]は[応答]しなければならない`
    - `[システム]は常に[応答]しなければならない`
-6. metadata を更新する前に requirements review gate を実行する。gate では EARS 準拠、numeric IDs、検証可能な acceptance criteria、重複または結合された振る舞い、残存する scope ambiguity を確認する。
+6. generate/repair step では final requirements review gate を実行しない。draft を review 可能にして dedicated read-only review step へ進める。その review step が EARS 準拠、numeric IDs、検証可能な acceptance criteria、重複または結合された振る舞い、残存する scope ambiguity を確認する。
 7. scope ambiguity が残る、または acceptance criteria を検証できない場合は `blockingReason` または findings を付けて `validation.verdict: "BLOCKED"` または `validation.verdict: "NEEDS_FIX"` を返す。`requirements-generated` へ進めない。
-8. requirements review gate が通過した場合だけ `.kiro/specs/<feature>/requirements.md` を書く。
-9. 同じ成功 result で `.kiro/specs/<feature>/spec.json` を更新する。
+8. finalize step でのみ、requirements review gate 通過後に `.kiro/specs/<feature>/requirements.md` を accepted requirements artifact として扱う。
+9. finalize step でのみ、同じ成功 result で `.kiro/specs/<feature>/spec.json` を更新する。
    - `phase`: `requirements-generated`。
    - `approvals.requirements.generated`: true。
    - `approvals.requirements.approved`: 明示的な auto-approve または human approval がない限り変更しない。

@@ -23,7 +23,7 @@ approved Kiro requirements から `.kiro/specs/<feature>/design.md` と `.kiro/s
 
 1. canonical feature directory を `.kiro/specs/<feature>/` として解決する。
 2. design output を生成する前に requirements approval gate を実行する。requirements が approved でない場合、明示的な `-y` または `auto-approve` mode がない限り `validation.verdict: "BLOCKED"` を返す。
-3. `-y` または `auto-approve` mode が有効な場合は、成功する design phase の一部として `approvals.requirements.approved: true` を明示的に更新する。暗黙の approval として扱わない。
+3. `-y` または `auto-approve` mode が有効な場合は、成功する design phase の finalize step で `approvals.requirements.approved: true` を明示的に更新する。暗黙の approval として扱わない。
 4. design synthesis の前に `requirements.md`、`spec.json`、関連する steering context、existing `design.md`、optional `research.md`、code patterns から discovery/research を行う。
 5. discovery findings、synthesis decisions、検討した alternatives、design に影響した risks を `research.md` に書く、または更新する。
 6. discovery/research 後に design synthesis を適用する。build-vs-adopt、simplification、boundary decisions を `research.md` に記録し、実装判断の結論を `design.md` にも反映する。
@@ -34,10 +34,10 @@ approved Kiro requirements から `.kiro/specs/<feature>/design.md` と `.kiro/s
 8. `Boundary Commitments` には owned behavior、out-of-boundary behavior、allowed dependencies、revalidation triggers を書く。
 9. `File Structure Plan` には具体的な repository paths と各 path の責務を書く。未決定 placeholder、placeholder-only entries、曖昧な ownership を残さない。
 10. `Requirements Traceability` では `requirements.md` のすべての numeric requirement IDs を具体的な components、files、interfaces、workflow decisions に対応づける。
-11. success metadata を書く前に design review gate を実行する。gate は coverage、architecture readiness、boundary readiness、File Structure Plan の具体性、Requirements Traceability を確認する。
+11. generate/repair step では final design review gate を実行しない。draft を review 可能にして dedicated read-only review step へ進める。その review step が coverage、architecture readiness、boundary readiness、File Structure Plan の具体性、Requirements Traceability を確認する。
 12. real requirements/design gap が残る場合は findings を添えて `validation.verdict: "BLOCKED"` または `validation.verdict: "NEEDS_FIX"` を返し、`design-generated` success state を書かない。
-13. design review gate が通過した場合だけ `.kiro/specs/<feature>/design.md` と `.kiro/specs/<feature>/research.md` を書く。
-14. 同じ成功 result で `.kiro/specs/<feature>/spec.json` を更新する。
+13. finalize step でのみ、design review gate 通過後に `.kiro/specs/<feature>/design.md` と `.kiro/specs/<feature>/research.md` を accepted design artifacts として扱う。
+14. finalize step でのみ、同じ成功 result で `.kiro/specs/<feature>/spec.json` を更新する。
    - `phase`: `design-generated`。
    - `approvals.requirements.approved`: true。
    - `approvals.design.generated`: true。

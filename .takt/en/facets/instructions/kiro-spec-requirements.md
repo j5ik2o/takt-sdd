@@ -31,10 +31,10 @@ Generate `.kiro/specs/<feature>/requirements.md` from initialized Kiro context. 
    - `If [unwanted event] occurs, [system] shall [response]`
    - `If [feature/option] is included, [system] shall [response]`
    - `[System] shall always [response]`
-6. Run the requirements review gate before updating metadata. The gate must check EARS conformance, numeric IDs, testable acceptance criteria, duplicate or combined behavior, and remaining scope ambiguity.
+6. In generate/repair steps, do not run the final requirements review gate; make the draft reviewable and route to the dedicated read-only review step. That review step checks EARS conformance, numeric IDs, testable acceptance criteria, duplicate or combined behavior, and remaining scope ambiguity.
 7. If scope ambiguity remains or any acceptance criteria cannot be verified, return `validation.verdict: "BLOCKED"` or `validation.verdict: "NEEDS_FIX"` with `blockingReason` or findings. Do not advance to `requirements-generated`.
-8. If the requirements review gate passes, write `.kiro/specs/<feature>/requirements.md`.
-9. Update `.kiro/specs/<feature>/spec.json` in the same successful result:
+8. In the finalize step only, after the requirements review gate passes, keep `.kiro/specs/<feature>/requirements.md` as the accepted requirements artifact.
+9. In the finalize step only, update `.kiro/specs/<feature>/spec.json` in the same successful result:
    - `phase`: `requirements-generated`.
    - `approvals.requirements.generated`: true.
    - `approvals.requirements.approved`: unchanged unless explicit auto-approve or human approval applies.
