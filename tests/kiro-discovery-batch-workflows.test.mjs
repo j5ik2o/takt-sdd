@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import {
@@ -112,4 +112,33 @@ test("validation harness rejects workflow reuse shims", () => {
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("must not be a single-step prompt wrapper")));
   assert.ok(result.failures.some((failure) => failure.includes("must not use shell takt -w")));
+});
+
+test("discovery routing policy and result contract define stable action path fields", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  for (const lang of ["en", "ja"]) {
+    for (const path of [
+      `.takt/${lang}/facets/policies/kiro-discovery-routing.md`,
+      `.takt/${lang}/facets/output-contracts/kiro-discovery-result.md`,
+    ]) {
+      assert.equal(existsSync(join(repoRoot, path)), true, `${path} should exist`);
+      const content = readFileSync(join(repoRoot, path), "utf8");
+      for (const term of [
+        "EXISTING_SPEC_UPDATE",
+        "DIRECT_IMPLEMENTATION",
+        "SINGLE_SPEC",
+        "MULTI_SPEC",
+        "MIXED_DECOMPOSITION",
+      ]) {
+        assert.ok(content.includes(term), `${path} should include ${term}`);
+      }
+    }
+    const contract = readFileSync(
+      join(repoRoot, `.takt/${lang}/facets/output-contracts/kiro-discovery-result.md`),
+      "utf8",
+    );
+    for (const field of ["actionPath", "createdFiles", "nextAction", "blockingReason"]) {
+      assert.ok(contract.includes(field), `discovery result contract should include ${field}`);
+    }
+  }
 });

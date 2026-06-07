@@ -8,7 +8,7 @@
   - _Boundary:_ DiscoveryBatchValidationHarness
   - _Depends:_ none
 
-- [ ] 2. discovery routing policy と result contract を追加する
+- [x] 2. discovery routing policy と result contract を追加する
   - existing spec update、direct implementation、single spec、multi-spec、mixed decomposition の action path を policy と output contract に定義する。
   - selected action path、reason、created files、next action、blocking reason を machine-readable にする。
   - 完了時点で discovery が新規 spec generation を開始すべきケースと止めるべきケースを同じ contract から判定できる。
