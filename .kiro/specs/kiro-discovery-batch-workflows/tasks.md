@@ -40,7 +40,7 @@
   - _Boundary:_ DiscoveryArtifactPlanner, RoadmapDependencyParser
   - _Depends:_ 4
 
-- [ ] 6. roadmap dependency parser を実装する
+- [x] 6. roadmap dependency parser を実装する
   - `## Specs (dependency order)` の checklist entry から feature、description、dependencies、completion status を抽出する。
   - circular dependency、missing dependency、unknown completion marker を blocking result にする。
   - 完了時点で parser fixture から pending/completed specs と dependency error が再現できる。
