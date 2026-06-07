@@ -9,7 +9,7 @@ extends_skill_section: "## Execution Steps"
 
 ## Kiro-specific delta
 
-Generate `.kiro/specs/<feature>/requirements.md` from initialized Kiro context. The success state is `requirements-generated`, with `requirements.md` preserving EARS fixed phrases and numeric IDs, and `spec.json` setting `approvals.requirements.generated` to true. Keep this phase limited to requirements generation; do not decide design component, workflow YAML, or implementation file ownership.
+Generate requirements content from initialized Kiro context. The final success state is `requirements-generated`, with `requirements.md` preserving EARS fixed phrases and numeric IDs, and `spec.json` setting `approvals.requirements.generated` to true. Keep this phase limited to requirements generation; do not decide design component, workflow YAML, or implementation file ownership.
 
 ## Inputs
 
@@ -24,7 +24,7 @@ Generate `.kiro/specs/<feature>/requirements.md` from initialized Kiro context. 
 1. Resolve the canonical feature directory as `.kiro/specs/<feature>/`.
 2. Perform context loading from `brief.md`, the existing draft `requirements.md`, `spec.json`, relevant steering context, and requirements rules before writing.
 3. If `spec.json` is missing, unreadable, or not in an initialized state that can advance to `requirements-generated`, return `validation.verdict: "BLOCKED"` and do not write success metadata.
-4. Generate `requirements.md` with numeric IDs only. Do not use prefixes such as `REQ-`, alphabetic IDs, or unnumbered acceptance criteria.
+4. Generate draft requirements content with numeric IDs only. Do not use prefixes such as `REQ-`, alphabetic IDs, or unnumbered acceptance criteria.
 5. Write each acceptance criterion with EARS fixed phrase structure:
    - `When [event] occurs, [system] shall [response]`
    - `If [condition], [system] shall [response]`
@@ -43,7 +43,7 @@ Generate `.kiro/specs/<feature>/requirements.md` from initialized Kiro context. 
 
 ## Result mapping
 
-- In draft generation or repair steps, write or update `requirements.md` as a draft artifact for the read-only review step, but do not promote `spec.json` to `requirements-generated`. When the draft is ready for review, return `phase: "requirements"`, `validation.verdict: "PASS"`, `draft_status: "READY_FOR_REVIEW"`, `review_gate: "PENDING"`, `featureName`, and `updatedFiles` containing `requirements.md` only.
+- In draft generation or repair steps, return draft requirements content in the step report for the read-only review step; do not write `requirements.md` or promote `spec.json` to `requirements-generated`. When the draft is ready for review, return `phase: "requirements"`, `validation.verdict: "PASS"`, `draft_status: "READY_FOR_REVIEW"`, `review_gate: "PENDING"`, `featureName`, and an empty `updatedFiles` array.
 - In finalize steps after the requirements review gate passed, return `phase: "requirements"`, `validation.verdict: "PASS"`, `draft_status: "WRITTEN"`, `review_gate: "PASSED"`, `featureName`, and `updatedFiles` containing `requirements.md` and `spec.json`.
 - On lifecycle inconsistency, missing context, scope ambiguity, unverifiable acceptance criteria, or requirements review gate failure, return `BLOCKED` or `NEEDS_FIX` and keep `spec.json` out of the `requirements-generated` success state.
 - `evidence` must mention the context loading sources, EARS and numeric IDs checks, requirements review gate result, and whether `spec.json` was updated to `requirements-generated`.

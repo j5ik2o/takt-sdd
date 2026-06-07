@@ -47,7 +47,7 @@ Generate `.kiro/specs/<feature>/tasks.md` from approved requirements and design.
 
 ## Result mapping
 
-- In draft generation or repair steps, write or update `tasks.md` as a draft artifact for the read-only review step, but do not promote `spec.json` to `tasks-generated`. When the draft task graph is ready for review, return `phase: "tasks"`, `validation.verdict: "PASS"`, `draft_status: "READY_FOR_REVIEW"`, `review_gate: "PENDING"`, `featureName`, and `updatedFiles` containing `tasks.md` only.
+- In draft generation or repair steps, return draft task plan content in the step report for the read-only review step; do not write `tasks.md` or promote `spec.json` to `tasks-generated`. When the draft task graph is ready for review, return `phase: "tasks"`, `validation.verdict: "PASS"`, `draft_status: "READY_FOR_REVIEW"`, `review_gate: "PENDING"`, `featureName`, and an empty `updatedFiles` array.
 - In finalize steps after task plan review and task graph sanity review pass, return `phase: "tasks"`, `validation.verdict: "PASS"`, `draft_status: "WRITTEN"`, `review_gate: "PASSED"`, `featureName`, and `updatedFiles` containing `tasks.md` and `spec.json`.
 - In normal mode, a generated `tasks.md` may be reviewable while `ready_for_implementation` remains false until tasks approval exists.
 - In auto-approve mode, the same successful result sets tasks approved true and `ready_for_implementation` true.

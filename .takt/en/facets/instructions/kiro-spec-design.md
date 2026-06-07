@@ -46,7 +46,7 @@ Generate `.kiro/specs/<feature>/design.md` and `.kiro/specs/<feature>/research.m
 
 ## Result mapping
 
-- In draft generation or repair steps, write or update `design.md` and `research.md` as draft artifacts for the read-only review step, but do not promote `spec.json` to `design-generated`. When the drafts are ready for review, return `phase: "design"`, `validation.verdict: "PASS"`, `draft_status: "READY_FOR_REVIEW"`, `review_gate: "PENDING"`, `featureName`, and `updatedFiles` containing `design.md` and `research.md` only.
+- In draft generation or repair steps, return draft design and research content in the step report for the read-only review step; do not write `design.md` or `research.md`, and do not promote `spec.json` to `design-generated`. When the drafts are ready for review, return `phase: "design"`, `validation.verdict: "PASS"`, `draft_status: "READY_FOR_REVIEW"`, `review_gate: "PENDING"`, `featureName`, and an empty `updatedFiles` array.
 - In finalize steps after the design review gate passed, return `phase: "design"`, `validation.verdict: "PASS"`, `draft_status: "WRITTEN"`, `review_gate: "PASSED"`, `featureName`, and `updatedFiles` containing `design.md`, `research.md`, and `spec.json`.
 - On missing requirements, lifecycle inconsistency, failed requirements approval gate, failed design review gate, or requirements/design gap, return `BLOCKED` or `NEEDS_FIX` and keep `spec.json` out of the `design-generated` success state.
 - `evidence` must mention requirements approval gate handling, `-y` or auto-approve handling, discovery/research sources, design synthesis, design review gate result, required sections, and whether `spec.json` was updated to `design-generated`.

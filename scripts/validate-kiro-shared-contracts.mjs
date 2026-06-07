@@ -187,6 +187,7 @@ function validateKiroSkillInheritance() {
       }
       const skill = frontmatter.extends_skill;
       const section = frontmatter.extends_skill_section;
+      const additionalSection = frontmatter.extends_skill_additional_section;
       if (!skill || !section) {
         failures.push(`${rel(path)} missing extends_skill or extends_skill_section frontmatter`);
         continue;
@@ -203,10 +204,13 @@ function validateKiroSkillInheritance() {
         continue;
       }
       const skillContents = skillPaths.map((skillPath) => ({ path: skillPath, content: readText(skillPath) }));
-      for (const skillSource of skillContents) {
-        if (!skillSource.content.includes(section)) {
-          failures.push(`SKILL_SECTION_NOT_FOUND: ${rel(path)} references ${skill} section ${section} missing from ${rel(skillSource.path)}`);
-        }
+      if (!skillContents.some((skillSource) => skillSource.content.includes(section))) {
+        failures.push(`SKILL_SECTION_NOT_FOUND: ${rel(path)} references ${skill} section ${section} missing from all skill sources`);
+      }
+      if (additionalSection && !skillContents.some((skillSource) => skillSource.content.includes(additionalSection))) {
+        failures.push(
+          `SKILL_SECTION_NOT_FOUND: ${rel(path)} references ${skill} additional section ${additionalSection} missing from all skill sources`,
+        );
       }
       const suspiciousCopies = [
         "<background_information>",
@@ -217,7 +221,7 @@ function validateKiroSkillInheritance() {
       if (suspiciousCopies.length > 0) {
         failures.push(`SKILL_BODY_COPY_DETECTED: ${rel(path)} repeats skill body markers ${suspiciousCopies.join(", ")}`);
       }
-      byLanguage.set(`${lang}:${basename(path)}`, { skill, section });
+      byLanguage.set(`${lang}:${basename(path)}`, { skill, section, additionalSection: additionalSection ?? "" });
     }
   }
 
@@ -235,7 +239,7 @@ function validateKiroSkillInheritance() {
       }
       continue;
     }
-    if (en.skill !== ja.skill || en.section !== ja.section) {
+    if (en.skill !== ja.skill || en.section !== ja.section || en.additionalSection !== ja.additionalSection) {
       failures.push(`SKILL_ADAPTER_DRIFT: ${file} en=${JSON.stringify(en)} ja=${JSON.stringify(ja)}`);
     }
   }

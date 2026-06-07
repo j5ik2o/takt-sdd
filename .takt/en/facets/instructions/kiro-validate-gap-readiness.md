@@ -1,6 +1,6 @@
 ---
 extends_skill: kiro-validate-gap
-extends_skill_section: "## Execution Steps"
+extends_skill_section: "## Core Task"
 ---
 
 {extends: review-qa}
