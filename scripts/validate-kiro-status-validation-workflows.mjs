@@ -432,10 +432,6 @@ function validateNoBoundaryLeaks() {
 }
 
 export function validateKiroStatusValidationWorkflows(options = {}) {
-  return validateKiroStatusValidationWorkflowsWithOptions(options);
-}
-
-export function validateKiroStatusValidationWorkflowsWithOptions(options = {}) {
   const previousRepoRoot = repoRoot;
   repoRoot = options.repoRoot ?? defaultRepoRoot;
   try {
