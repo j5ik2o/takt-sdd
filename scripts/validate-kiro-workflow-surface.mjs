@@ -144,6 +144,14 @@ function hasWorkflow(repoRoot, workflowName) {
     || existsSync(join(repoRoot, ".takt", "workflows", `${workflowName}.yaml`));
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function invokesWorkflow(value, workflowName) {
+  return new RegExp(`(?:^|\\s)-w\\s+${escapeRegExp(workflowName)}(?:\\s|$)`).test(value);
+}
+
 function validateLegacyScriptSet(repoRoot, label, scripts) {
   const failures = [];
   for (const [scriptName, workflowName] of legacyScripts) {
@@ -152,7 +160,7 @@ function validateLegacyScriptSet(repoRoot, label, scripts) {
       failures.push(`LEGACY_SCRIPT_POLICY_DRIFT: ${label} missing ${scriptName}`);
       continue;
     }
-    if (value.includes("kiro") || value.includes("kiro-staged") || !value.includes(workflowName)) {
+    if (value.includes("kiro") || value.includes("kiro-staged") || !invokesWorkflow(value, workflowName)) {
       failures.push(
         `LEGACY_SCRIPT_POLICY_DRIFT: ${label} ${scriptName} must keep existing ${workflowName} workflow and must not alias Kiro actual=${JSON.stringify(value)}`,
       );
@@ -244,7 +252,7 @@ function validateInstalledLegacyScripts(repoRoot) {
       failures.push(`INSTALLED_LEGACY_SCRIPT_DRIFT: installer missing ${scriptName}`);
       continue;
     }
-    if (!value.includes(`-w ${workflowName}`)) {
+    if (!invokesWorkflow(value, workflowName)) {
       failures.push(`INSTALLED_LEGACY_SCRIPT_DRIFT: installer ${scriptName} must invoke ${workflowName}`);
     }
   }

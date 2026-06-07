@@ -92,6 +92,30 @@ test("validation rejects legacy scripts that alias Kiro workflows", () => {
   assert.ok(result.failures.some((failure) => failure.includes("LEGACY_SCRIPT_POLICY_DRIFT") && failure.includes("cc-sdd:full")));
 });
 
+test("validation rejects legacy workflow name prefix collisions", () => {
+  const root = copyCurrentSurfaceFixture();
+  const packagePath = join(root, "package.json");
+  const pkg = JSON.parse(readFileSync(packagePath, "utf8"));
+  pkg.scripts["cc-sdd:steering"] = "scripts/takt.sh --pipeline --skip-git -w cc-sdd-steering-custom -t";
+  writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
+
+  const installerPath = join(root, "installer", "src", "install.ts");
+  writeFixtureFile(
+    root,
+    "installer/src/install.ts",
+    readFileSync(installerPath, "utf8").replace(
+      '"cc-sdd:steering": "takt --pipeline --skip-git -w cc-sdd-steering -t"',
+      '"cc-sdd:steering": "takt --pipeline --skip-git -w cc-sdd-steering-custom -t"',
+    ),
+  );
+
+  const result = validateKiroWorkflowSurface({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("LEGACY_SCRIPT_POLICY_DRIFT") && failure.includes("cc-sdd:steering")));
+  assert.ok(result.failures.some((failure) => failure.includes("INSTALLED_LEGACY_SCRIPT_DRIFT") && failure.includes("cc-sdd:steering")));
+});
+
 test("validation rejects old canonical README wording", () => {
   const root = copyCurrentSurfaceFixture();
   writeFixtureFile(
