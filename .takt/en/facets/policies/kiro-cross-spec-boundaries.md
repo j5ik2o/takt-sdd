@@ -22,3 +22,5 @@ Cross-spec review reads generated `.kiro/specs/*/requirements.md`, `design.md`, 
 - Local issue: return `repairTarget` with `affectedSpecs` and `suggestedFix`.
 - Decomposition issue: return `DECOMPOSITION_RETURN`, keep `repairTarget` empty or roadmap-scoped, and do not mark implementation-ready.
 - Minor issue: return awareness finding without blocking batch completion.
+
+Use decomposition routing when the issue changes spec boundaries, dependency direction, or roadmap ownership rather than a local artifact detail.

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import {
@@ -18,6 +18,13 @@ function writeFixtureFile(root, path, content) {
   const fullPath = join(root, path);
   mkdirSync(dirname(fullPath), { recursive: true });
   writeFileSync(fullPath, content);
+}
+
+function copyCurrentTaktFixture() {
+  const repoRoot = join(import.meta.dirname, "..");
+  const root = makeFixture();
+  cpSync(join(repoRoot, ".takt"), join(root, ".takt"), { recursive: true });
+  return root;
 }
 
 test("validation harness reports missing discovery/batch workflow bundle", () => {
@@ -310,4 +317,19 @@ test("batch summary contract separates worker results from implementation readin
       assert.ok(content.includes(term), `${path} should include ${term}`);
     }
   }
+});
+
+test("validation rejects en/ja machine enum drift", () => {
+  const root = copyCurrentTaktFixture();
+  const path = ".takt/ja/facets/output-contracts/kiro-discovery-result.md";
+  writeFixtureFile(
+    root,
+    path,
+    readFileSync(join(root, path), "utf8").replaceAll("MIXED_DECOMPOSITION", "MIXED_SPLIT"),
+  );
+
+  const result = validateKiroDiscoveryBatchWorkflows({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("MIXED_DECOMPOSITION")));
 });

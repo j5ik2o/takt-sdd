@@ -81,7 +81,7 @@
   - _Boundary:_ CrossSpecReviewWorkflow
   - _Depends:_ 8
 
-- [ ] 11. discovery/batch workflow の en/ja language pair をそろえる
+- [x] 11. discovery/batch workflow の en/ja language pair をそろえる
   - 追加した workflow、instruction、policy、output contract の en/ja basename と machine field をそろえる。
   - 日本語 facet は自然な日本語にし、path、script 名、enum、field name は shared contract と一致させる。
   - 完了時点で片言語だけの追加や enum drift が validation failure として見える。
