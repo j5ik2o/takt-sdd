@@ -6,8 +6,8 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 
 ## Machine Fields
 
-- `verdict`: `PASS`, `FAIL`, `NEEDS_FIX`, `BLOCKED` のいずれか。
-- `DECISION`: implementation validation skill が返す場合の Kiro skill primary field。`GO`, `NO-GO`, `MANUAL_VERIFY_REQUIRED` のいずれか。
+- `DECISION`: Kiro validation の必須 primary field。`GO`, `NO-GO`, `MANUAL_VERIFY_REQUIRED` のいずれか。
+- `verdict`: 継承元 tooling が返す場合だけ使う補助的な validation value。`PASS`, `FAIL`, `NEEDS_FIX`, `BLOCKED` のいずれか。workflow routing には使わない。
 - `scope`: 検証対象の workflow、feature、または contract set。
 - `checked_items`: 確認した file、command、contract name の配列。
 - `findings`: `category`、`severity`、`path`、`message` を持つ machine-readable finding の配列。
@@ -17,4 +17,4 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 
 ## Branching Rule
 
-workflow rule は `DECISION` など参照元 Kiro skill の primary field がある場合はそれを参照する。存在しない場合だけ `verdict` と `error_category` を参照し、`summary` では分岐しない。
+Kiro validation workflow の rule は `DECISION` で分岐し、`verdict`、`error_category`、`summary` では分岐しない。

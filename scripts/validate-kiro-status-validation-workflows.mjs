@@ -44,17 +44,17 @@ const instructionSpecs = [
   {
     file: "kiro-validate-gap-readiness.md",
     parent: "review-qa",
-    terms: ["requirements.md", "existing implementation", "missing components", "integration points", "recommended next action", "observed evidence", "missing evidence", "findings", "evidence", "MANUAL_VERIFICATION_REQUIRED", "kiro-validation-result"],
+    terms: ["requirements.md", "existing implementation", "missing components", "integration points", "recommended next action", "observed evidence", "missing evidence", "findings", "evidence", "DECISION", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "MANUAL_VERIFICATION_REQUIRED", "kiro-validation-result"],
   },
   {
     file: "kiro-validate-design-readiness.md",
     parent: "review-arch",
-    terms: ["requirements coverage", "Boundary Commitments", "File Structure Plan", "validation hooks", "boundary violation", "kiro-validation-result"],
+    terms: ["requirements coverage", "Boundary Commitments", "File Structure Plan", "validation hooks", "boundary violation", "DECISION", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "kiro-validation-result"],
   },
   {
     file: "kiro-validate-impl-readiness.md",
     parent: "supervise",
-    terms: ["tasks.md", "ready_for_implementation", "FAIL", "BLOCKED", "ARTIFACT_MISSING", "LIFECYCLE_INCONSISTENT", "task checkbox", "test/build evidence", "evidence mismatch", "observed evidence", "missing evidence", "findings", "evidence", "MANUAL_VERIFICATION_REQUIRED", "kiro-validation-result"],
+    terms: ["tasks.md", "ready_for_implementation", "DECISION", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "ARTIFACT_MISSING", "LIFECYCLE_INCONSISTENT", "task checkbox", "test/build evidence", "evidence mismatch", "observed evidence", "missing evidence", "findings", "evidence", "MANUAL_VERIFICATION_REQUIRED", "kiro-validation-result"],
   },
   {
     file: "kiro-collect-validation-evidence.md",

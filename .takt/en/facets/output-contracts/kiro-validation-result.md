@@ -6,8 +6,8 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 
 ## Machine Fields
 
-- `verdict`: one of `PASS`, `FAIL`, `NEEDS_FIX`, `BLOCKED`.
-- `DECISION`: optional Kiro skill primary field when produced by implementation validation; one of `GO`, `NO-GO`, `MANUAL_VERIFY_REQUIRED`.
+- `DECISION`: required Kiro validation primary field; one of `GO`, `NO-GO`, `MANUAL_VERIFY_REQUIRED`.
+- `verdict`: optional supporting validation value when inherited tooling also emits one; one of `PASS`, `FAIL`, `NEEDS_FIX`, `BLOCKED`; not used for workflow routing.
 - `scope`: validated workflow, feature, or contract set.
 - `checked_items`: array of checked files, commands, or contract names.
 - `findings`: array of machine-readable findings with `category`, `severity`, `path`, and `message`.
@@ -17,4 +17,4 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 
 ## Branching Rule
 
-Workflow rules must branch on the source Kiro skill primary field when one exists, such as `DECISION`; otherwise branch on `verdict` and `error_category`, not on `summary`.
+Workflow rules for Kiro validation workflows must branch on `DECISION`, not on `verdict`, `error_category`, or `summary`.
