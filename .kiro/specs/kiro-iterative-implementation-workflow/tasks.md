@@ -11,7 +11,7 @@
 - [ ] 2. implementation progress policy を追加する
   - checkbox 更新前の completion gate、selected task 限定更新、blocker notes、implementation notes、verification evidence の policy facet を en/ja に追加する。
   - progress update 前に `tasks.md` の selected task section を再読し、他 worker の変更を上書きしない規約を明示する。
-  - 完了時点で progress update が completion verdict と selected task にだけ紐づくことを facet から確認できる。
+  - 完了時点で progress update が completion STATUS と selected task にだけ紐づくことを facet から確認できる。
   - _Requirements: 4.4, 5.4, 6.2, 6.3_
   - _Boundary:_ KiroTaskProgressUpdater
   - _Depends:_ 1
@@ -70,14 +70,14 @@
 
 - [ ] 9. `kiro-verify-completion` internal workflow と completion facet を追加する
   - implementation result、validation evidence、review verdict、remaining work、manual verification requirement を照合する adapter step/facet を en/ja に追加する。
-  - shared `kiro-completion-verification` の `COMPLETE`、`INCOMPLETE`、`BLOCKED` を progress update 前の gate として使う。
+  - `kiro-verify-completion` / shared `kiro-completion-verification` の primary `STATUS` (`VERIFIED`、`NOT_VERIFIED`、`MANUAL_VERIFY_REQUIRED`) を progress update 前の gate として使う。
   - 完了時点で evidence のない項目が complete 根拠に含まれない。
   - _Requirements: 3.4, 6.1, 6.2, 6.4_
   - _Boundary:_ KiroCompletionVerifier
   - _Depends:_ 1, 5, 6, 7, 8
 
 - [ ] 10. selected task progress update の instruction facet を追加する
-  - completion verdict が `COMPLETE` の場合だけ selected task checkbox を `- [x]` に更新する手順を en/ja に追加する。
+  - completion `STATUS` が `VERIFIED` の場合だけ selected task checkbox を `- [x]` に更新する手順を en/ja に追加する。
   - `BLOCK_TASK`、`STOP_FOR_HUMAN`、または `loop_monitors` の非生産的判定では checkbox を更新せず、blocker notes と必要な人間確認事項を selected task に残す。
   - 完了時点で selected task 外の checkbox、blocker、implementation notes を変更しない規約が確認できる。
   - _Requirements: 4.3, 4.4, 5.4, 5.6, 6.2, 6.3_
