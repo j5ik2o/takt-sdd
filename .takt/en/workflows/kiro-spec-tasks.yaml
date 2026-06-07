@@ -21,6 +21,7 @@ policies:
 
 report_formats:
   kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
+  kiro-spec-tasks-review-result: ../facets/output-contracts/kiro-spec-tasks-review-result.md
 
 loop_monitors:
   - cycle:
@@ -88,13 +89,13 @@ steps:
     output_contracts:
       report:
         - name: kiro-spec-tasks-review.md
-          format: kiro-spec-generation-result
+          format: kiro-spec-tasks-review-result
     rules:
-      - condition: validation.verdict PASS and task plan review evidence present and task graph sanity review evidence present
+      - condition: task_plan_review PASS and task_graph_sanity_review PASS
         next: finalize-tasks
-      - condition: validation.verdict NEEDS_FIX
+      - condition: task_plan_review NEEDS_FIXES or task_graph_sanity_review NEEDS_FIXES
         next: repair-tasks
-      - condition: validation.verdict BLOCKED or task plan review RETURN_TO_DESIGN or task graph sanity review RETURN_TO_DESIGN
+      - condition: task_plan_review RETURN_TO_DESIGN or task_graph_sanity_review RETURN_TO_DESIGN
         next: ABORT
       - condition: hidden prerequisite remains or boundary overlap remains or coverage gap remains
         next: ABORT

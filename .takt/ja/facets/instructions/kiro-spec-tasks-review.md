@@ -16,9 +16,9 @@ extends_skill_section: "### Step 3: Review Task Plan"
 1. `requirements.md`、`design.md`、`spec.json`、existing `tasks.md` の merge context、前 step の draft task plan、task generation rules を読み込む。
 2. `kiro-spec-tasks` Step 3 の task plan review gate を実行する。
 3. `kiro-spec-tasks` Step 3.5 の task-graph sanity review を実行する。
-4. 両方の review が通過した場合だけ `validation.verdict: "PASS"` を返し、report body に `task plan review PASS` と `task graph sanity review PASS` の evidence を明記する。
-5. findings が task plan 内で修復可能な場合は `validation.verdict: "NEEDS_FIX"` を返し、`NEEDS_FIXES` evidence を含める。
-6. requirements/design の実ギャップまたは矛盾が見つかった場合は `validation.verdict: "BLOCKED"` を返し、`RETURN_TO_DESIGN` evidence を含める。
+4. 両方の review が通過した場合だけ `task_plan_review: "PASS"` と `task_graph_sanity_review: "PASS"` を返す。
+5. findings が task plan 内で修復可能な場合は、該当する review field に `NEEDS_FIXES` を返す。
+6. requirements/design の実ギャップまたは矛盾が見つかった場合は、該当する review field に `RETURN_TO_DESIGN` を返す。
 
 ## Result mapping
 

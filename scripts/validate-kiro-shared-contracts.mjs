@@ -8,6 +8,10 @@ const __dirname = dirname(__filename);
 const repoRoot = join(__dirname, "..");
 const languages = ["en", "ja"];
 const facetKinds = ["instructions", "output-contracts", "policies"];
+const workflowReferenceExemptInstructionFacets = new Map([
+  ["kiro-resolve-skill-identity.md", "shared identity resolver contract, not a workflow step instruction"],
+  ["kiro-collect-validation-evidence.md", "shared evidence vocabulary embedded by validation readiness adapters"],
+]);
 
 const outputContracts = [
   {
@@ -493,6 +497,30 @@ function validateWorkflowFacetReferences() {
   return { ok: failures.length === 0, failures };
 }
 
+function validateUnusedKiroInstructionFacets() {
+  const failures = [];
+  for (const lang of languages) {
+    const instructionDir = join(repoRoot, ".takt", lang, "facets", "instructions");
+    const workflowDir = join(repoRoot, ".takt", lang, "workflows");
+    const referenced = new Set();
+
+    for (const workflow of listFilesRecursive(workflowDir).filter((path) => basename(path).startsWith("kiro-") && path.endsWith(".yaml"))) {
+      const content = readText(workflow);
+      for (const match of content.matchAll(/\.\.\/facets\/instructions\/([^/\s]+\.md)/g)) {
+        referenced.add(match[1]);
+      }
+    }
+
+    for (const facet of listFilesRecursive(instructionDir).filter((path) => basename(path).startsWith("kiro-") && path.endsWith(".md"))) {
+      const file = basename(facet);
+      if (!referenced.has(file) && !workflowReferenceExemptInstructionFacets.has(file)) {
+        failures.push(`${rel(facet)} is not referenced by any kiro-*.yaml workflow`);
+      }
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
 function validateKiroWorkflowShapeRules() {
   const failures = [];
   const closedLoopWorkflowPattern = /^kiro-spec-(requirements|design|tasks)\.yaml$/;
@@ -532,6 +560,7 @@ export function validateKiroSharedContracts() {
     kiroSkillFieldContract: validateKiroSkillFieldContract(),
     kiroWorkflowShapeRules: validateKiroWorkflowShapeRules(),
     workflowFacetReferences: validateWorkflowFacetReferences(),
+    unusedKiroInstructionFacets: validateUnusedKiroInstructionFacets(),
   };
   const failures = Object.entries(sections).flatMap(([name, result]) =>
     result.failures.map((failure) => `${name}: ${failure}`),

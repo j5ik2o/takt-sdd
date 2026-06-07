@@ -35,7 +35,7 @@ const phaseWorkflowSpecs = [
     requiredTerms: ["tasks.md", "tasks-generated", "_Boundary:_", "_Depends:_", "kiro-spec-generation-result"],
     instructionFacets: ["kiro-spec-tasks", "kiro-spec-tasks-review"],
     policyFacets: ["kiro-spec-generation", "kiro-spec-task-annotations"],
-    outputContracts: ["kiro-spec-generation-result"],
+    outputContracts: ["kiro-spec-generation-result", "kiro-spec-tasks-review-result"],
   },
   {
     name: "kiro-spec-quick",
@@ -86,7 +86,12 @@ const facetSpecs = [
   {
     kind: "instructions",
     name: "kiro-spec-tasks-review",
-    terms: ["Review Task Plan", "task plan review", "task graph sanity review", "read-only", "PASS", "NEEDS_FIXES", "RETURN_TO_DESIGN"],
+    terms: ["Review Task Plan", "task_plan_review", "task_graph_sanity_review", "read-only", "PASS", "NEEDS_FIXES", "RETURN_TO_DESIGN"],
+  },
+  {
+    kind: "output-contracts",
+    name: "kiro-spec-tasks-review-result",
+    terms: ["task_plan_review", "task_graph_sanity_review", "PASS", "NEEDS_FIXES", "RETURN_TO_DESIGN", "summary"],
   },
   {
     kind: "instructions",
