@@ -21,4 +21,10 @@ Update only the selected task progress after completion verification or blocker 
 
 ## Output mapping
 
-Progress update is allowed only after `STATUS`, `VERDICT`, `NEXT_ACTION`, and completion `STATUS` have been resolved by upstream adapter steps.
+After writing `tasks.md`, emit one of these machine statuses for workflow routing:
+
+- `STATUS: READY_FOR_REVIEW` when the selected task checkbox or blocker note was updated successfully and the workflow may move to the next gate.
+- `STATUS: BLOCKED` when the selected task cannot be updated safely, including stale task state or missing write evidence.
+- `STATUS: NEEDS_CONTEXT` when human input is required before any progress or blocker note can be written.
+
+Progress update is allowed only after planning, debug, or completion adapter steps have resolved the selected task and write intent.

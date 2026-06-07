@@ -21,4 +21,10 @@ completion verificationまたはblocker decisionの後に、selected task progre
 
 ## Output mapping
 
-progress updateは、上流adapter stepで `STATUS`、`VERDICT`、`NEXT_ACTION`、completion `STATUS` が解決済みの場合だけ許可する。
+`tasks.md` を書いた後は、workflow routing用に以下のmachine statusのいずれかを返す。
+
+- selected task checkboxまたはblocker noteを正常に更新し、次gateへ進める場合は `STATUS: READY_FOR_REVIEW`。
+- stale task stateやwrite evidence不足によりselected taskを安全に更新できない場合は `STATUS: BLOCKED`。
+- progressまたはblocker noteを書く前に人間の入力が必要な場合は `STATUS: NEEDS_CONTEXT`。
+
+progress updateは、planning、debug、completion adapter stepがselected taskとwrite intentを解決した後だけ許可される。

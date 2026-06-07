@@ -24,8 +24,10 @@ extends_skill_section: "## Step 2: Select Tasks & Determine Mode"
 2. `_Depends:_` が完了済みで、blocker notesが実行を止めていないunchecked taskの先頭 one task を選ぶ。
 3. `_Depends:_ none` はempty dependency setとして扱う。
 4. implementation planには `_Boundary:_`、`_Depends:_`、requirement numbers、selected task text、禁止する隣接scope、validation command hintsを含める。
-5. task annotation不足、eligible task不在、selected task boundaryとdesign commitmentsの矛盾は `BLOCKED` として返す。
+5. exactly one selected task と有効なimplementation planがある場合は `STATUS: READY_FOR_REVIEW` を返す。
+6. unchecked task が task annotation不足またはboundary conflictで止まる場合は、`selected_task` と `blocker_note_required: true` を含めて `STATUS: BLOCKED` を返す。
+7. eligibleなunchecked taskがない、またはfeature readinessが失敗した場合は、`selected_task` なしで `STATUS: BLOCKED` を返す。
 
 ## Output mapping
 
-workflowは one task が選択された場合だけ `execute-task` へ進む。planが `BLOCKED` を返す場合はprogress/blocker handlingへ進む。このadapterはstandalone review/debug workflowを作らない。
+workflowは `STATUS: READY_FOR_REVIEW` かつ one task が選択された場合だけ `execute-task` へ進む。selected task付きの `STATUS: BLOCKED` はprogress/blocker handlingへ進み、readiness-levelの `STATUS: BLOCKED` は `tasks.md` を書かずに停止する。このadapterはstandalone review/debug workflowを作らない。

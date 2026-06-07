@@ -86,7 +86,9 @@ steps:
     rules:
       - condition: STATUS READY_FOR_REVIEW and ready_for_implementation true and exactly one selected task and implementation plan emitted
         next: execute-task
-      - condition: STATUS BLOCKED and no eligible task or readiness gate failed or task annotation missing
+      - condition: STATUS BLOCKED and selected task exists and blocker_note_required true
+        next: update-progress
+      - condition: STATUS BLOCKED and no selected task or readiness gate failed
         next: ABORT
       - condition: STATUS NEEDS_CONTEXT
         next: ABORT
@@ -247,7 +249,9 @@ steps:
         next: validate-impl-final
       - condition: STATUS READY_FOR_REVIEW and selected task checkbox updated and remaining tasks exist
         next: COMPLETE
-      - condition: STATUS BLOCKED
+      - condition: STATUS BLOCKED and selected task blocker note written
+        next: ABORT
+      - condition: STATUS BLOCKED and progress update could not be written safely
         next: ABORT
       - condition: STATUS NEEDS_CONTEXT
         next: ABORT

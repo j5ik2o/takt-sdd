@@ -24,8 +24,10 @@ Plan exactly one task for this TAKT iteration. This facet maps `kiro-impl` task 
 2. Select the first unchecked one task whose `_Depends:_` entries are complete and whose blocker notes do not stop execution.
 3. Treat `_Depends:_ none` as an empty dependency set.
 4. Include `_Boundary:_`, `_Depends:_`, requirement numbers, selected task text, forbidden adjacent scope, and validation command hints in the implementation plan.
-5. Return `BLOCKED` when task annotation is missing, no eligible task exists, or the selected task boundary conflicts with design commitments.
+5. Return `STATUS: READY_FOR_REVIEW` when exactly one selected task has a valid implementation plan.
+6. Return `STATUS: BLOCKED` with `selected_task` and `blocker_note_required: true` when an unchecked task is blocked by missing task annotation or a boundary conflict.
+7. Return `STATUS: BLOCKED` without `selected_task` when no unchecked task is eligible or feature readiness failed.
 
 ## Output mapping
 
-The workflow routes to `execute-task` only when one task is selected. It routes to progress/blocker handling when the plan returns `BLOCKED`; this adapter does not create a standalone review or debug workflow.
+The workflow routes to `execute-task` only when `STATUS: READY_FOR_REVIEW` and exactly one task is selected. It routes selected-task `STATUS: BLOCKED` results to progress/blocker handling; readiness-level `STATUS: BLOCKED` stops without writing `tasks.md`. This adapter does not create a standalone review or debug workflow.

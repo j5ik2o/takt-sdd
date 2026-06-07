@@ -21,7 +21,10 @@ const instructionSpecs = [
       "_Boundary:_",
       "_Depends:_",
       "one task",
+      "READY_FOR_REVIEW",
       "BLOCKED",
+      "selected_task",
+      "blocker_note_required",
     ],
   },
   {
@@ -46,6 +49,9 @@ const instructionSpecs = [
     parent: "fix",
     terms: [
       "STATUS",
+      "READY_FOR_REVIEW",
+      "BLOCKED",
+      "NEEDS_CONTEXT",
       "VERIFIED",
       "safe_to_update_progress",
       "selected task",
@@ -375,8 +381,11 @@ function validateWorkflowFiles(repoRoot) {
     if (!hasRuleWithTerms(planBlock, ["ready_for_implementation", "next: execute-task"])) {
       failures.push(`GATE_ORDER_DRIFT: ${rel(repoRoot, workflowPath)} plan-one-task must check readiness before edit`);
     }
-    if (!hasRuleWithTerms(planBlock, ["task annotation", "next: ABORT"])) {
-      failures.push(`GATE_ORDER_DRIFT: ${rel(repoRoot, workflowPath)} plan-one-task must stop on task annotation/readiness failure`);
+    if (!hasRuleWithTerms(planBlock, ["selected task exists", "blocker_note_required true", "next: update-progress"])) {
+      failures.push(`GATE_ORDER_DRIFT: ${rel(repoRoot, workflowPath)} plan-one-task must route selected-task blockers to update-progress`);
+    }
+    if (!hasRuleWithTerms(planBlock, ["no selected task", "readiness gate failed", "next: ABORT"])) {
+      failures.push(`GATE_ORDER_DRIFT: ${rel(repoRoot, workflowPath)} plan-one-task must stop readiness-level blockers without writing tasks.md`);
     }
     const executeBlock = blocks.get("execute-task") ?? [];
     if (!hasRuleWithTerms(executeBlock, ["STATUS READY_FOR_REVIEW", "next: review-task"])) {
@@ -408,6 +417,13 @@ function validateWorkflowFiles(repoRoot) {
     const verifyBlock = blocks.get("verify-task-completion") ?? [];
     if (!hasRuleWithTerms(verifyBlock, ["STATUS VERIFIED", "safe_to_update_progress true", "next: update-progress"])) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} verify-task-completion must gate progress on VERIFIED and safe_to_update_progress true`);
+    }
+    const updateBlock = blocks.get("update-progress") ?? [];
+    if (!hasRuleWithTerms(updateBlock, ["STATUS READY_FOR_REVIEW", "selected task checkbox updated", "next: validate-impl-final"])) {
+      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must route successful final checkbox updates to validate-impl-final`);
+    }
+    if (!hasRuleWithTerms(updateBlock, ["STATUS BLOCKED", "selected task blocker note written", "next: ABORT"])) {
+      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must route written blocker notes to ABORT`);
     }
     if (!canonicalBlock(content, "loop_monitors").join("\n").includes("execute-task")) {
       failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, workflowPath)} loop_monitors must cover execute-task`);

@@ -142,6 +142,33 @@ test("validator rejects completion-before-checkbox gate drift", () => {
   assert.ok(result.failures.some((failure) => failure.includes("verify-task-completion")));
 });
 
+test("validator rejects plan blockers that bypass progress blocker notes", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    "- condition: STATUS BLOCKED and selected task exists and blocker_note_required true\n        next: update-progress",
+    "- condition: STATUS BLOCKED and selected task exists and blocker_note_required true\n        next: ABORT",
+  );
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("selected-task blockers")));
+});
+
+test("validator rejects progress updates that omit routing status outputs", () => {
+  const root = makeCurrentSurfaceFixture();
+  const progressPath = join(root, ".takt", "en", "facets", "instructions", "kiro-impl-update-progress.md");
+  const progress = readFileSync(progressPath, "utf8").replaceAll("READY_FOR_REVIEW", "PROGRESS_DONE");
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-impl-update-progress.md", progress);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("kiro-impl-update-progress.md")));
+});
+
 test("validator rejects workflow references to missing persona resources", () => {
   const root = makeCurrentSurfaceFixture();
   const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");
