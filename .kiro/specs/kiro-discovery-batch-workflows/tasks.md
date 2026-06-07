@@ -48,7 +48,7 @@
   - _Boundary:_ RoadmapDependencyParser
   - _Depends:_ 5
 
-- [ ] 7. batch wave planner を追加する
+- [x] 7. batch wave planner を追加する
   - pending specs を、dependencies が完了済みまたは先行 wave に属する feature ごとの dependency wave に分類する。
   - pending feature の `brief.md` existence を wave execution 前に確認する。
   - 完了時点で missing brief と dependency cycle は worker dispatch 前に報告される。

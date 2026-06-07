@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import {
   buildDependencyWaves,
   parseRoadmap,
+  validateBatchPlanPrerequisites,
   validateKiroDiscoveryBatchWorkflows,
 } from "../scripts/validate-kiro-discovery-batch-workflows.mjs";
 
@@ -75,6 +76,30 @@ test("dependency wave planner rejects missing dependencies and cycles", () => {
   ]);
   assert.equal(cycle.ok, false);
   assert.ok(cycle.errors.some((error) => error.includes("circular dependency")));
+});
+
+test("batch plan prerequisites reject pending specs without brief", () => {
+  const root = makeFixture();
+  const result = validateBatchPlanPrerequisites(root, [
+    { featureName: "done-feature", description: "Done", dependencies: [], status: "done" },
+    { featureName: "pending-feature", description: "Pending", dependencies: [], status: "pending" },
+  ]);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((error) => error.includes(".kiro/specs/pending-feature/brief.md")));
+  assert.equal(result.errors.some((error) => error.includes("done-feature")), false);
+});
+
+test("batch plan prerequisites accept pending specs with brief", () => {
+  const root = makeFixture();
+  writeFixtureFile(root, ".kiro/specs/pending-feature/brief.md", "# Brief: pending-feature\n");
+
+  const result = validateBatchPlanPrerequisites(root, [
+    { featureName: "pending-feature", description: "Pending", dependencies: [], status: "pending" },
+  ]);
+
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.ok, true);
 });
 
 test("validation harness rejects workflow reuse shims", () => {

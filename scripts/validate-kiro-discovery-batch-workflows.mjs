@@ -329,6 +329,23 @@ export function buildDependencyWaves(specs) {
   };
 }
 
+export function validateBatchPlanPrerequisites(repoRoot, specs) {
+  const errors = [];
+  for (const spec of specs) {
+    if (spec.status !== "pending") {
+      continue;
+    }
+    const briefPath = join(repoRoot, ".kiro", "specs", spec.featureName, "brief.md");
+    if (!existsSync(briefPath)) {
+      errors.push(`pending spec ${spec.featureName} missing .kiro/specs/${spec.featureName}/brief.md`);
+    }
+  }
+  return {
+    ok: errors.length === 0,
+    errors,
+  };
+}
+
 function validateRoadmapParserFixture(repoRoot) {
   const failures = [];
   const roadmapPath = join(repoRoot, ".kiro", "steering", "roadmap.md");
@@ -341,6 +358,10 @@ function validateRoadmapParserFixture(repoRoot) {
   }
   const plan = buildDependencyWaves(result.specs);
   for (const error of plan.errors) {
+    failures.push(`ROADMAP_PARSER_DRIFT: ${rel(repoRoot, roadmapPath)} ${error}`);
+  }
+  const prerequisites = validateBatchPlanPrerequisites(repoRoot, result.specs);
+  for (const error of prerequisites.errors) {
     failures.push(`ROADMAP_PARSER_DRIFT: ${rel(repoRoot, roadmapPath)} ${error}`);
   }
   return failures;
