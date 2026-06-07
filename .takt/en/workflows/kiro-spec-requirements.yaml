@@ -25,6 +25,7 @@ loop_monitors:
   - cycle:
       - review-requirements
       - repair-requirements
+      - finalize-requirements
     threshold: 2
     judge:
       persona: supervisor
@@ -124,7 +125,7 @@ steps:
 # - Context loading reads .kiro/specs/<feature>/brief.md, existing draft requirements.md, existing spec.json, steering context, and requirements rules.
 # - Generate requirements.md with EARS fixed phrases and numeric IDs only.
 # - The requirements review gate checks EARS conformance, numeric IDs, testable acceptance criteria, and scope ambiguity before metadata update.
-# - The workflow uses generate -> review -> repair -> review -> finalize as a closed loop; the repeat bound is only loop_monitors.threshold.
+# - The workflow uses generate -> review -> repair -> review -> finalize, and finalize repair returns stay inside the monitored loop; the repeat bound is only loop_monitors.threshold.
 # - On success, update spec.json to phase: "requirements-generated" and approvals.requirements.generated: true.
 # - If scope ambiguity or unverifiable acceptance criteria remain, return BLOCKED or NEEDS_FIX and do not advance to requirements-generated.
 # - The requirements phase does not decide design component ownership, workflow YAML ownership, or implementation file ownership.

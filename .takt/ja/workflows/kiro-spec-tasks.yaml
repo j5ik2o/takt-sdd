@@ -27,6 +27,7 @@ loop_monitors:
   - cycle:
       - review-tasks
       - repair-tasks
+      - finalize-tasks
     threshold: 2
     judge:
       persona: supervisor
@@ -154,7 +155,7 @@ steps:
 # - dependency がない task は _Depends:_ none を使う。
 # - success metadata の前に task plan review と task graph sanity review を実行する。
 # - (P) は non-overlapping boundary と explicit dependency graph から独立実行可能と判断できる場合だけ使う。
-# - workflow は generate -> review -> repair -> review -> finalize の closed loop を使い、repeat bound は loop_monitors.threshold だけに置く。
+# - workflow は generate -> review -> repair -> review -> finalize を使い、finalize からの repair 戻りも監視対象に含め、repeat bound は loop_monitors.threshold だけに置く。
 # - 成功時は spec.json を phase: "tasks-generated" と approvals.tasks.generated: true に更新する。
 # - auto-approve mode では approvals.tasks.approved: true と ready_for_implementation: true も設定する。
 # - 通常 mode では tasks approval が存在するまで ready_for_implementation true にしない。

@@ -26,6 +26,7 @@ loop_monitors:
   - cycle:
       - review-design
       - repair-design
+      - finalize-design
     threshold: 2
     judge:
       persona: supervisor
@@ -148,6 +149,6 @@ steps:
 # - research.md は design phase の補助 artifact として書き、最終的な実装判断は design.md にも残す。
 # - design.md は required sections として Boundary Commitments、File Structure Plan、Requirements Traceability を含める。
 # - design review gate は requirement coverage、architecture readiness、boundary readiness、File Structure Plan の具体性、Requirements Traceability を確認する。
-# - workflow は generate -> review -> repair -> review -> finalize の closed loop を使い、repeat bound は loop_monitors.threshold だけに置く。
+# - workflow は generate -> review -> repair -> review -> finalize を使い、finalize からの repair 戻りも監視対象に含め、repeat bound は loop_monitors.threshold だけに置く。
 # - real requirements/design gap が残る場合は BLOCKED または NEEDS_FIX を返し、design-generated へ進めない。
 # - 成功時は spec.json を phase: "design-generated"、approvals.requirements.approved: true、approvals.design.generated: true に更新する。

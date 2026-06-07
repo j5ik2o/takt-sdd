@@ -8,7 +8,7 @@ workflow_config:
     opencode:
       network_access: true
 max_steps: 5
-initial_step: validate-impl
+initial_step: collect-impl-evidence
 
 instructions:
   kiro-validate-impl-readiness: ../facets/instructions/kiro-validate-impl-readiness.md
@@ -17,12 +17,47 @@ report_formats:
   kiro-validation-result: ../facets/output-contracts/kiro-validation-result.md
 
 steps:
+  - name: collect-impl-evidence
+    edit: false
+    persona: supervisor
+    policy:
+      - review
+      - qa
+    required_permission_mode: readonly
+    instruction: kiro-validate-impl-readiness
+    rules:
+      - condition: validation evidence collected
+        next: validate-impl
+      - condition: required artifact missing or unreadable
+        next: ABORT
+
   - name: validate-impl
     edit: false
     persona: supervisor
     policy:
       - review
       - qa
+    required_permission_mode: readonly
+    instruction: kiro-validate-impl-readiness
+    output_contracts:
+      report:
+        - name: kiro-impl-validation-draft.md
+          format: kiro-validation-result
+    rules:
+      - condition: DECISION MANUAL_VERIFY_REQUIRED
+        next: report-impl
+      - condition: DECISION GO
+        next: report-impl
+      - condition: DECISION NO-GO
+        next: report-impl
+
+  - name: report-impl
+    edit: false
+    persona: supervisor
+    policy:
+      - review
+      - qa
+    required_permission_mode: readonly
     instruction: kiro-validate-impl-readiness
     output_contracts:
       report:

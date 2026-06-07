@@ -24,7 +24,7 @@
 2. installer が既存 project の `package.json` に scripts を追加する場合、installer は `kiro:*` scripts を追加対象に含める。
 3. 新規 project に `package.json` がない状態で installer が実行される場合、installer は `kiro:*` scripts を含む `package.json` を生成する。
 4. takt-sdd package は OpenSpec の `opsx:*` scripts を Kiro surface と混同せず、既存の分離された入口として維持する。
-5. リリース準備を確認する場合、takt-sdd package は public `kiro:*` scripts が後続 spec または既存 steering 系実装で提供済みであること、または staged migration として明示的な fail-fast 案内を返すことを検出する。
+5. リリース準備を確認する場合、takt-sdd package は public `kiro:*` scripts が後続 spec または既存 steering 系実装で提供済みであることを検出する。
 
 ### Requirement 2: 破壊的変更の version policy を package metadata に反映する
 
@@ -70,7 +70,7 @@
 3. `cc-sdd:*` compatibility が採用される場合、validation は既存 `cc-sdd-*` workflow が維持され、`kiro:*` への透過 alias や fail-fast shim に置き換わっていないことを検出する。
 4. validation は 個別 workflow の YAML/facet の完成をこの spec の成功条件に含めない。
 5. validation は installer が生成または更新した project で legacy `cc-sdd:*` script が module-not-found にならず実行できることを検出する。
-6. validation は public `kiro:*` scripts が未提供 workflow の素の missing-file error を利用者へ出さないことを、後続 workflow 実装の存在確認または staged fail-fast 契約として検出する。
+6. validation は public `kiro:*` scripts が未提供 workflow の素の missing-file error を利用者へ出さないことを、後続 workflow 実装の存在確認と release guidance に基づく cross-spec release gate として検出する。
 
 ### Requirement 6: unreleased Kiro TAKT workflow は互換維持対象にしない
 

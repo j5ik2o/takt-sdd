@@ -528,11 +528,13 @@ function validateUnusedKiroInstructionFacets() {
 function validateKiroWorkflowShapeRules() {
   const failures = [];
   const closedLoopWorkflowPattern = /^kiro-spec-(requirements|design|tasks)\.yaml$/;
+  const readOnlyWorkflowPattern = /^(kiro-spec-status|kiro-validate-(gap|design|impl))\.yaml$/;
   for (const lang of languages) {
     const workflowDir = join(repoRoot, ".takt", lang, "workflows");
     for (const workflow of listFilesRecursive(workflowDir).filter((path) => basename(path).startsWith("kiro-") && path.endsWith(".yaml"))) {
       const content = readText(workflow);
       const workflowName = basename(workflow);
+      const stepCount = (content.match(/^  - name:/gm) ?? []).length;
       if (/\bworkflow_call\b/.test(content)) {
         failures.push(`${rel(workflow)} must not use workflow_call for Kiro workflow reuse`);
       }
@@ -543,12 +545,31 @@ function validateKiroWorkflowShapeRules() {
         failures.push(`${rel(workflow)} must not define custom retry or loop-health source of truth`);
       }
       if (closedLoopWorkflowPattern.test(workflowName)) {
-        const stepCount = (content.match(/^  - name:/gm) ?? []).length;
         if (stepCount < 3) {
           failures.push(`${rel(workflow)} must not be a single-step generation wrapper`);
         }
         containsAllContractTerms(content, ["loop_monitors", "threshold"], workflow, failures);
-        containsAll(content, ["review", "repair"], workflow, failures);
+        containsAll(content, ["review", "repair", "finalize"], workflow, failures);
+      }
+      if (readOnlyWorkflowPattern.test(workflowName)) {
+        if (stepCount < 3) {
+          failures.push(`${rel(workflow)} must use collect -> validate/classify -> report read-only shape`);
+        }
+        containsAll(content, ["collect", "report", "required_permission_mode: readonly"], workflow, failures);
+        if (workflowName === "kiro-spec-status.yaml") {
+          containsAll(content, ["classify"], workflow, failures);
+        } else {
+          containsAll(content, ["validate"], workflow, failures);
+        }
+        if (/\bloop_monitors\b/.test(content)) {
+          failures.push(`${rel(workflow)} must not define loop_monitors for read-only validation`);
+        }
+        if (/^\s*edit:\s*true\b/m.test(content) || /^\s*required_permission_mode:\s*edit\b/m.test(content)) {
+          failures.push(`${rel(workflow)} must remain read-only`);
+        }
+        if (/^  - name:.*\b(repair|debug)\b/m.test(content)) {
+          failures.push(`${rel(workflow)} must not include repair or debug steps`);
+        }
       }
     }
   }

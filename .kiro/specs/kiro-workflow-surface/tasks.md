@@ -15,7 +15,7 @@
     - `cc-sdd:*` や `opsx:*` を canonical Kiro set に混入させない。
     - _Requirements: 1.1, 1.4, 2.1, 2.2_
     - _Boundary:_ ReleaseSurfaceMetadata, CanonicalKiroScripts
-    - _Depends:_ 1
+    - _Depends:_ 1.1
 
   - [x] 1.3 root script surface を `npm run` で確認できる状態にする
     - `npm run` の script 一覧から `kiro:*` が正規 SDD surface として確認できる。

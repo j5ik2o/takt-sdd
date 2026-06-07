@@ -7,7 +7,7 @@ workflow_config:
     opencode:
       network_access: true
 max_steps: 5
-initial_step: report-status
+initial_step: collect-status-evidence
 
 instructions:
   kiro-report-spec-status: ../facets/instructions/kiro-report-spec-status.md
@@ -16,10 +16,35 @@ report_formats:
   kiro-status: ../facets/output-contracts/kiro-status.md
 
 steps:
+  - name: collect-status-evidence
+    edit: false
+    persona: supervisor
+    policy: review
+    required_permission_mode: readonly
+    instruction: kiro-report-spec-status
+    rules:
+      - condition: status evidence collected
+        next: classify-status
+      - condition: feature artifact read failed or spec path cannot be resolved
+        next: ABORT
+
+  - name: classify-status
+    edit: false
+    persona: supervisor
+    policy: review
+    required_permission_mode: readonly
+    instruction: kiro-report-spec-status
+    rules:
+      - condition: status classified
+        next: report-status
+      - condition: status classification blocked
+        next: ABORT
+
   - name: report-status
     edit: false
     persona: supervisor
     policy: review
+    required_permission_mode: readonly
     instruction: kiro-report-spec-status
     output_contracts:
       report:
