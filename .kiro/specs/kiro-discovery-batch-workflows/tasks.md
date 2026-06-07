@@ -73,7 +73,7 @@
   - _Boundary:_ BatchRemediationCoordinator
   - _Depends:_ 8, 10
 
-- [ ] 10. cross-spec review instruction と output contract を追加する
+- [x] 10. cross-spec review instruction と output contract を追加する
   - generated specs の requirements、design、tasks、roadmap を読む review instruction を追加する。
   - data model consistency、interface alignment、duplicate functionality、dependency completeness、naming、shared infrastructure ownership、task boundary alignment を issue category にする。
   - 完了時点で review result が severity、affected specs、suggested fix、decomposition return を machine-readable に返す。

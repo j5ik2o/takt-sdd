@@ -263,3 +263,29 @@ test("kiro-spec-batch workflow uses dynamic worker dispatch without workflow reu
     assert.ok(instruction.includes("kiro-spec-generation-workflows"));
   }
 });
+
+test("cross-spec review contract exposes machine-readable issue routing", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  for (const lang of ["en", "ja"]) {
+    for (const path of [
+      `.takt/${lang}/facets/instructions/kiro-cross-spec-review.md`,
+      `.takt/${lang}/facets/policies/kiro-cross-spec-boundaries.md`,
+      `.takt/${lang}/facets/output-contracts/kiro-cross-spec-review.md`,
+    ]) {
+      assert.equal(existsSync(join(repoRoot, path)), true, `${path} should exist`);
+      const content = readFileSync(join(repoRoot, path), "utf8");
+      for (const term of [
+        "data model consistency",
+        "interface alignment",
+        "duplicate functionality",
+        "dependency completeness",
+        "affectedSpecs",
+        "suggestedFix",
+        "DECOMPOSITION_RETURN",
+        "repairTarget",
+      ]) {
+        assert.ok(content.includes(term), `${path} should include ${term}`);
+      }
+    }
+  }
+});
