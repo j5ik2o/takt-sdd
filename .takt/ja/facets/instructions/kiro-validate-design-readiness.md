@@ -22,4 +22,4 @@ extends_skill_section: "## Execution Steps"
 
 ## Output mapping
 
-shared `kiro-validation-result` contract を使う。workflow routing 用の primary field として必ず `DECISION` を設定する。design readiness を満たす場合は `GO`、lifecycle failure または design drift は `NO-GO`、evidence を自動確認できない場合は `MANUAL_VERIFY_REQUIRED` を返す。
+shared `kiro-validation-result` contract を使う。継承元 skill の GO/NO-GO readiness 判断は、必ず `DECISION: <GO|NO-GO|MANUAL_VERIFY_REQUIRED>` 行へ正規化する。`DECISION` machine field を持たない素の GO/NO-GO verdict は返さない。workflow routing 用の primary field として必ず `DECISION` を設定する。design readiness を満たす場合は `GO`、lifecycle failure または design drift は `NO-GO`、evidence を自動確認できない場合は `MANUAL_VERIFY_REQUIRED` を返す。

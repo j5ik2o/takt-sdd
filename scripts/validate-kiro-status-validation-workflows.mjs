@@ -49,7 +49,7 @@ const instructionSpecs = [
   {
     file: "kiro-validate-design-readiness.md",
     parent: "review-arch",
-    terms: ["requirements coverage", "Boundary Commitments", "File Structure Plan", "validation hooks", "boundary violation", "DECISION", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "kiro-validation-result"],
+    terms: ["requirements coverage", "Boundary Commitments", "File Structure Plan", "validation hooks", "boundary violation", "DECISION", "DECISION:", "machine field", "GO/NO-GO", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "kiro-validation-result"],
   },
   {
     file: "kiro-validate-impl-readiness.md",

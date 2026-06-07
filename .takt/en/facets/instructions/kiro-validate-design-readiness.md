@@ -22,4 +22,4 @@ This instruction is read-only. Inspect `requirements.md`, `design.md`, optional 
 
 ## Output mapping
 
-Use the shared `kiro-validation-result` contract. Always set `DECISION` as the primary workflow-routing field: `GO` for design readiness, `NO-GO` for lifecycle failure or design drift, and `MANUAL_VERIFY_REQUIRED` when evidence cannot be confirmed automatically.
+Use the shared `kiro-validation-result` contract. Translate the inherited skill's GO/NO-GO readiness determination into an explicit `DECISION: <GO|NO-GO|MANUAL_VERIFY_REQUIRED>` line; do not return a bare GO/NO-GO verdict without the `DECISION` machine field. Always set `DECISION` as the primary workflow-routing field: `GO` for design readiness, `NO-GO` for lifecycle failure or design drift, and `MANUAL_VERIFY_REQUIRED` when evidence cannot be confirmed automatically.
