@@ -19,19 +19,19 @@ const workflowSpecs = [
     file: "kiro-validate-gap.yaml",
     instructions: ["kiro-validate-gap-readiness"],
     reports: ["kiro-validation-result"],
-    requiredTerms: ["kiro-validation-result", "MANUAL_VERIFICATION_REQUIRED", "FAIL", "BLOCKED"],
+    requiredTerms: ["kiro-validation-result", "DECISION", "MANUAL_VERIFY_REQUIRED", "GO", "NO-GO"],
   },
   {
     file: "kiro-validate-design.yaml",
     instructions: ["kiro-validate-design-readiness"],
     reports: ["kiro-validation-result"],
-    requiredTerms: ["kiro-validation-result", "Boundary Commitments", "File Structure Plan", "NEEDS_FIX"],
+    requiredTerms: ["kiro-validation-result", "Boundary Commitments", "File Structure Plan", "DECISION", "NO-GO"],
   },
   {
     file: "kiro-validate-impl.yaml",
     instructions: ["kiro-validate-impl-readiness"],
     reports: ["kiro-validation-result"],
-    requiredTerms: ["kiro-validation-result", "MANUAL_VERIFICATION_REQUIRED", "tasks.md", "ready_for_implementation"],
+    requiredTerms: ["kiro-validation-result", "DECISION", "MANUAL_VERIFY_REQUIRED", "tasks.md", "ready_for_implementation"],
   },
 ];
 
@@ -167,10 +167,10 @@ function validateWorkflowFiles() {
       if (/instruction:\s*\n\s*-/.test(content)) {
         failures.push(`${rel(path)} must use a single TAKT instruction reference, not an instruction array`);
       }
-      const passIndex = content.indexOf("condition: verdict PASS");
-      const manualIndex = content.indexOf("condition: finding category MANUAL_VERIFICATION_REQUIRED");
+      const passIndex = content.indexOf("condition: DECISION GO");
+      const manualIndex = content.indexOf("condition: DECISION MANUAL_VERIFY_REQUIRED");
       if (manualIndex !== -1 && passIndex !== -1 && passIndex < manualIndex) {
-        failures.push(`${rel(path)} must route MANUAL_VERIFICATION_REQUIRED before verdict PASS`);
+        failures.push(`${rel(path)} must route MANUAL_VERIFY_REQUIRED before DECISION GO`);
       }
       const readyIndex = content.indexOf("condition: status FOUND and readiness READY");
       const statusErrorIndexes = [

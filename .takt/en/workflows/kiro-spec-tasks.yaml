@@ -90,7 +90,7 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: task plan review PASS and task graph sanity review PASS
-        next: COMPLETE
+        next: finalize-tasks
       - condition: task plan review NEEDS_FIXES or task graph sanity review NEEDS_FIXES
         next: repair-tasks
       - condition: task plan review RETURN_TO_DESIGN or task graph sanity review RETURN_TO_DESIGN
@@ -124,6 +124,32 @@ steps:
       - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
         next: ABORT
 
+  - name: finalize-tasks
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+      - kiro-spec-task-annotations
+    knowledge:
+      - architecture
+    required_permission_mode: edit
+    instruction: kiro-spec-tasks
+    output_contracts:
+      report:
+        - name: kiro-spec-tasks-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true and task plan review PASS and task graph sanity review PASS
+        next: COMPLETE
+      - condition: validation.verdict PASS and not auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and task plan review PASS and task graph sanity review PASS
+        next: COMPLETE
+      - condition: validation.verdict NEEDS_FIX
+        next: repair-tasks
+      - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
+        next: ABORT
+
 # Contract notes for validation and reviewers:
 # - The requirements/design approval gate checks requirements.md, design.md, and spec.json before task generation.
 # - In normal mode, unapproved requirements or design stop the workflow. With -y or auto-approve, explicitly set approvals.requirements.approved: true and approvals.design.approved: true before continuing.
@@ -132,7 +158,7 @@ steps:
 # - Use _Depends:_ none when a task has no dependency.
 # - Run task plan review and task graph sanity review before success metadata.
 # - (P) is allowed only when the non-overlapping boundary and explicit dependency graph show the task can run independently.
-# - The workflow uses generate -> review -> repair -> review as a closed loop; the repeat bound is only loop_monitors.threshold.
+# - The workflow uses generate -> review -> repair -> review -> finalize as a closed loop; the repeat bound is only loop_monitors.threshold.
 # - On success, update spec.json to phase: "tasks-generated" and approvals.tasks.generated: true.
 # - In auto-approve mode, also set approvals.tasks.approved: true and ready_for_implementation: true.
 # - In normal mode, do not set ready_for_implementation true until tasks approval exists.

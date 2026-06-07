@@ -28,9 +28,9 @@ steps:
         - name: kiro-design-validation-result.md
           format: kiro-validation-result
     rules:
-      - condition: verdict PASS
-        next: COMPLETE
-      - condition: verdict NEEDS_FIX
+      - condition: DECISION MANUAL_VERIFY_REQUIRED
         next: ABORT
-      - condition: verdict FAIL or verdict BLOCKED
+      - condition: DECISION GO
+        next: COMPLETE
+      - condition: DECISION NO-GO
         next: ABORT

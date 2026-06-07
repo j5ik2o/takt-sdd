@@ -238,6 +238,47 @@ function validateKiroSkillInheritance() {
   return { ok: failures.length === 0, failures };
 }
 
+function workflowStepBlocks(content) {
+  const lines = content.split(/\r?\n/);
+  const blocks = [];
+  let inSteps = false;
+  let current = null;
+  for (const line of lines) {
+    if (/^steps:\s*$/.test(line)) {
+      inSteps = true;
+      continue;
+    }
+    if (!inSteps) continue;
+    if (/^[A-Za-z_][A-Za-z0-9_-]*:\s*/.test(line)) {
+      break;
+    }
+    if (/^  - name:/.test(line)) {
+      if (current) blocks.push(current);
+      current = [line];
+      continue;
+    }
+    if (current) current.push(line);
+  }
+  if (current) blocks.push(current);
+  return blocks;
+}
+
+function workflowStepName(block) {
+  const nameLine = block.find((line) => /^  - name:\s*/.test(line));
+  return nameLine?.replace(/^  - name:\s*/, "").trim() || "(unknown step)";
+}
+
+function workflowStepUsesFormat(block, format) {
+  return block.some((line) => line.trim() === `format: ${format}`);
+}
+
+function workflowStepConditions(block) {
+  return block
+    .filter((line) => /^\s+- condition:\s+/.test(line))
+    .map((line) => line.trim())
+    .join("\n");
+}
+
 function validateKiroSkillFieldContract() {
   const failures = [];
   for (const lang of languages) {
@@ -247,6 +288,29 @@ function validateKiroSkillFieldContract() {
     containsAll(readText(reviewPath), ["VERDICT", "APPROVED", "REJECTED", "workflow branching"], reviewPath, failures);
     containsAll(readText(debugPath), ["NEXT_ACTION", "RETRY_TASK", "BLOCK_TASK", "STOP_FOR_HUMAN", "workflow branching"], debugPath, failures);
     containsAll(readText(validationPath), ["DECISION", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "primary field"], validationPath, failures);
+
+    const workflowDir = join(repoRoot, ".takt", lang, "workflows");
+    for (const workflow of listFilesRecursive(workflowDir).filter((path) => basename(path).startsWith("kiro-") && path.endsWith(".yaml"))) {
+      const content = readText(workflow);
+      for (const block of workflowStepBlocks(content)) {
+        const stepName = workflowStepName(block);
+        const conditions = workflowStepConditions(block);
+        if (workflowStepUsesFormat(block, "kiro-review-verdict") && !/\bVERDICT\b/.test(conditions)) {
+          failures.push(`${rel(workflow)} step ${stepName} must branch on VERDICT for kiro-review-verdict`);
+        }
+        if (workflowStepUsesFormat(block, "kiro-debug-decision") && !/\bNEXT_ACTION\b/.test(conditions)) {
+          failures.push(`${rel(workflow)} step ${stepName} must branch on NEXT_ACTION for kiro-debug-decision`);
+        }
+        if (workflowStepUsesFormat(block, "kiro-validation-result")) {
+          if (!/\bDECISION\b/.test(conditions)) {
+            failures.push(`${rel(workflow)} step ${stepName} must branch on DECISION for kiro-validation-result`);
+          }
+          if (/\bvalidation\.verdict\b|\bverdict\s+(?:PASS|FAIL|NEEDS_FIX|BLOCKED)\b|finding category MANUAL_VERIFICATION_REQUIRED/.test(conditions)) {
+            failures.push(`${rel(workflow)} step ${stepName} must not branch on legacy validation verdict fields for kiro-validation-result`);
+          }
+        }
+      }
+    }
   }
   return { ok: failures.length === 0, failures };
 }
