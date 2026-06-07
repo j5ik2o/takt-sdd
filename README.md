@@ -258,7 +258,7 @@ npm run kiro:steering-custom -- "database: PostgreSQL, Prisma ORM, automated mig
 npm run kiro:steering-custom -- "testing"
 ```
 
-Generated steering files are automatically referenced during design phases (`sdd:design`, `sdd:validate-design`, etc.).
+Generated steering files are automatically referenced during design phases (`kiro:spec:design`, `kiro:validate:design`, etc.).
 
 ## OpenSpec Compatibility Workflow
 

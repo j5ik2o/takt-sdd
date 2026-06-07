@@ -133,6 +133,23 @@ test("validation rejects old canonical README wording", () => {
   assert.ok(result.failures.some((failure) => failure.includes("GUIDANCE_DRIFT") && failure.includes("README.md")));
 });
 
+test("validation rejects nonexistent sdd design script references", () => {
+  const root = copyCurrentSurfaceFixture();
+  writeFixtureFile(
+    root,
+    "README.md",
+    readFileSync(join(root, "README.md"), "utf8").replace(
+      "`kiro:spec:design`, `kiro:validate:design`",
+      "`sdd:design`, `sdd:validate-design`",
+    ),
+  );
+
+  const result = validateKiroWorkflowSurface({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("GUIDANCE_DRIFT") && failure.includes("sdd:*")));
+});
+
 test("validation accepts staged public scripts for workflows not installed yet", () => {
   const root = copyCurrentSurfaceFixture();
 

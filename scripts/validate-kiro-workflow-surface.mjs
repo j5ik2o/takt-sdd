@@ -54,10 +54,6 @@ function readText(path) {
   return readFileSync(path, "utf8");
 }
 
-function rel(repoRoot, path) {
-  return path.startsWith(repoRoot) ? path.slice(repoRoot.length + 1) : path;
-}
-
 function readPackageScripts(repoRoot) {
   return JSON.parse(readText(join(repoRoot, "package.json"))).scripts ?? {};
 }
@@ -203,6 +199,9 @@ function validateMigrationDoc(repoRoot, path, oldCanonicalPattern, requiredTerms
   }
   if (oldCanonicalPattern.test(content)) {
     failures.push(`GUIDANCE_DRIFT: ${path} still presents cc-sdd as the canonical Kiro workflow surface`);
+  }
+  if (content.includes("`sdd:design`") || content.includes("`sdd:validate-design`")) {
+    failures.push(`GUIDANCE_DRIFT: ${path} must not reference nonexistent sdd:* design scripts`);
   }
   return failures;
 }
