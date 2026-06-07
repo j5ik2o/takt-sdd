@@ -672,8 +672,17 @@ function conditionLines(block) {
     .filter(Boolean);
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function hasExactTerm(content, term) {
+  const tokenChars = "A-Za-z0-9_.-";
+  return new RegExp(`(^|[^${tokenChars}])${escapeRegExp(term)}($|[^${tokenChars}])`).test(content);
+}
+
 function hasConditionWithTerms(conditions, terms) {
-  return conditions.some((condition) => terms.every((term) => condition.includes(term)));
+  return conditions.some((condition) => terms.every((term) => hasExactTerm(condition, term)));
 }
 
 function indentedList(block, key) {
@@ -1378,8 +1387,8 @@ function adapterSignature(content, spec) {
     extends_skill: frontMatter.extends_skill ?? "",
     extends_skill_section: frontMatter.extends_skill_section ?? "",
     extends_skill_additional_section: frontMatter.extends_skill_additional_section ?? "",
-    machineFields: spec.machineFields.filter((field) => content.includes(field)).sort(),
-    enums: spec.enums.filter((value) => content.includes(value)).sort(),
+    machineFields: spec.machineFields.filter((field) => hasExactTerm(content, field)).sort(),
+    enums: spec.enums.filter((value) => hasExactTerm(content, value)).sort(),
   };
 }
 
@@ -1433,12 +1442,12 @@ function validateSkillAdapterFacets(repoRoot) {
       }
 
       for (const field of spec.machineFields) {
-        if (!content.includes(field)) {
+        if (!hasExactTerm(content, field)) {
           failures.push(`SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} missing machine field: ${field}`);
         }
       }
       for (const value of spec.enums) {
-        if (!content.includes(value)) {
+        if (!hasExactTerm(content, value)) {
           failures.push(`SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} missing enum: ${value}`);
         }
       }

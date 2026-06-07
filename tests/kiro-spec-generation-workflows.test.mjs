@@ -906,12 +906,26 @@ test("task 15 adapter validation detects skill section, field, and enum drift", 
   const root = makeWritableValidationFixture();
   const requirementsReviewPath = ".takt/ja/facets/instructions/kiro-spec-requirements-review.md";
   const tasksReviewPath = ".takt/ja/facets/instructions/kiro-spec-tasks-review.md";
+  const designReadinessPath = ".takt/ja/facets/instructions/kiro-validate-design-readiness.md";
   const requirementsReview = readFileSync(join(root, requirementsReviewPath), "utf8")
     .replace('extends_skill_section: "### Step 4: Review Requirements Draft"', 'extends_skill_section: "### Step 4: Draft Review"')
     .replaceAll("validation.verdict", "validation.status");
   const tasksReview = readFileSync(join(root, tasksReviewPath), "utf8").replace("RETURN_TO_DESIGN", "RETURN_TO_REQUIREMENTS");
+  const designReadiness = [
+    "---",
+    "extends_skill: kiro-validate-design",
+    'extends_skill_section: "## Execution Steps"',
+    "---",
+    "",
+    "{extends: review-arch}",
+    "",
+    "# Drifted Kiro Design Validation Readiness",
+    "",
+    "Return `DECISION: NO-GO` or `DECISION: MANUAL_VERIFY_REQUIRED`.",
+  ].join("\n");
   writeFixtureFile(root, requirementsReviewPath, requirementsReview);
   writeFixtureFile(root, tasksReviewPath, tasksReview);
+  writeFixtureFile(root, designReadinessPath, designReadiness);
 
   const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
 
@@ -936,6 +950,14 @@ test("task 15 adapter validation detects skill section, field, and enum drift", 
       failure.includes("SKILL_ADAPTER_DRIFT") &&
       failure.includes("kiro-spec-tasks-review.md") &&
       failure.includes("RETURN_TO_DESIGN"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("SKILL_ADAPTER_DRIFT") &&
+      failure.includes("kiro-validate-design-readiness.md") &&
+      failure.includes("missing enum: GO"),
     ),
     result.failures.join("\n"),
   );
@@ -1091,6 +1113,31 @@ test("task 17 validation detects translated review field and output contract dri
         failure.includes("REVIEW_OUTPUT_CONTRACT_DRIFT") &&
         failure.includes("kiro-spec-quick.yaml") &&
         failure.includes("kiro-spec-sanity-review"),
+    ),
+    result.failures.join("\n"),
+  );
+});
+
+test("task 17 validation distinguishes GO from NO-GO in review field conditions", () => {
+  const root = makeWritableValidationFixture();
+  for (const lang of ["en", "ja"]) {
+    const designWorkflowPath = `.takt/${lang}/workflows/kiro-spec-design.yaml`;
+    const designWorkflow = readFileSync(join(root, designWorkflowPath), "utf8").replace(
+      "condition: DECISION GO and design review gate passed",
+      "condition: DECISION NO-GO and design review gate passed",
+    );
+    writeFixtureFile(root, designWorkflowPath, designWorkflow);
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("REVIEW_FIELD_CONTRACT_DRIFT") &&
+        failure.includes("kiro-spec-design.yaml") &&
+        failure.includes("review-design") &&
+        failure.includes("DECISION, GO"),
     ),
     result.failures.join("\n"),
   );
