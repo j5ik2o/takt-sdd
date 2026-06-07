@@ -1,0 +1,51 @@
+name: kiro-spec-init
+description: Kiro - Initialize a feature spec from a description or brief.md
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 5
+initial_step: initialize-spec
+
+instructions:
+  kiro-spec-init: ../facets/instructions/kiro-spec-init.md
+
+policies:
+  kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
+  kiro-spec-lifecycle: ../facets/policies/kiro-spec-lifecycle.md
+  kiro-spec-generation: ../facets/policies/kiro-spec-generation.md
+
+report_formats:
+  kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
+
+steps:
+  - name: initialize-spec
+    edit: true
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    required_permission_mode: edit
+    instruction: kiro-spec-init
+    output_contracts:
+      report:
+        - name: kiro-spec-init-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and phase init and spec.json written and requirements.md written and initialized
+        next: COMPLETE
+      - condition: validation.verdict BLOCKED or feature name conflict or template missing
+        next: ABORT
+      - condition: validation.verdict NEEDS_FIX
+        next: ABORT
+
+# Contract notes for validation and reviewers:
+# - The description source is brief.md when it exists; otherwise use the invocation description.
+# - Reuse a brief-only directory at .kiro/specs/<feature>/ instead of creating another feature name.
+# - Read .kiro/settings/templates/specs/init.json and requirements-init.md template guidance before writing initialized artifacts.
+# - Handle a feature name conflict with a supported BLOCKED result rather than overwriting an existing spec.
+# - Initialization writes .kiro/specs/<feature>/spec.json and draft requirements.md only.
+# - Do not update roadmap or OpenSpec artifacts as a success condition.

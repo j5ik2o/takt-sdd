@@ -1,0 +1,69 @@
+name: kiro-spec-tasks
+description: Kiro - Generate implementation-ready tasks.md from approved requirements and design
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 10
+initial_step: generate-tasks
+
+instructions:
+  kiro-spec-tasks: ../facets/instructions/kiro-spec-tasks.md
+
+policies:
+  kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
+  kiro-spec-lifecycle: ../facets/policies/kiro-spec-lifecycle.md
+  kiro-spec-generation: ../facets/policies/kiro-spec-generation.md
+  kiro-spec-task-annotations: ../facets/policies/kiro-spec-task-annotations.md
+
+report_formats:
+  kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
+
+steps:
+  - name: generate-tasks
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+      - kiro-spec-task-annotations
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
+    required_permission_mode: edit
+    instruction: kiro-spec-tasks
+    output_contracts:
+      report:
+        - name: kiro-spec-tasks-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true and task plan review PASS and task graph sanity review PASS
+        next: COMPLETE
+      - condition: validation.verdict PASS and not auto-approve and phase tasks and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and task plan review PASS and task graph sanity review PASS
+        next: COMPLETE
+      - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
+        next: ABORT
+      - condition: validation.verdict NEEDS_FIX or task plan review failed or task graph sanity review failed
+        next: ABORT
+
+# Contract notes for validation and reviewers:
+# - The requirements/design approval gate checks requirements.md, design.md, and spec.json before task generation.
+# - In normal mode, unapproved requirements or design stop the workflow. With -y or auto-approve, explicitly set approvals.requirements.approved: true and approvals.design.approved: true before continuing.
+# - Task generation reads requirements.md, design.md, existing tasks.md, spec.json, and .kiro/settings/templates/specs/tasks.md.
+# - Every executable task in tasks.md must include observable completion detail, numeric requirements, _Boundary:_, and _Depends:_.
+# - Use _Depends:_ none when a task has no dependency.
+# - Run task plan review and task graph sanity review before success metadata.
+# - (P) is allowed only when the non-overlapping boundary and explicit dependency graph show the task can run independently.
+# - On success, update spec.json to phase: "tasks-generated" and approvals.tasks.generated: true.
+# - In auto-approve mode, also set approvals.tasks.approved: true and ready_for_implementation: true.
+# - In normal mode, do not set ready_for_implementation true until tasks approval exists.

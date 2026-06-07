@@ -1,0 +1,65 @@
+name: kiro-spec-design
+description: Kiro - Generate design.md and research.md from approved requirements
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 10
+initial_step: generate-design
+
+instructions:
+  kiro-spec-design: ../facets/instructions/kiro-spec-design.md
+
+policies:
+  kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
+  kiro-spec-lifecycle: ../facets/policies/kiro-spec-lifecycle.md
+  kiro-spec-generation: ../facets/policies/kiro-spec-generation.md
+
+report_formats:
+  kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
+
+steps:
+  - name: generate-design
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-generation
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Write
+          - Bash
+          - WebSearch
+          - WebFetch
+    required_permission_mode: edit
+    instruction: kiro-spec-design
+    output_contracts:
+      report:
+        - name: kiro-spec-design-result.md
+          format: kiro-spec-generation-result
+    rules:
+      - condition: validation.verdict PASS and phase design and design.md written and research.md written and design-generated and approvals.requirements.approved true and approvals.design.generated true
+        next: COMPLETE
+      - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
+        next: ABORT
+      - condition: validation.verdict NEEDS_FIX or design review gate failed
+        next: ABORT
+
+# Contract notes for validation and reviewers:
+# - The requirements approval gate checks requirements.md and spec.json before design generation.
+# - In normal mode, unapproved requirements stop the workflow. With -y or auto-approve, explicitly set approvals.requirements.approved: true before continuing.
+# - Discovery/research and discovery/research validation read requirements.md, existing design.md, optional research.md, steering context, and relevant code patterns before design synthesis.
+# - Write research.md as the design phase supplemental artifact and write final implementation decisions to design.md.
+# - design.md must include required sections: Boundary Commitments, File Structure Plan, and Requirements Traceability.
+# - The design review gate checks requirement coverage, architecture readiness, boundary readiness, File Structure Plan concreteness, and Requirements Traceability.
+# - If a real requirements/design gap remains, return BLOCKED or NEEDS_FIX and do not advance to design-generated.
+# - On success, update spec.json to phase: "design-generated", approvals.requirements.approved: true, and approvals.design.generated: true.
