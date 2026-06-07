@@ -19,7 +19,6 @@ policies:
 
 report_formats:
   kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md
-  kiro-review-verdict: ../facets/output-contracts/kiro-review-verdict.md
 
 loop_monitors:
   - cycle:
@@ -69,13 +68,13 @@ steps:
     output_contracts:
       report:
         - name: kiro-spec-requirements-review.md
-          format: kiro-review-verdict
+          format: kiro-spec-generation-result
     rules:
-      - condition: VERDICT APPROVED and requirements review gate passed
+      - condition: validation.verdict PASS and requirements review gate passed
         next: finalize-requirements
-      - condition: VERDICT REJECTED and local repair possible
+      - condition: validation.verdict NEEDS_FIX and local repair possible
         next: repair-requirements
-      - condition: VERDICT REJECTED and scope ambiguity remains
+      - condition: validation.verdict BLOCKED or scope ambiguity remains
         next: ABORT
 
   - name: repair-requirements
