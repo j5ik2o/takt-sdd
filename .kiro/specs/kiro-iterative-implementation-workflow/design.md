@@ -12,7 +12,7 @@
 - 1 iteration で 1 task のみを実行し、boundary/dependency/validation plan を固定できる
 - `kiro-review`、`kiro-debug`、`kiro-verify-completion` を internal sub-workflow として接続できる
 - implementation/debug/review の再実行ループは TAKT runtime の `loop_monitors` で監視し、独自 retry 管理を持たない
-- completion verification が `COMPLETE` になるまで checkbox と実装メモを更新しない
+- completion verification の `STATUS` が `VERIFIED` になるまで checkbox と実装メモを更新しない
 - workflow/facet/contract drift を repository-local validation で検出できる
 
 ### Non-Goals
@@ -63,7 +63,7 @@
 
 既存の `cc-sdd-impl` workflow は `plan`、`implement`、`ai_review`、`ai_fix`、`supervise` の流れを持ち、未完了 task をバッチ化して実装し、実装 step 内で `tasks.md` の checkbox を更新します。Kiro 版ではこの shape を参考にしますが、batch 実装ではなく one-task iteration に限定し、checkbox 更新を completion verification の後に移動します。
 
-上流 spec では、shared contract が review/debug/completion verdict を定義し、status/validation workflow が read-only readiness を返し、spec generation workflow が task annotation を生成します。本 spec はこれらの出力を消費する実行 workflow です。
+上流 spec では、shared contract が review/debug verdict と completion STATUS を定義し、status/validation workflow が read-only readiness を返し、spec generation workflow が task annotation を生成します。本 spec はこれらの出力を消費する実行 workflow です。
 
 ### Architecture Pattern & Boundary Map
 
@@ -104,7 +104,7 @@ Key decisions:
 - `kiro-review` adapter は `VERDICT: APPROVED | REJECTED`、`kiro-debug` adapter は `NEXT_ACTION: RETRY_TASK | BLOCK_TASK | STOP_FOR_HUMAN`、`kiro-validate-impl` adapter は `DECISION: GO | NO-GO | MANUAL_VERIFY_REQUIRED` を primary machine field として使う。
 - `kiro-debug` adapter は root cause と次 action を返すが、retry 回数や loop health は管理しない。
 - `KiroImplementationWorkflow` は `loop_monitors.threshold` を定義し、`execute-task` / `debug-task` と `execute-task` / `review-task` / `debug-task` の再実行上限を runtime だけで管理する。
-- `ProgressUpdater` は completion verdict が `COMPLETE` のときだけ selected task に限定して `tasks.md` を更新する。
+- `ProgressUpdater` は completion `STATUS` が `VERIFIED` のときだけ selected task に限定して `tasks.md` を更新する。
 - validation harness は workflow/facet の順序、Kiro skill adapter reference、shared contract reference、`loop_monitors.threshold` presence、out-of-boundary reference を検証する。
 - Kiro-specific implementation facets は shared `BuiltinFacetInheritancePolicy` に従い、`node_modules/takt/builtins/{lang}/facets` の coding/testing/review/debug 相当の built-in facet を継承できる場合は差分だけを書く。
 - Kiro-specific implementation instruction facet は shared `KiroSkillInheritancePolicy` に従い、Kiro skill section を `extends_skill` / `extends_skill_section` で参照し、Kiro skill 本文をコピーしない。
@@ -219,10 +219,10 @@ sequenceDiagram
         Review-->>Impl: APPROVED or REJECTED
         alt APPROVED
             Impl->>Verify: verify completion
-            Verify-->>Impl: COMPLETE or not
-            alt COMPLETE
+            Verify-->>Impl: VERIFIED or not
+            alt VERIFIED
                 Impl->>Updater: update selected task only
-            else not COMPLETE
+            else not VERIFIED
                 Impl->>Debug: investigate incomplete verification
             end
         else REJECTED
@@ -253,7 +253,7 @@ stateDiagram-v2
     Debugging --> Blocked: BLOCK_TASK
     Debugging --> Human: STOP_FOR_HUMAN
     Debugging --> Blocked: loop_monitors nonproductive
-    Verifying --> Completed: COMPLETE
+    Verifying --> Completed: VERIFIED
     Verifying --> Debugging: incomplete
     Completed --> [*]
 ```
@@ -509,7 +509,7 @@ interface KiroOneTaskPlanner {
 **Responsibilities & Constraints**
 
 - implementation result、validation evidence、review verdict、remaining work を照合する。
-- `COMPLETE`、`INCOMPLETE`、`BLOCKED` を shared contract に従って返す。
+- primary `STATUS` として `VERIFIED`、`NOT_VERIFIED`、`MANUAL_VERIFY_REQUIRED` を shared contract に従って返す。
 - evidence がない項目を complete 根拠に含めない。
 
 **Dependencies**
@@ -528,7 +528,7 @@ interface KiroOneTaskPlanner {
 
 **Responsibilities & Constraints**
 
-- completion verdict が `COMPLETE` の場合だけ selected task の checkbox を `- [x]` にする。
+- completion `STATUS` が `VERIFIED` の場合だけ selected task の checkbox を `- [x]` にする。
 - `BLOCK_TASK`、`STOP_FOR_HUMAN`、または `loop_monitors` の非生産的判定では checkbox を更新せず、blocker notes を selected task へ残す。
 - selected task 外の progress artifact は変更しない。
 
