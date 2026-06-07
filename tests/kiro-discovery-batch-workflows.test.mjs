@@ -142,3 +142,28 @@ test("discovery routing policy and result contract define stable action path fie
     }
   }
 });
+
+test("kiro-discovery workflow uses multi-step routing and skill adapter metadata", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  for (const lang of ["en", "ja"]) {
+    const workflowPath = `.takt/${lang}/workflows/kiro-discovery.yaml`;
+    assert.equal(existsSync(join(repoRoot, workflowPath)), true, `${workflowPath} should exist`);
+    const workflow = readFileSync(join(repoRoot, workflowPath), "utf8");
+    for (const step of [
+      "classify-action-path",
+      "plan-discovery-artifacts",
+      "write-discovery-artifacts",
+      "report-discovery",
+    ]) {
+      assert.ok(workflow.includes(`name: ${step}`), `${workflowPath} should include ${step}`);
+    }
+    assert.ok(workflow.includes("kiro-discovery-result"), `${workflowPath} should report kiro-discovery-result`);
+
+    const instructionPath = `.takt/${lang}/facets/instructions/kiro-discovery.md`;
+    assert.equal(existsSync(join(repoRoot, instructionPath)), true, `${instructionPath} should exist`);
+    const instruction = readFileSync(join(repoRoot, instructionPath), "utf8");
+    assert.ok(instruction.includes("extends_skill: kiro-discovery"));
+    assert.ok(instruction.includes('extends_skill_section: "## Step 2: Determine Action Path"'));
+    assert.ok(instruction.includes("{extends: plan}"));
+  }
+});

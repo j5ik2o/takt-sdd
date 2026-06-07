@@ -16,7 +16,7 @@
   - _Boundary:_ DiscoveryRoutingPolicy, DiscoveryArtifactPlanner
   - _Depends:_ 1
 
-- [ ] 3. `kiro-discovery` workflow と instruction facet を追加する
+- [x] 3. `kiro-discovery` workflow と instruction facet を追加する
   - work request、既存 `.kiro/specs/`、roadmap、steering context を読み、routing policy に従って action path を選ぶ。
   - existing/direct path では artifact write なしの next action を返し、single/multi/mixed path では artifact planning に進む。
   - 完了時点で曖昧な request は `BLOCKED` 相当で止まり、推測で roadmap や brief が確定されない。
