@@ -142,10 +142,18 @@ test("task 2.1 shared spec generation policy and result contract are available i
   const resultTerms = [
     "phase",
     "validation",
+    "draft_status",
+    "review_gate",
     "featureName",
     "updatedFiles",
     "nextAction",
     "blockingReason",
+    "READY_FOR_REVIEW",
+    "WRITTEN",
+    "PENDING",
+    "PASSED",
+    "FAILED",
+    "NOT_APPLICABLE",
     "PASS",
     "NEEDS_FIX",
     "BLOCKED",
@@ -272,6 +280,46 @@ test("kiro spec generation validation passes current spec generation surface", (
   assert.equal(result.failures.some((failure) => failure.includes("kiro-discovery")), false);
   assert.equal(result.failures.some((failure) => failure.includes("kiro-spec-batch")), false);
   assert.equal(result.failures.some((failure) => failure.includes("kiro-impl")), false);
+});
+
+test("kiro spec generation validation detects generation result draft routing drift", () => {
+  const root = makeFixture();
+  const driftedGenerationResult = [
+    "{extends: validation}",
+    "",
+    "- `phase`",
+    "- `validation`",
+    "- `review_gate`",
+    "- `featureName`",
+    "- `updatedFiles`",
+    "- `nextAction`",
+    "- `blockingReason`",
+    "- `READY_FOR_REVIEW`",
+    "- `NEEDS_FIX`",
+    "- `BLOCKED`",
+    "- `WRITTEN`",
+    "- `PENDING`",
+    "- `PASSED`",
+    "- `FAILED`",
+    "- `NOT_APPLICABLE`",
+    "- `PASS`",
+  ].join("\n");
+  for (const lang of ["en", "ja"]) {
+    writeFixtureFile(
+      root,
+      `.takt/${lang}/facets/output-contracts/kiro-spec-generation-result.md`,
+      driftedGenerationResult,
+    );
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some(
+      (failure) => failure.includes("FACET_DRIFT") && failure.includes("missing required term: draft_status"),
+    ),
+    result.failures.join("\n"),
+  );
 });
 
 test("task 13.1 validation detects downstream boundary drift", () => {

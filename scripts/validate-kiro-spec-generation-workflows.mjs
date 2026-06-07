@@ -7,6 +7,26 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const defaultRepoRoot = join(__dirname, "..");
 const languages = ["en", "ja"];
+const draftReviewRoutingTerms = ["draft_status", "review_gate", "READY_FOR_REVIEW", "PENDING"];
+const generationResultContractTerms = [
+  "phase",
+  "validation",
+  "featureName",
+  "updatedFiles",
+  "nextAction",
+  "blockingReason",
+  "draft_status",
+  "review_gate",
+  "READY_FOR_REVIEW",
+  "NEEDS_FIX",
+  "BLOCKED",
+  "WRITTEN",
+  "PENDING",
+  "PASSED",
+  "FAILED",
+  "NOT_APPLICABLE",
+  "PASS",
+];
 
 const phaseWorkflowSpecs = [
   {
@@ -18,21 +38,41 @@ const phaseWorkflowSpecs = [
   },
   {
     name: "kiro-spec-requirements",
-    requiredTerms: ["requirements.md", "requirements-generated", "EARS", "kiro-spec-generation-result"],
+    requiredTerms: [
+      "requirements.md",
+      "requirements-generated",
+      "EARS",
+      "kiro-spec-generation-result",
+      ...draftReviewRoutingTerms,
+    ],
     instructionFacets: ["kiro-spec-requirements", "kiro-spec-requirements-review"],
     policyFacets: ["kiro-spec-generation"],
     outputContracts: ["kiro-spec-generation-result"],
   },
   {
     name: "kiro-spec-design",
-    requiredTerms: ["design.md", "research.md", "design-generated", "Boundary Commitments", "File Structure Plan"],
+    requiredTerms: [
+      "design.md",
+      "research.md",
+      "design-generated",
+      "Boundary Commitments",
+      "File Structure Plan",
+      ...draftReviewRoutingTerms,
+    ],
     instructionFacets: ["kiro-spec-design", "kiro-validate-design-readiness"],
     policyFacets: ["kiro-spec-generation"],
     outputContracts: ["kiro-spec-generation-result", "kiro-validation-result"],
   },
   {
     name: "kiro-spec-tasks",
-    requiredTerms: ["tasks.md", "tasks-generated", "_Boundary:_", "_Depends:_", "kiro-spec-generation-result"],
+    requiredTerms: [
+      "tasks.md",
+      "tasks-generated",
+      "_Boundary:_",
+      "_Depends:_",
+      "kiro-spec-generation-result",
+      ...draftReviewRoutingTerms,
+    ],
     instructionFacets: ["kiro-spec-tasks", "kiro-spec-tasks-review"],
     policyFacets: ["kiro-spec-generation", "kiro-spec-task-annotations"],
     outputContracts: ["kiro-spec-generation-result", "kiro-spec-tasks-review-result"],
@@ -111,7 +151,7 @@ const facetSpecs = [
   {
     kind: "output-contracts",
     name: "kiro-spec-generation-result",
-    terms: ["phase", "validation", "featureName", "updatedFiles", "nextAction", "blockingReason", "PASS", "NEEDS_FIX", "BLOCKED"],
+    terms: generationResultContractTerms,
   },
   {
     kind: "output-contracts",
