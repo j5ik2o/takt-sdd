@@ -15,6 +15,8 @@ Project memory keeps persistent guidance (steering, specs notes, component docs)
 - Steering: `.kiro/steering/`
 - Specs: `.kiro/specs/`
 
+Use `$kiro-*` skills for agent workflows. When invoking npm scripts directly, use the canonical `kiro:*` surface from `package.json`; legacy `cc-sdd:*` scripts are compatibility entrypoints only.
+
 ### Steering vs Specification
 
 **Steering** (`.kiro/steering/`) - Guide AI with project-wide rules and context
