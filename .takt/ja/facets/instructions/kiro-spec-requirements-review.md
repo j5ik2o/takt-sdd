@@ -1,6 +1,6 @@
 ---
 extends_skill: kiro-spec-requirements
-extends_skill_section: "Review Requirements Draft"
+extends_skill_section: "### Step 4: Review Requirements Draft"
 ---
 
 {extends: review-requirements}

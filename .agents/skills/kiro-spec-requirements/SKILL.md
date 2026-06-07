@@ -64,7 +64,7 @@ After all research completes, synthesize findings in main context before generat
    - If scope could be misread, add lightweight boundary context without introducing implementation or architecture ownership detail
    - Keep this as a draft until the review gate passes; do not write `requirements.md` yet
 
-4. **Review Requirements Draft**:
+### Step 4: Review Requirements Draft
    - Run the `Requirements Review Gate` from `rules/requirements-review-gate.md`
    - Review coverage, EARS compliance, ambiguity, adjacent expectations, and scope boundaries before finalizing
    - If issues are local to the draft, repair the requirements and review again
