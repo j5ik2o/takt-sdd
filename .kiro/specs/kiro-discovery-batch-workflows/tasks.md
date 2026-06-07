@@ -125,7 +125,7 @@
   - _Boundary:_ BatchWavePlanner, BatchWorkerDispatcher, CrossSpecReviewWorkflow, BatchRemediationCoordinator
   - _Depends:_ 14
 
-- [ ] 16. unreleased discovery/batch workflow/facet を削除または再作成する
+- [x] 16. unreleased discovery/batch workflow/facet を削除または再作成する
   - `.takt/{en,ja}/workflows/kiro-discovery.yaml` と `kiro-spec-batch.yaml` が単一 prompt step wrapper の場合は削除し、closed-loop workflow として再作成する。
   - `workflow_call`、shell `takt -w`、workflow-to-workflow 再起動で phase reuse している箇所を排除する。
   - TAKT built-in facet を継承して残す policy/output/persona は workflow から結線し、未使用なら削除する。

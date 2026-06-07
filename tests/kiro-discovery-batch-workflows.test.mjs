@@ -394,3 +394,17 @@ test("validation rejects independent remediation retry counters", () => {
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("independent retry counter")));
 });
+
+test("validation rejects unconnected discovery batch facets", () => {
+  const root = copyCurrentTaktFixture();
+  writeFixtureFile(
+    root,
+    ".takt/en/facets/policies/kiro-unused-discovery-policy.md",
+    "{extends: research}\n\n# Unused Discovery Policy\n",
+  );
+
+  const result = validateKiroDiscoveryBatchWorkflows({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("kiro-unused-discovery-policy.md")));
+});

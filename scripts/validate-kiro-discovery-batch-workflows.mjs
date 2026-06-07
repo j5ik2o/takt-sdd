@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -111,6 +111,9 @@ const facetSpecs = [
     terms: ["severity", "affectedSpecs", "suggestedFix", "DECOMPOSITION_RETURN", "repairTarget"],
   },
 ];
+
+const discoveryBatchFacetKinds = ["instructions", "policies", "output-contracts", "personas"];
+const expectedDiscoveryBatchFacets = new Set(facetSpecs.map((spec) => `${spec.kind}/${spec.file}`));
 
 function readText(path) {
   return readFileSync(path, "utf8");
@@ -235,6 +238,37 @@ function validateFacet(repoRoot, lang, spec) {
     }
   }
   containsAll(content, spec.terms, path, failures, repoRoot, "FACET_DRIFT");
+  return failures;
+}
+
+function isDiscoveryBatchScopedFacet(file) {
+  const basename = file.replace(/\.md$/, "");
+  return basename.startsWith("kiro-") && (
+    basename.includes("discovery") ||
+    basename.includes("spec-batch") ||
+    basename.includes("batch-summary") ||
+    basename.includes("cross-spec") ||
+    basename.includes("roadmap-dependency")
+  );
+}
+
+function validateNoUnusedDiscoveryBatchFacets(repoRoot, lang) {
+  const failures = [];
+  for (const kind of discoveryBatchFacetKinds) {
+    const dir = join(repoRoot, ".takt", lang, "facets", kind);
+    if (!existsSync(dir)) {
+      continue;
+    }
+    for (const file of readdirSync(dir)) {
+      if (!file.endsWith(".md") || !isDiscoveryBatchScopedFacet(file)) {
+        continue;
+      }
+      const key = `${kind}/${file}`;
+      if (!expectedDiscoveryBatchFacets.has(key)) {
+        failures.push(`UNUSED_FACET_DRIFT: ${rel(repoRoot, join(dir, file))} is in discovery/batch scope but is not connected`);
+      }
+    }
+  }
   return failures;
 }
 
@@ -397,6 +431,7 @@ export function validateKiroDiscoveryBatchWorkflows(options = {}) {
     for (const spec of facetSpecs) {
       failures.push(...validateFacet(repoRoot, lang, spec));
     }
+    failures.push(...validateNoUnusedDiscoveryBatchFacets(repoRoot, lang));
   }
   failures.push(...validateRoadmapParserFixture(repoRoot));
 
