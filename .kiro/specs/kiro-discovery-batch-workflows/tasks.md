@@ -64,7 +64,7 @@
   - _Boundary:_ BatchWorkerDispatcher
   - _Depends:_ 7
 
-- [ ] 9. batch summary と remediation coordinator を追加する
+- [x] 9. batch summary と remediation coordinator を追加する
   - wave plan、skipped completed specs、worker results、failed features、awareness-only items、next action を summary contract に定義する。
   - generation failure と review issue を区別し、局所修正、再 review、roadmap/discovery return の routing を持たせる。
   - 完了時点で partial success を成功扱いにせず、feature ごとの状態と残作業が利用者に見える。

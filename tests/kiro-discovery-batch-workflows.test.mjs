@@ -289,3 +289,25 @@ test("cross-spec review contract exposes machine-readable issue routing", () => 
     }
   }
 });
+
+test("batch summary contract separates worker results from implementation readiness", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  for (const lang of ["en", "ja"]) {
+    const path = `.takt/${lang}/facets/output-contracts/kiro-batch-summary.md`;
+    assert.equal(existsSync(join(repoRoot, path)), true, `${path} should exist`);
+    const content = readFileSync(join(repoRoot, path), "utf8");
+    for (const term of [
+      "wavePlan",
+      "featureResults",
+      "failedFeatures",
+      "awarenessOnlyItems",
+      "crossSpecReview",
+      "implementationReady",
+      "worker-local",
+      "DECOMPOSITION_RETURN",
+      "nextAction",
+    ]) {
+      assert.ok(content.includes(term), `${path} should include ${term}`);
+    }
+  }
+});
