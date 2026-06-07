@@ -941,6 +941,86 @@ test("task 15 adapter validation detects skill section, field, and enum drift", 
   );
 });
 
+test("task 16 validation detects legacy kiro spec generation surfaces", () => {
+  const root = makeWritableValidationFixture();
+  const wrapperWorkflow = [
+    "name: kiro-spec-requirements",
+    "description: legacy single prompt wrapper fixture",
+    "initial_step: prompt-requirements",
+    "instructions:",
+    "  kiro-spec-requirements: ../facets/instructions/kiro-spec-requirements.md",
+    "  kiro-spec-requirements-review: ../facets/instructions/kiro-spec-requirements-review.md",
+    "policies:",
+    "  kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md",
+    "  kiro-spec-lifecycle: ../facets/policies/kiro-spec-lifecycle.md",
+    "  kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
+    "report_formats:",
+    "  kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md",
+    "steps:",
+    "  - name: prompt-requirements",
+    "    edit: true",
+    "    persona: supervisor",
+    "    required_permission_mode: edit",
+    "    instruction: kiro-spec-requirements",
+    "    rules:",
+    "      - condition: validation.verdict PASS and requirements.md and requirements-generated and EARS and review_gate PENDING and READY_FOR_REVIEW",
+    "        next: COMPLETE",
+  ].join("\n");
+  for (const lang of ["en", "ja"]) {
+    writeFixtureFile(root, `.takt/${lang}/workflows/kiro-spec-requirements.yaml`, wrapperWorkflow);
+    const requirementsFacetPath = `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`;
+    const requirementsFacet = readFileSync(join(root, requirementsFacetPath), "utf8").replace(
+      /^---\n[\s\S]*?\n---\n/,
+      "",
+    );
+    writeFixtureFile(root, requirementsFacetPath, requirementsFacet);
+    writeFixtureFile(
+      root,
+      `.takt/${lang}/facets/instructions/kiro-spec-orphan.md`,
+      [
+        "---",
+        "extends_skill: kiro-spec-requirements",
+        'extends_skill_section: "## Execution Steps"',
+        "---",
+        "",
+        "{extends: plan}",
+        "",
+        "# Orphan legacy Kiro spec facet",
+      ].join("\n"),
+    );
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("LEGACY_KIRO_GENERATION_DRIFT") &&
+        failure.includes("kiro-spec-requirements.yaml") &&
+        failure.includes("review-requirements"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("LEGACY_KIRO_GENERATION_DRIFT") &&
+        failure.includes("kiro-spec-requirements.md") &&
+        failure.includes("extends_skill"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("LEGACY_KIRO_GENERATION_DRIFT") &&
+        failure.includes("kiro-spec-orphan.md") &&
+        failure.includes("unreferenced"),
+    ),
+    result.failures.join("\n"),
+  );
+});
+
 test("task 5.1 design workflow connects research, required sections, review gate, and lifecycle update", () => {
   const repoRoot = join(import.meta.dirname, "..");
   const workflowTerms = [

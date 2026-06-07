@@ -141,7 +141,7 @@
   - _Boundary:_ RequirementsGenerationWorkflow, DesignGenerationWorkflow, TasksGenerationWorkflow, QuickGenerationWorkflow, SpecGenerationValidationHarness
   - _Depends:_ 14.1
 
-- [ ] 16. unreleased の既存 Kiro generation workflow/facet を削除または再作成する
+- [x] 16. unreleased の既存 Kiro generation workflow/facet を削除または再作成する
   - `.takt/{en,ja}/workflows/kiro-spec-*.yaml` が単発 prompt step wrapper の場合は削除し、Kiro skill adapter step sequence として再作成する。
   - `.takt/{en,ja}/facets/instructions/kiro-spec-*.md` が `extends_skill` を持たない独自 prompt の場合は削除または thin adapter に作り替える。
   - workflow から参照されない Kiro-specific facet を validation failure にする。

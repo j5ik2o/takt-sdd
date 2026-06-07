@@ -378,6 +378,43 @@ const skillAdapterFacetSpecs = [
     enums: ["PASS", "NEEDS_FIX", "BLOCKED"],
   },
 ];
+
+const generationWorkflowStepSpecs = [
+  {
+    name: "kiro-spec-requirements",
+    steps: ["generate-requirements", "review-requirements", "repair-requirements", "finalize-requirements"],
+  },
+  {
+    name: "kiro-spec-design",
+    steps: ["generate-design", "review-design", "repair-design", "finalize-design"],
+  },
+  {
+    name: "kiro-spec-tasks",
+    steps: ["generate-tasks", "review-tasks", "repair-tasks", "finalize-tasks"],
+  },
+  {
+    name: "kiro-spec-quick",
+    steps: [
+      "quick-init",
+      "quick-requirements",
+      "quick-review-requirements",
+      "quick-repair-requirements",
+      "quick-finalize-requirements",
+      "quick-design",
+      "quick-review-design",
+      "quick-repair-design",
+      "quick-finalize-design",
+      "quick-tasks",
+      "quick-review-tasks",
+      "quick-repair-tasks",
+      "quick-finalize-tasks",
+      "quick-sanity-review",
+    ],
+  },
+];
+
+const outOfBoundaryKiroSpecInstructionFacets = new Set(["kiro-spec-batch", "kiro-spec-status"]);
+
 const packageScriptSpecs = [
   {
     name: "validate:kiro-spec-generation-workflows",
@@ -1336,6 +1373,81 @@ function validateSkillAdapterFacets(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
+function generationInstructionFacetNames() {
+  return [
+    ...new Set(
+      phaseWorkflowSpecs
+        .flatMap((spec) => spec.instructionFacets)
+        .filter((name) => name.startsWith("kiro-spec-")),
+    ),
+  ].sort();
+}
+
+function workflowInstructionReferences(content) {
+  return topLevelMap(content, "instructions").map((entry) => entry.split("=")[0]);
+}
+
+function validateLegacyKiroGenerationSurface(repoRoot) {
+  const failures = [];
+  const expectedInstructionFacets = generationInstructionFacetNames();
+
+  for (const lang of languages) {
+    const referencedInstructionFacets = new Set();
+    for (const spec of phaseWorkflowSpecs) {
+      const workflowPath = join(repoRoot, ".takt", lang, "workflows", `${spec.name}.yaml`);
+      if (!existsSync(workflowPath)) {
+        continue;
+      }
+      for (const reference of workflowInstructionReferences(readText(workflowPath))) {
+        referencedInstructionFacets.add(reference);
+      }
+    }
+
+    for (const spec of generationWorkflowStepSpecs) {
+      const workflowPath = join(repoRoot, ".takt", lang, "workflows", `${spec.name}.yaml`);
+      if (!existsSync(workflowPath)) {
+        continue;
+      }
+      const actualSteps = stepBlocks(readText(workflowPath)).map((block) => stepScalar(block, "name"));
+      for (const step of spec.steps) {
+        if (!actualSteps.includes(step)) {
+          failures.push(
+            `LEGACY_KIRO_GENERATION_DRIFT: ${rel(repoRoot, workflowPath)} must be a Kiro skill adapter step sequence and include step ${step}`,
+          );
+        }
+      }
+    }
+
+    for (const facet of expectedInstructionFacets) {
+      const facetPath = join(repoRoot, ".takt", lang, "facets", "instructions", `${facet}.md`);
+      if (!existsSync(facetPath)) {
+        continue;
+      }
+      const frontMatter = frontMatterFields(readText(facetPath));
+      if (!frontMatter.extends_skill) {
+        failures.push(
+          `LEGACY_KIRO_GENERATION_DRIFT: ${rel(repoRoot, facetPath)} must declare extends_skill for thin Kiro skill adapter reuse`,
+        );
+      }
+    }
+
+    const instructionFacetDir = join(repoRoot, ".takt", lang, "facets", "instructions");
+    for (const facet of listBasenames(repoRoot, rel(repoRoot, instructionFacetDir), ".md")) {
+      if (outOfBoundaryKiroSpecInstructionFacets.has(facet)) {
+        continue;
+      }
+      const facetPath = join(instructionFacetDir, `${facet}.md`);
+      if (!referencedInstructionFacets.has(facet)) {
+        failures.push(
+          `LEGACY_KIRO_GENERATION_DRIFT: ${rel(repoRoot, facetPath)} is an unreferenced Kiro-specific instruction facet`,
+        );
+      }
+    }
+  }
+
+  return { ok: failures.length === 0, failures };
+}
+
 function validatePackageScripts(repoRoot) {
   const failures = [];
   const packagePath = join(repoRoot, "package.json");
@@ -1432,6 +1544,7 @@ export function validateKiroSpecGenerationWorkflows(options = {}) {
     generatedArtifacts: validateGeneratedArtifacts(repoRoot),
     taskAnnotationContract: validateTaskAnnotationContract(repoRoot),
     skillAdapterFacets: validateSkillAdapterFacets(repoRoot),
+    legacyGenerationSurface: validateLegacyKiroGenerationSurface(repoRoot),
     packageScripts: validatePackageScripts(repoRoot),
     quickComposition: validateQuickComposition(repoRoot),
     taskWorkflowCompletion: validateTaskWorkflowCompletion(repoRoot),
