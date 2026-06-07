@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { basename, dirname, join, relative, resolve } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -72,7 +72,7 @@ const instructionSpecs = [
     skill: "kiro-debug",
     section: "## Outputs",
     parent: "fix",
-    terms: ["NEXT_ACTION", "RETRY_TASK", "BLOCK_TASK", "STOP_FOR_HUMAN", "ROOT_CAUSE", "FIX_PLAN"],
+    terms: ["NEXT_ACTION", "RETRY_TASK", "BLOCK_TASK", "STOP_FOR_HUMAN", "retry_eligible", "ROOT_CAUSE", "FIX_PLAN"],
   },
   {
     name: "kiro-verify-task-completion",
@@ -180,13 +180,6 @@ function containsAll(content, terms, path, failures, repoRoot, code) {
   }
 }
 
-function listFiles(dir) {
-  if (!existsSync(dir)) {
-    return [];
-  }
-  return readdirSync(dir).map((entry) => join(dir, entry));
-}
-
 function canonicalBlock(content, key) {
   const lines = content.split("\n");
   const start = lines.findIndex((line) => line === `${key}:`);
@@ -243,14 +236,6 @@ function stepScalar(block, key) {
   }
   const match = block.join("\n").match(new RegExp(`^    ${key}:\\s*(.+)\\s*$`, "m"));
   return match?.[1] ?? "";
-}
-
-function conditionLines(block) {
-  return block
-    .join("\n")
-    .split("\n")
-    .map((line) => line.match(/^\s*-\s+condition:\s*(.+)\s*$/)?.[1])
-    .filter(Boolean);
 }
 
 function scalarLines(content, key) {

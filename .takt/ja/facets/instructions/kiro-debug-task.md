@@ -20,7 +20,8 @@ selected taskのimplementation、validation、review failureを調査し、root-
 - `FIX_PLAN`: 該当する場合の最小selected-task repair plan。
 - `VERIFICATION`: 次のimplementer向けcommandまたはchecklist。
 - `NEXT_ACTION`: `RETRY_TASK`、`BLOCK_TASK`、`STOP_FOR_HUMAN` のいずれか。
+- `retry_eligible`: boolean。workflow rule がretry可能/不可を区別できるよう、`NEXT_ACTION` と一緒に必ず返す。
 - `CONFIDENCE`: `HIGH`、`MEDIUM`、`LOW` のいずれか。
 - `NOTES`: 次のadapter step向けcontext。
 
-workflow rulesは `NEXT_ACTION` で分岐する。反復制御は `kiro-impl.yaml` の `loop_monitors.threshold` に置く。
+workflow rulesは `NEXT_ACTION` と `retry_eligible` で分岐する。反復制御は `kiro-impl.yaml` の `loop_monitors.threshold` に置く。

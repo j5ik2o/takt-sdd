@@ -20,7 +20,8 @@ Return the `## Debug Report` shape from `kiro-debug`.
 - `FIX_PLAN`: smallest selected-task repair plan when applicable.
 - `VERIFICATION`: command or checklist for the next implementer.
 - `NEXT_ACTION`: `RETRY_TASK`, `BLOCK_TASK`, or `STOP_FOR_HUMAN`.
+- `retry_eligible`: boolean; required with `NEXT_ACTION` so workflow rules can distinguish retryable and non-retryable failures.
 - `CONFIDENCE`: `HIGH`, `MEDIUM`, or `LOW`.
 - `NOTES`: context for the next adapter step.
 
-Workflow rules branch on `NEXT_ACTION`. Repetition control stays in `kiro-impl.yaml` `loop_monitors.threshold`.
+Workflow rules branch on `NEXT_ACTION` and `retry_eligible`. Repetition control stays in `kiro-impl.yaml` `loop_monitors.threshold`.
