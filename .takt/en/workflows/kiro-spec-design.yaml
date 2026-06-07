@@ -67,8 +67,8 @@ steps:
         next: review-design
       - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
         next: ABORT
-      - condition: validation.verdict NEEDS_FIX or design review gate failed
-        next: repair-design
+      - condition: validation.verdict NEEDS_FIX and design draft ready and research draft ready
+        next: review-design
 
   - name: review-design
     edit: false

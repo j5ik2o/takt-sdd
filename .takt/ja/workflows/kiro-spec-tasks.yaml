@@ -71,8 +71,8 @@ steps:
         next: review-tasks
       - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
         next: ABORT
-      - condition: validation.verdict NEEDS_FIX or task plan review failed or task graph sanity review failed
-        next: repair-tasks
+      - condition: validation.verdict NEEDS_FIX and tasks draft ready
+        next: review-tasks
 
   - name: review-tasks
     edit: false

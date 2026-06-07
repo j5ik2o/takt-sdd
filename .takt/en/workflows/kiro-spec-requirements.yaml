@@ -54,8 +54,8 @@ steps:
         next: review-requirements
       - condition: validation.verdict BLOCKED or scope ambiguity remains or acceptance criteria not verifiable
         next: ABORT
-      - condition: validation.verdict NEEDS_FIX or requirements review gate failed
-        next: repair-requirements
+      - condition: validation.verdict NEEDS_FIX and requirements draft ready
+        next: review-requirements
 
   - name: review-requirements
     edit: false
