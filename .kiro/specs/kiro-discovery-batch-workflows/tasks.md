@@ -32,7 +32,7 @@
   - _Boundary:_ DiscoveryArtifactPlanner
   - _Depends:_ 3
 
-- [ ] 5. roadmap artifact planning と awareness-only section handling を追加する
+- [x] 5. roadmap artifact planning と awareness-only section handling を追加する
   - multi-spec と mixed decomposition で `.kiro/steering/roadmap.md` に overview、approach、scope、constraints、boundary strategy、`## Specs (dependency order)` を残す。
   - `Existing Spec Updates` と `Direct Implementation Candidates` を awareness-only として記録し、batch 対象にしない policy を追加する。
   - 完了時点で roadmap から batch 対象 feature と awareness-only item を区別できる。

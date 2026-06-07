@@ -189,3 +189,22 @@ test("discovery artifacts define required brief sections and write path", () => 
     }
   }
 });
+
+test("roadmap dependency wave policy keeps awareness-only sections out of batch input", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  for (const lang of ["en", "ja"]) {
+    const policyPath = `.takt/${lang}/facets/policies/kiro-roadmap-dependency-waves.md`;
+    assert.equal(existsSync(join(repoRoot, policyPath)), true, `${policyPath} should exist`);
+    const policy = readFileSync(join(repoRoot, policyPath), "utf8");
+    for (const term of [
+      "## Specs (dependency order)",
+      "Existing Spec Updates",
+      "Direct Implementation Candidates",
+      "awareness-only",
+      "Dependencies: none",
+      "circular dependency",
+    ]) {
+      assert.ok(policy.includes(term), `${policyPath} should include ${term}`);
+    }
+  }
+});
