@@ -150,7 +150,7 @@
   - _Boundary:_ SpecGenerationWorkflowBundle, SpecGenerationValidationHarness
   - _Depends:_ 15
 
-- [ ] 17. Kiro skill field contract に rule condition を合わせる
+- [x] 17. Kiro skill field contract に rule condition を合わせる
   - task graph sanity の `PASS`、`NEEDS_FIXES`、`RETURN_TO_DESIGN` を Kiro skill field のまま rule condition に使う。
   - requirements/design/tasks/quick の review result を独自 `validation.verdict` や `review.verdict` に翻訳しない。
   - shared validation supplement を使う場合も primary field は Kiro skill section の output field に合わせる。

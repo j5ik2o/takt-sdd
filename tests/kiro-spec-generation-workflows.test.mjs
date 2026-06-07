@@ -1021,6 +1021,81 @@ test("task 16 validation detects legacy kiro spec generation surfaces", () => {
   );
 });
 
+test("task 17 validation detects translated review field and output contract drift", () => {
+  const root = makeWritableValidationFixture();
+  for (const lang of ["en", "ja"]) {
+    const designWorkflowPath = `.takt/${lang}/workflows/kiro-spec-design.yaml`;
+    const designWorkflow = readFileSync(join(root, designWorkflowPath), "utf8")
+      .replace("condition: DECISION GO and design review gate passed", "condition: validation.verdict PASS")
+      .replace("format: kiro-validation-result", "format: kiro-spec-generation-result");
+    writeFixtureFile(root, designWorkflowPath, designWorkflow);
+
+    const tasksWorkflowPath = `.takt/${lang}/workflows/kiro-spec-tasks.yaml`;
+    const tasksWorkflow = readFileSync(join(root, tasksWorkflowPath), "utf8")
+      .replace(
+        "condition: task_plan_review PASS and task_graph_sanity_review PASS",
+        "condition: review.verdict PASS",
+      )
+      .replace("format: kiro-spec-tasks-review-result", "format: kiro-spec-generation-result");
+    writeFixtureFile(root, tasksWorkflowPath, tasksWorkflow);
+
+    const quickWorkflowPath = `.takt/${lang}/workflows/kiro-spec-quick.yaml`;
+    const quickWorkflow = readFileSync(join(root, quickWorkflowPath), "utf8")
+      .replace("condition: DECISION GO and design review gate passed", "condition: validation.verdict PASS")
+      .replace(
+        "condition: task_plan_review PASS and task_graph_sanity_review PASS",
+        "condition: review.verdict PASS",
+      )
+      .replace("condition: verdict PASS and quick-completion", "condition: validation.verdict PASS")
+      .replace("format: kiro-validation-result", "format: kiro-spec-generation-result")
+      .replace("format: kiro-spec-tasks-review-result", "format: kiro-spec-generation-result")
+      .replace("format: kiro-spec-sanity-review", "format: kiro-spec-generation-result");
+    writeFixtureFile(root, quickWorkflowPath, quickWorkflow);
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("REVIEW_FIELD_CONTRACT_DRIFT") &&
+        failure.includes("kiro-spec-design.yaml") &&
+        failure.includes("review-design") &&
+        failure.includes("validation.verdict"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("REVIEW_FIELD_CONTRACT_DRIFT") &&
+        failure.includes("kiro-spec-tasks.yaml") &&
+        failure.includes("review-tasks") &&
+        failure.includes("task_plan_review"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("REVIEW_FIELD_CONTRACT_DRIFT") &&
+        failure.includes("kiro-spec-quick.yaml") &&
+        failure.includes("quick-sanity-review") &&
+        failure.includes("verdict"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("REVIEW_OUTPUT_CONTRACT_DRIFT") &&
+        failure.includes("kiro-spec-quick.yaml") &&
+        failure.includes("kiro-spec-sanity-review"),
+    ),
+    result.failures.join("\n"),
+  );
+});
+
 test("task 5.1 design workflow connects research, required sections, review gate, and lifecycle update", () => {
   const repoRoot = join(import.meta.dirname, "..");
   const workflowTerms = [

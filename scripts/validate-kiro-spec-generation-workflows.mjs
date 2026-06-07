@@ -413,6 +413,86 @@ const generationWorkflowStepSpecs = [
   },
 ];
 
+const reviewStepFieldContractSpecs = [
+  {
+    workflow: "kiro-spec-requirements",
+    step: "review-requirements",
+    outputContract: "kiro-spec-generation-result",
+    requiredConditionTermSets: [
+      ["validation.verdict", "PASS"],
+      ["validation.verdict", "NEEDS_FIX"],
+      ["validation.verdict", "BLOCKED"],
+    ],
+    forbiddenFields: ["review.verdict"],
+  },
+  {
+    workflow: "kiro-spec-design",
+    step: "review-design",
+    outputContract: "kiro-validation-result",
+    requiredConditionTermSets: [
+      ["DECISION", "GO"],
+      ["DECISION", "NO-GO"],
+      ["DECISION", "MANUAL_VERIFY_REQUIRED"],
+    ],
+    forbiddenFields: ["validation.verdict", "review.verdict"],
+  },
+  {
+    workflow: "kiro-spec-tasks",
+    step: "review-tasks",
+    outputContract: "kiro-spec-tasks-review-result",
+    requiredConditionTermSets: [
+      ["task_plan_review", "PASS", "task_graph_sanity_review", "PASS"],
+      ["task_plan_review", "NEEDS_FIXES", "task_graph_sanity_review", "NEEDS_FIXES"],
+      ["task_plan_review", "RETURN_TO_DESIGN", "task_graph_sanity_review", "RETURN_TO_DESIGN"],
+    ],
+    forbiddenFields: ["validation.verdict", "review.verdict"],
+  },
+  {
+    workflow: "kiro-spec-quick",
+    step: "quick-review-requirements",
+    outputContract: "kiro-spec-generation-result",
+    requiredConditionTermSets: [
+      ["validation.verdict", "PASS"],
+      ["validation.verdict", "NEEDS_FIX"],
+      ["validation.verdict", "BLOCKED"],
+    ],
+    forbiddenFields: ["review.verdict"],
+  },
+  {
+    workflow: "kiro-spec-quick",
+    step: "quick-review-design",
+    outputContract: "kiro-validation-result",
+    requiredConditionTermSets: [
+      ["DECISION", "GO"],
+      ["DECISION", "NO-GO"],
+      ["DECISION", "MANUAL_VERIFY_REQUIRED"],
+    ],
+    forbiddenFields: ["validation.verdict", "review.verdict"],
+  },
+  {
+    workflow: "kiro-spec-quick",
+    step: "quick-review-tasks",
+    outputContract: "kiro-spec-tasks-review-result",
+    requiredConditionTermSets: [
+      ["task_plan_review", "PASS", "task_graph_sanity_review", "PASS"],
+      ["task_plan_review", "NEEDS_FIXES", "task_graph_sanity_review", "NEEDS_FIXES"],
+      ["task_plan_review", "RETURN_TO_DESIGN", "task_graph_sanity_review", "RETURN_TO_DESIGN"],
+    ],
+    forbiddenFields: ["validation.verdict", "review.verdict"],
+  },
+  {
+    workflow: "kiro-spec-quick",
+    step: "quick-sanity-review",
+    outputContract: "kiro-spec-sanity-review",
+    requiredConditionTermSets: [
+      ["verdict", "PASS"],
+      ["verdict", "NEEDS_FIX"],
+      ["verdict", "BLOCKED"],
+    ],
+    forbiddenFields: ["validation.verdict", "review.verdict"],
+  },
+];
+
 const outOfBoundaryKiroSpecInstructionFacets = new Set(["kiro-spec-batch", "kiro-spec-status"]);
 
 const packageScriptSpecs = [
@@ -1448,6 +1528,52 @@ function validateLegacyKiroGenerationSurface(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
+function validateReviewFieldContracts(repoRoot) {
+  const failures = [];
+  for (const lang of languages) {
+    for (const spec of reviewStepFieldContractSpecs) {
+      const workflowPath = join(repoRoot, ".takt", lang, "workflows", `${spec.workflow}.yaml`);
+      if (!existsSync(workflowPath)) {
+        continue;
+      }
+
+      const block = stepBlocks(readText(workflowPath)).find((candidate) => stepScalar(candidate, "name") === spec.step);
+      if (!block) {
+        failures.push(
+          `REVIEW_FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} missing review step ${spec.step}`,
+        );
+        continue;
+      }
+
+      const blockText = block.join("\n");
+      if (!blockText.includes(`format: ${spec.outputContract}`)) {
+        failures.push(
+          `REVIEW_OUTPUT_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} step ${spec.step} must emit ${spec.outputContract}`,
+        );
+      }
+
+      const conditions = conditionLines(block);
+      for (const terms of spec.requiredConditionTermSets) {
+        if (!hasConditionWithTerms(conditions, terms)) {
+          failures.push(
+            `REVIEW_FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} step ${spec.step} must branch on Kiro skill field terms: ${terms.join(", ")}`,
+          );
+        }
+      }
+
+      for (const forbiddenField of spec.forbiddenFields) {
+        if (conditions.some((condition) => condition.includes(forbiddenField))) {
+          failures.push(
+            `REVIEW_FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} step ${spec.step} must not route review result through ${forbiddenField}`,
+          );
+        }
+      }
+    }
+  }
+
+  return { ok: failures.length === 0, failures };
+}
+
 function validatePackageScripts(repoRoot) {
   const failures = [];
   const packagePath = join(repoRoot, "package.json");
@@ -1545,6 +1671,7 @@ export function validateKiroSpecGenerationWorkflows(options = {}) {
     taskAnnotationContract: validateTaskAnnotationContract(repoRoot),
     skillAdapterFacets: validateSkillAdapterFacets(repoRoot),
     legacyGenerationSurface: validateLegacyKiroGenerationSurface(repoRoot),
+    reviewFieldContracts: validateReviewFieldContracts(repoRoot),
     packageScripts: validatePackageScripts(repoRoot),
     quickComposition: validateQuickComposition(repoRoot),
     taskWorkflowCompletion: validateTaskWorkflowCompletion(repoRoot),
