@@ -29,6 +29,21 @@ Classify a user work request into one Kiro discovery `actionPath` and decide whe
 6. For `MIXED_DECOMPOSITION`, keep existing spec updates and direct implementation candidates as `awarenessOnlyItems`.
 7. If the action path or boundary ownership is ambiguous, return `blockingReason` and keep `createdFiles` empty.
 
+## Brief Artifact Structure
+
+When discovery writes `.kiro/specs/<feature>/brief.md`, include these sections exactly so `kiro-spec-init` can use the file as source of truth:
+
+- `## Problem`
+- `## Current State`
+- `## Desired Outcome`
+- `## Approach`
+- `## Scope`
+- `## Boundary Candidates`
+- `## Out of Boundary`
+- `## Upstream / Downstream`
+
+Keep the brief scoped to the target feature. Do not place existing spec updates or direct implementation candidates inside a new feature brief unless they are explicitly marked as adjacent context.
+
 ## Output Mapping
 
 - Return `kiro-discovery-result` with `actionPath`, `reason`, `createdFiles`, `plannedFiles`, `nextAction`, `blockingReason`, and `awarenessOnlyItems`.

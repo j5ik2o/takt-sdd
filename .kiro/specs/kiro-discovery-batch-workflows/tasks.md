@@ -24,7 +24,7 @@
   - _Boundary:_ DiscoveryWorkflow
   - _Depends:_ 2
 
-- [ ] 4. `brief.md` artifact structure と write path を追加する
+- [x] 4. `brief.md` artifact structure と write path を追加する
   - problem、current state、desired outcome、approach、scope、boundary candidates、out of boundary、upstream/downstream を含む brief structure を定義する。
   - single/multi/mixed の対象 feature directory に `brief.md` を作成する workflow step を接続する。
   - 完了時点で後続 `kiro-spec-init` が brief を source of truth として読める。

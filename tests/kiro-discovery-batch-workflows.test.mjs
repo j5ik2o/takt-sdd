@@ -167,3 +167,25 @@ test("kiro-discovery workflow uses multi-step routing and skill adapter metadata
     assert.ok(instruction.includes("{extends: plan}"));
   }
 });
+
+test("discovery artifacts define required brief sections and write path", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  for (const lang of ["en", "ja"]) {
+    const instruction = readFileSync(join(repoRoot, `.takt/${lang}/facets/instructions/kiro-discovery.md`), "utf8");
+    const contract = readFileSync(join(repoRoot, `.takt/${lang}/facets/output-contracts/kiro-discovery-result.md`), "utf8");
+    for (const term of [
+      "## Problem",
+      "## Current State",
+      "## Desired Outcome",
+      "## Approach",
+      "## Scope",
+      "## Boundary Candidates",
+      "## Out of Boundary",
+      "## Upstream / Downstream",
+      ".kiro/specs/<feature>/brief.md",
+    ]) {
+      assert.ok(instruction.includes(term), `instruction should include ${term}`);
+      assert.ok(contract.includes(term), `contract should include ${term}`);
+    }
+  }
+});

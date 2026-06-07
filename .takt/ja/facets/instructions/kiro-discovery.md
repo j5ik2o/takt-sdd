@@ -29,6 +29,21 @@ extends_skill_section: "## Step 2: Determine Action Path"
 6. `MIXED_DECOMPOSITION` では既存 spec 更新と direct implementation candidate を `awarenessOnlyItems` に分離する。
 7. action path または boundary ownership が曖昧な場合は、`blockingReason` を返し `createdFiles` を空に保つ。
 
+## Brief Artifact Structure
+
+discovery が `.kiro/specs/<feature>/brief.md` を書く場合、`kiro-spec-init` が source of truth として読めるように次の section を正確に含める:
+
+- `## Problem`
+- `## Current State`
+- `## Desired Outcome`
+- `## Approach`
+- `## Scope`
+- `## Boundary Candidates`
+- `## Out of Boundary`
+- `## Upstream / Downstream`
+
+brief は対象 feature に閉じる。既存 spec 更新や direct implementation candidate は、明示的に adjacent context として分離されていない限り、新規 feature brief に混ぜない。
+
 ## Output Mapping
 
 - `actionPath`、`reason`、`createdFiles`、`plannedFiles`、`nextAction`、`blockingReason`、`awarenessOnlyItems` を含む `kiro-discovery-result` を返す。

@@ -11,6 +11,7 @@
 - `nextAction`: `kiro-spec-init`、`kiro-spec-batch`、`kiro-spec-requirements`、direct implementation などの次 action。
 - `blockingReason`: discovery が安全に action path を選べない、または artifact を書けない場合に必須。
 - `awarenessOnlyItems`: batch dependency wave に入れてはいけない既存 spec 更新または direct implementation candidate。
+- `briefSections`: `.kiro/specs/<feature>/brief.md` を作成する場合の required section heading。
 
 ## Result Rules
 
@@ -19,3 +20,16 @@
 - `MULTI_SPEC` と `MIXED_DECOMPOSITION` は `.kiro/steering/roadmap.md` と新規 spec ごとの `brief.md` を含める。
 - `MIXED_DECOMPOSITION` は既存 spec 更新と direct implementation candidate を `awarenessOnlyItems` に分離する。
 - `blockingReason` が存在する場合、downstream spec generation を開始してはいけない。
+
+## Brief Contract
+
+`.kiro/specs/<feature>/brief.md` が `createdFiles` または `plannedFiles` に含まれる場合、`briefSections` は次を含める:
+
+- `## Problem`
+- `## Current State`
+- `## Desired Outcome`
+- `## Approach`
+- `## Scope`
+- `## Boundary Candidates`
+- `## Out of Boundary`
+- `## Upstream / Downstream`
