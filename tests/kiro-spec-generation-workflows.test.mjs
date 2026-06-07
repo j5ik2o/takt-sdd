@@ -580,6 +580,8 @@ test("task 4.1 requirements workflow connects EARS generation, review gate, and 
     "implementation file",
     "kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
     "kiro-spec-generation-result: ../facets/output-contracts/kiro-spec-generation-result.md",
+    "kiro-spec-requirements-review: ../facets/instructions/kiro-spec-requirements-review.md",
+    "instruction: kiro-spec-requirements-review",
   ];
   const instructionTerms = [
     "requirements.md",
@@ -603,6 +605,15 @@ test("task 4.1 requirements workflow connects EARS generation, review gate, and 
   for (const lang of ["en", "ja"]) {
     assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-requirements.yaml`, workflowTerms);
     assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`, instructionTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-requirements-review.md`, [
+      "Review Requirements Draft",
+      "requirements review gate",
+      "read-only",
+      "validation.verdict",
+      "PASS",
+      "NEEDS_FIX",
+      "BLOCKED",
+    ]);
   }
 });
 

@@ -59,7 +59,7 @@ const instructionSpecs = [
   {
     file: "kiro-collect-validation-evidence.md",
     parent: "gather-review",
-    terms: ["observed evidence", "missing evidence", "MANUAL_VERIFICATION_REQUIRED", "PASS", "findings", "evidence"],
+    terms: ["observed evidence", "missing evidence", "MANUAL_VERIFICATION_REQUIRED", "DECISION", "GO", "findings", "evidence"],
   },
 ];
 

@@ -19,7 +19,7 @@ const phaseWorkflowSpecs = [
   {
     name: "kiro-spec-requirements",
     requiredTerms: ["requirements.md", "requirements-generated", "EARS", "kiro-spec-generation-result"],
-    instructionFacets: ["kiro-spec-requirements"],
+    instructionFacets: ["kiro-spec-requirements", "kiro-spec-requirements-review"],
     policyFacets: ["kiro-spec-generation"],
     outputContracts: ["kiro-spec-generation-result"],
   },
@@ -67,6 +67,11 @@ const facetSpecs = [
     kind: "instructions",
     name: "kiro-spec-requirements",
     terms: ["requirements.md", "EARS", "requirements-generated", "BLOCKED"],
+  },
+  {
+    kind: "instructions",
+    name: "kiro-spec-requirements-review",
+    terms: ["Review Requirements Draft", "requirements review gate", "read-only", "validation.verdict", "PASS", "NEEDS_FIX", "BLOCKED"],
   },
   {
     kind: "instructions",

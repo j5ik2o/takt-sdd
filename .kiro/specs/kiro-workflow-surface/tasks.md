@@ -33,14 +33,13 @@
     - _Boundary:_ InstallerScriptCatalog, CanonicalKiroScripts
     - _Depends:_ 1
 
-  - [ ] 2.2 installer の既存 script 保護と legacy shim 配布方針を維持する
+  - [ ] 2.2 installer の既存 script 保護と legacy script 維持方針を維持する
     - 既存 script を上書きしない installer policy は維持する。
-    - legacy shim scripts を導入先に追加する場合は、shim 実体も同じ install transaction で配置する。
-    - 導入先 project が module-not-found ではなく migration guidance を返せる配置にする。
+    - 既存 `cc-sdd:*` scripts は上書きせず、既存 `cc-sdd-*` workflow を引き続き実行できるようにする。
+    - 新規 project に legacy scripts を含める場合も `kiro:*` alias にはしない。
     - _Requirements: 1.2, 1.3, 3.5, 5.5_
-    - _Boundary:_ InstallerScriptCatalog, LegacyCompatibilityShim
+    - _Boundary:_ InstallerScriptCatalog, LegacyDeprecationPolicy
     - _Depends:_ 2
-    - _Blocked: task 2.2 requires legacy shim runtime behavior before task 3.1 creates the shim and task 4.2 wires installer scripts to it. Review task ordering or narrow 2.2 before continuing._
 
   - [ ] 2.3 root package と installer の script catalog 差分を検出できる fixture を用意する
     - root package と installer catalog の canonical `kiro:*` key set 比較に必要な test fixture または helper を追加する。
@@ -49,37 +48,37 @@
     - _Boundary:_ InstallerScriptCatalog, SurfaceValidation
     - _Depends:_ 2
 
-- [ ] 3. 旧 `cc-sdd:*` 用の fail-fast migration shim を追加する
-  - [ ] 3.1 既知の旧 script 名に対する migration mapping を実装する
+- [ ] 3. 旧 `cc-sdd:*` の非推奨方針と migration mapping を定義する
+  - [ ] 3.1 既知の旧 script 名に対する migration mapping を文書化する
     - 旧 script 名ごとに `Script Mapping` 表で定義された `kiro:*` 移行先を表示する。
     - `cc-sdd:full` は `kiro:spec:quick` を案内し、legacy phase 名から `kiro:<phase>` を文字列補間しない。
-    - 旧 script は実 workflow を起動せず、非ゼロ終了する。
+    - 旧 script は既存 `cc-sdd-*` workflow として維持し、`kiro:*` alias にはしない。
     - _Requirements: 3.1, 3.2, 3.4, 5.3_
-    - _Boundary:_ LegacyCompatibilityShim
+    - _Boundary:_ LegacyDeprecationPolicy, MigrationDocumentation
     - _Depends:_ 1
 
-  - [ ] 3.2 未知の legacy phase に generic migration guidance を返す
-    - 未知の `cc-sdd:*` 実行でも、素の runtime error ではなく generic な migration guidance を表示する。
-    - 未知 phase でも実 workflow を起動せず、非ゼロ終了する。
+  - [ ] 3.2 legacy script が既存 workflow を指すことを明文化する
+    - 既知の `cc-sdd:*` は既存 `cc-sdd-*` workflow を指す。
+    - `cc-sdd:*` を実行時に失敗する移行専用入口へ置き換えない。
     - _Requirements: 3.1, 3.2, 3.4, 5.3_
-    - _Boundary:_ LegacyCompatibilityShim
+    - _Boundary:_ LegacyDeprecationPolicy
     - _Depends:_ 3
 
-- [ ] 4. root package と installer に legacy shim script を接続する
-  - [ ] 4.1 root `package.json` の旧 `cc-sdd:*` scripts を shim 呼び出しへ置き換える
-    - root `package.json` の旧 `cc-sdd:*` scripts は migration shim を呼ぶ形に置き換える。
-    - `cc-sdd:*` が `kiro:*` の alias として workflow を起動しないことを確認する。
+- [ ] 4. root package と installer の legacy script 維持を検証する
+  - [ ] 4.1 root `package.json` の旧 `cc-sdd:*` scripts を既存 workflow 参照として維持する
+    - root `package.json` の旧 `cc-sdd:*` scripts は既存 `cc-sdd-*` workflow を呼ぶ形で維持する。
+    - `cc-sdd:*` が `kiro:*` の alias になっていないことを確認する。
     - _Requirements: 3.1, 3.2, 3.4, 5.3_
-    - _Boundary:_ ReleaseSurfaceMetadata, LegacyCompatibilityShim
+    - _Boundary:_ ReleaseSurfaceMetadata, LegacyDeprecationPolicy
     - _Depends:_ 3
 
-  - [ ] 4.2 installer が配る旧 `cc-sdd:*` scripts を root と同じ migration policy にそろえる
-    - installer が配る旧 `cc-sdd:*` scripts も同じ migration shim 方針にそろえる。
-    - installer fixture では導入先 project の `scripts/cc-sdd-migrate.mjs` または package-resolved shim が存在し、module-not-found にならないことを確認する。
-    - root と installer の legacy script 挙動が同じ migration policy を示す。
+  - [ ] 4.2 installer が配る旧 `cc-sdd:*` scripts を root と同じ deprecation policy にそろえる
+    - installer が配る旧 `cc-sdd:*` scripts も既存 `cc-sdd-*` workflow を指す方針にそろえる。
+    - installer fixture では導入先 project の legacy scripts が module-not-found にならないことを確認する。
+    - root と installer の legacy script 挙動が同じ deprecation policy を示す。
     - _Requirements: 3.1, 3.2, 3.4, 3.5, 5.5_
-    - _Boundary:_ InstallerScriptCatalog, LegacyCompatibilityShim
-    - _Depends:_ 2, 4
+    - _Boundary:_ InstallerScriptCatalog, LegacyDeprecationPolicy
+    - _Depends:_ 2, 4.1
 
 - [ ] 5. README の Kiro workflow 説明と migration table を更新する
   - [ ] 5.1 README の Kiro compatibility workflow section を `kiro:*` canonical の説明へ更新する
@@ -92,7 +91,7 @@
 
   - [ ] 5.2 README に `cc-sdd:*` から `kiro:*` への migration table を追加する
     - `cc-sdd:*` から `kiro:*` への対応表を追加する。
-    - 旧入口が正規ではないことと、削除または shim 化の理由を説明する。
+    - 旧入口が正規ではないことと、既存互換として維持する理由を説明する。
     - 利用者が command を置き換えられる粒度で移行先を示す。
     - _Requirements: 3.1, 3.3, 4.1, 4.4_
     - _Boundary:_ MigrationDocumentation
@@ -109,7 +108,7 @@
 
   - [ ] 6.2 README.ja に残る旧 `cc-sdd:*` 正規入口表現を置き換える
     - `cc-sdd:*` を正規入口として案内する既存表現を置き換える。
-    - 旧入口が必要な場合でも fail-fast migration shim として説明する。
+    - 旧入口が必要な場合でも既存互換の非推奨入口として説明する。
     - _Requirements: 3.1, 3.3, 4.2, 4.4_
     - _Boundary:_ MigrationDocumentation
     - _Depends:_ 6
@@ -138,12 +137,12 @@
     - _Boundary:_ SurfaceValidation, CanonicalKiroScripts
     - _Depends:_ 2
 
-  - [ ] 8.2 legacy shim と installer 導入先 shim asset の検証を追加する
-    - 旧 `cc-sdd:*` shim が `Script Mapping` の対応先を示して非ゼロ終了することを検証する。
-    - installer 導入先 fixture で legacy shim が module-not-found にならず migration guidance を返すことを検証する。
-    - `SurfaceValidationService` に `validateInstalledLegacyShimAsset()` を実装し、shim 実体の配布漏れを独立した failure として返す。
+  - [ ] 8.2 legacy script と installer 導入先 script の検証を追加する
+    - 旧 `cc-sdd:*` scripts が `kiro:*` alias や実行時失敗専用入口ではないことを検証する。
+    - installer 導入先 fixture で legacy scripts が module-not-found にならず既存 workflow を指すことを検証する。
+    - `SurfaceValidationService` に `validateInstalledLegacyScripts()` を実装し、legacy script の配布漏れを独立した failure として返す。
     - _Requirements: 5.3, 5.4, 5.5_
-    - _Boundary:_ SurfaceValidation, LegacyCompatibilityShim
+    - _Boundary:_ SurfaceValidation, LegacyDeprecationPolicy
     - _Depends:_ 4, 8
 
 - [ ] 9. README/agent guidance の旧 canonical 表現を検出するテストを追加する
@@ -162,16 +161,16 @@
     - _Depends:_ 7, 9
 
 - [ ] 10. surface migration 全体を統合検証する
-  - [ ] 10.1 package、installer、shim、README、agent guidance の変更をまとめて実行確認する
-    - package、installer、shim、README、agent guidance の変更をまとめて実行確認する。
-    - `kiro:*` が canonical、`cc-sdd:*` が fail-fast migration shim、`opsx:*` が分離入口であることを確認する。
+  - [ ] 10.1 package、installer、README、agent guidance の変更をまとめて実行確認する
+    - package、installer、README、agent guidance の変更をまとめて実行確認する。
+    - `kiro:*` が canonical、`cc-sdd:*` が既存互換の非推奨入口、`opsx:*` が分離入口であることを確認する。
     - 既存の installer/build/test コマンドに今回追加した検証が含まれることを確認する。
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4, 5.1, 5.2, 5.3, 5.4, 5.5_
-    - _Boundary:_ ReleaseSurfaceMetadata, InstallerScriptCatalog, LegacyCompatibilityShim, MigrationDocumentation, AgentGuidanceSurface, SurfaceValidation
+    - _Boundary:_ ReleaseSurfaceMetadata, InstallerScriptCatalog, LegacyDeprecationPolicy, MigrationDocumentation, AgentGuidanceSurface, SurfaceValidation
     - _Depends:_ 8, 9
 
   - [ ] 10.2 public `kiro:*` scripts の staged migration 挙動を確認する
-    - public `kiro:*` scripts が後続 spec または既存 steering 系の workflow 実装へ接続されているか、未提供時は staged migration として明示的な fail-fast 案内を返すことを確認する。
+    - public `kiro:*` scripts が後続 spec または既存 steering 系の workflow 実装へ接続されているか、未提供時は staged migration として明示的な案内を返すことを確認する。
     - 後続 Kiro workflow spec がこの surface を前提に実装へ進める状態にする。
     - _Requirements: 1.5, 5.4, 5.6_
     - _Boundary:_ SurfaceValidation, CanonicalKiroScripts
@@ -180,7 +179,7 @@
 - [ ] 11. cross-spec release gate を後続 spec と既存 steering 系実装に照合する
   - [ ] 11.1 downstream spec と既存 steering 系実装の public workflow ownership を照合する
     - `kiro-spec-generation-workflows`、`kiro-status-validation-workflows`、`kiro-discovery-batch-workflows`、`kiro-iterative-implementation-workflow` と既存 steering 系実装が所有する public workflow identity と `CanonicalKiroScripts` の mapping を照合する。
-    - workflow YAML/facet の実装が同一 PR stack に存在しない public `kiro:*` は、staged migration の明示的な fail-fast 案内へ接続されていることを確認する。
+    - workflow YAML/facet の実装が同一 PR stack に存在しない public `kiro:*` は、staged migration の明示的な案内へ接続されていることを確認する。
     - _Requirements: 1.5, 5.4, 5.6_
     - _Boundary:_ SurfaceValidation, CanonicalKiroScripts
     - _Depends:_ 10
@@ -193,7 +192,7 @@
     - _Depends:_ 11
 
 - [ ] 12. 2026-06-07 方針補正を反映する
-  - 旧 `cc-sdd:*` を fail-fast migration shim に置き換えるタスクは採用せず、既存 `cc-sdd-*` workflow を維持して非推奨案内だけを追加する。
+  - 旧 `cc-sdd:*` を実行時に失敗する移行専用入口へ置き換えるタスクは採用せず、既存 `cc-sdd-*` workflow を維持して非推奨案内だけを追加する。
   - `cc-sdd:*` を `kiro:*` の透過 alias にしないことを validation に含める。
   - README/README.ja/agent guidance では、旧 `cc-sdd:*` を既存互換、`kiro:*` を新規推奨として説明する。
   - unreleased の既存 `kiro-*` workflow/facet は互換維持対象にせず、Kiro skill 継承の closed-loop workflow として削除または再作成する。

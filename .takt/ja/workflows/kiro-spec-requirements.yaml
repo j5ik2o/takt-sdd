@@ -11,6 +11,7 @@ initial_step: generate-requirements
 
 instructions:
   kiro-spec-requirements: ../facets/instructions/kiro-spec-requirements.md
+  kiro-spec-requirements-review: ../facets/instructions/kiro-spec-requirements-review.md
 
 policies:
   kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
@@ -64,7 +65,7 @@ steps:
       - kiro-spec-lifecycle
       - kiro-spec-generation
     required_permission_mode: readonly
-    instruction: kiro-spec-requirements
+    instruction: kiro-spec-requirements-review
     output_contracts:
       report:
         - name: kiro-spec-requirements-review.md

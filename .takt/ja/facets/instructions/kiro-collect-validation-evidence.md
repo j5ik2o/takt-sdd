@@ -15,9 +15,9 @@ Full custom skill reason: common evidence helper shared by multiple validation s
 1. 確認済み command result、inspected files、checked facts は `evidence` に入れる。
 2. missing evidence は `evidence` ではなく `findings` に入れる。
 3. 人間または external system による確認が必要な条件は、finding `category: "MANUAL_VERIFICATION_REQUIRED"` を使う。
-4. missing evidence を `PASS` の根拠にしない。
+4. missing evidence を `DECISION: GO` の根拠にしない。
 5. `summary` は人間向け説明に限定し、workflow branching は machine fields を使う。
 
 ## Output mapping
 
-shared `kiro-validation-result` contract fields の `verdict`、`checked_items`、`findings`、`error_category`、`evidence`、`summary` を使う。
+shared `kiro-validation-result` contract fields の `DECISION`、`checked_items`、`findings`、`error_category`、`evidence`、`summary` を使う。workflow branching の primary machine field は `DECISION` とし、`verdict` は任意の補助 data としてのみ扱う。
