@@ -6,7 +6,7 @@ workflow_config:
       network_access: true
     opencode:
       network_access: true
-max_steps: 7
+max_steps: 10
 initial_step: generate-requirements
 
 instructions:
