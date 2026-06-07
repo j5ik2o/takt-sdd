@@ -648,9 +648,26 @@ function validateFacetFiles(repoRoot) {
       if (!/^\s*\{extends:\s*[^}]+}\s*$/m.test(content) && !content.includes("Full custom reason:")) {
         failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must use {extends: parent} or state Full custom reason`);
       }
+      if (spec.kind === "output-contracts" && spec.name === "kiro-spec-generation-result") {
+        validateGenerationResultContractShape(content, path, failures, repoRoot);
+      }
     }
   }
   return { ok: failures.length === 0, failures };
+}
+
+function validateGenerationResultContractShape(content, path, failures, repoRoot) {
+  const draftStatusLine = content.match(/^- `draft_status`:[^\n]*/m)?.[0] ?? "";
+  if (/\b(?:NEEDS_FIX|BLOCKED)\b/.test(draftStatusLine)) {
+    failures.push(
+      `FACET_DRIFT: ${rel(repoRoot, path)} must not list validation verdict values NEEDS_FIX or BLOCKED as draft_status states`,
+    );
+  }
+  if (/^- `(?:NEEDS_FIX|BLOCKED)`\s/m.test(content)) {
+    failures.push(
+      `FACET_DRIFT: ${rel(repoRoot, path)} must describe NEEDS_FIX and BLOCKED as validation.verdict values`,
+    );
+  }
 }
 
 function validateLifecycleTerms(repoRoot) {

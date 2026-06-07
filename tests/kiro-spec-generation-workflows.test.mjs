@@ -322,6 +322,53 @@ test("kiro spec generation validation detects generation result draft routing dr
   );
 });
 
+test("kiro spec generation validation rejects verdict values as draft status states", () => {
+  const root = makeFixture();
+  const invalidGenerationResult = [
+    "{extends: validation}",
+    "",
+    "- `phase`: one of `init`, `requirements`, `design`, `tasks`, or `quick`.",
+    "- `validation`: object with `verdict`, `evidence`, `findings`, and optional `sharedContractValidation`.",
+    "- `validation.verdict`: one of `PASS`, `NEEDS_FIX`, or `BLOCKED`.",
+    "- `draft_status`: one of `READY_FOR_REVIEW`, `NEEDS_FIX`, `BLOCKED`, or `WRITTEN`.",
+    "- `review_gate`: one of `PENDING`, `PASSED`, `FAILED`, or `NOT_APPLICABLE`.",
+    "- `featureName`: canonical feature directory name.",
+    "- `updatedFiles`: array of files written by the current step.",
+    "- `nextAction`: optional next approval, correction, or phase command.",
+    "- `blockingReason`: required when `validation.verdict` is `BLOCKED`.",
+    "",
+    "- `PASS` means the current step succeeded.",
+    "- `NEEDS_FIX` means the phase needs correction.",
+    "- `BLOCKED` means the workflow could not safely continue.",
+  ].join("\n");
+  for (const lang of ["en", "ja"]) {
+    writeFixtureFile(
+      root,
+      `.takt/${lang}/facets/output-contracts/kiro-spec-generation-result.md`,
+      invalidGenerationResult,
+    );
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("FACET_DRIFT") &&
+        failure.includes("must not list validation verdict values NEEDS_FIX or BLOCKED as draft_status states"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("FACET_DRIFT") &&
+        failure.includes("must describe NEEDS_FIX and BLOCKED as validation.verdict values"),
+    ),
+    result.failures.join("\n"),
+  );
+});
+
 test("task 13.1 validation detects downstream boundary drift", () => {
   const root = makeValidationFixture();
   writeFixtureFile(
