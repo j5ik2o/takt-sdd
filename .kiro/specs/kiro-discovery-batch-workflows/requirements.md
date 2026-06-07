@@ -87,3 +87,39 @@
 4. repository validation が実行される場合、discovery batch validation は cross-spec review output が issue severity、affected specs、suggested fix、decomposition return の区別を持つことを検証する。
 5. discovery batch validation は `kiro-impl` の code edit behavior と個別 spec artifact 本文生成の full behavior を成功条件に含めない。
 6. discovery batch validation は Kiro-specific facet が shared `BuiltinFacetInheritancePolicy` に従い、TAKT built-in facet を継承できるものは差分だけを記述していることを検出する。
+
+### Requirement 7: discovery/batch workflow は Kiro skill section を継承する
+
+**Objective:** workflow 実装者として、`kiro-discovery` と `kiro-spec-batch` を独自 orchestration prompt ではなく、Kiro skill の routing/batch 手順を TAKT step と adapter facet に写像したい。そうすることで、Kiro skill 更新時に TAKT 側の追従を adapter と rule mapping に限定できる。
+
+#### Acceptance Criteria
+
+1. `kiro-discovery` workflow が routing を行う場合、discovery batch workflows は `kiro-discovery` skill の routing section を `extends_skill` / `extends_skill_section` で継承した thin adapter facet を使う。
+2. `kiro-spec-batch` workflow が roadmap を処理する場合、discovery batch workflows は `kiro-spec-batch` skill の dependency wave、parallel subagent dispatch、cross-spec review、remediation、finalize に対応する section を thin adapter facet で継承する。
+3. adapter facet は Kiro skill 本文をコピーせず、TAKT の artifact input、subagent dispatch input、output summary、rule condition の写像だけを記述する。
+4. `kiro-spec-batch` は `kiro-spec-quick` の一種ではなく、`.kiro/steering/roadmap.md` を読む dependency-wave controller として扱う。
+5. discovery/batch validation は `extends_skill`、`extends_skill_section`、machine field、enum の en/ja drift と skill section missing を検出する。
+
+### Requirement 8: batch は dynamic worker dispatch と cross-spec remediation loop を持つ
+
+**Objective:** maintainer として、roadmap の wave ごとに複数 spec を生成し、cross-spec review と修正まで閉じた workflow にしたい。そうすることで、複数 spec の境界ずれを implementation 前に解消できる。
+
+#### Acceptance Criteria
+
+1. `kiro-spec-batch` workflow が wave execution を行う場合、discovery batch workflows は wave 内の feature 数を static TAKT step に展開せず、batch worker dispatch step が dynamic subagent dispatch を管理する。
+2. worker dispatch が feature spec を生成する場合、worker は `kiro-spec-generation-workflows` の phase contract と Kiro skill adapter を参照し、batch workflow が requirements/design/tasks 本文生成を再実装しない。
+3. cross-spec review が issue を返す場合、batch workflow は affected specs、issue category、repair target、roadmap/decomposition return を machine-readable に報告する。
+4. local remediation が可能な issue の場合、batch workflow は remediation step と再 review step を接続し、最大 3 回の上限を workflow YAML の `loop_monitors.threshold` だけで表現する。
+5. decomposition 問題または 3 回の remediation で解消しない問題が残る場合、batch workflow は implementation-ready を確定せず、roadmap/discovery return または human stop を返す。
+6. batch completion は worker-local `ready_for_implementation` だけで確定せず、cross-spec review と必要な remediation の通過後にだけ確定する。
+
+### Requirement 9: 既存 unreleased discovery/batch workflow/facet を再作成対象として扱う
+
+**Objective:** maintainer として、過去前提の単発 `kiro-discovery` / `kiro-spec-batch` workflow を互換維持せず、Kiro skill 継承と dynamic batch controller に合わせて整理したい。そうすることで、旧 workflow が batch の閉じた loop を持たないまま残ることを防げる。
+
+#### Acceptance Criteria
+
+1. existing `.takt/{en,ja}/workflows/kiro-discovery.yaml` または `kiro-spec-batch.yaml` が単一 prompt step wrapper の場合、discovery batch validation は failure として扱う。
+2. discovery/batch instruction facet が `extends_skill` と `extends_skill_section` を持たない場合、implementation は削除または thin adapter への再作成を要求する。
+3. workflow が shell `takt -w`、`workflow_call`、workflow-to-workflow 再起動で phase reuse を行う場合、discovery batch validation は failure として扱う。
+4. TAKT built-in facet を継承して残す policy/output/persona は workflow から結線されていることを検証し、未使用 facet を残さない。

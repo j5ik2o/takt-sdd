@@ -22,7 +22,7 @@
 
 1. Kiro workflow が status 結果を出力する場合、Kiro contract set は feature の存在、phase、approval、ready-for-implementation の判定を parseable な構造で表現できる。
 2. Kiro workflow が validation result を出力する場合、Kiro contract set は `PASS`、`FAIL`、`NEEDS_FIX`、`BLOCKED` のような分岐可能な verdict と主要理由を表現できる。
-3. Kiro workflow が review verdict を出力する場合、Kiro contract set は `GO`、`NO_GO`、actionable findings、対象 requirement/task を分けて表現できる。
+3. Kiro workflow が review verdict を出力する場合、Kiro contract set は `VERDICT: APPROVED | REJECTED`、actionable findings、対象 requirement/task を分けて表現できる。
 4. Kiro workflow が debug decision を出力する場合、Kiro contract set は root cause、selected action、retry eligibility、abort reason を分岐可能な形で表現できる。
 5. Kiro workflow が completion verification を出力する場合、Kiro contract set は 完了可否、未完了項目、検証証跡を parseable な形で表現できる。
 6. Kiro contract set は 人間向け要約と機械判定用フィールドを混在させず、workflow rule が参照する値を明示する。
@@ -97,3 +97,42 @@
 3. 親 facet が `node_modules/takt/builtins/{lang}/facets` に存在しない場合、Kiro contract validation は `BUILTIN_FACET_NOT_FOUND` として fail-fast できる。
 4. TAKT runtime が Markdown facet inheritance を解決できない場合、Kiro contract validation は `FACET_EXTENDS_UNSUPPORTED` として前提不足を示し、親 facet の暗黙コピーとして扱わない。
 5. Kiro-specific facet が built-in facet を継承しない場合、design または validation finding は full custom にする理由を示す。
+
+### Requirement 8: Kiro skill を source of truth とする thin adapter facet を定義する
+
+**Objective:** workflow/facet 実装者として、Kiro skill 本体を TAKT facet にコピーせず、Kiro skill の特定 section を継承した adapter として扱いたい。そうすることで、`.agents/skills/kiro-*` が更新されたときに TAKT workflow 側の追従範囲を input/output/rule mapping の差分へ限定できる。
+
+#### Acceptance Criteria
+
+1. Kiro-specific instruction facet が Kiro skill の手順を実行する場合、Kiro contract set は frontmatter の `extends_skill` と `extends_skill_section` で参照元 skill と section heading を明示できる。
+2. `extends_skill_section` が記述される場合、Kiro contract set は翻訳後の見出しではなく、参照元 `SKILL.md` に存在する section heading 文字列をそのまま使うことを要求する。
+3. thin adapter facet の本文は Kiro skill 本文のコピーではなく、TAKT の入力 artifact、参照 facet、出力 contract、rule condition への写像だけを記述する。
+4. en/ja の thin adapter facet が同じ Kiro skill section を参照する場合、Kiro contract validation は `extends_skill`、`extends_skill_section`、machine field、enum の drift を検出する。
+5. Kiro skill source root または section heading が存在しない場合、Kiro contract validation は `SKILL_SOURCE_MISSING` または `SKILL_SECTION_NOT_FOUND` として fail-fast できる。
+6. Kiro skill 本文に由来する長い手順コピーが thin adapter facet に含まれる場合、Kiro contract validation は `SKILL_BODY_COPY_DETECTED` として差し戻せる。
+
+### Requirement 9: Kiro workflow の形と loop monitor の共通契約を定義する
+
+**Objective:** workflow 実装者として、`kiro-*` workflow を単発 prompt step ではなく、Kiro skill が要求する確認、修正、debug、validation の閉じた loop として実装したい。そうすることで、agent が途中成果だけを返して止まる事故を避けられる。
+
+#### Acceptance Criteria
+
+1. Kiro workflow が generation または implementation を行う場合、Kiro contract set は単一 prompt step wrapper を不正な shape として扱い、phase step、review/validation step、必要な repair/debug step、finalization step の接続を要求する。
+2. Kiro workflow が read-only status/validation を行う場合、Kiro contract set は collect evidence、classify/validate、report のような複数 step の workflow shape を要求し、artifact 更新や repair loop を含めない。
+3. Kiro workflow が再実行上限を持つ場合、Kiro contract set は上限を workflow YAML の `loop_monitors.threshold` にだけ置き、facet frontmatter、validator、独自 counter に重複して持たせない。
+4. Kiro workflow が phase workflow を再利用する場合、Kiro contract set は `workflow_call`、shell 経由の `takt -w`、workflow-to-workflow の再起動ではなく、同じ thin adapter facet、output contract、validation helper の再利用を要求する。
+5. Kiro workflow validation は、Kiro-specific workflow が未使用 facet を保持している場合、または workflow から参照されない Kiro-specific facet が残っている場合に failure として検出できる。
+6. Kiro workflow validation は、既存の unreleased `.takt/{en,ja}/workflows/kiro-*.yaml` と Kiro instruction facets を互換維持対象にせず、必要に応じて削除・再作成できる前提を downstream spec に提供する。
+
+### Requirement 10: Kiro skill の構造化フィールドをそのまま machine contract として扱う
+
+**Objective:** workflow 実装者として、Kiro skill が定義する `STATUS`、`VERDICT`、`NEXT_ACTION`、`DECISION` などを TAKT rule から直接参照したい。そうすることで、Kiro skill の更新と TAKT output contract の間に独自翻訳層を増やさずに済む。
+
+#### Acceptance Criteria
+
+1. Kiro implementation adapter が implementer output を読む場合、Kiro contract set は `STATUS: READY_FOR_REVIEW | BLOCKED | NEEDS_CONTEXT` を source of truth として扱う。
+2. Kiro review adapter が reviewer output を読む場合、Kiro contract set は `VERDICT: APPROVED | REJECTED` を source of truth として扱う。
+3. Kiro debug adapter が debugger output を読む場合、Kiro contract set は `NEXT_ACTION: RETRY_TASK | BLOCK_TASK | STOP_FOR_HUMAN` を source of truth として扱う。
+4. Kiro implementation validation adapter が feature validation output を読む場合、Kiro contract set は `DECISION: GO | NO-GO | MANUAL_VERIFY_REQUIRED` を source of truth として扱う。
+5. spec generation review adapter が Kiro spec skill の review step を読む場合、Kiro contract set は該当 skill section が定義する review result を source of truth とし、独自の `validation.verdict` や `review.verdict` へ翻訳しない。
+6. 既存 `kiro-validation-result`、`kiro-review-verdict`、`kiro-debug-decision` などの shared output contract は、人間向け補助形式として残す場合でも Kiro skill field を上書きせず、workflow rule の primary field は Kiro skill field に一致させる。

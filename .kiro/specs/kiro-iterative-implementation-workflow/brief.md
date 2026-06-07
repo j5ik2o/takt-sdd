@@ -10,7 +10,7 @@ OpenSpec change では、`kiro-impl` を planning、one-task execution、interna
 
 ## Desired Outcome
 
-`kiro-impl` が `.kiro/specs/<feature>/tasks.md` から実行可能な 1 タスクを選び、境界、依存、検証コマンド、feature flag の前提を明示して実行します。review、debug、completion verification が通るまで task checkbox は更新せず、失敗時は RETRY_TASK、BLOCK_TASK、STOP_FOR_HUMAN のような明示的 decision で分岐します。
+`kiro-impl` が `.kiro/specs/<feature>/tasks.md` から実行可能な 1 タスクを選び、境界、依存、検証コマンド、feature flag の前提を明示して実行します。review、debug、completion verification が通るまで task checkbox は更新せず、失敗時は RETRY_TASK、BLOCK_TASK、STOP_FOR_HUMAN のような明示的 decision で分岐します。再実行ループの健全性と打ち切りは TAKT runtime の `loop_monitors` を source of truth にし、facet や validator に独自 retry counter / loop-health 管理を持たせません。
 
 ## Approach
 

@@ -87,3 +87,28 @@
 4. shared contract の enum、field、artifact layout が変更される場合、spec generation validation は spec generation workflow の再検証が必要であることを failure または actionable finding として示す。
 5. spec generation validation は discovery/batch workflow や implementation workflow の full behavior を成功条件に含めない。
 6. spec generation validation は Kiro-specific facet が shared `BuiltinFacetInheritancePolicy` に従い、TAKT built-in facet を継承できるものは差分だけを記述していることを検出する。
+
+### Requirement 7: spec generation workflow は Kiro skill section を継承した closed loop として動作する
+
+**Objective:** workflow 実装者として、`kiro-spec-*` workflow を独自 prompt の単発 step ではなく、Kiro skill が定義する review/fix/finalize 手順を TAKT step と loop に写像したい。そうすることで、Kiro skill 更新時の追従範囲を adapter の差分に限定できる。
+
+#### Acceptance Criteria
+
+1. `kiro-spec-requirements` workflow が requirements draft を生成する場合、spec generation workflows は `kiro-spec-requirements` の `Review Requirements Draft` section を thin adapter facet で継承し、requirements review gate と repair loop を接続する。
+2. requirements review が local issue を返す場合、spec generation workflows は Kiro skill の最大 2 pass の意味を workflow YAML の `loop_monitors.threshold` だけで表現し、facet や validator に retry counter を置かない。
+3. `kiro-spec-design` workflow が design draft を生成する場合、spec generation workflows は design review gate を独自 review ではなく `kiro-validate-design` skill protocol の thin adapter step として接続する。
+4. `kiro-spec-tasks` workflow が task plan を生成する場合、spec generation workflows は `kiro-spec-tasks` の `Step 3: Review Task Plan` と `Step 3.5: Run Task-Graph Sanity Review` を thin adapter facet で継承し、`PASS`、`NEEDS_FIXES`、`RETURN_TO_DESIGN` を Kiro skill field のまま扱う。
+5. `kiro-spec-quick` workflow が quick path を実行する場合、spec generation workflows は standalone workflow を `workflow_call` や shell `takt -w` で呼ばず、同じ thin adapter facet と shared contract を使う step sequence として展開する。
+6. quick path の final sanity review は `kiro-spec-quick` の `Final Sanity Review` section を thin adapter facet で継承し、requirements/design/tasks の coherence が通るまで completion を返さない。
+
+### Requirement 8: 既存 unreleased Kiro workflow/facet を再作成対象として扱う
+
+**Objective:** maintainer として、過去前提で作られた単発 `kiro-*` workflow と instruction facet を互換維持せず、Kiro skill 継承設計に合わせて整理したい。そうすることで、未使用 facet や独自 prompt が残って実装者を混乱させることを防げる。
+
+#### Acceptance Criteria
+
+1. spec generation workflow implementation が既存 `.takt/{en,ja}/workflows/kiro-spec-*.yaml` を検出する場合、spec generation validation は単一 step wrapper、独自 review、未結線 facet を failure として扱う。
+2. 既存 Kiro-specific instruction facet が Kiro skill section を継承していない場合、spec generation validation は再利用せず削除または thin adapter への再作成を要求する。
+3. TAKT built-in facet が使える policy/output/persona は `BuiltinFacetInheritancePolicy` に従って再利用し、使わない facet は残さない。
+4. spec generation workflow は `validation.verdict` などの独自翻訳 field を rule condition の primary field にせず、Kiro skill が定義する review result を使う。
+5. validation は `kiro-spec-batch` を quick path の一種として扱わず、discovery/batch spec の roadmap wave controller として境界外に残す。

@@ -597,12 +597,37 @@ interface SpecGenerationValidationResult {
 
 ## Data Models
 
+### Kiro Skill Adapter Map
+
+spec generation の instruction facet は Kiro skill 本文をコピーせず、shared `KiroSkillInheritancePolicy` に従って `extends_skill` と `extends_skill_section` を持つ thin adapter として実装します。adapter 本文は TAKT の artifact input、output field、rule condition、write boundary の写像だけを書きます。
+
+| Workflow step | Kiro skill source | Section source | TAKT mapping |
+|---------------|-------------------|----------------|--------------|
+| requirements draft | `kiro-spec-requirements` | generation section | `brief.md`、steering、既存 draft を入力し、`requirements.md` draft を出す |
+| requirements review | `kiro-spec-requirements` | `Review Requirements Draft` | local issue は repair loop、scope ambiguity は user clarification/block |
+| design draft | `kiro-spec-design` | design draft section | approved requirements と research evidence を入力し、`design.md` / optional `research.md` を出す |
+| design validation | `kiro-validate-design` | design validation protocol | skill-defined decision field を primary field とし、NO-GO は local repair または requirements gap へ分岐 |
+| task plan review | `kiro-spec-tasks` | `Step 3: Review Task Plan` | task draft の missing coverage、oversized task、dependency gap を修正対象として返す |
+| task graph sanity | `kiro-spec-tasks` | `Step 3.5: Run Task-Graph Sanity Review` | `PASS`、`NEEDS_FIXES`、`RETURN_TO_DESIGN` を rule condition に使う |
+| quick final sanity | `kiro-spec-quick` | `Final Sanity Review` | requirements/design/tasks の coherence を確認し、通過後だけ completion を返す |
+
+requirements review の local repair 上限、design validation の再生成上限、task review/sanity の再実行上限は workflow YAML の `loop_monitors.threshold` にだけ置きます。adapter facet は Kiro skill の loop 意味を説明しても、`retryCount` や独自 max attempt field を持ちません。
+
+### Legacy Kiro Workflow Replacement Policy
+
+既存 `.takt/{en,ja}/workflows/kiro-spec-*.yaml` と `.takt/{en,ja}/facets/instructions/kiro-spec-*.md` は unreleased 前提の成果物であり、互換維持対象ではありません。実装時は以下の順序で扱います。
+
+1. Kiro skill 継承、workflow shape、loop monitor、field contract に合わない workflow/facet は削除する。
+2. 再利用する facet は `extends_skill` / `extends_skill_section` または built-in `{extends: parent}` を持つ thin adapter に作り替える。
+3. workflow から参照されない Kiro-specific facet は validation failure とし、残さない。
+4. quick workflow は standalone workflow を呼び出さず、同じ adapter facet を参照する step sequence として展開する。
+
 ### Domain Model
 
 - `FeatureSpec` — `.kiro/specs/<feature>` directory と lifecycle state を持つ個別 spec。
 - `SpecArtifact` — `requirements.md`、`design.md`、`research.md`、`tasks.md` の phase output。
 - `LifecycleState` — `spec.json.phase`、`approvals.*.generated`、`approvals.*.approved`、`ready_for_implementation`。
-- `GenerationPhaseResult` — workflow phase の validation verdict、updated files、next action、blocking reason。
+- `GenerationPhaseResult` — workflow phase の Kiro skill field、updated files、next action、blocking reason。
 - `TaskAnnotation` — downstream implementation が読む `_Requirements:_`、`_Boundary:_`、`_Depends:_`、`(P)` marker。
 
 ### Logical Data Model
@@ -612,7 +637,7 @@ interface SpecGenerationValidationResult {
 | FeatureSpec | feature name | directory path, optional brief, spec json | feature directory に閉じて更新する |
 | SpecJson | file path | phase, approvals, ready flag, timestamps | shared lifecycle phase table と一致する |
 | MarkdownArtifact | file path | artifact type, required sections | phase ごとの required sections を満たす |
-| GenerationResult | phase run | validation.verdict, updated files, blocking reason | `PASS` のときだけ lifecycle を進める |
+| GenerationResult | phase run | skill-defined review result, updated files, blocking reason | Kiro skill field が通過状態のときだけ lifecycle を進める |
 | TaskAnnotation | task id | requirements, boundary, depends, parallel marker | tasks.md の全 executable task に存在する |
 
 ## Error Handling

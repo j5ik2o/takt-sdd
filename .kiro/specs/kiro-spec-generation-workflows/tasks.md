@@ -131,3 +131,30 @@
   - _Requirements: 6.6_
   - _Boundary:_ SpecGenerationValidationHarness
   - _Depends:_ 3.1, 4.1, 5.1, 6.1, 11.1, 12.1
+
+- [ ] 15. Kiro skill thin adapter へ spec generation facets を再整合する
+  - `kiro-spec-requirements` の `Review Requirements Draft`、`kiro-spec-tasks` の `Step 3: Review Task Plan` と `Step 3.5: Run Task-Graph Sanity Review`、`kiro-spec-quick` の `Final Sanity Review` を `extends_skill_section` で参照する。
+  - `kiro-spec-design` の review gate は独自 review ではなく `kiro-validate-design` skill protocol の adapter step として接続する。
+  - Kiro skill 本文を instruction facet にコピーせず、TAKT input/output/rule mapping だけを差分として記述する。
+  - en/ja adapter facet の `extends_skill`、`extends_skill_section`、machine field、enum が一致することを validation に追加する。
+  - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.6, 8.4_
+  - _Boundary:_ RequirementsGenerationWorkflow, DesignGenerationWorkflow, TasksGenerationWorkflow, QuickGenerationWorkflow, SpecGenerationValidationHarness
+  - _Depends:_ 14.1
+
+- [ ] 16. unreleased の既存 Kiro generation workflow/facet を削除または再作成する
+  - `.takt/{en,ja}/workflows/kiro-spec-*.yaml` が単発 prompt step wrapper の場合は削除し、Kiro skill adapter step sequence として再作成する。
+  - `.takt/{en,ja}/facets/instructions/kiro-spec-*.md` が `extends_skill` を持たない独自 prompt の場合は削除または thin adapter に作り替える。
+  - workflow から参照されない Kiro-specific facet を validation failure にする。
+  - quick workflow は `workflow_call` や shell `takt -w` に依存しない single YAML step sequence を維持する。
+  - _Requirements: 7.5, 8.1, 8.2, 8.3, 8.5_
+  - _Boundary:_ SpecGenerationWorkflowBundle, SpecGenerationValidationHarness
+  - _Depends:_ 15
+
+- [ ] 17. Kiro skill field contract に rule condition を合わせる
+  - task graph sanity の `PASS`、`NEEDS_FIXES`、`RETURN_TO_DESIGN` を Kiro skill field のまま rule condition に使う。
+  - requirements/design/tasks/quick の review result を独自 `validation.verdict` や `review.verdict` に翻訳しない。
+  - shared validation supplement を使う場合も primary field は Kiro skill section の output field に合わせる。
+  - 完了時点で spec generation validation が独自翻訳 field と old output contract drift を検出できる。
+  - _Requirements: 7.4, 8.4_
+  - _Boundary:_ SpecGenerationValidationHarness, SpecGenerationWorkflowBundle
+  - _Depends:_ 15, 16

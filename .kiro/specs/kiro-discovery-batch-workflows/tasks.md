@@ -105,3 +105,31 @@
   - _Requirements: 6.6_
   - _Boundary:_ DiscoveryBatchValidationHarness
   - _Depends:_ 2, 3, 8, 9, 10, 11, 12
+
+- [ ] 14. Kiro skill thin adapter へ discovery/batch facets を再整合する
+  - `kiro-discovery` と `kiro-spec-batch` の instruction facet に `extends_skill` と `extends_skill_section` を持たせる。
+  - Kiro skill 本文をコピーせず、TAKT artifact input、worker dispatch input、output summary、rule condition だけを差分として記述する。
+  - `kiro-spec-batch` を quick path ではなく roadmap dependency-wave controller として扱う。
+  - en/ja adapter facet の skill section、machine field、enum が一致することを validation に追加する。
+  - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 9.2_
+  - _Boundary:_ DiscoveryRoutingWorkflow, BatchWorkflow, DiscoveryBatchValidationHarness
+  - _Depends:_ 13
+
+- [ ] 15. dynamic worker dispatch と cross-spec remediation loop を実装する
+  - wave 内 feature を static TAKT step に展開せず、batch worker dispatch step が dynamic subagent input と result aggregation を管理する。
+  - worker は `kiro-spec-generation-workflows` の phase contract と adapter を参照し、batch workflow は requirements/design/tasks 本文生成を再実装しない。
+  - cross-spec review issue を affected specs、issue category、repair target、roadmap/decomposition return として machine-readable に返す。
+  - local remediation と再 review を `loop_monitors.threshold: 3` で制御し、独自 retry counter を持たせない。
+  - remediation で解消しない issue または decomposition issue がある場合は implementation-ready を確定しない。
+  - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
+  - _Boundary:_ BatchWavePlanner, BatchWorkerDispatcher, CrossSpecReviewWorkflow, BatchRemediationCoordinator
+  - _Depends:_ 14
+
+- [ ] 16. unreleased discovery/batch workflow/facet を削除または再作成する
+  - `.takt/{en,ja}/workflows/kiro-discovery.yaml` と `kiro-spec-batch.yaml` が単一 prompt step wrapper の場合は削除し、closed-loop workflow として再作成する。
+  - `workflow_call`、shell `takt -w`、workflow-to-workflow 再起動で phase reuse している箇所を排除する。
+  - TAKT built-in facet を継承して残す policy/output/persona は workflow から結線し、未使用なら削除する。
+  - 完了時点で discovery/batch validation が old single-step workflow、未結線 facet、独自 loop counter を検出できる。
+  - _Requirements: 9.1, 9.2, 9.3, 9.4_
+  - _Boundary:_ DiscoveryBatchWorkflowBundle, DiscoveryBatchValidationHarness
+  - _Depends:_ 14, 15

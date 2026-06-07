@@ -17,7 +17,7 @@
   - _Depends:_ 1
 
 - [x] 3. review verdict と debug decision の output contract を追加する
-  - `GO` / `NO_GO`、actionable findings、requirement/task references を返す review verdict contract を追加する。
+  - `VERDICT: APPROVED | REJECTED`、actionable findings、requirement/task references を返す review supplement contract を追加する。
   - root cause、selected action、retry eligibility、abort reason を返す debug decision contract を追加する。
   - 完了時点で downstream review/debug workflow が machine verdict を rule condition に使える contract shape を参照できる。
   - _Requirements: 1.3, 1.4, 1.6, 5.1, 6.1_
@@ -113,3 +113,31 @@
 - Kiro shared output contracts は en/ja で同じ machine field と enum を持ち、human summary を workflow branching に使わないことを明記した。
 - TAKT 0.43.0 の runtime semantics に合わせ、facet inheritance は frontmatter ではなく `{extends: validation}` の単独行 directive と bare parent name を検証する。
 - 検証済みコマンド: `npm run validate:kiro-shared-contracts`、`npm run test:kiro-shared-contracts`、`npm run build` in `installer/`、`node installer/dist/cli.js --dry-run --lang en`、`node installer/dist/cli.js --dry-run --lang ja`、`node installer/dist/cli.js --help`、`.takt/{en,ja}/workflows/*.yaml` の `takt prompt` validation。
+
+- [ ] 14. Kiro skill inheritance validation を追加する
+  - Kiro-specific instruction facet の frontmatter に `extends_skill` と `extends_skill_section` を要求する。
+  - `extends_skill_section` が `.agents/skills/kiro-*` または `.claude/skills/kiro-*` の `SKILL.md` に存在することを検証する。
+  - en/ja adapter facet の参照 skill、section heading、machine field、enum が一致することを検証する。
+  - Kiro skill 本文の長いコピーを `SKILL_BODY_COPY_DETECTED` として検出する。
+  - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
+  - _Boundary:_ KiroSkillInheritancePolicy, SharedContractValidationHarness
+  - _Depends:_ 11, 12
+
+- [ ] 15. Kiro workflow shape と loop monitor validation を追加する
+  - generation / implementation workflow が単一 prompt step wrapper でないことを検出する。
+  - read-only status/validation workflow が collect、classify/validate、report の shape に閉じ、artifact 更新 loop を持たないことを検出する。
+  - 再実行上限が `loop_monitors.threshold` にだけ存在し、facet frontmatter、validator、独自 retry counter に重複していないことを検証する。
+  - `workflow_call`、shell 経由の `takt -w`、workflow-to-workflow の再起動を Kiro workflow から排除する。
+  - Kiro-specific facet が workflow から参照されず残っている場合は validation failure にする。
+  - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6_
+  - _Boundary:_ KiroWorkflowShapeRules, KiroWorkflowReferenceRules, SharedContractValidationHarness
+  - _Depends:_ 14
+
+- [ ] 16. Kiro skill field contract へ output contract を再整合する
+  - `kiro-impl` implementer の `STATUS`、`kiro-review` の `VERDICT`、`kiro-debug` の `NEXT_ACTION`、`kiro-validate-impl` の `DECISION` を primary machine field として validation する。
+  - 既存 `kiro-validation-result`、`kiro-review-verdict`、`kiro-debug-decision`、`kiro-completion-verification` を補助 contract として残す場合も Kiro skill field を上書きしない。
+  - workflow rule が独自 `validation.verdict` や `review.verdict` へ翻訳していないことを検証する。
+  - 下流 spec generation / status / discovery / implementation workflow の validator が同じ field contract を参照できるようにする。
+  - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6_
+  - _Boundary:_ KiroSkillFieldContract, KiroOutputContractCatalog, SharedContractValidationHarness
+  - _Depends:_ 14, 15
