@@ -14,6 +14,9 @@ instructions:
   kiro-impl-execute-task: ../facets/instructions/kiro-impl-execute-task.md
   kiro-impl-update-progress: ../facets/instructions/kiro-impl-update-progress.md
   kiro-review-task: ../facets/instructions/kiro-review-task.md
+  kiro-review-architecture-task: ../facets/instructions/kiro-review-architecture-task.md
+  kiro-review-qa-task: ../facets/instructions/kiro-review-qa-task.md
+  kiro-review-testing-task: ../facets/instructions/kiro-review-testing-task.md
   kiro-debug-task: ../facets/instructions/kiro-debug-task.md
   kiro-verify-task-completion: ../facets/instructions/kiro-verify-task-completion.md
   kiro-validate-impl-final: ../facets/instructions/kiro-validate-impl-final.md
@@ -49,7 +52,7 @@ loop_monitors:
   - cycle:
       - execute-task
       - ai-quality-gate
-      - review-task
+      - reviewers
       - debug-task
     threshold: 2
     judge:
@@ -58,7 +61,7 @@ loop_monitors:
       rules:
         - condition: Healthy (review findings are converging toward VERDICT APPROVED)
           next: execute-task
-        - condition: Unproductive (loop_monitors.threshold reached for execute-task, ai-quality-gate, review-task, and debug-task)
+        - condition: Unproductive (loop_monitors.threshold reached for execute-task, ai-quality-gate, reviewers, and debug-task)
           next: update-progress
 
 steps:
@@ -140,39 +143,124 @@ steps:
         - architecture
     rules:
       - condition: COMPLETE
-        next: review-task
+        next: reviewers
       - condition: need_replan
         next: debug-task
       - condition: ABORT
         next: ABORT
 
-  - name: review-task
-    edit: false
-    persona: coding-reviewer
-    policy:
-      - review
-      - qa
-      - kiro-artifact-operations
-      - kiro-impl-task-progress
-    knowledge:
-      - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Bash
-    required_permission_mode: readonly
-    instruction: kiro-review-task
-    output_contracts:
-      report:
-        - name: kiro-task-review-verdict.md
-          format: kiro-review-verdict
+  - name: reviewers
+    parallel:
+      - name: coding-review
+        edit: false
+        persona: coding-reviewer
+        policy:
+          - review
+          - qa
+          - kiro-artifact-operations
+          - kiro-impl-task-progress
+        knowledge:
+          - architecture
+        provider_options:
+          claude:
+            allowed_tools:
+              - Read
+              - Glob
+              - Grep
+              - Bash
+        required_permission_mode: readonly
+        instruction: kiro-review-task
+        output_contracts:
+          report:
+            - name: kiro-task-coding-review.md
+              format: kiro-review-verdict
+        rules:
+          - condition: approved
+          - condition: needs_fix
+
+      - name: arch-review
+        edit: false
+        persona: architecture-reviewer
+        policy:
+          - review
+          - kiro-artifact-operations
+          - kiro-impl-task-progress
+        knowledge:
+          - architecture
+          - backend
+        provider_options:
+          claude:
+            allowed_tools:
+              - Read
+              - Glob
+              - Grep
+              - Bash
+        required_permission_mode: readonly
+        instruction: kiro-review-architecture-task
+        output_contracts:
+          report:
+            - name: kiro-task-architecture-review.md
+              format: architecture-review
+        rules:
+          - condition: approved
+          - condition: needs_fix
+
+      - name: qa-review
+        edit: false
+        persona: qa-reviewer
+        policy:
+          - review
+          - qa
+          - kiro-artifact-operations
+          - kiro-impl-task-progress
+        provider_options:
+          claude:
+            allowed_tools:
+              - Read
+              - Glob
+              - Grep
+              - Bash
+        required_permission_mode: readonly
+        instruction: kiro-review-qa-task
+        output_contracts:
+          report:
+            - name: kiro-task-qa-review.md
+              format: qa-review
+        rules:
+          - condition: approved
+          - condition: needs_fix
+
+      - name: testing-review
+        edit: false
+        persona: testing-reviewer
+        policy:
+          - review
+          - testing
+          - kiro-artifact-operations
+          - kiro-impl-task-progress
+        knowledge:
+          - unit-testing
+          - e2e-testing
+        provider_options:
+          claude:
+            allowed_tools:
+              - Read
+              - Glob
+              - Grep
+              - Bash
+        required_permission_mode: readonly
+        instruction: kiro-review-testing-task
+        output_contracts:
+          report:
+            - name: kiro-task-testing-review.md
+              format: testing-review
+        rules:
+          - condition: approved
+          - condition: needs_fix
     rules:
-      - condition: VERDICT APPROVED
+      - condition: all("approved")
         next: verify-task-completion
-      - condition: VERDICT REJECTED
+      - condition: any("needs_fix")
         next: debug-task
 
   - name: debug-task
@@ -312,5 +400,6 @@ steps:
 # Contract notes:
 # - この workflow は 1 回の実行で selected task を最大 1 つだけ扱う。
 # - kiro-review、kiro-debug、kiro-verify-completion、kiro-validate-impl は standalone workflow ではなく、この workflow 内の adapter step として接続する。
-# - workflow rule は primary machine field の STATUS、VERDICT、NEXT_ACTION、DECISION で分岐する。
+# - review は parallel reviewer group で実行し、child condition の approved / needs_fix を親 rule で集約する。
+# - workflow rule は primary machine field の STATUS、VERDICT、NEXT_ACTION、DECISION と reviewer child condition で分岐する。
 # - 再実行上限は loop_monitors.threshold だけで表現する。

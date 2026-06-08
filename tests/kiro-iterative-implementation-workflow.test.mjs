@@ -44,6 +44,7 @@ function makeCurrentSurfaceFixture() {
             "node scripts/validate-kiro-iterative-implementation-workflow.mjs",
           "test:kiro-iterative-implementation-workflow":
             "node --test tests/kiro-iterative-implementation-workflow.test.mjs",
+          "test:kiro-ai-quality-gate-runtime-smoke": "node --test tests/kiro-ai-quality-gate-runtime-smoke.test.mjs",
         },
       },
       null,
@@ -157,12 +158,42 @@ test("validator rejects completion-before-checkbox gate drift", () => {
   assert.ok(result.failures.some((failure) => failure.includes("verify-task-completion")));
 });
 
+test("validator rejects readiness routing that skips ready-for-implementation", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    "STATUS READY_FOR_REVIEW and ready_for_implementation true and exactly one selected task and implementation plan emitted",
+    "STATUS READY_FOR_REVIEW and exactly one selected task and implementation plan emitted",
+  );
+  writeFixtureFile(root, ".takt/ja/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("readiness before edit")));
+});
+
+test("validator rejects blocked execution routing to reviewers", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    "STATUS BLOCKED\n        next: debug-task",
+    "STATUS BLOCKED\n        next: reviewers",
+  );
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("BLOCKED to debug-task")));
+});
+
 test("validator rejects direct review routing that bypasses AI quality gate", () => {
   const root = makeCurrentSurfaceFixture();
   const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
   const workflow = readFileSync(workflowPath, "utf8").replace(
     "STATUS READY_FOR_REVIEW\n        next: ai-quality-gate",
-    "STATUS READY_FOR_REVIEW\n        next: review-task",
+    "STATUS READY_FOR_REVIEW\n        next: reviewers",
   );
   writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
 
@@ -178,8 +209,8 @@ test("validator rejects parent loop monitor that skips AI quality gate", () => {
   const workflow = readFileSync(workflowPath, "utf8")
     .replace("      - ai-quality-gate\n", "")
     .replace(
-      "loop_monitors.threshold reached for execute-task, ai-quality-gate, review-task, and debug-task",
-      "loop_monitors.threshold reached for execute-task, review-task, and debug-task",
+      "loop_monitors.threshold reached for execute-task, ai-quality-gate, reviewers, and debug-task",
+      "loop_monitors.threshold reached for execute-task, reviewers, and debug-task",
     );
   writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
 
@@ -187,6 +218,83 @@ test("validator rejects parent loop monitor that skips AI quality gate", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("loop monitor must include ai-quality-gate")));
+});
+
+test("validator rejects missing parallel reviewer group", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8")
+    .replace("  - name: reviewers\n    parallel:", "  - name: reviewers\n    edit: false")
+    .replace("        next: verify-task-completion", "        next: verify-task-completion");
+  writeFixtureFile(root, ".takt/ja/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("reviewers must be a parallel group")));
+});
+
+test("validator rejects reviewer group without all mandatory reviewers", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace("persona: testing-reviewer", "persona: coding-reviewer");
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("testing-reviewer")));
+});
+
+test("validator rejects reviewer group routing without all approved aggregation", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace('condition: all("approved")', "condition: approved");
+  writeFixtureFile(root, ".takt/ja/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("all approved reports")));
+});
+
+test("validator rejects reviewer group routing without needs-fix aggregation", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace('condition: any("needs_fix")', "condition: needs_fix");
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("any needs_fix report")));
+});
+
+test("validator rejects wrong reviewer report filenames", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace("kiro-task-qa-review.md", "qa-review.md");
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("kiro-task-qa-review.md")));
+});
+
+test("validator rejects mandatory security reviewer mixed into Kiro implementation reviewers", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    "      - name: qa-review",
+    "      - name: security-review\n        edit: false\n        persona: security-reviewer\n        policy: review\n        instruction: review-security\n        output_contracts:\n          report:\n            - name: security-review.md\n              format: security-review\n        rules:\n          - condition: approved\n          - condition: needs_fix\n\n      - name: qa-review",
+  );
+  writeFixtureFile(root, ".takt/ja/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("reviewer group order")));
 });
 
 test("validator rejects missing AI quality gate workflow", () => {
@@ -328,6 +436,39 @@ test("validator rejects verify adapters that ignore AI antipattern fix statuses"
 
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("STATUS NEED_REPLAN")));
+});
+
+test("validator rejects debug adapters that ignore reviewer child reports", () => {
+  const root = makeCurrentSurfaceFixture();
+  const debugPath = join(root, ".takt", "en", "facets", "instructions", "kiro-debug-task.md");
+  const debug = readFileSync(debugPath, "utf8")
+    .replaceAll("kiro-task-coding-review.md", "missing-coding-review.md")
+    .replaceAll("kiro-task-architecture-review.md", "missing-architecture-review.md")
+    .replaceAll("kiro-task-qa-review.md", "missing-qa-review.md")
+    .replaceAll("kiro-task-testing-review.md", "missing-testing-review.md");
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-debug-task.md", debug);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("kiro-task-coding-review.md")));
+});
+
+test("validator rejects completion verification that ignores reviewer evidence", () => {
+  const root = makeCurrentSurfaceFixture();
+  const verifyPath = join(root, ".takt", "ja", "facets", "instructions", "kiro-verify-task-completion.md");
+  const verify = readFileSync(verifyPath, "utf8")
+    .replaceAll("kiro-task-coding-review.md", "missing-coding-review.md")
+    .replaceAll("kiro-task-architecture-review.md", "missing-architecture-review.md")
+    .replaceAll("kiro-task-qa-review.md", "missing-qa-review.md")
+    .replaceAll("kiro-task-testing-review.md", "missing-testing-review.md")
+    .replaceAll("needs_fix", "review problem");
+  writeFixtureFile(root, ".takt/ja/facets/instructions/kiro-verify-task-completion.md", verify);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("kiro-task-coding-review.md")));
 });
 
 test("validator rejects progress adapter reading AI gate reports directly", () => {

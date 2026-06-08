@@ -337,6 +337,18 @@ function workflowStepUsesFormat(block, format) {
   return block.some((line) => line.trim() === `format: ${format}`);
 }
 
+function workflowStepUsesParallelReviewAggregation(block) {
+  const content = block.join("\n");
+  return (
+    content.includes("parallel:") &&
+    content.includes("format: kiro-review-verdict") &&
+    content.includes("condition: approved") &&
+    content.includes("condition: needs_fix") &&
+    content.includes('condition: all("approved")') &&
+    content.includes('condition: any("needs_fix")')
+  );
+}
+
 function workflowStepConditions(block) {
   return block
     .filter((line) => /^\s+- condition:\s+/.test(line))
@@ -383,7 +395,11 @@ function validateKiroSkillFieldContract() {
       for (const block of workflowStepBlocks(content)) {
         const stepName = workflowStepName(block);
         const conditions = workflowStepConditions(block);
-        if (workflowStepUsesFormat(block, "kiro-review-verdict") && !/\bVERDICT\b/.test(conditions)) {
+        if (
+          workflowStepUsesFormat(block, "kiro-review-verdict") &&
+          !/\bVERDICT\b/.test(conditions) &&
+          !workflowStepUsesParallelReviewAggregation(block)
+        ) {
           failures.push(`${rel(workflow)} step ${stepName} must branch on VERDICT for kiro-review-verdict`);
         }
         if (workflowStepUsesFormat(block, "kiro-debug-decision") && !/\bNEXT_ACTION\b/.test(conditions)) {

@@ -23,3 +23,5 @@ verdict を作る前に `kiro-ai-antipattern-review.md` を読む。`kiro-ai-ant
 - `SUMMARY`: human-readable summaryのみ。
 
 workflow rulesは `VERDICT` で分岐し、別fieldへ翻訳しない。
+
+reviewer child step は `VERDICT APPROVED` を condition `approved`、`VERDICT REJECTED` を condition `needs_fix` として返す。親 `reviewers` group は child condition だけを集約する。

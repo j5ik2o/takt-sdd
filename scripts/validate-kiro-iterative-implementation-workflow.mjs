@@ -66,21 +66,62 @@ const instructionSpecs = [
     skill: "kiro-review",
     section: "## Outputs",
     parent: "review-coding",
-    terms: ["VERDICT", "APPROVED", "REJECTED", "Review Verdict", "selected task", "boundary"],
+    terms: ["VERDICT", "APPROVED", "REJECTED", "approved", "needs_fix", "Review Verdict", "selected task", "boundary"],
+  },
+  {
+    name: "kiro-review-architecture-task",
+    parent: "review-arch",
+    terms: ["VERDICT", "APPROVED", "REJECTED", "approved", "needs_fix", "selected task", "boundary", "kiro-ai-antipattern-review.md"],
+  },
+  {
+    name: "kiro-review-qa-task",
+    parent: "review-qa",
+    terms: ["VERDICT", "APPROVED", "REJECTED", "approved", "needs_fix", "selected task", "validation evidence", "kiro-ai-antipattern-review.md"],
+  },
+  {
+    name: "kiro-review-testing-task",
+    parent: "review-test",
+    terms: ["VERDICT", "APPROVED", "REJECTED", "approved", "needs_fix", "selected task", "RED_PHASE_OUTPUT", "kiro-ai-antipattern-review.md"],
   },
   {
     name: "kiro-debug-task",
     skill: "kiro-debug",
     section: "## Outputs",
     parent: "fix",
-    terms: ["NEXT_ACTION", "RETRY_TASK", "BLOCK_TASK", "STOP_FOR_HUMAN", "retry_eligible", "ROOT_CAUSE", "FIX_PLAN"],
+    terms: [
+      "NEXT_ACTION",
+      "RETRY_TASK",
+      "BLOCK_TASK",
+      "STOP_FOR_HUMAN",
+      "retry_eligible",
+      "ROOT_CAUSE",
+      "FIX_PLAN",
+      "kiro-task-coding-review.md",
+      "kiro-task-architecture-review.md",
+      "kiro-task-qa-review.md",
+      "kiro-task-testing-review.md",
+      "any(\"needs_fix\")",
+      "need_replan",
+    ],
   },
   {
     name: "kiro-verify-task-completion",
     skill: "kiro-verify-completion",
     section: "## Outputs",
     parent: "supervise",
-    terms: ["STATUS", "VERIFIED", "NOT_VERIFIED", "MANUAL_VERIFY_REQUIRED", "safe_to_update_progress"],
+    terms: [
+      "STATUS",
+      "VERIFIED",
+      "NOT_VERIFIED",
+      "MANUAL_VERIFY_REQUIRED",
+      "safe_to_update_progress",
+      "kiro-task-coding-review.md",
+      "kiro-task-architecture-review.md",
+      "kiro-task-qa-review.md",
+      "kiro-task-testing-review.md",
+      "approved",
+      "needs_fix",
+    ],
   },
   {
     name: "kiro-validate-impl-final",
@@ -192,7 +233,7 @@ const expectedSteps = [
   "plan-one-task",
   "execute-task",
   "ai-quality-gate",
-  "review-task",
+  "reviewers",
   "debug-task",
   "verify-task-completion",
   "update-progress",
@@ -320,6 +361,40 @@ function hasRuleWithTerms(block, terms) {
   return ruleBlocks(block).some((rule) => terms.every((term) => rule.includes(term)));
 }
 
+function parallelChildBlocks(block) {
+  const lines = block.join("\n").split("\n");
+  const blocks = [];
+  let current = null;
+  for (const line of lines) {
+    if (/^      - name:\s+/.test(line)) {
+      if (current) {
+        blocks.push(current);
+      }
+      current = [line];
+    } else if (current) {
+      if (/^    [A-Za-z_]/.test(line) || /^  - name:\s+/.test(line)) {
+        blocks.push(current);
+        current = null;
+      } else {
+        current.push(line);
+      }
+    }
+  }
+  if (current) {
+    blocks.push(current);
+  }
+  return blocks;
+}
+
+function childScalar(block, key) {
+  if (key === "name") {
+    const match = block.join("\n").match(/^      - name:\s*(.+)\s*$/m);
+    return match?.[1] ?? "";
+  }
+  const match = block.join("\n").match(new RegExp(`^        ${key}:\\s*(.+)\\s*$`, "m"));
+  return match?.[1] ?? "";
+}
+
 function parseFrontmatter(content) {
   if (!content.startsWith("---\n")) {
     return {};
@@ -367,6 +442,7 @@ function validatePackageScripts(repoRoot) {
       "node scripts/validate-kiro-iterative-implementation-workflow.mjs",
     "test:kiro-iterative-implementation-workflow":
       "node --test tests/kiro-iterative-implementation-workflow.test.mjs",
+    "test:kiro-ai-quality-gate-runtime-smoke": "node --test tests/kiro-ai-quality-gate-runtime-smoke.test.mjs",
   };
   for (const [name, command] of Object.entries(expected)) {
     if (pkg.scripts?.[name] !== command) {
@@ -444,8 +520,8 @@ function validateWorkflowFiles(repoRoot) {
       repoRoot,
       "AI_QUALITY_GATE_DRIFT",
     );
-    if (!hasRuleWithTerms(gateBlock, ["COMPLETE", "next: review-task"])) {
-      failures.push(`AI_QUALITY_GATE_DRIFT: ${rel(repoRoot, workflowPath)} ai-quality-gate must route COMPLETE to review-task`);
+    if (!hasRuleWithTerms(gateBlock, ["COMPLETE", "next: reviewers"])) {
+      failures.push(`AI_QUALITY_GATE_DRIFT: ${rel(repoRoot, workflowPath)} ai-quality-gate must route COMPLETE to reviewers`);
     }
     if (!hasRuleWithTerms(gateBlock, ["need_replan", "next: debug-task"])) {
       failures.push(`AI_QUALITY_GATE_DRIFT: ${rel(repoRoot, workflowPath)} ai-quality-gate must route need_replan to debug-task`);
@@ -453,12 +529,78 @@ function validateWorkflowFiles(repoRoot) {
     if (!hasRuleWithTerms(gateBlock, ["ABORT", "next: ABORT"])) {
       failures.push(`AI_QUALITY_GATE_DRIFT: ${rel(repoRoot, workflowPath)} ai-quality-gate must route ABORT to ABORT`);
     }
-    const reviewBlock = blocks.get("review-task") ?? [];
-    if (!hasRuleWithTerms(reviewBlock, ["VERDICT APPROVED", "next: verify-task-completion"])) {
-      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} review-task must branch APPROVED to verify-task-completion`);
+    const reviewersBlock = blocks.get("reviewers") ?? [];
+    if (!reviewersBlock.join("\n").includes("parallel:")) {
+      failures.push(`REVIEWER_GROUP_DRIFT: ${rel(repoRoot, workflowPath)} reviewers must be a parallel group`);
     }
-    if (!hasRuleWithTerms(reviewBlock, ["VERDICT REJECTED", "next: debug-task"])) {
-      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} review-task must branch REJECTED to debug-task`);
+    const reviewerChildren = new Map(parallelChildBlocks(reviewersBlock).map((block) => [childScalar(block, "name"), block]));
+    const expectedReviewers = [
+      {
+        name: "coding-review",
+        persona: "coding-reviewer",
+        instruction: "kiro-review-task",
+        report: "kiro-task-coding-review.md",
+        format: "kiro-review-verdict",
+      },
+      {
+        name: "arch-review",
+        persona: "architecture-reviewer",
+        instruction: "kiro-review-architecture-task",
+        report: "kiro-task-architecture-review.md",
+        format: "architecture-review",
+      },
+      {
+        name: "qa-review",
+        persona: "qa-reviewer",
+        instruction: "kiro-review-qa-task",
+        report: "kiro-task-qa-review.md",
+        format: "qa-review",
+      },
+      {
+        name: "testing-review",
+        persona: "testing-reviewer",
+        instruction: "kiro-review-testing-task",
+        report: "kiro-task-testing-review.md",
+        format: "testing-review",
+      },
+    ];
+    const childNames = [...reviewerChildren.keys()];
+    if (JSON.stringify(childNames) !== JSON.stringify(expectedReviewers.map((reviewer) => reviewer.name))) {
+      failures.push(
+        `REVIEWER_GROUP_DRIFT: ${rel(repoRoot, workflowPath)} reviewer group order must be ${expectedReviewers
+          .map((reviewer) => reviewer.name)
+          .join(" -> ")}`,
+      );
+    }
+    for (const reviewer of expectedReviewers) {
+      const childBlock = reviewerChildren.get(reviewer.name) ?? [];
+      containsAll(
+        childBlock.join("\n"),
+        [
+          `persona: ${reviewer.persona}`,
+          `instruction: ${reviewer.instruction}`,
+          `name: ${reviewer.report}`,
+          `format: ${reviewer.format}`,
+          "condition: approved",
+          "condition: needs_fix",
+        ],
+        workflowPath,
+        failures,
+        repoRoot,
+        "REVIEWER_GROUP_DRIFT",
+      );
+      if (!facetReferenceExists(repoRoot, lang, "output-contracts", reviewer.format)) {
+        failures.push(`RESOURCE_REFERENCE_DRIFT: ${rel(repoRoot, workflowPath)} reviewer ${reviewer.name} references missing output contract ${reviewer.format}`);
+      }
+      if (childBlock.join("\n").includes("edit: true")) {
+        failures.push(`REVIEWER_GROUP_DRIFT: ${rel(repoRoot, workflowPath)} ${reviewer.name} must be read-only`);
+      }
+    }
+    if (!hasRuleWithTerms(reviewersBlock, ['all("approved")', "next: verify-task-completion"])) {
+      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} reviewers must route all approved reports to verify-task-completion`);
+    }
+    if (!hasRuleWithTerms(reviewersBlock, ['any("needs_fix")', "next: debug-task"])) {
+      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} reviewers must route any needs_fix report to debug-task`);
     }
     const debugBlock = blocks.get("debug-task") ?? [];
     if (!hasRuleWithTerms(debugBlock, ["NEXT_ACTION RETRY_TASK", "retry_eligible true", "next: execute-task"])) {
@@ -495,10 +637,10 @@ function validateWorkflowFiles(repoRoot) {
     }
     if (
       !content.includes(
-        "cycle:\n      - execute-task\n      - ai-quality-gate\n      - review-task\n      - debug-task\n    threshold: 2",
+        "cycle:\n      - execute-task\n      - ai-quality-gate\n      - reviewers\n      - debug-task\n    threshold: 2",
       )
     ) {
-      failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, workflowPath)} review/debug loop monitor must include ai-quality-gate between execute-task and review-task`);
+      failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, workflowPath)} review/debug loop monitor must include ai-quality-gate between execute-task and reviewers`);
     }
     const workflowCallBlocks = stepBlocks(content).filter((block) => block.join("\n").includes("kind: workflow_call"));
     for (const block of workflowCallBlocks) {
@@ -652,7 +794,14 @@ function validateFacetFiles(repoRoot) {
       }
       const content = readText(path);
       containsAll(content, spec.terms, path, failures, repoRoot, "FACET_DRIFT");
-      if (spec.name === "kiro-review-task") {
+      if (
+        [
+          "kiro-review-task",
+          "kiro-review-architecture-task",
+          "kiro-review-qa-task",
+          "kiro-review-testing-task",
+        ].includes(spec.name)
+      ) {
         containsAll(
           content,
           [
@@ -797,6 +946,9 @@ function validateLanguageParity(repoRoot) {
         "NEEDS_CONTEXT",
         "APPROVED",
         "REJECTED",
+        "approved",
+        "needs_fix",
+        "reviewers",
         "RETRY_TASK",
         "STOP_FOR_HUMAN",
         "VERIFIED",
@@ -867,7 +1019,15 @@ function validateTaskFixtureCoverage(repoRoot) {
     content,
     [
       "validator rejects completion-before-checkbox gate drift",
+      "validator rejects readiness routing that skips ready-for-implementation",
+      "validator rejects blocked execution routing to reviewers",
       "validator rejects direct review routing that bypasses AI quality gate",
+      "validator rejects missing parallel reviewer group",
+      "validator rejects reviewer group without all mandatory reviewers",
+      "validator rejects reviewer group routing without all approved aggregation",
+      "validator rejects reviewer group routing without needs-fix aggregation",
+      "validator rejects wrong reviewer report filenames",
+      "validator rejects mandatory security reviewer mixed into Kiro implementation reviewers",
       "validator rejects missing AI quality gate workflow",
       "validator rejects unapproved nested Kiro workflow call",
       "validator rejects parent loop monitor that skips AI quality gate",
@@ -879,6 +1039,8 @@ function validateTaskFixtureCoverage(repoRoot) {
       "validator rejects missing AI gate evidence hooks in review adapter",
       "validator rejects adapters that require AI antipattern fix reports unconditionally",
       "validator rejects verify adapters that ignore AI antipattern fix statuses",
+      "validator rejects debug adapters that ignore reviewer child reports",
+      "validator rejects completion verification that ignores reviewer evidence",
       "validator rejects progress adapter reading AI gate reports directly",
       "validator rejects plan blockers that bypass progress blocker notes",
       "validator rejects progress updates that omit routing status outputs",
@@ -889,6 +1051,25 @@ function validateTaskFixtureCoverage(repoRoot) {
     repoRoot,
     "TASK_FIXTURE_COVERAGE_DRIFT",
   );
+  const smokePath = join(repoRoot, "tests", "kiro-ai-quality-gate-runtime-smoke.test.mjs");
+  if (!existsSync(smokePath)) {
+    failures.push(`TASK_FIXTURE_COVERAGE_MISSING: ${rel(repoRoot, smokePath)} missing`);
+  } else {
+    containsAll(
+      readText(smokePath),
+      [
+        "kiro impl runtime wiring calls AI quality gate subworkflow and returns to parallel reviewers",
+        "kiro-task-coding-review.md",
+        "kiro-task-architecture-review.md",
+        "kiro-task-qa-review.md",
+        "kiro-task-testing-review.md",
+      ],
+      smokePath,
+      failures,
+      repoRoot,
+      "TASK_FIXTURE_COVERAGE_DRIFT",
+    );
+  }
   return { ok: failures.length === 0, failures };
 }
 

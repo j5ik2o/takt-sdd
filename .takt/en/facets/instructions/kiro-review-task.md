@@ -23,3 +23,5 @@ Return the `## Review Verdict` shape from `kiro-review`.
 - `SUMMARY`: human-readable summary only.
 
 Workflow rules branch on `VERDICT`; do not translate the result to another field.
+
+The reviewer child step returns `VERDICT APPROVED` as condition `approved` and `VERDICT REJECTED` as condition `needs_fix`. The parent `reviewers` group aggregates only child conditions.

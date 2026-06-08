@@ -16,7 +16,8 @@ checkbox updateの前に、fresh evidenceでselected task completion claimを検
 - implementation resultと `STATUS`。
 - AI antipattern gate reports: `kiro-ai-antipattern-review.md`、および current AI quality gate subworkflow run に存在する場合だけ optional な `kiro-ai-antipattern-fix.md`。
 - `kiro-ai-antipattern-fix.md` が存在する場合、`safe_to_update_progress` を true にする前に、`STATUS NEED_REPLAN`、`STATUS BLOCKED`、stale または cross-run の fix evidence、finding-level evidence がない `STATUS NO_FIX_NEEDED` を拒否する。
-- review `VERDICT`。
+- reviewer reports: `kiro-task-coding-review.md`、`kiro-task-architecture-review.md`、`kiro-task-qa-review.md`、`kiro-task-testing-review.md`。
+- 4 reviewer reports がすべて `approved` / `VERDICT APPROVED` の evidence を持つ場合だけ `VERIFIED` 候補にする。missing、stale、cross-run、または `needs_fix` / `VERDICT REJECTED` を含む report は `NOT_VERIFIED` または `MANUAL_VERIFY_REQUIRED` として扱う。
 - validation evidenceとmanual verification requirement。
 - selected task text、requirement refs、boundary scope。
 

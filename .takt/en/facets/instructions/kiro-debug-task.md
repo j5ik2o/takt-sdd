@@ -11,6 +11,18 @@ extends_skill_section: "## Outputs"
 
 Investigate implementation, validation, or review failure for the selected task and return a root-cause-first action. This adapter only decides whether a task is repairable, blocked, or needs human input.
 
+## Debug inputs
+
+- `kiro-task-implementation-result.md`
+- `kiro-ai-antipattern-review.md`
+- optional `kiro-ai-antipattern-fix.md` only if it exists in the current AI quality gate subworkflow run
+- `kiro-task-coding-review.md`
+- `kiro-task-architecture-review.md`
+- `kiro-task-qa-review.md`
+- `kiro-task-testing-review.md`
+
+When the `reviewers` group routes here through `any("needs_fix")`, use the rejected child report perspective, report file, finding refs, selected task refs, and requirement/design refs for root cause analysis. When AI gate routes here through `need_replan`, treat `NEED_REPLAN` / `BLOCKED` / ambiguous AI review evidence as human-confirmation or blocker candidates.
+
 ## Output mapping
 
 Return the `## Debug Report` shape from `kiro-debug`.
