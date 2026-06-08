@@ -1,0 +1,101 @@
+name: kiro-discovery
+description: Kiro - Classify new work and create discovery artifacts
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 8
+initial_step: classify-action-path
+
+instructions:
+  kiro-discovery: ../facets/instructions/kiro-discovery.md
+
+policies:
+  kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
+  kiro-discovery-routing: ../facets/policies/kiro-discovery-routing.md
+
+report_formats:
+  kiro-discovery-result: ../facets/output-contracts/kiro-discovery-result.md
+
+steps:
+  - name: classify-action-path
+    edit: false
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-discovery-routing
+    required_permission_mode: readonly
+    instruction: kiro-discovery
+    rules:
+      - condition: blockingReason present or action path ambiguous
+        next: report-discovery
+      - condition: actionPath EXISTING_SPEC_UPDATE or actionPath DIRECT_IMPLEMENTATION
+        next: report-discovery
+      - condition: actionPath SINGLE_SPEC or actionPath MULTI_SPEC or actionPath MIXED_DECOMPOSITION
+        next: plan-discovery-artifacts
+
+  - name: plan-discovery-artifacts
+    edit: false
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-discovery-routing
+    required_permission_mode: readonly
+    instruction: kiro-discovery
+    rules:
+      - condition: blockingReason present or brief.md roadmap contradiction found
+        next: report-discovery
+      - condition: plannedFiles include target brief.md and actionPath SINGLE_SPEC
+        next: write-discovery-artifacts
+      - condition: plannedFiles include every new spec brief.md and .kiro/steering/roadmap.md and actionPath MULTI_SPEC
+        next: write-discovery-artifacts
+      - condition: plannedFiles include every new spec brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems non-empty and separated and actionPath MIXED_DECOMPOSITION
+        next: write-discovery-artifacts
+      - condition: required plannedFiles missing for actionPath SINGLE_SPEC or actionPath MULTI_SPEC or actionPath MIXED_DECOMPOSITION
+        next: report-discovery
+
+  - name: write-discovery-artifacts
+    edit: true
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-discovery-routing
+    required_permission_mode: edit
+    instruction: kiro-discovery
+    rules:
+      - condition: artifact write failed or blockingReason present
+        next: report-discovery
+      - condition: createdFiles include target brief.md and actionPath SINGLE_SPEC
+        next: report-discovery
+      - condition: createdFiles include every new spec brief.md and .kiro/steering/roadmap.md and actionPath MULTI_SPEC
+        next: report-discovery
+      - condition: createdFiles include every new spec brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems non-empty and separated and actionPath MIXED_DECOMPOSITION
+        next: report-discovery
+      - condition: required createdFiles missing for actionPath SINGLE_SPEC or actionPath MULTI_SPEC or actionPath MIXED_DECOMPOSITION
+        next: report-discovery
+
+  - name: report-discovery
+    edit: false
+    persona: supervisor
+    policy:
+      - kiro-artifact-operations
+      - kiro-discovery-routing
+    required_permission_mode: readonly
+    instruction: kiro-discovery
+    output_contracts:
+      report:
+        - name: kiro-discovery-result.md
+          format: kiro-discovery-result
+    rules:
+      - condition: blockingReason present or artifact write failed or brief.md roadmap contradiction found or required discovery artifacts missing
+        next: ABORT
+      - condition: actionPath EXISTING_SPEC_UPDATE or actionPath DIRECT_IMPLEMENTATION
+        next: COMPLETE
+      - condition: actionPath SINGLE_SPEC and target brief.md present
+        next: COMPLETE
+      - condition: actionPath MULTI_SPEC and every new spec brief.md present and .kiro/steering/roadmap.md present
+        next: COMPLETE
+      - condition: actionPath MIXED_DECOMPOSITION and every new spec brief.md present and .kiro/steering/roadmap.md present and awarenessOnlyItems non-empty and separated
+        next: COMPLETE
