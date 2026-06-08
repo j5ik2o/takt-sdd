@@ -288,6 +288,17 @@ test("kiro-discovery workflow uses multi-step routing and skill adapter metadata
       workflow.includes("required discovery artifacts missing"),
       `${workflowPath} should abort reports when required discovery artifacts are missing`,
     );
+    const classifyBlock = workflow.indexOf("blockingReason present or action path ambiguous");
+    const classifySuccess = workflow.indexOf(
+      "actionPath SINGLE_SPEC or actionPath MULTI_SPEC or actionPath MIXED_DECOMPOSITION",
+    );
+    const planBlock = workflow.indexOf("blockingReason present or brief.md roadmap contradiction found");
+    const planSuccess = workflow.indexOf("plannedFiles include brief.md and actionPath SINGLE_SPEC");
+    const writeBlock = workflow.indexOf("artifact write failed or blockingReason present");
+    const writeSuccess = workflow.indexOf("createdFiles include brief.md and actionPath SINGLE_SPEC");
+    assert.ok(classifyBlock >= 0 && classifyBlock < classifySuccess, `${workflowPath} should classify blockers first`);
+    assert.ok(planBlock >= 0 && planBlock < planSuccess, `${workflowPath} should plan blockers first`);
+    assert.ok(writeBlock >= 0 && writeBlock < writeSuccess, `${workflowPath} should route write blockers first`);
 
     const instructionPath = `.takt/${lang}/facets/instructions/kiro-discovery.md`;
     assert.equal(existsSync(join(repoRoot, instructionPath)), true, `${instructionPath} should exist`);
