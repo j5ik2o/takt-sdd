@@ -34,7 +34,11 @@ These sections can affect review context and sequencing advice, but they are not
 ## Blocking Conditions
 
 - Missing `## Specs (dependency order)` blocks batch execution.
+- Empty `## Specs (dependency order)` blocks batch execution as `missing roadmap spec entries`.
+- Invalid dependency-order checklist lines block batch execution as `invalid roadmap spec entry`.
+- Duplicate dependency-order feature names block batch execution as `duplicate roadmap spec entry`.
 - Missing dependency names block batch execution.
 - `circular dependency` blocks batch execution.
 - Unknown completion markers block batch execution.
 - Pending specs without `.kiro/specs/<feature>/brief.md` block worker dispatch.
+- Empty, invalid, or duplicate roadmap parse states must not be treated as `all roadmap specs already complete`.

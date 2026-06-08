@@ -47,9 +47,9 @@ steps:
     required_permission_mode: readonly
     instruction: kiro-spec-batch
     rules:
-      - condition: roadmap missing or missing dependency or circular dependency or missing brief.md
+      - condition: roadmap missing or missing dependency or circular dependency or missing brief.md or invalid roadmap spec entry or duplicate roadmap spec entry or missing roadmap spec entries
         next: finalize-batch
-      - condition: roadmap parsed from ## Specs (dependency order) and awareness-only sections separated and no missing brief.md
+      - condition: roadmap parsed from ## Specs (dependency order) and awareness-only sections separated and no missing brief.md and no invalid roadmap spec entry and no duplicate roadmap spec entry and no missing roadmap spec entries
         next: plan-waves
 
   - name: plan-waves
@@ -61,12 +61,12 @@ steps:
     required_permission_mode: readonly
     instruction: kiro-spec-batch
     rules:
+      - condition: wave planning blocked or missing roadmap spec entries or invalid roadmap spec entry or duplicate roadmap spec entry
+        next: finalize-batch
       - condition: dependency waves planned and pending feature count greater than zero
         next: dispatch-wave
-      - condition: all roadmap specs already complete
+      - condition: all roadmap specs already complete and roadmap spec entries present
         next: cross-spec-review
-      - condition: wave planning blocked
-        next: finalize-batch
 
   - name: dispatch-wave
     edit: true

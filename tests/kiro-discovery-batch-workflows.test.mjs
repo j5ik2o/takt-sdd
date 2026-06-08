@@ -354,6 +354,10 @@ test("roadmap dependency wave policy keeps awareness-only sections out of batch 
       "awareness-only",
       "Dependencies: none",
       "circular dependency",
+      "missing roadmap spec entries",
+      "invalid roadmap spec entry",
+      "duplicate roadmap spec entry",
+      "all roadmap specs already complete",
     ]) {
       assert.ok(policy.includes(term), `${policyPath} should include ${term}`);
     }
@@ -378,23 +382,37 @@ test("kiro-spec-batch workflow uses dynamic worker dispatch without workflow reu
     }
     assert.ok(workflow.includes("dynamic subagent dispatch"));
     assert.ok(workflow.includes("loop_monitors.threshold"));
+    const parseBlockRule =
+      "roadmap missing or missing dependency or circular dependency or missing brief.md or invalid roadmap spec entry or duplicate roadmap spec entry or missing roadmap spec entries";
+    const parseSuccessRule =
+      "roadmap parsed from ## Specs (dependency order) and awareness-only sections separated and no missing brief.md and no invalid roadmap spec entry and no duplicate roadmap spec entry and no missing roadmap spec entries";
+    const waveBlockRule =
+      "wave planning blocked or missing roadmap spec entries or invalid roadmap spec entry or duplicate roadmap spec entry";
+    assert.ok(workflow.includes(parseBlockRule), `${workflowPath} should name hard roadmap parse errors`);
+    assert.ok(workflow.includes(parseSuccessRule), `${workflowPath} should gate success on no hard parse errors`);
     assert.ok(
-      workflow.indexOf("roadmap missing or missing dependency or circular dependency or missing brief.md") <
-        workflow.indexOf("roadmap parsed from ## Specs (dependency order) and awareness-only sections separated and no missing brief.md"),
-      `${workflowPath} should block missing brief before planning waves`,
+      workflow.indexOf(parseBlockRule) < workflow.indexOf(parseSuccessRule),
+      `${workflowPath} should block roadmap parse errors before planning waves`,
     );
+    assert.ok(workflow.includes(waveBlockRule), `${workflowPath} should block hard parse errors during wave planning`);
     assert.equal(
       workflow.includes("roadmap parsed from ## Specs (dependency order) and awareness-only sections separated\n"),
       false,
       `${workflowPath} should not allow parsed roadmap to bypass missing brief checks`,
     );
+    assert.equal(
+      workflow.includes("condition: all roadmap specs already complete\n"),
+      false,
+      `${workflowPath} should not route empty roadmaps as already complete`,
+    );
+    assert.ok(workflow.includes("condition: all roadmap specs already complete and roadmap spec entries present"));
     assert.ok(workflow.includes("verdict PASS"));
     assert.ok(workflow.includes("verdict NEEDS_FIX"));
     assert.ok(workflow.includes("verdict DECOMPOSITION_RETURN"));
     assert.equal(workflow.includes("condition: DECOMPOSITION_RETURN or loop_monitors.threshold reached"), false);
     assert.equal(workflow.includes("crossSpecReview PASS"), false);
     assert.ok(
-      workflow.indexOf("condition: all roadmap specs already complete") <
+      workflow.indexOf("condition: all roadmap specs already complete and roadmap spec entries present") <
         workflow.indexOf("condition: verdict PASS"),
       `${workflowPath} should route already-complete roadmaps through cross-spec review before finalization`,
     );

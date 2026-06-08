@@ -34,7 +34,11 @@ roadmap には次の section を context として置けるが、これらは aw
 ## Blocking Conditions
 
 - `## Specs (dependency order)` がない場合は batch execution を止める。
+- 空の `## Specs (dependency order)` は `missing roadmap spec entries` として batch execution を止める。
+- dependency-order checklist line が不正な場合は `invalid roadmap spec entry` として batch execution を止める。
+- dependency-order feature name が重複する場合は `duplicate roadmap spec entry` として batch execution を止める。
 - missing dependency name は batch execution を止める。
 - `circular dependency` は batch execution を止める。
 - unknown completion marker は batch execution を止める。
 - pending spec に `.kiro/specs/<feature>/brief.md` がない場合は worker dispatch 前に止める。
+- empty, invalid, duplicate の roadmap parse state を `all roadmap specs already complete` として扱ってはいけない。
