@@ -261,6 +261,38 @@ function validateGateContractTerms(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
+function validatePolicyFacetBoundaries(repoRoot, coverageEntries) {
+  const failures = [];
+  const requiredTerms = ["scripts/kiro-ai-quality-gate-contracts.mjs", "roadmap checkbox"];
+  const workflowNames = new Set(coverageEntries.map((entry) => entry.workflowName));
+  for (const language of languages) {
+    const path = join(repoRoot, ".takt", language, "facets", "policies", "kiro-ai-quality-gate-coverage.md");
+    if (!existsSync(path)) {
+      failures.push(`POLICY_INVENTORY_DUPLICATION: ${rel(repoRoot, path)} missing`);
+      continue;
+    }
+    const content = readText(path);
+    for (const term of requiredTerms) {
+      if (!content.includes(term)) {
+        failures.push(`POLICY_INVENTORY_DUPLICATION: ${rel(repoRoot, path)} must reference ${term}`);
+      }
+    }
+    for (const line of content.split("\n").filter((candidate) => candidate.trim().startsWith("|"))) {
+      const cells = line
+        .split("|")
+        .map((cell) => cell.trim().replace(/^`|`$/g, ""))
+        .filter(Boolean);
+      const duplicatedWorkflowName = cells.find((cell) => workflowNames.has(cell));
+      if (duplicatedWorkflowName) {
+        failures.push(
+          `POLICY_INVENTORY_DUPLICATION: ${rel(repoRoot, path)} must not duplicate workflow inventory row for ${duplicatedWorkflowName}`,
+        );
+      }
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
 export function validateKiroAiQualityGateWorkflowCoverage(options = {}) {
   const repoRoot = options.repoRoot ?? defaultRepoRoot;
   const coverageEntries = options.coverageEntries ?? getKiroWorkflowCoverageEntries();
@@ -270,6 +302,7 @@ export function validateKiroAiQualityGateWorkflowCoverage(options = {}) {
     gatePlacement: validateGatePlacement(repoRoot, coverageEntries),
     readOnlyAndDelegatedBoundaries: validateReadOnlyAndDelegatedBoundaries(repoRoot, coverageEntries),
     gateContractTerms: validateGateContractTerms(repoRoot),
+    policyFacetBoundaries: validatePolicyFacetBoundaries(repoRoot, coverageEntries),
   };
   const failures = Object.entries(sections).flatMap(([name, result]) =>
     result.failures.map((failure) => `${name}: ${failure}`),

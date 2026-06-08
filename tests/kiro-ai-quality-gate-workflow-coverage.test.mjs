@@ -364,6 +364,24 @@ test("coverage validator detects eligible generation workflows that bypass the s
   );
 });
 
+test("coverage validator detects bare workflow name gate calls", () => {
+  const root = makeCoverageFixture();
+  const path = ".takt/en/workflows/kiro-spec-design.yaml";
+  writeFixtureFile(
+    root,
+    path,
+    readFixtureFile(root, path).replace("call: ./kiro-spec-ai-quality-gate.yaml", "call: kiro-spec-ai-quality-gate"),
+  );
+
+  const result = validateKiroAiQualityGateWorkflowCoverage({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.failures.some((failure) => failure.includes("INVALID_GATE_CALL") && failure.includes("kiro-spec-design")),
+    result.failures.join("\n"),
+  );
+});
+
 test("coverage validator detects read-only workflows that gain AI fix loop behavior", () => {
   const root = makeCoverageFixture();
   const path = ".takt/en/workflows/kiro-validate-design.yaml";
@@ -402,6 +420,20 @@ test("coverage validator detects language drift in gate call paths before treati
   assert.equal(result.ok, false);
   assert.ok(
     result.failures.some((failure) => failure.includes("LANGUAGE_PARITY_DRIFT") && failure.includes("kiro-spec-quick")),
+    result.failures.join("\n"),
+  );
+});
+
+test("coverage validator detects policy facets that duplicate workflow inventory rows", () => {
+  const root = makeCoverageFixture();
+  const path = ".takt/en/facets/policies/kiro-ai-quality-gate-coverage.md";
+  writeFixtureFile(root, path, `${readFixtureFile(root, path)}\n| \`kiro-impl\` | existing_gate_coverage |\n`);
+
+  const result = validateKiroAiQualityGateWorkflowCoverage({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.failures.some((failure) => failure.includes("POLICY_INVENTORY_DUPLICATION") && failure.includes("kiro-impl")),
     result.failures.join("\n"),
   );
 });

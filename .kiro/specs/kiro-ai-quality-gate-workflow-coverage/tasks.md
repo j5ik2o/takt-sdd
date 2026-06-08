@@ -86,7 +86,7 @@
   - _Boundary:_ SharedGateContractHelper, CoverageValidator, ReadOnlyGuardValidator
   - _Depends:_ 4.1
 
-- [ ] 4.3 validator unit tests と parity tests を追加する
+- [x] 4.3 validator unit tests と parity tests を追加する
   - positive fixture では implementation gate と generation gate の approved call sites が pass する。
   - negative fixture では bare workflow name call、quick phase workflow reuse、missing gate、read-only fix loop、language drift が fail する。
   - policy facet が workflow 別分類表を再掲せず、machine-readable coverage inventory を正本として参照していることを検出できる。
