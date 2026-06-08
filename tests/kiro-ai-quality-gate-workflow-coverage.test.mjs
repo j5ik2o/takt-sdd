@@ -285,6 +285,10 @@ test("standalone spec generation workflows route drafts through spec AI quality 
       assert.match(content, new RegExp(`- name: ${spec.repair}[\\s\\S]*next: ${spec.gate}`));
       assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*condition: COMPLETE[\\s\\S]*next: ${spec.review}`));
       assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*condition: need_replan[\\s\\S]*next: ABORT`));
+      assert.ok(
+        content.includes(`condition: Healthy (review findings are converging)\n          next: ${spec.gate}`),
+        `${path} loop monitor Healthy branch should route to ${spec.gate}`,
+      );
     }
   }
 });
@@ -327,6 +331,10 @@ test("quick spec workflow routes each phase draft through spec AI quality gate b
       assert.match(content, new RegExp(`- name: ${spec.repair}[\\s\\S]*next: ${spec.gate}`));
       assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*condition: COMPLETE[\\s\\S]*next: ${spec.review}`));
       assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*condition: need_replan[\\s\\S]*next: ABORT`));
+      assert.ok(
+        content.includes(`condition: Healthy (review findings are converging)\n          next: ${spec.gate}`),
+        `${path} loop monitor Healthy branch should route to ${spec.gate}`,
+      );
     }
 
     for (const forbiddenCall of forbiddenStandaloneCalls) {
@@ -488,6 +496,27 @@ test("coverage validator detects spec gate need_replan routing back into local r
   assert.equal(result.ok, false);
   assert.ok(
     result.failures.some((failure) => failure.includes("REPLAN_ROUTING_DRIFT") && failure.includes("repair")),
+    result.failures.join("\n"),
+  );
+});
+
+test("coverage validator detects loop monitor Healthy routing that skips the spec AI gate", () => {
+  const root = makeCoverageFixture();
+  const path = ".takt/en/workflows/kiro-spec-quick.yaml";
+  writeFixtureFile(
+    root,
+    path,
+    readFixtureFile(root, path).replace(
+      "condition: Healthy (review findings are converging)\n          next: quick-ai-quality-gate-design",
+      "condition: Healthy (review findings are converging)\n          next: quick-review-design",
+    ),
+  );
+
+  const result = validateKiroAiQualityGateWorkflowCoverage({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.failures.some((failure) => failure.includes("LOOP_MONITOR_GATE_BYPASS") && failure.includes("quick-ai-quality-gate-design")),
     result.failures.join("\n"),
   );
 });

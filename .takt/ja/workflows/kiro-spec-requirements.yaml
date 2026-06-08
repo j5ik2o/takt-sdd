@@ -33,7 +33,7 @@ loop_monitors:
       instruction: kiro-spec-requirements
       rules:
         - condition: Healthy (review findings are converging)
-          next: review-requirements
+          next: ai-quality-gate-requirements
         - condition: Unproductive (same finding repeats or no improvement)
           next: ABORT
 

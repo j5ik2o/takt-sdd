@@ -34,7 +34,7 @@ loop_monitors:
       instruction: kiro-spec-design
       rules:
         - condition: Healthy (review findings are converging)
-          next: review-design
+          next: ai-quality-gate-design
         - condition: Unproductive (same finding repeats or no improvement)
           next: ABORT
 

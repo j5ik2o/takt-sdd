@@ -35,7 +35,7 @@ loop_monitors:
       instruction: kiro-spec-tasks
       rules:
         - condition: Healthy (review findings are converging)
-          next: review-tasks
+          next: ai-quality-gate-tasks
         - condition: Unproductive (same finding repeats or no improvement)
           next: ABORT
 

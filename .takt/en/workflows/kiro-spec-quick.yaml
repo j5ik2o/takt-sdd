@@ -43,7 +43,7 @@ loop_monitors:
       instruction: kiro-spec-requirements
       rules:
         - condition: Healthy (review findings are converging)
-          next: quick-review-requirements
+          next: quick-ai-quality-gate-requirements
         - condition: Unproductive (same finding repeats or no improvement)
           next: ABORT
   - cycle:
@@ -57,7 +57,7 @@ loop_monitors:
       instruction: kiro-spec-design
       rules:
         - condition: Healthy (review findings are converging)
-          next: quick-review-design
+          next: quick-ai-quality-gate-design
         - condition: Unproductive (same finding repeats or no improvement)
           next: ABORT
   - cycle:
@@ -71,7 +71,7 @@ loop_monitors:
       instruction: kiro-spec-tasks
       rules:
         - condition: Healthy (review findings are converging)
-          next: quick-review-tasks
+          next: quick-ai-quality-gate-tasks
         - condition: Unproductive (same finding repeats or no improvement)
           next: ABORT
 

@@ -191,6 +191,11 @@ function validateGatePlacement(repoRoot, coverageEntries) {
               `REPLAN_ROUTING_DRIFT: ${rel(repoRoot, path)} ${site.stepName} must route need_replan to ABORT instead of local repair`,
             );
           }
+          if (!content.includes(`condition: Healthy (review findings are converging)\n          next: ${site.stepName}`)) {
+            failures.push(
+              `LOOP_MONITOR_GATE_BYPASS: ${rel(repoRoot, path)} loop monitor Healthy branch must route to ${site.stepName} before domain review`,
+            );
+          }
         }
       }
     }
