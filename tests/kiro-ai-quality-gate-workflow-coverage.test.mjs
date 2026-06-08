@@ -48,6 +48,24 @@ test("kiro AI quality gate coverage inventory records current Kiro workflow boun
   }
 });
 
+test("orchestration workflows delegate artifact-level AI review without direct AI gate calls", () => {
+  const byName = new Map(getKiroWorkflowCoverageEntries().map((entry) => [entry.workflowName, entry]));
+
+  for (const workflowName of ["kiro-discovery", "kiro-spec-batch"]) {
+    const entry = byName.get(workflowName);
+    assert.equal(entry.category, "orchestration_delegated");
+    assert.match(entry.adjacentOwner, /kiro-spec-/);
+    assert.equal(entry.allowedGateCall, undefined);
+
+    for (const language of languages) {
+      const path = join(repoRoot, ".takt", language, "workflows", `${workflowName}.yaml`);
+      const content = readFileSync(path, "utf8");
+      assert.equal(content.includes("kiro-ai-quality-gate"), false, `${path} must not call implementation AI gate`);
+      assert.equal(content.includes("kiro-spec-ai-quality-gate"), false, `${path} must not call spec AI gate directly`);
+    }
+  }
+});
+
 test("kiro AI quality gate coverage policy facets explain categories without duplicating the inventory table", () => {
   const workflowNames = listKiroWorkflowNames("en");
   const requiredTerms = [

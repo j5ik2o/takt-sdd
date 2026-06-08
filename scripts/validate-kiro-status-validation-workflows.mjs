@@ -2,6 +2,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { getKiroWorkflowNamesByCoverageCategory } from "./kiro-ai-quality-gate-contracts.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -42,6 +43,9 @@ const workflowSpecs = [
     requiredTerms: ["kiro-validation-result", "DECISION", "MANUAL_VERIFY_REQUIRED", "tasks.md", "ready_for_implementation"],
   },
 ];
+const readOnlyCoverageWorkflowFiles = new Set(
+  getKiroWorkflowNamesByCoverageCategory("read_only_out_of_scope").map((name) => `${name}.yaml`),
+);
 
 const instructionSpecs = [
   {
@@ -257,11 +261,20 @@ function validateSkillAdapterParity() {
 
 function validateReadOnlyWorkflowShape() {
   const failures = [];
+  const workflowSpecFiles = new Set(workflowSpecs.map((spec) => spec.file));
+  for (const file of readOnlyCoverageWorkflowFiles) {
+    if (!workflowSpecFiles.has(file)) {
+      failures.push(`${file} is classified read_only_out_of_scope but is not covered by read-only workflow validation`);
+    }
+  }
   for (const lang of languages) {
     for (const spec of workflowSpecs) {
       const path = join(repoRoot, ".takt", lang, "workflows", spec.file);
       if (!existsSync(path)) continue;
       const content = readText(path);
+      if (!readOnlyCoverageWorkflowFiles.has(spec.file)) {
+        failures.push(`${rel(path)} is validated as read-only but is not classified read_only_out_of_scope`);
+      }
       const stepNames = getStepNames(content);
       if (stepNames.length < 3) {
         failures.push(`${rel(path)} must use read-only collect -> classify/validate -> report steps, not a single prompt wrapper`);
@@ -286,6 +299,12 @@ function validateReadOnlyWorkflowShape() {
       }
       if (/workflow_call|takt\s+-w|required_permission_mode:\s*edit|\bWrite\b|\bEdit\b|repair-|debug-|update-progress|tasks\.md checkbox update|design\.md update/.test(content)) {
         failures.push(`${rel(path)} contains artifact mutation, nested workflow, repair, or debug behavior`);
+      }
+      if (/^loop_monitors:\s*$/m.test(content)) {
+        failures.push(`${rel(path)} must not define loop_monitors in read-only validation workflows`);
+      }
+      if (/ai-quality-gate|ai-antipattern|quality gate fix/i.test(content)) {
+        failures.push(`${rel(path)} contains read-only AI quality gate or fix-loop behavior`);
       }
     }
   }

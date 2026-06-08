@@ -61,7 +61,7 @@
   - _Boundary:_ GenerationWorkflowIntegration
   - _Depends:_ 2.1, 2.3
 
-- [ ] 3.3 read-only と orchestration の対象外境界を workflow 上で保つ
+- [x] 3.3 read-only と orchestration の対象外境界を workflow 上で保つ
   - status/validate workflow に edit-capable gate/fix step、repair/debug step、loop monitor、nested Kiro workflow call が追加されていない。
   - discovery と batch は artifact-level AI review owner を downstream generation workflows として分類し、直接 fix loop を持たない。
   - 新規の未判断 orchestration workflow は covered ではなく maintainer decision required として扱える。
