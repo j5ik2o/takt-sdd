@@ -255,7 +255,7 @@ test("standalone spec generation workflows route drafts through spec AI quality 
       assert.match(content, new RegExp(`- name: ${spec.generate}[\\s\\S]*next: ${spec.gate}`));
       assert.match(content, new RegExp(`- name: ${spec.repair}[\\s\\S]*next: ${spec.gate}`));
       assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*condition: COMPLETE[\\s\\S]*next: ${spec.review}`));
-      assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*condition: need_replan[\\s\\S]*next: ${spec.repair}`));
+      assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*condition: need_replan[\\s\\S]*next: ABORT`));
     }
   }
 });
@@ -297,7 +297,7 @@ test("quick spec workflow routes each phase draft through spec AI quality gate b
       assert.match(content, new RegExp(`- name: ${spec.generate}[\\s\\S]*next: ${spec.gate}`));
       assert.match(content, new RegExp(`- name: ${spec.repair}[\\s\\S]*next: ${spec.gate}`));
       assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*condition: COMPLETE[\\s\\S]*next: ${spec.review}`));
-      assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*condition: need_replan[\\s\\S]*next: ${spec.repair}`));
+      assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*condition: need_replan[\\s\\S]*next: ABORT`));
     }
 
     for (const forbiddenCall of forbiddenStandaloneCalls) {
@@ -438,6 +438,27 @@ test("coverage validator detects language drift in gate call paths before treati
   assert.equal(result.ok, false);
   assert.ok(
     result.failures.some((failure) => failure.includes("LANGUAGE_PARITY_DRIFT") && failure.includes("kiro-spec-quick")),
+    result.failures.join("\n"),
+  );
+});
+
+test("coverage validator detects spec gate need_replan routing back into local repair", () => {
+  const root = makeCoverageFixture();
+  const path = ".takt/en/workflows/kiro-spec-requirements.yaml";
+  writeFixtureFile(
+    root,
+    path,
+    readFixtureFile(root, path).replace(
+      "condition: need_replan\n        next: ABORT",
+      "condition: need_replan\n        next: repair-requirements",
+    ),
+  );
+
+  const result = validateKiroAiQualityGateWorkflowCoverage({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.failures.some((failure) => failure.includes("REPLAN_ROUTING_DRIFT") && failure.includes("repair")),
     result.failures.join("\n"),
   );
 });

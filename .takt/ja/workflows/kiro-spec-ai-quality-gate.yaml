@@ -126,7 +126,7 @@ steps:
     required_permission_mode: readonly
     instruction: |
       spec generation AI antipattern quality gate で、review outcome が ambiguous、blocked、internally inconsistent、または review/fix loop が収束しないため replan が必要。
-      caller workflow が既存の repair、replan、maintainer-decision path に戻れるように need_replan を返す。
+      caller workflow が local repair に入らず、upstream または boundary の再計画へ制御を戻せるように need_replan を返す。
     rules:
       - condition: Replan is required after an ambiguous, blocked, or internally inconsistent AI antipattern review outcome or an unproductive AI antipattern fix loop
         return: need_replan

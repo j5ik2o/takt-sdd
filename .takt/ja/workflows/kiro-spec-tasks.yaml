@@ -83,7 +83,7 @@ steps:
       - condition: COMPLETE
         next: review-tasks
       - condition: need_replan
-        next: repair-tasks
+        next: ABORT
       - condition: ABORT
         next: ABORT
 

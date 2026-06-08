@@ -83,7 +83,7 @@ steps:
       - condition: COMPLETE
         next: review-design
       - condition: need_replan
-        next: repair-design
+        next: ABORT
       - condition: ABORT
         next: ABORT
 

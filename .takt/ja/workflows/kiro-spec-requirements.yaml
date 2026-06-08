@@ -70,7 +70,7 @@ steps:
       - condition: COMPLETE
         next: review-requirements
       - condition: need_replan
-        next: repair-requirements
+        next: ABORT
       - condition: ABORT
         next: ABORT
 

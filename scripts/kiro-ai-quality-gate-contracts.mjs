@@ -146,7 +146,7 @@ const gateContractTerms = Object.freeze({
   shared: Object.freeze({
     routingTerms: Object.freeze(["No AI-specific issues", "AI-specific issues found"]),
     catchAllTerms: Object.freeze(["ambiguous", "blocked", "internally inconsistent"]),
-    loopOutcomeTerms: Object.freeze(["need_replan", "repair", "replan"]),
+    loopOutcomeTerms: Object.freeze(["need_replan", "replan"]),
   }),
 });
 

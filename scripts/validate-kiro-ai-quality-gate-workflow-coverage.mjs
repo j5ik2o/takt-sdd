@@ -69,6 +69,11 @@ function stepScalar(block, key) {
   return match?.[1] ?? "";
 }
 
+function ruleNextForCondition(block, condition) {
+  const pattern = new RegExp(`^\\s+- condition:\\s*${condition}\\s*\\n\\s+next:\\s*(\\S+)\\s*$`, "m");
+  return block.join("\n").match(pattern)?.[1] ?? "";
+}
+
 function extractWorkflowCalls(content) {
   return stepBlocks(content)
     .filter((block) => stepScalar(block, "kind") === "workflow_call")
@@ -178,6 +183,14 @@ function validateGatePlacement(repoRoot, coverageEntries) {
         }
         if (!content.includes(`- ${site.stepName}`)) {
           failures.push(`ELIGIBLE_GATE_BYPASS: ${rel(repoRoot, path)} loop monitor or route is missing ${site.stepName}`);
+        }
+        if (site.gateKind === "spec_generation") {
+          const gateBlock = stepBlocks(content).find((block) => stepScalar(block, "name") === site.stepName) ?? [];
+          if (ruleNextForCondition(gateBlock, "need_replan") !== "ABORT") {
+            failures.push(
+              `REPLAN_ROUTING_DRIFT: ${rel(repoRoot, path)} ${site.stepName} must route need_replan to ABORT instead of local repair`,
+            );
+          }
         }
       }
     }
