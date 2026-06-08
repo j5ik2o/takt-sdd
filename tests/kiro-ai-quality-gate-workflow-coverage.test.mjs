@@ -306,6 +306,24 @@ test("quick spec workflow routes each phase draft through spec AI quality gate b
   }
 });
 
+test("quick sanity review requires namespaced AI gate evidence for each quick phase", () => {
+  const requiredTerms = [
+    "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-requirements--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+    "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+    "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+    "namespaced",
+    "kiro-spec-ai-antipattern-fix.md",
+  ];
+
+  for (const language of languages) {
+    const path = join(repoRoot, ".takt", language, "facets", "instructions", "kiro-spec-quick-sanity-review.md");
+    const content = readFileSync(path, "utf8");
+    for (const term of requiredTerms) {
+      assert.ok(content.includes(term), `${path} should include ${term}`);
+    }
+  }
+});
+
 test("coverage validator accepts current Kiro AI quality gate coverage surface", () => {
   const result = validateKiroAiQualityGateWorkflowCoverage();
 
@@ -420,6 +438,27 @@ test("coverage validator detects language drift in gate call paths before treati
   assert.equal(result.ok, false);
   assert.ok(
     result.failures.some((failure) => failure.includes("LANGUAGE_PARITY_DRIFT") && failure.includes("kiro-spec-quick")),
+    result.failures.join("\n"),
+  );
+});
+
+test("coverage validator detects missing quick phase namespaced gate evidence instructions", () => {
+  const root = makeCoverageFixture();
+  const path = ".takt/en/facets/instructions/kiro-spec-quick-sanity-review.md";
+  writeFixtureFile(
+    root,
+    path,
+    readFixtureFile(root, path).replace(
+      "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+      "kiro-spec-ai-antipattern-review.md",
+    ),
+  );
+
+  const result = validateKiroAiQualityGateWorkflowCoverage({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.failures.some((failure) => failure.includes("QUICK_GATE_EVIDENCE_DRIFT") && failure.includes("quick-sanity-review")),
     result.failures.join("\n"),
   );
 });

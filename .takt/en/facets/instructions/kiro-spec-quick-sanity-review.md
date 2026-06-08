@@ -48,8 +48,11 @@ Review the already completed quick path. This instruction is used only by the fi
 
 ## AI quality gate evidence
 
-- Inspect `kiro-spec-ai-antipattern-review.md` for each quick phase before returning `verdict: "PASS"`.
+- Inspect the namespaced `kiro-spec-ai-antipattern-review.md` for each quick phase before returning `verdict: "PASS"`.
+  - Requirements: `reports/subworkflows/iteration-*--step-quick-ai-quality-gate-requirements--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`
+  - Design: `reports/subworkflows/iteration-*--step-quick-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`
+  - Tasks: `reports/subworkflows/iteration-*--step-quick-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`
 - Return `verdict: "NEEDS_FIX"` or `verdict: "BLOCKED"` when unresolved AI antipattern findings remain.
-- If `kiro-spec-ai-antipattern-fix.md` exists, reject stale, cross-run, blocked, or evidence-free no-fix outcomes.
+- If a phase's namespaced `kiro-spec-ai-antipattern-fix.md` exists, reject stale, cross-run, blocked, or evidence-free no-fix outcomes.
 - Treat the missing `kiro-spec-ai-antipattern-fix.md` as valid only when the first review found no blocking issue; it is an optional fix report, not a required success artifact.
 - Route rejected AI gate evidence to the affected `fix_targets` instead of accepting quick-completion.

@@ -261,6 +261,31 @@ function validateGateContractTerms(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
+function validateQuickGateEvidenceInstructions(repoRoot) {
+  const failures = [];
+  const requiredTerms = [
+    "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-requirements--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+    "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+    "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+    "namespaced",
+    "kiro-spec-ai-antipattern-fix.md",
+  ];
+  for (const language of languages) {
+    const path = join(repoRoot, ".takt", language, "facets", "instructions", "kiro-spec-quick-sanity-review.md");
+    if (!existsSync(path)) {
+      failures.push(`QUICK_GATE_EVIDENCE_DRIFT: ${rel(repoRoot, path)} missing`);
+      continue;
+    }
+    const content = readText(path);
+    for (const term of requiredTerms) {
+      if (!content.includes(term)) {
+        failures.push(`QUICK_GATE_EVIDENCE_DRIFT: ${rel(repoRoot, path)} missing required quick gate evidence term: ${term}`);
+      }
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
 function validatePolicyFacetBoundaries(repoRoot, coverageEntries) {
   const failures = [];
   const requiredTerms = ["scripts/kiro-ai-quality-gate-contracts.mjs", "roadmap checkbox"];
@@ -302,6 +327,7 @@ export function validateKiroAiQualityGateWorkflowCoverage(options = {}) {
     gatePlacement: validateGatePlacement(repoRoot, coverageEntries),
     readOnlyAndDelegatedBoundaries: validateReadOnlyAndDelegatedBoundaries(repoRoot, coverageEntries),
     gateContractTerms: validateGateContractTerms(repoRoot),
+    quickGateEvidenceInstructions: validateQuickGateEvidenceInstructions(repoRoot),
     policyFacetBoundaries: validatePolicyFacetBoundaries(repoRoot, coverageEntries),
   };
   const failures = Object.entries(sections).flatMap(([name, result]) =>

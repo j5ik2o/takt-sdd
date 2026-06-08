@@ -48,8 +48,11 @@ extends_skill_section: "#### Final Sanity Review"
 
 ## AI quality gate evidence
 
-- `verdict: "PASS"` を返す前に、各 quick phase の `kiro-spec-ai-antipattern-review.md` を確認する。
+- `verdict: "PASS"` を返す前に、各 quick phase の namespaced `kiro-spec-ai-antipattern-review.md` を確認する。
+  - Requirements: `reports/subworkflows/iteration-*--step-quick-ai-quality-gate-requirements--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`
+  - Design: `reports/subworkflows/iteration-*--step-quick-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`
+  - Tasks: `reports/subworkflows/iteration-*--step-quick-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`
 - unresolved AI antipattern findings が残る場合は `verdict: "NEEDS_FIX"` または `verdict: "BLOCKED"` を返す。
-- `kiro-spec-ai-antipattern-fix.md` が存在する場合、stale、cross-run、blocked、evidence-free no-fix outcomes を reject する。
+- phase の namespaced `kiro-spec-ai-antipattern-fix.md` が存在する場合、stale、cross-run、blocked、evidence-free no-fix outcomes を reject する。
 - first review が blocking issue を見つけなかった場合だけ、`kiro-spec-ai-antipattern-fix.md` が存在しなくても valid と扱う。これは optional fix report であり、required success artifact ではない。
 - rejected AI gate evidence は quick-completion accept ではなく affected `fix_targets` へ route する。
