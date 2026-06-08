@@ -23,3 +23,15 @@ This instruction is read-only. Inspect `requirements.md`, `design.md`, optional 
 ## Output mapping
 
 Use the shared `kiro-validation-result` contract. Translate the inherited skill's GO/NO-GO readiness determination into an explicit `DECISION: <GO|NO-GO|MANUAL_VERIFY_REQUIRED>` line; do not return a bare GO/NO-GO verdict without the `DECISION` machine field. Always set `DECISION` as the primary workflow-routing field: `GO` for design readiness, `NO-GO` for lifecycle failure or design drift, and `MANUAL_VERIFY_REQUIRED` when evidence cannot be confirmed automatically.
+
+## AI quality gate evidence
+
+- Inspect the current run's namespaced AI gate review report before returning `DECISION: GO`:
+  `reports/subworkflows/iteration-*--step-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`
+  or `reports/subworkflows/iteration-*--step-quick-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`.
+- If the active workflow is standalone `kiro-validate-design` and no `kiro-spec-ai-antipattern-review.md` exists in the current run, skip the AI quality gate evidence check and use the normal validation procedure only; that read-only workflow does not execute the gate.
+- If a generation review workflow such as `kiro-spec-design` or `kiro-spec-quick` lacks `kiro-spec-ai-antipattern-review.md`, return `DECISION: MANUAL_VERIFY_REQUIRED` instead of accepting design readiness.
+- Return `DECISION: NO-GO` when unresolved AI antipattern findings remain.
+- If the corresponding namespaced `kiro-spec-ai-antipattern-fix.md` exists, reject stale, cross-run, blocked, or evidence-free no-fix outcomes.
+- Treat the missing `kiro-spec-ai-antipattern-fix.md` as valid only when the first review found no blocking issue; it is an optional fix report, not a required success artifact.
+- Route rejected AI gate evidence through the existing `NO-GO` or `MANUAL_VERIFY_REQUIRED` result instead of accepting design readiness.

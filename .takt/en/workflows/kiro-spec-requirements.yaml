@@ -6,7 +6,7 @@ workflow_config:
       network_access: true
     opencode:
       network_access: true
-max_steps: 10
+max_steps: 14
 initial_step: generate-requirements
 
 instructions:
@@ -23,6 +23,7 @@ report_formats:
 
 loop_monitors:
   - cycle:
+      - ai-quality-gate-requirements
       - review-requirements
       - repair-requirements
       - finalize-requirements
@@ -32,7 +33,7 @@ loop_monitors:
       instruction: kiro-spec-requirements
       rules:
         - condition: Healthy (review findings are converging)
-          next: review-requirements
+          next: ai-quality-gate-requirements
         - condition: Unproductive (same finding repeats or no improvement)
           next: ABORT
 
@@ -52,11 +53,26 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: validation.verdict PASS and phase requirements and draft_status READY_FOR_REVIEW and review_gate PENDING
-        next: review-requirements
+        next: ai-quality-gate-requirements
       - condition: validation.verdict BLOCKED or scope ambiguity remains or acceptance criteria not verifiable
         next: ABORT
       - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW
+        next: ai-quality-gate-requirements
+
+  - name: ai-quality-gate-requirements
+    kind: workflow_call
+    call: ./kiro-spec-ai-quality-gate.yaml
+    args:
+      fix_instruction: kiro-ai-antipattern-fix-spec-generation
+      domain_knowledge:
+        - architecture
+    rules:
+      - condition: COMPLETE
         next: review-requirements
+      - condition: need_replan
+        next: ABORT
+      - condition: ABORT
+        next: ABORT
 
   - name: review-requirements
     edit: false
@@ -94,9 +110,9 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: validation.verdict PASS and draft_status READY_FOR_REVIEW
-        next: review-requirements
+        next: ai-quality-gate-requirements
       - condition: validation.verdict NEEDS_FIX and local repair attempted
-        next: review-requirements
+        next: ai-quality-gate-requirements
       - condition: validation.verdict BLOCKED or scope ambiguity remains or acceptance criteria not verifiable
         next: ABORT
 
@@ -125,7 +141,7 @@ steps:
 # - Context loading reads .kiro/specs/<feature>/brief.md, existing draft requirements.md, existing spec.json, steering context, and requirements rules.
 # - Generate requirements.md with EARS fixed phrases and numeric IDs only.
 # - The requirements review gate checks EARS conformance, numeric IDs, testable acceptance criteria, and scope ambiguity before metadata update.
-# - The workflow uses generate -> review -> repair -> review -> finalize, and finalize repair returns stay inside the monitored loop; the repeat bound is only loop_monitors.threshold.
+# - The workflow uses generate/repair -> ai-quality-gate-requirements -> review -> finalize, and finalize repair returns stay inside the monitored loop; the repeat bound is only loop_monitors.threshold.
 # - On success, update spec.json to phase: "requirements-generated" and approvals.requirements.generated: true.
 # - If scope ambiguity or unverifiable acceptance criteria remain, return BLOCKED or NEEDS_FIX and do not advance to requirements-generated.
 # - The requirements phase does not decide design component ownership, workflow YAML ownership, or implementation file ownership.

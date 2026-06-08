@@ -6,7 +6,7 @@ workflow_config:
       network_access: true
     opencode:
       network_access: true
-max_steps: 10
+max_steps: 14
 initial_step: generate-design
 
 instructions:
@@ -24,6 +24,7 @@ report_formats:
 
 loop_monitors:
   - cycle:
+      - ai-quality-gate-design
       - review-design
       - repair-design
       - finalize-design
@@ -33,7 +34,7 @@ loop_monitors:
       instruction: kiro-spec-design
       rules:
         - condition: Healthy (review findings are converging)
-          next: review-design
+          next: ai-quality-gate-design
         - condition: Unproductive (same finding repeats or no improvement)
           next: ABORT
 
@@ -65,11 +66,26 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: validation.verdict PASS and phase design and draft_status READY_FOR_REVIEW and review_gate PENDING
-        next: review-design
+        next: ai-quality-gate-design
       - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
         next: ABORT
       - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW
+        next: ai-quality-gate-design
+
+  - name: ai-quality-gate-design
+    kind: workflow_call
+    call: ./kiro-spec-ai-quality-gate.yaml
+    args:
+      fix_instruction: kiro-ai-antipattern-fix-spec-generation
+      domain_knowledge:
+        - architecture
+    rules:
+      - condition: COMPLETE
         next: review-design
+      - condition: need_replan
+        next: ABORT
+      - condition: ABORT
+        next: ABORT
 
   - name: review-design
     edit: false
@@ -113,9 +129,9 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: validation.verdict PASS and draft_status READY_FOR_REVIEW
-        next: review-design
+        next: ai-quality-gate-design
       - condition: validation.verdict NEEDS_FIX and local repair attempted
-        next: review-design
+        next: ai-quality-gate-design
       - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
         next: ABORT
 
@@ -149,6 +165,6 @@ steps:
 # - research.md は design phase の補助 artifact として書き、最終的な実装判断は design.md にも残す。
 # - design.md は required sections として Boundary Commitments、File Structure Plan、Requirements Traceability を含める。
 # - design review gate は requirement coverage、architecture readiness、boundary readiness、File Structure Plan の具体性、Requirements Traceability を確認する。
-# - workflow は generate -> review -> repair -> review -> finalize を使い、finalize からの repair 戻りも監視対象に含め、repeat bound は loop_monitors.threshold だけに置く。
+# - workflow は generate/repair -> ai-quality-gate-design -> review -> finalize を使い、finalize からの repair 戻りも監視対象に含め、repeat bound は loop_monitors.threshold だけに置く。
 # - real requirements/design gap が残る場合は BLOCKED または NEEDS_FIX を返し、design-generated へ進めない。
 # - 成功時は spec.json を phase: "design-generated"、approvals.requirements.approved: true、approvals.design.generated: true に更新する。

@@ -1,0 +1,22 @@
+{
+  "feature_name": "kiro-ai-quality-gate-workflow-coverage",
+  "created_at": "2026-06-08T09:14:17Z",
+  "updated_at": "2026-06-08T11:31:39Z",
+  "language": "ja",
+  "phase": "tasks-generated",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": true
+    }
+  },
+  "ready_for_implementation": true
+}

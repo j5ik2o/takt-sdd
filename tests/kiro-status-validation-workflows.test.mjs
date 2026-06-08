@@ -104,3 +104,29 @@ test("task 16 rejects downstream adapter steps that stop using DECISION as the p
   const result = validateKiroStatusValidationWorkflows({ repoRoot: root });
   assertHasFailure(result, "must keep DECISION as the primary Kiro skill field");
 });
+
+test("read-only status and validation workflows reject AI gate loop monitor drift", () => {
+  const root = makeValidationFixture();
+  const path = ".takt/en/workflows/kiro-validate-gap.yaml";
+  writeFile(
+    root,
+    path,
+    readFixtureFile(root, path).replace(
+      "\nsteps:\n",
+      [
+        "",
+        "loop_monitors:",
+        "  - cycle:",
+        "      - ai-quality-gate-gap",
+        "      - validate-gap",
+        "    threshold: 2",
+        "",
+        "steps:",
+        "",
+      ].join("\n"),
+    ),
+  );
+
+  const result = validateKiroStatusValidationWorkflows({ repoRoot: root });
+  assertHasFailure(result, "must not define loop_monitors");
+});

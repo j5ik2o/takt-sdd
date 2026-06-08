@@ -82,14 +82,17 @@ const phaseWorkflowSpecs = [
     requiredTerms: [
       "quick-init",
       "quick-requirements",
+      "quick-ai-quality-gate-requirements",
       "quick-review-requirements",
       "quick-repair-requirements",
       "quick-finalize-requirements",
       "quick-design",
+      "quick-ai-quality-gate-design",
       "quick-review-design",
       "quick-repair-design",
       "quick-finalize-design",
       "quick-tasks",
+      "quick-ai-quality-gate-tasks",
       "quick-review-tasks",
       "quick-repair-tasks",
       "quick-finalize-tasks",
@@ -935,8 +938,21 @@ function validateQuickComposition(repoRoot) {
       }
     }
 
-    if (/\bworkflow_call\b/.test(content)) {
-      failures.push(`QUICK_COMPOSITION_DRIFT: ${rel(repoRoot, path)} must not depend on workflow_call`);
+    for (const block of blocks) {
+      const blockText = block.join("\n");
+      const stepName = stepScalar(block, "name");
+      const kind = stepScalar(block, "kind");
+      const call = stepScalar(block, "call");
+      const hasLegacyWorkflowCall = /^    workflow_call:\s*/m.test(blockText);
+      const hasWorkflowCall = kind === "workflow_call" || hasLegacyWorkflowCall;
+      if (!hasWorkflowCall) {
+        continue;
+      }
+      if (!stepName.startsWith("quick-ai-quality-gate-") || kind !== "workflow_call" || call !== "./kiro-spec-ai-quality-gate.yaml") {
+        failures.push(
+          `QUICK_COMPOSITION_DRIFT: ${rel(repoRoot, path)} workflow_call is only allowed for quick spec AI quality gate steps`,
+        );
+      }
     }
     if (/\btakt\b[^\n]*(?:-w\s+|--workflow(?:\s+|=))kiro-spec-(?:init|requirements|design|tasks|quick)\b/.test(content)) {
       failures.push(`QUICK_COMPOSITION_DRIFT: ${rel(repoRoot, path)} must not use nested takt execution`);

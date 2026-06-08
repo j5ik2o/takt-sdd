@@ -32,6 +32,8 @@
     "test:kiro-status-validation-workflows": "node --test tests/kiro-status-validation-workflows.test.mjs",
     "validate:kiro-spec-generation-workflows": "node scripts/validate-kiro-spec-generation-workflows.mjs",
     "test:kiro-spec-generation-workflows": "node --test tests/kiro-spec-generation-workflows.test.mjs",
+    "validate:kiro-ai-quality-gate-workflow-coverage": "node scripts/validate-kiro-ai-quality-gate-workflow-coverage.mjs",
+    "test:kiro-ai-quality-gate-workflow-coverage": "node --test tests/kiro-ai-quality-gate-workflow-coverage.test.mjs",
     "validate:kiro-iterative-implementation-workflow": "node scripts/validate-kiro-iterative-implementation-workflow.mjs",
     "test:kiro-iterative-implementation-workflow": "node --test tests/kiro-iterative-implementation-workflow.test.mjs",
     "test:kiro-ai-quality-gate-runtime-smoke": "node --test tests/kiro-ai-quality-gate-runtime-smoke.test.mjs",

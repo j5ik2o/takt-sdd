@@ -25,3 +25,13 @@ extends_skill_additional_section: "### Step 3.5: Run Task-Graph Sanity Review"
 
 - pass 時は coverage、executability、dependency graph、boundary ownership、`(P)` marker evidence を報告し、artifact は変更しない。
 - needs-fix または blocked 時は具体的な findings を含め、`tasks.md` と `spec.json` を変更しない。
+
+## AI quality gate evidence
+
+- task plan review pass を返す前に、current run の namespaced AI gate review report を確認する:
+  `reports/subworkflows/iteration-*--step-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`
+  または `reports/subworkflows/iteration-*--step-quick-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`。
+- unresolved AI antipattern findings が残る場合は draft task plan を reject する。
+- 対応する namespaced `kiro-spec-ai-antipattern-fix.md` が存在する場合、stale、cross-run、blocked、evidence-free no-fix outcomes を reject する。
+- first review が blocking issue を見つけなかった場合だけ、`kiro-spec-ai-antipattern-fix.md` が存在しなくても valid と扱う。これは optional fix report であり、required success artifact ではない。
+- rejected AI gate evidence は task graph accept ではなく `NEEDS_FIXES` または `RETURN_TO_DESIGN` へ route する。

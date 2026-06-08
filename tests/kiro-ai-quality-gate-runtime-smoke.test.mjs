@@ -28,6 +28,7 @@ function makeRuntimeFixture() {
       {
         scripts: {
           "kiro:impl": "node scripts/kiro-staged.mjs kiro-impl --pipeline --skip-git -t",
+          "kiro:spec:requirements": "node scripts/kiro-staged.mjs kiro-spec-requirements --pipeline --skip-git -t",
         },
       },
       null,
@@ -40,6 +41,54 @@ function makeRuntimeFixture() {
     "provider: mock\nlanguage: ja\nmodel: claude-opus-4-8\nconcurrency: 1\nbase_branch: main\nsubmodules: all\n",
   );
   return root;
+}
+
+function writeRequirementsSmokeSpec(root) {
+  writeFixtureFile(
+    root,
+    ".kiro/specs/kiro-spec-ai-quality-gate-smoke/spec.json",
+    `${JSON.stringify(
+      {
+        feature_name: "kiro-spec-ai-quality-gate-smoke",
+        created_at: "2026-06-08T00:00:00Z",
+        updated_at: "2026-06-08T00:00:00Z",
+        language: "ja",
+        phase: "initialized",
+        approvals: {
+          requirements: { generated: false, approved: false },
+          design: { generated: false, approved: false },
+          tasks: { generated: false, approved: false },
+        },
+        ready_for_implementation: false,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  writeFixtureFile(
+    root,
+    ".kiro/specs/kiro-spec-ai-quality-gate-smoke/brief.md",
+    `# Brief
+
+Generate a minimal requirements draft for deterministic runtime smoke.
+`,
+  );
+  writeFixtureFile(
+    root,
+    ".kiro/specs/kiro-spec-ai-quality-gate-smoke/requirements.md",
+    `# Requirements Document
+
+## Requirements
+
+### Requirement 1:
+
+**User Story:** As a smoke tester, I want a generated requirements draft, so that spec gate wiring can be observed.
+
+#### Acceptance Criteria
+
+1. When the spec requirements workflow runs, it shall pass through the spec AI quality gate before requirements review.
+`,
+  );
 }
 
 function writeSmokeSpec(root) {
@@ -177,6 +226,54 @@ function writeMockScenario(root) {
   return scenarioPath;
 }
 
+function writeSpecGenerationMockScenario(root) {
+  const entries = [
+    {
+      persona: "supervisor",
+      content:
+        "## Requirements Generation\n\nphase: requirements\nvalidation.verdict: PASS\ndraft_status: READY_FOR_REVIEW\nreview_gate: PENDING\nfeatureName: kiro-spec-ai-quality-gate-smoke\nupdatedFiles: []\nsummary: draft ready for spec AI gate",
+    },
+    {
+      persona: "supervisor",
+      content:
+        "## Requirements Generation Report\n\nphase: requirements\nvalidation.verdict: PASS\ndraft_status: READY_FOR_REVIEW\nreview_gate: PENDING\nfeatureName: kiro-spec-ai-quality-gate-smoke\nupdatedFiles: []\nsummary: draft ready for spec AI gate",
+    },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "ai-antipattern-reviewer", content: "Spec AI antipattern smoke review complete. No AI-specific issues." },
+    {
+      persona: "ai-antipattern-reviewer",
+      content:
+        "# Spec AI Antipattern Review\n\n## Result: APPROVE\n\nNo AI-specific issues.\n\nNo fix report is required for this successful smoke path.",
+    },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    {
+      persona: "reviewer",
+      content:
+        "## Requirements Review\n\nphase: requirements\nvalidation.verdict: PASS\ndraft_status: READY_FOR_REVIEW\nreview_gate: PENDING\nrequirements review gate passed\nsummary: requirements review passed after spec AI gate",
+    },
+    {
+      persona: "reviewer",
+      content:
+        "## Requirements Review Report\n\nphase: requirements\nvalidation.verdict: PASS\ndraft_status: READY_FOR_REVIEW\nreview_gate: PENDING\nrequirements review gate passed\nsummary: requirements review passed after spec AI gate",
+    },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    {
+      persona: "supervisor",
+      content:
+        "## Requirements Finalize\n\nphase: requirements\nvalidation.verdict: PASS\ndraft_status: WRITTEN\nreview_gate: PASSED\nrequirements.md written\nrequirements-generated\napprovals.requirements.generated true\nfeatureName: kiro-spec-ai-quality-gate-smoke\nupdatedFiles: [\"requirements.md\", \"spec.json\"]\nsummary: requirements finalized",
+    },
+    {
+      persona: "supervisor",
+      content:
+        "## Requirements Finalize Report\n\nphase: requirements\nvalidation.verdict: PASS\ndraft_status: WRITTEN\nreview_gate: PASSED\nrequirements.md written\nrequirements-generated\napprovals.requirements.generated true\nfeatureName: kiro-spec-ai-quality-gate-smoke\nupdatedFiles: [\"requirements.md\", \"spec.json\"]\nsummary: requirements finalized",
+    },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+  ];
+  const scenarioPath = join(root, ".takt", "runs", "kiro-spec-ai-quality-gate-runtime-smoke-scenario.json");
+  writeFixtureFile(root, ".takt/runs/kiro-spec-ai-quality-gate-runtime-smoke-scenario.json", `${JSON.stringify(entries, null, 2)}\n`);
+  return scenarioPath;
+}
+
 function findFile(root, fileName) {
   for (const entry of readdirSync(root, { withFileTypes: true })) {
     const entryPath = join(root, entry.name);
@@ -227,6 +324,51 @@ test("kiro impl runtime wiring calls AI quality gate subworkflow and returns to 
     assert.ok(aiAntipatternReportPath, "expected the AI antipattern review report to be emitted");
     assert.match(readFileSync(aiAntipatternReportPath, "utf8"), /APPROVE/);
     assert.match(readFileSync(join(reportsDir, "kiro-task-review-verdict.md"), "utf8"), /VERDICT: APPROVED/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("kiro spec generation runtime wiring calls spec AI gate before requirements review", () => {
+  const root = makeRuntimeFixture();
+  try {
+    writeRequirementsSmokeSpec(root);
+    const scenarioPath = writeSpecGenerationMockScenario(root);
+
+    const result = spawnSync(
+      "npm",
+      ["run", "kiro:spec:requirements", "--", "feature=kiro-spec-ai-quality-gate-smoke"],
+      {
+        cwd: root,
+        env: {
+          ...process.env,
+          TAKT_MOCK_SCENARIO: scenarioPath,
+        },
+        encoding: "utf8",
+      },
+    );
+    const output = `${result.stdout}\n${result.stderr}`;
+
+    assert.equal(result.status, 0, output);
+    assert.match(output, /\[2\/14\] ai-quality-gate-requirements/);
+    assert.match(output, /\[3\/14\] ai-antipattern-review-1st/);
+    assert.match(output, /Status: COMPLETE/);
+    assert.match(output, /\[4\/14\] review-requirements/);
+    assert.match(output, /\[5\/14\] finalize-requirements/);
+    assert.match(output, /Result: Success/);
+
+    const reportRoot = join(root, ".takt", "runs");
+    const latestRun = readdirSync(reportRoot)
+      .filter((entry) => statSync(join(reportRoot, entry)).isDirectory())
+      .sort()
+      .at(-1);
+    assert.ok(latestRun, output);
+    const reportsDir = join(reportRoot, latestRun, "reports");
+    const specAiReportPath = findFile(reportsDir, "kiro-spec-ai-antipattern-review.md");
+    assert.ok(specAiReportPath, "expected the spec AI antipattern review report to be emitted");
+    assert.match(readFileSync(specAiReportPath, "utf8"), /No AI-specific issues/);
+    assert.equal(findFile(reportsDir, "kiro-spec-ai-antipattern-fix.md"), undefined);
+    assert.match(readFileSync(join(reportsDir, "kiro-spec-requirements-review.md"), "utf8"), /requirements review gate passed/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

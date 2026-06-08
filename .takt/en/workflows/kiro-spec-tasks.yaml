@@ -6,7 +6,7 @@ workflow_config:
       network_access: true
     opencode:
       network_access: true
-max_steps: 10
+max_steps: 14
 initial_step: generate-tasks
 
 instructions:
@@ -25,6 +25,7 @@ report_formats:
 
 loop_monitors:
   - cycle:
+      - ai-quality-gate-tasks
       - review-tasks
       - repair-tasks
       - finalize-tasks
@@ -34,7 +35,7 @@ loop_monitors:
       instruction: kiro-spec-tasks
       rules:
         - condition: Healthy (review findings are converging)
-          next: review-tasks
+          next: ai-quality-gate-tasks
         - condition: Unproductive (same finding repeats or no improvement)
           next: ABORT
 
@@ -65,11 +66,26 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: validation.verdict PASS and phase tasks and draft_status READY_FOR_REVIEW and review_gate PENDING
-        next: review-tasks
+        next: ai-quality-gate-tasks
       - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
         next: ABORT
       - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW and review_gate PENDING
+        next: ai-quality-gate-tasks
+
+  - name: ai-quality-gate-tasks
+    kind: workflow_call
+    call: ./kiro-spec-ai-quality-gate.yaml
+    args:
+      fix_instruction: kiro-ai-antipattern-fix-spec-generation
+      domain_knowledge:
+        - architecture
+    rules:
+      - condition: COMPLETE
         next: review-tasks
+      - condition: need_replan
+        next: ABORT
+      - condition: ABORT
+        next: ABORT
 
   - name: review-tasks
     edit: false
@@ -115,9 +131,9 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: validation.verdict PASS and phase tasks and draft_status READY_FOR_REVIEW and review_gate PENDING
-        next: review-tasks
+        next: ai-quality-gate-tasks
       - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW and review_gate PENDING and local repair attempted
-        next: review-tasks
+        next: ai-quality-gate-tasks
       - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
         next: ABORT
 
@@ -155,7 +171,7 @@ steps:
 # - Use _Depends:_ none when a task has no dependency.
 # - Run task plan review and task graph sanity review before success metadata.
 # - (P) is allowed only when the non-overlapping boundary and explicit dependency graph show the task can run independently.
-# - The workflow uses generate -> review -> repair -> review -> finalize, and finalize repair returns stay inside the monitored loop; the repeat bound is only loop_monitors.threshold.
+# - The workflow uses generate/repair -> ai-quality-gate-tasks -> review -> finalize, and finalize repair returns stay inside the monitored loop; the repeat bound is only loop_monitors.threshold.
 # - On success, update spec.json to phase: "tasks-generated" and approvals.tasks.generated: true.
 # - In auto-approve mode, also set approvals.tasks.approved: true and ready_for_implementation: true.
 # - In normal mode, do not set ready_for_implementation true until tasks approval exists.

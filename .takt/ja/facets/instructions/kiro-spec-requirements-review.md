@@ -23,3 +23,13 @@ extends_skill_section: "### Step 4: Review Requirements Draft"
 
 - pass 時は `requirements review gate passed` を報告し、lifecycle metadata は更新しない。
 - needs-fix または blocked 時は具体的な findings を含め、`spec.json` を `requirements-generated` success state にしない。
+
+## AI quality gate evidence
+
+- draft を accept する前に、current run の namespaced AI gate review report を確認する:
+  `reports/subworkflows/iteration-*--step-ai-quality-gate-requirements--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`
+  または `reports/subworkflows/iteration-*--step-quick-ai-quality-gate-requirements--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`。
+- unresolved AI antipattern findings が残る場合は draft を reject する。
+- 対応する namespaced `kiro-spec-ai-antipattern-fix.md` が存在する場合、stale、cross-run、blocked、evidence-free no-fix outcomes を reject する。
+- first review が blocking issue を見つけなかった場合だけ、`kiro-spec-ai-antipattern-fix.md` が存在しなくても valid と扱う。これは optional fix report であり、required success artifact ではない。
+- rejected AI gate evidence は draft accept ではなく既存の needs-fix または blocked result へ route する。

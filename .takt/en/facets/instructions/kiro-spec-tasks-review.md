@@ -25,3 +25,13 @@ Review the draft task plan and task graph before `tasks.md` and lifecycle metada
 
 - On pass, report the checked coverage, executability, dependency graph, boundary ownership, and `(P)` marker evidence without changing artifacts.
 - On needs-fix or blocked, include concrete findings and keep `tasks.md` and `spec.json` unchanged.
+
+## AI quality gate evidence
+
+- Inspect the current run's namespaced AI gate review report before returning task plan review pass:
+  `reports/subworkflows/iteration-*--step-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`
+  or `reports/subworkflows/iteration-*--step-quick-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`.
+- Reject the draft task plan when unresolved AI antipattern findings remain.
+- If the corresponding namespaced `kiro-spec-ai-antipattern-fix.md` exists, reject stale, cross-run, blocked, or evidence-free no-fix outcomes.
+- Treat the missing `kiro-spec-ai-antipattern-fix.md` as valid only when the first review found no blocking issue; it is an optional fix report, not a required success artifact.
+- Route rejected AI gate evidence through `NEEDS_FIXES` or `RETURN_TO_DESIGN` instead of accepting the task graph.
