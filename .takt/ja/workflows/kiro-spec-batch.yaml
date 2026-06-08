@@ -118,7 +118,7 @@ steps:
     rules:
       - condition: local remediation attempted and loop_monitors.threshold not reached
         next: cross-spec-review
-      - condition: DECOMPOSITION_RETURN or loop_monitors.threshold reached
+      - condition: verdict DECOMPOSITION_RETURN or loop_monitors.threshold reached
         next: finalize-batch
 
   - name: finalize-batch

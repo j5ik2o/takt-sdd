@@ -375,6 +375,7 @@ function parseRoadmapLine(line) {
 export function parseRoadmap(content) {
   const errors = [];
   const specs = [];
+  const seenFeatureNames = new Set();
   const specsBody = sectionBody(content, "## Specs (dependency order)");
   if (!specsBody) {
     errors.push("missing ## Specs (dependency order) section");
@@ -393,6 +394,11 @@ export function parseRoadmap(content) {
       errors.push(`invalid roadmap spec entry: ${line}`);
       continue;
     }
+    if (seenFeatureNames.has(entry.featureName)) {
+      errors.push(`duplicate roadmap spec entry: ${entry.featureName}`);
+      continue;
+    }
+    seenFeatureNames.add(entry.featureName);
     specs.push(entry);
   }
   const names = new Set(specs.map((spec) => spec.featureName));
@@ -414,6 +420,13 @@ export function parseRoadmap(content) {
 
 export function buildDependencyWaves(specs) {
   const errors = [];
+  const seenFeatureNames = new Set();
+  for (const spec of specs) {
+    if (seenFeatureNames.has(spec.featureName)) {
+      errors.push(`duplicate roadmap spec entry: ${spec.featureName}`);
+    }
+    seenFeatureNames.add(spec.featureName);
+  }
   const byName = new Map(specs.map((spec) => [spec.featureName, spec]));
   for (const spec of specs) {
     for (const dependency of spec.dependencies) {

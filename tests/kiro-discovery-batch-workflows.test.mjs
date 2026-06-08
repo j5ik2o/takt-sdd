@@ -92,6 +92,27 @@ test("roadmap parser rejects malformed dependency-order lines", () => {
   assert.ok(result.errors.every((error) => error.includes("invalid roadmap spec entry")));
 });
 
+test("roadmap parser rejects duplicate dependency-order features", () => {
+  const roadmap = [
+    "# Roadmap",
+    "",
+    "## Specs (dependency order)",
+    "- [x] feature-a -- Existing completion. Dependencies: none",
+    "- [ ] feature-a -- Duplicate pending entry. Dependencies: none",
+  ].join("\n");
+
+  const result = parseRoadmap(roadmap);
+  const wavePlan = buildDependencyWaves([
+    { featureName: "feature-a", description: "Existing completion", dependencies: [], status: "done" },
+    { featureName: "feature-a", description: "Duplicate pending entry", dependencies: [], status: "pending" },
+  ]);
+
+  assert.deepEqual(result.specs.map((spec) => spec.status), ["done"]);
+  assert.ok(result.errors.some((error) => error.includes("duplicate roadmap spec entry: feature-a")));
+  assert.equal(wavePlan.ok, false);
+  assert.ok(wavePlan.errors.some((error) => error.includes("duplicate roadmap spec entry: feature-a")));
+});
+
 test("dependency wave planner rejects missing dependencies and cycles", () => {
   const missingDependency = buildDependencyWaves([
     { featureName: "feature-a", description: "A", dependencies: ["missing"], status: "pending" },
@@ -320,6 +341,7 @@ test("kiro-spec-batch workflow uses dynamic worker dispatch without workflow reu
     assert.ok(workflow.includes("verdict PASS"));
     assert.ok(workflow.includes("verdict NEEDS_FIX"));
     assert.ok(workflow.includes("verdict DECOMPOSITION_RETURN"));
+    assert.equal(workflow.includes("condition: DECOMPOSITION_RETURN or loop_monitors.threshold reached"), false);
     assert.equal(workflow.includes("crossSpecReview PASS"), false);
     assert.equal(/\btakt\s+-w\b|\btakt\s+.*\s-w\s+/.test(workflow), false);
     assert.equal(workflow.includes("workflow_call"), false);
