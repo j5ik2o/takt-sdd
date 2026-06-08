@@ -23,7 +23,7 @@ extends_skill_section: "## Step 2: Build Dependency Waves"
 - `## Specs (dependency order)` から spec pending entries と skipped spec-ready entries を解析する。
 - roadmap の `[x]` は spec ready marker として扱い、implementation completion や `tasks.md` checkbox completion として扱わない。
 - strict dependency waves を作る。feature はすべての dependency が spec ready、または earlier wave に属する場合だけ wave に入れる。
-- `tasks.md` が存在するだけで skip しない。`spec.json.phase == "tasks-generated"`、requirements/design/tasks approval、`ready_for_implementation == true`、required artifacts の存在を readiness evidence として確認する。
+- `tasks.md` が存在するだけで skip しない。`spec.json.phase == "tasks-generated"`、requirements/design/tasks approvals、`ready_for_implementation == true`、required artifacts の存在を readiness evidence として確認する。
 - missing dependency、circular dependency、missing `brief.md`、unknown readiness marker は worker dispatch 前に報告する。
 
 ## Dynamic Worker Dispatch
