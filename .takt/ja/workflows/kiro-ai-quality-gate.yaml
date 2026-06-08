@@ -126,8 +126,8 @@ steps:
     persona: supervisor
     required_permission_mode: readonly
     instruction: |
-      AI アンチパターン review/fix ループが収束せず loop_monitors.threshold に達した。
+      AI アンチパターン品質ゲートで、review outcome が曖昧、または review/fix ループが収束しないため再計画が必要。
       親の実装ワークフローが debug-task に戻れるように need_replan を返す。
     rules:
-      - condition: Replan is required after an unproductive AI antipattern fix loop
+      - condition: Replan is required after an ambiguous AI antipattern review outcome or an unproductive AI antipattern fix loop
         return: need_replan

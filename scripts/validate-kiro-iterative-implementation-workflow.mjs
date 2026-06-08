@@ -624,8 +624,8 @@ function validateGateWorkflowFiles(repoRoot) {
       repoRoot,
       "GATE_WORKFLOW_DRIFT",
     );
-    if (!hasRuleWithTerms(replanBlock, ["unproductive AI antipattern fix loop", "return: need_replan"])) {
-      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} request-replan must return need_replan after loop monitor exhaustion`);
+    if (!hasRuleWithTerms(replanBlock, ["ambiguous AI antipattern review outcome", "unproductive AI antipattern fix loop", "return: need_replan"])) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} request-replan must return need_replan for ambiguous review outcomes and loop exhaustion`);
     }
     if (customLoopSourcePattern.test(content)) {
       failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, workflowPath)} must rely on TAKT loop_monitors, not custom retry state`);
@@ -874,6 +874,7 @@ function validateTaskFixtureCoverage(repoRoot) {
       "validator rejects AI quality gate loop threshold drift",
       "validator rejects AI quality gate review routing gaps",
       "validator rejects AI quality gate review vocabulary drift",
+      "validator rejects request-replan rules that only handle loop exhaustion",
       "validator rejects AI quality gate loop exhaustion that aborts instead of replanning",
       "validator rejects missing AI gate evidence hooks in review adapter",
       "validator rejects adapters that require AI antipattern fix reports unconditionally",

@@ -253,6 +253,23 @@ test("validator rejects AI quality gate review vocabulary drift", () => {
   assert.ok(result.failures.some((failure) => failure.includes("AI-specific issues to fix")));
 });
 
+test("validator rejects request-replan rules that only handle loop exhaustion", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-ai-quality-gate.yaml");
+  const workflow = readFileSync(workflowPath, "utf8")
+    .replace("the review outcome was ambiguous or the review/fix loop did not converge", "the review/fix loop did not converge")
+    .replace(
+      "condition: Replan is required after an ambiguous AI antipattern review outcome or an unproductive AI antipattern fix loop",
+      "condition: Replan is required after an unproductive AI antipattern fix loop",
+    );
+  writeFixtureFile(root, ".takt/en/workflows/kiro-ai-quality-gate.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("ambiguous review outcomes and loop exhaustion")));
+});
+
 test("validator rejects AI quality gate loop exhaustion that aborts instead of replanning", () => {
   const root = makeCurrentSurfaceFixture();
   const workflowPath = join(root, ".takt", "en", "workflows", "kiro-ai-quality-gate.yaml");

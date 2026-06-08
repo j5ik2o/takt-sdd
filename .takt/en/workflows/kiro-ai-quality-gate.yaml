@@ -126,8 +126,8 @@ steps:
     persona: supervisor
     required_permission_mode: readonly
     instruction: |
-      The AI antipattern review/fix loop reached loop_monitors.threshold without converging.
+      The AI antipattern quality gate requires replanning because the review outcome was ambiguous or the review/fix loop did not converge.
       Return need_replan so the parent implementation workflow can route to debug-task.
     rules:
-      - condition: Replan is required after an unproductive AI antipattern fix loop
+      - condition: Replan is required after an ambiguous AI antipattern review outcome or an unproductive AI antipattern fix loop
         return: need_replan
