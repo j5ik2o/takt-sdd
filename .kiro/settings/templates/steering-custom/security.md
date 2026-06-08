@@ -1,55 +1,55 @@
-# Security Standards
+# セキュリティ標準
 
-[Purpose: define security posture with patterns for validation, authz, secrets, and data]
+[目的: バリデーション・認可・シークレット・データに関するパターンとともに、セキュリティ姿勢を定める]
 
-## Philosophy
-- Defense in depth; least privilege; secure by default; fail closed
-- Validate at boundaries; sanitize for context; never trust input
-- Separate authentication (who) and authorization (what)
+## 基本方針
+- 多層防御（defense in depth）、最小権限、セキュアバイデフォルト、フェイルクローズ
+- 境界で検証する。出力先に応じてサニタイズする。入力を決して信頼しない
+- 認証（誰か / who）と認可（何ができるか / what）を分離する
 
-## Input & Output
-- Validate at API boundaries and UI forms; enforce types and constraints
-- Sanitize/escape based on destination (HTML, SQL, shell, logs)
-- Prefer allow-lists over block-lists; reject early with minimal detail
+## 入力と出力
+- API 境界と UI フォームで検証する。型と制約を強制する
+- 出力先（HTML、SQL、シェル、ログ）に応じてサニタイズ／エスケープする
+- ブロックリストよりアローリストを優先する。詳細を最小限にして早期に拒否する
 
-## Authentication & Authorization
-- Authentication: verify identity; issue short-lived tokens/sessions
-- Authorization: check permissions before actions; deny by default
-- Centralize policies; avoid duplicating checks across code
+## 認証と認可
+- 認証: 本人性を検証する。短命のトークン／セッションを発行する
+- 認可: 操作の前に権限をチェックする。既定では拒否する
+- ポリシーを一元化する。コード全体でチェックを重複させない
 
-Pattern:
+パターン:
 ```typescript
 if (!user.hasPermission('resource:action')) throw ForbiddenError();
 ```
 
-## Secrets & Configuration
-- Never commit secrets; store in secret manager or env
-- Rotate regularly; audit access; scope minimal
-- Validate required env vars at startup; fail fast on missing
+## シークレットと設定
+- シークレットは絶対にコミットしない。シークレットマネージャまたは env に保存する
+- 定期的にローテーションする。アクセスを監査する。スコープは最小限にする
+- 起動時に必須の環境変数を検証する。欠落していれば即座に失敗させる
 
-## Sensitive Data
-- Minimize collection; mask/redact in logs; encrypt at rest and in transit
-- Restrict access by role/need-to-know; track access to sensitive records
+## 機微データ
+- 収集を最小化する。ログ内ではマスク／秘匿する。保存時・転送時に暗号化する
+- ロール／知る必要性（need-to-know）でアクセスを制限する。機微レコードへのアクセスを追跡する
 
-## Session/Token Security
-- httpOnly + secure cookies where possible; TLS everywhere
-- Short expiration; rotate on refresh; revoke on logout/compromise
-- Bind tokens to audience/issuer; include minimal claims
+## セッション／トークンのセキュリティ
+- 可能なら httpOnly + secure クッキー。すべての経路で TLS
+- 短い有効期限。リフレッシュ時にローテーション。ログアウト／漏洩時に失効
+- トークンを audience／issuer に紐付ける。クレームは最小限にする
 
-## Logging (security-aware)
-- Log auth attempts, permission denials, and sensitive operations
-- Never log passwords, tokens, secrets, full PII; avoid full bodies
-- Include requestId and context to correlate events
+## ログ記録（セキュリティを意識した）
+- 認証試行、権限拒否、機微な操作を記録する
+- パスワード、トークン、シークレット、完全な PII を決して記録しない。ボディ全体を避ける
+- イベントを相関させるため requestId と文脈を含める
 
-## Headers & Transport
-- Enforce TLS; HSTS
-- Set security headers (CSP, X-Frame-Options, X-Content-Type-Options)
-- Prefer modern crypto; disable weak protocols/ciphers
+## ヘッダーとトランスポート
+- TLS を強制する。HSTS
+- セキュリティヘッダーを設定する（CSP、X-Frame-Options、X-Content-Type-Options）
+- 最新の暗号方式を優先する。脆弱なプロトコル／暗号を無効化する
 
-## Vulnerability Posture
-- Prefer secure libraries; keep dependencies updated
-- Static/dynamic scans in CI; track and remediate
-- Educate team on common classes; encode as patterns above
+## 脆弱性への姿勢
+- 安全なライブラリを優先する。依存関係を最新に保つ
+- CI で静的／動的スキャンを行う。追跡して修正する
+- よくある脆弱性クラスをチームに周知し、上記のパターンとして体系化する
 
 ---
-_Focus on patterns and principles. Link concrete configs to ops docs._
+_パターンと原則に焦点を当てること。具体的な設定は運用ドキュメントにリンクする。_

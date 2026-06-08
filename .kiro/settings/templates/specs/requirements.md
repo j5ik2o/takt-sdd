@@ -3,30 +3,32 @@
 ## Introduction
 {{INTRODUCTION}}
 
-<!-- Optional when scope could be misread or the feature touches adjacent systems/specs -->
+<!-- スコープが誤読されうる場合、または隣接するシステム／スペックに影響する場合は任意で記載 -->
 ## Boundary Context (Optional)
-- **In scope**: {{IN_SCOPE_BEHAVIORS}}
-- **Out of scope**: {{OUT_OF_SCOPE_BEHAVIORS}}
-- **Adjacent expectations**: {{ADJACENT_SYSTEM_OR_SPEC_EXPECTATIONS}}
+- **In scope（対象範囲）**: {{IN_SCOPE_BEHAVIORS}}
+- **Out of scope（対象外）**: {{OUT_OF_SCOPE_BEHAVIORS}}
+- **Adjacent expectations（隣接システム／スペックへの期待）**: {{ADJACENT_SYSTEM_OR_SPEC_EXPECTATIONS}}
 
 ## Requirements
 
 ### Requirement 1: {{REQUIREMENT_AREA_1}}
-<!-- Requirement headings MUST include a leading numeric ID only (for example: "Requirement 1: ...", "1. Overview", "2 Feature: ..."). Alphabetic IDs like "Requirement A" are not allowed. -->
+<!-- 要件見出しには先頭に数値IDのみを含めること（例: "Requirement 1: ...", "1. Overview", "2 Feature: ..."）。"Requirement A" のようなアルファベットIDは不可。 -->
 **Objective:** As a {{ROLE}}, I want {{CAPABILITY}}, so that {{BENEFIT}}
+<!-- 上記は「[役割]として、[利益]のために、[能力]が欲しい」という形式です。 -->
 
 #### Acceptance Criteria
-1. When [event], the [system] shall [response/action]
-2. If [trigger], then the [system] shall [response/action]
-3. While [precondition], the [system] shall [response/action]
-4. Where [feature is included], the [system] shall [response/action]
-5. The [system] shall [response/action]
+<!-- EARS形式。検証では「場合」「は」または shall/must などの固定句を必須とします。 -->
+1. [イベント]した場合、[システム]は[応答／動作]するものとする
+2. [トリガー]の場合、[システム]は[応答／動作]するものとする
+3. [前提条件]の間、[システム]は[応答／動作]するものとする
+4. [機能が含まれる]場合、[システム]は[応答／動作]するものとする
+5. [システム]は[応答／動作]するものとする
 
 ### Requirement 2: {{REQUIREMENT_AREA_2}}
 **Objective:** As a {{ROLE}}, I want {{CAPABILITY}}, so that {{BENEFIT}}
 
 #### Acceptance Criteria
-1. When [event], the [system] shall [response/action]
-2. When [event] and [condition], the [system] shall [response/action]
+1. [イベント]した場合、[システム]は[応答／動作]するものとする
+2. [イベント]かつ[条件]の場合、[システム]は[応答／動作]するものとする
 
-<!-- Additional requirements follow the same pattern -->
+<!-- 以降の要件も同じパターンに従う -->

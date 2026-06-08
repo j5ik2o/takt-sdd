@@ -1,47 +1,47 @@
-# Testing Standards
+# テスト標準
 
-[Purpose: guide what to test, where tests live, and how to structure them]
+[目的: 何をテストするか、テストをどこに置くか、どう構成するかを示す]
 
-## Philosophy
-- Test behavior, not implementation
-- Prefer fast, reliable tests; minimize brittle mocks
-- Cover critical paths deeply; breadth over 100% pursuit
+## 基本方針
+- 実装ではなく振る舞いをテストする
+- 高速で信頼できるテストを優先する。壊れやすいモックは最小限にする
+- クリティカルパスを深くカバーする。100% を追い求めるより、広さ（重要箇所の網羅）を重視する
 
-## Organization
-Options:
-- Co-located: `component.tsx` + `component.test.tsx`
-- Separate: `/src/...` and `/tests/...`
-Pick one as default; allow exceptions with rationale.
+## 構成
+選択肢:
+- 同居（co-located）: `component.tsx` + `component.test.tsx`
+- 分離: `/src/...` と `/tests/...`
+どちらかを既定とし、根拠があれば例外を許容する。
 
-Naming:
-- Files: `*.test.*` or `*.spec.*`
-- Suites: what is under test; Cases: expected behavior
+命名:
+- ファイル: `*.test.*` または `*.spec.*`
+- スイート: テスト対象は何か。ケース: 期待される振る舞い
 
-## Test Types
-- Unit: single unit, mocked dependencies, very fast
-- Integration: multiple units together, mock externals only
-- E2E: full flows, minimal mocks, only for critical journeys
+## テストの種類
+- ユニット: 単一ユニット、依存はモック化、非常に高速
+- 統合（Integration）: 複数ユニットを組み合わせる、外部のみモック化
+- E2E: フロー全体、モックは最小限、クリティカルな経路のみ
 
-## Structure (AAA)
+## 構造（AAA）
 ```typescript
-it('does X when Y', () => {
-  // Arrange
+it('Y のとき X する', () => {
+  // Arrange（準備）
   const input = setup();
-  // Act
+  // Act（実行）
   const result = act(input);
-  // Assert
+  // Assert（検証）
   expect(result).toEqual(expected);
 });
 ```
 
-## Mocking & Data
-- Mock externals (API/DB); never mock the system under test
-- Use factories/fixtures; reset state between tests
-- Keep test data minimal and intention-revealing
+## モックとデータ
+- 外部（API／DB）をモックする。テスト対象システム自体はモックしない
+- ファクトリ／フィクスチャを使う。テスト間で状態をリセットする
+- テストデータは最小限かつ意図が読み取れるものにする
 
-## Coverage
-- Target: [% overall]; higher for critical domains
-- Enforce thresholds in CI; exceptions require review rationale
+## カバレッジ
+- 目標: [全体の %]。クリティカルなドメインはより高く
+- CI で閾値を強制する。例外にはレビュー上の根拠を要する
 
 ---
-_Focus on patterns and decisions. Tool-specific config lives elsewhere._
+_パターンと意思決定に焦点を当てること。ツール固有の設定は別の場所に置く。_

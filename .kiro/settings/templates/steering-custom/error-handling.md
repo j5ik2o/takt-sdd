@@ -1,38 +1,38 @@
-# Error Handling Standards
+# エラーハンドリング標準
 
-[Purpose: unify how errors are classified, shaped, propagated, logged, and monitored]
+[目的: エラーの分類・形式・伝播・ログ記録・監視のしかたを統一する]
 
-## Philosophy
-- Fail fast where possible; degrade gracefully at system boundaries
-- Consistent error shape across the stack (human + machine readable)
-- Handle known errors close to source; surface unknowns to a global handler
+## 基本方針
+- 可能な箇所では早期に失敗（fail fast）させる。システム境界では穏やかに劣化させる
+- スタック全体で一貫したエラー形式（人間にも機械にも読める）にする
+- 既知のエラーは発生源の近くで処理し、未知のエラーはグローバルハンドラに委ねる
 
-## Classification (decide handling by source)
-- Client: Input/validation/user action issues → 4xx
-- Server: System failures/unexpected exceptions → 5xx
-- Business: Rule/state violations → 4xx (e.g., 409)
-- External: 3rd-party/network failures → map to 5xx or 4xx with context
+## 分類（発生源によって処理を決める）
+- クライアント: 入力／バリデーション／ユーザー操作の問題 → 4xx
+- サーバー: システム障害／想定外の例外 → 5xx
+- ビジネス: ルール／状態の違反 → 4xx（例: 409）
+- 外部: サードパーティ／ネットワーク障害 → 文脈を添えて 5xx または 4xx にマップする
 
-## Error Shape (single canonical format)
+## エラー形式（唯一の正規フォーマット）
 ```json
 {
   "error": {
     "code": "ERROR_CODE",
-    "message": "Human-readable message",
+    "message": "人間が読めるメッセージ",
     "requestId": "trace-id",
     "timestamp": "ISO-8601"
   }
 }
 ```
-Principles: stable code enums, no secrets, include trace info.
+原則: コードは安定した enum にする、シークレットを含めない、トレース情報を含める。
 
-## Propagation (where to convert)
-- API layer: Convert domain errors → HTTP status + canonical body
-- Service layer: Throw typed business errors, avoid stringly-typed errors
-- Data/external layer: Wrap provider errors with safe, actionable codes
-- Unknown errors: Bubble to global handler → 500 + generic message
+## 伝播（どこで変換するか）
+- API 層: ドメインエラー → HTTP ステータス + 正規ボディ に変換する
+- サービス層: 型付きのビジネスエラーを投げる。文字列ベースのエラーを避ける
+- データ／外部層: プロバイダのエラーを、安全で対処可能なコードでラップする
+- 未知のエラー: グローバルハンドラまで伝播 → 500 + 汎用メッセージ
 
-Example pattern:
+パターンの例:
 ```typescript
 try { return await useCase(); }
 catch (e) {
@@ -41,19 +41,19 @@ catch (e) {
 }
 ```
 
-## Logging (context over noise)
-Log: operation, userId (if available), code, message, stack, requestId, minimal context.
-Do not log: passwords, tokens, secrets, full PII, full bodies with sensitive data.
-Levels: ERROR (failures), WARN (recoverable/edge), INFO (key events), DEBUG (diagnostics).
+## ログ記録（ノイズより文脈を）
+記録する: 操作、userId（取得できれば）、code、message、スタック、requestId、最小限の文脈。
+記録しない: パスワード、トークン、シークレット、完全な PII、機微なデータを含むボディ全体。
+レベル: ERROR（障害）、WARN（回復可能／境界ケース）、INFO（主要イベント）、DEBUG（診断）。
 
-## Retry (only when safe)
-Retry when: network/timeouts/transient 5xx AND operation is idempotent.
-Do not retry: 4xx, business errors, non-idempotent flows.
-Strategy: exponential backoff + jitter, capped attempts; require idempotency keys.
+## リトライ（安全なときのみ）
+リトライする条件: ネットワーク／タイムアウト／一時的な 5xx かつ 操作が冪等であること。
+リトライしない: 4xx、ビジネスエラー、非冪等なフロー。
+戦略: 指数バックオフ + ジッター、試行回数に上限。冪等性キーを要求する。
 
-## Monitoring & Health
-Track: error rates by code/category, latency, saturation; alert on spikes/SLI breaches.
-Expose health: `/health` (live), `/health/ready` (ready). Link errors to traces.
+## 監視とヘルス
+追跡する: コード／カテゴリ別のエラー率、レイテンシ、飽和度。スパイクや SLI 違反でアラートする。
+ヘルスを公開する: `/health`（live）、`/health/ready`（ready）。エラーをトレースに紐付ける。
 
 ---
-_Focus on patterns and decisions. No implementation details or exhaustive lists._
+_パターンと意思決定に焦点を当てること。実装の詳細や網羅的な一覧は記載しない。_

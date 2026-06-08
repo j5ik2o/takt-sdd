@@ -1,45 +1,45 @@
-# Technology Stack
+# 技術スタック
 
-## Architecture
+## アーキテクチャ
 
-[High-level system design approach]
+[高レベルなシステム設計のアプローチ]
 
-## Core Technologies
+## 中核技術
 
-- **Language**: [e.g., TypeScript, Python]
-- **Framework**: [e.g., React, Next.js, Django]
-- **Runtime**: [e.g., Node.js 20+]
+- **言語**: [例: TypeScript、Python]
+- **フレームワーク**: [例: React、Next.js、Django]
+- **ランタイム**: [例: Node.js 20以上]
 
-## Key Libraries
+## 主要ライブラリ
 
-[Only major libraries that influence development patterns]
+[開発パターンに影響を与える主要ライブラリのみ]
 
-## Development Standards
+## 開発標準
 
-### Type Safety
-[e.g., TypeScript strict mode, no `any`]
+### 型安全性
+[例: TypeScript の strict モード、`any` 禁止]
 
-### Code Quality
-[e.g., ESLint, Prettier rules]
+### コード品質
+[例: ESLint、Prettier のルール]
 
-### Testing
-[e.g., Jest, coverage requirements]
+### テスト
+[例: Jest、カバレッジ要件]
 
-## Development Environment
+## 開発環境
 
-### Required Tools
-[Key tools and version requirements]
+### 必要なツール
+[主要なツールとバージョン要件]
 
-### Common Commands
+### よく使うコマンド
 ```bash
-# Dev: [command]
-# Build: [command]
-# Test: [command]
+# 開発: [コマンド]
+# ビルド: [コマンド]
+# テスト: [コマンド]
 ```
 
-## Key Technical Decisions
+## 主要な技術的意思決定
 
-[Important architectural choices and rationale]
+[重要なアーキテクチャ上の選択とその根拠]
 
 ---
-_Document standards and patterns, not every dependency_
+_すべての依存関係ではなく、標準とパターンを記録すること_

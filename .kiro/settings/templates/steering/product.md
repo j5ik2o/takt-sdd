@@ -1,18 +1,18 @@
-# Product Overview
+# プロダクト概要
 
-[Brief description of what this product does and who it serves]
+[このプロダクトが何をするのか、誰のためのものかを簡潔に説明する]
 
-## Core Capabilities
+## 主な機能
 
-[3-5 key capabilities, not exhaustive features]
+[網羅的な機能一覧ではなく、3〜5個の主要機能]
 
-## Target Use Cases
+## 想定ユースケース
 
-[Primary scenarios this product addresses]
+[このプロダクトが対応する主要なシナリオ]
 
-## Value Proposition
+## バリュープロポジション
 
-[What makes this product unique or valuable]
+[このプロダクトを独自たらしめている、あるいは価値あるものにしている点]
 
 ---
-_Focus on patterns and purpose, not exhaustive feature lists_
+_網羅的な機能一覧ではなく、パターンと目的に焦点を当てること_

@@ -2,12 +2,12 @@
 
 ## Task Format Template
 
-Use this canonical annotation grammar for every executable task.
+実行可能なすべてのタスク（every executable task / すべての executable task）に、この正規の注釈文法を用いること。
 
 ### Major task with executable work
 - [ ] {{NUMBER}}. {{TASK_DESCRIPTION}}{{PARALLEL_MARK}}
-  - {{OBSERVABLE_COMPLETION_ITEM}} *(State the concrete completion signal for this task.)*
-  - _Requirements: {{REQUIREMENT_IDS}}_ *(IDs only; do not add descriptions or parentheses.)*
+  - {{OBSERVABLE_COMPLETION_ITEM}} *(このタスクの、観測可能な完了シグナルを具体的に記述する)*
+  - _Requirements: {{REQUIREMENT_IDS}}_ *(IDのみ。説明や括弧を付けない)*
   - _Boundary:_ {{COMPONENT_NAMES}}
   - _Depends:_ {{TASK_IDS_OR_NONE}}
 
@@ -15,15 +15,15 @@ Use this canonical annotation grammar for every executable task.
 - [ ] {{MAJOR_NUMBER}}. {{MAJOR_TASK_SUMMARY}}
 - [ ] {{MAJOR_NUMBER}}.{{SUB_NUMBER}} {{SUB_TASK_DESCRIPTION}}{{SUB_PARALLEL_MARK}}
   - {{DETAIL_ITEM_1}}
-  - {{OBSERVABLE_COMPLETION_ITEM}} *(State the concrete completion signal for this task.)*
-  - _Requirements: {{REQUIREMENT_IDS}}_ *(IDs only; do not add descriptions or parentheses.)*
+  - {{OBSERVABLE_COMPLETION_ITEM}} *(このタスクの、観測可能な完了シグナルを具体的に記述する)*
+  - _Requirements: {{REQUIREMENT_IDS}}_ *(IDのみ。説明や括弧を付けない)*
   - _Boundary:_ {{COMPONENT_NAMES}}
   - _Depends:_ {{TASK_IDS_OR_NONE}}
 
 ## Annotation Rules
 
-- `_Requirements: {{REQUIREMENT_IDS}}_` uses numeric requirement IDs.
-- `_Boundary:_ {{COMPONENT_NAMES}}` names the owned component or workflow boundary.
-- `_Depends:_ {{TASK_IDS_OR_NONE}}` uses task IDs when dependencies exist.
-- `_Depends:_ none` is the canonical grammar for no dependencies.
-- ` (P)` is appended only when non-overlapping boundary and an explicit dependency graph show independent execution.
+- `_Requirements: {{REQUIREMENT_IDS}}_` には数値の要件IDを用いる。
+- `_Boundary:_ {{COMPONENT_NAMES}}` は、所有するコンポーネントまたはワークフローの境界を示す。
+- `_Depends:_ {{TASK_IDS_OR_NONE}}` は、依存がある場合にタスクIDを用いる。
+- 依存がない場合は `_Depends:_ none` が正規の文法。
+- ` (P)` は、境界が重複せず、かつ明示的な依存グラフ上で独立実行可能と示される場合にのみ付与する。

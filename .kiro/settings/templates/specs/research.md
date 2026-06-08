@@ -1,61 +1,61 @@
 # Research & Design Decisions Template
 
 ---
-**Purpose**: Capture discovery findings, architectural investigations, and rationale that inform the technical design.
+**目的**: 技術設計の根拠となる、ディスカバリーの発見・アーキテクチャ調査・意思決定の理由を記録する。
 
-**Usage**:
-- Log research activities and outcomes during the discovery phase.
-- Document design decision trade-offs that are too detailed for `design.md`.
-- Provide references and evidence for future audits or reuse.
+**使い方**:
+- ディスカバリーフェーズで、調査活動とその結果を記録する。
+- `design.md` には詳細すぎる、設計判断のトレードオフを文書化する。
+- 将来の監査や再利用のための参照・根拠を提供する。
 ---
 
 ## Summary
-- **Feature**: `<feature-name>`
-- **Discovery Scope**: New Feature / Extension / Simple Addition / Complex Integration
-- **Key Findings**:
-  - Finding 1
-  - Finding 2
-  - Finding 3
+- **Feature（機能）**: `<feature-name>`
+- **Discovery Scope（ディスカバリー範囲）**: New Feature / Extension / Simple Addition / Complex Integration（新規機能／拡張／単純な追加／複雑な統合）
+- **Key Findings（主要な発見）**:
+  - 発見 1
+  - 発見 2
+  - 発見 3
 
 ## Research Log
-Document notable investigation steps and their outcomes. Group entries by topic for readability.
+注目すべき調査ステップとその結果を記録する。読みやすさのため、トピックごとにまとめる。
 
-### [Topic or Question]
-- **Context**: What triggered this investigation?
-- **Sources Consulted**: Links, documentation, API references, benchmarks
-- **Findings**: Concise bullet points summarizing the insights
-- **Implications**: How this affects architecture, contracts, or implementation
+### [トピックまたは問い]
+- **Context（背景）**: この調査のきっかけは何か？
+- **Sources Consulted（参照した情報源）**: リンク、ドキュメント、APIリファレンス、ベンチマーク
+- **Findings（発見）**: 得られた知見を簡潔な箇条書きで要約
+- **Implications（含意）**: アーキテクチャ・契約・実装にどう影響するか
 
-_Repeat the subsection for each major topic._
+_主要なトピックごとに、このサブセクションを繰り返す。_
 
 ## Architecture Pattern Evaluation
-List candidate patterns or approaches that were considered. Use the table format where helpful.
+検討したパターンやアプローチの候補を列挙する。役立つ場合は表形式を用いる。
 
 | Option | Description | Strengths | Risks / Limitations | Notes |
 |--------|-------------|-----------|---------------------|-------|
-| Hexagonal | Ports & adapters abstraction around core domain | Clear boundaries, testable core | Requires adapter layer build-out | Aligns with existing steering principle X |
+| Hexagonal | コアドメインを囲むポート＆アダプタ抽象 | 境界が明確、コアがテスト可能 | アダプタ層の構築が必要 | 既存のステアリング原則 X に整合 |
 
 ## Design Decisions
-Record major decisions that influence `design.md`. Focus on choices with significant trade-offs.
+`design.md` に影響する主要な意思決定を記録する。トレードオフの大きい選択に焦点を当てる。
 
-### Decision: `<Title>`
-- **Context**: Problem or requirement driving the decision
-- **Alternatives Considered**:
-  1. Option A — short description
-  2. Option B — short description
-- **Selected Approach**: What was chosen and how it works
-- **Rationale**: Why this approach fits the current project context
-- **Trade-offs**: Benefits vs. compromises
-- **Follow-up**: Items to verify during implementation or testing
+### Decision: `<タイトル>`
+- **Context（背景）**: 意思決定を駆動する課題または要件
+- **Alternatives Considered（検討した代替案）**:
+  1. 案A — 短い説明
+  2. 案B — 短い説明
+- **Selected Approach（採用したアプローチ）**: 何を選び、どう機能するか
+- **Rationale（根拠）**: なぜこのアプローチが現在のプロジェクト文脈に適合するか
+- **Trade-offs（トレードオフ）**: 利点と妥協点
+- **Follow-up（フォローアップ）**: 実装・テスト時に検証すべき項目
 
-_Repeat the subsection for each decision._
+_意思決定ごとに、このサブセクションを繰り返す。_
 
 ## Risks & Mitigations
-- Risk 1 — Proposed mitigation
-- Risk 2 — Proposed mitigation
-- Risk 3 — Proposed mitigation
+- リスク 1 — 提案する緩和策
+- リスク 2 — 提案する緩和策
+- リスク 3 — 提案する緩和策
 
 ## References
-Provide canonical links and citations (official docs, standards, ADRs, internal guidelines).
-- [Title](https://example.com) — brief note on relevance
+正規のリンクと出典を示す（公式ドキュメント、標準仕様、ADR、社内ガイドライン）。
+- [タイトル](https://example.com) — 関連性についての短いメモ
 - ...
