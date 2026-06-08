@@ -67,7 +67,7 @@ steps:
         next: report-discovery
       - condition: createdFiles include brief.md and .kiro/steering/roadmap.md and actionPath MULTI_SPEC
         next: report-discovery
-      - condition: createdFiles include brief.md and .kiro/steering/roadmap.md and actionPath MIXED_DECOMPOSITION
+      - condition: createdFiles include brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems present and actionPath MIXED_DECOMPOSITION
         next: report-discovery
       - condition: artifact write failed or blockingReason present
         next: report-discovery
@@ -89,5 +89,7 @@ steps:
         next: ABORT
       - condition: actionPath EXISTING_SPEC_UPDATE or actionPath DIRECT_IMPLEMENTATION
         next: COMPLETE
-      - condition: actionPath SINGLE_SPEC or actionPath MULTI_SPEC or actionPath MIXED_DECOMPOSITION
+      - condition: actionPath SINGLE_SPEC or actionPath MULTI_SPEC
+        next: COMPLETE
+      - condition: actionPath MIXED_DECOMPOSITION and awarenessOnlyItems present
         next: COMPLETE

@@ -219,6 +219,16 @@ test("kiro-discovery workflow uses multi-step routing and skill adapter metadata
       `${workflowPath} should require mixed decomposition brief and roadmap planning`,
     );
     assert.ok(
+      workflow.includes(
+        "createdFiles include brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems present and actionPath MIXED_DECOMPOSITION",
+      ),
+      `${workflowPath} should require mixed decomposition awareness-only items before reporting`,
+    );
+    assert.ok(
+      workflow.includes("actionPath MIXED_DECOMPOSITION and awarenessOnlyItems present"),
+      `${workflowPath} should require awareness-only items before mixed decomposition completion`,
+    );
+    assert.ok(
       workflow.includes("blockingReason present or artifact write failed or brief.md roadmap contradiction found"),
       `${workflowPath} should abort discovery reports on artifact failures and roadmap contradictions`,
     );
