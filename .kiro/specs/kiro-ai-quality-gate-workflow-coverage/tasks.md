@@ -95,7 +95,7 @@
   - _Depends:_ 4.2
 
 - [ ] 5. Runtime smoke と repository integration を完了する
-- [ ] 5.1 generation-scoped gate の deterministic successful path smoke を追加する
+- [x] 5.1 generation-scoped gate の deterministic successful path smoke を追加する
   - mock provider fixture で spec generation workflow が spec AI gate を通り、no blocking finding の場合に fix report なしで domain review へ進む。
   - smoke は artifact 品質評価ではなく workflow wiring の検証に限定され、成功時に gate step と後続 review step の到達が観測できる。
   - runtime smoke が失敗した場合、どの route または report semantics が壊れたかを出力から追える。
