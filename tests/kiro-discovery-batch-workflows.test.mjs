@@ -338,6 +338,16 @@ test("kiro-spec-batch workflow uses dynamic worker dispatch without workflow reu
     }
     assert.ok(workflow.includes("dynamic subagent dispatch"));
     assert.ok(workflow.includes("loop_monitors.threshold"));
+    assert.ok(
+      workflow.indexOf("roadmap missing or missing dependency or circular dependency or missing brief.md") <
+        workflow.indexOf("roadmap parsed from ## Specs (dependency order) and awareness-only sections separated and no missing brief.md"),
+      `${workflowPath} should block missing brief before planning waves`,
+    );
+    assert.equal(
+      workflow.includes("roadmap parsed from ## Specs (dependency order) and awareness-only sections separated\n"),
+      false,
+      `${workflowPath} should not allow parsed roadmap to bypass missing brief checks`,
+    );
     assert.ok(workflow.includes("verdict PASS"));
     assert.ok(workflow.includes("verdict NEEDS_FIX"));
     assert.ok(workflow.includes("verdict DECOMPOSITION_RETURN"));

@@ -47,10 +47,10 @@ steps:
     required_permission_mode: readonly
     instruction: kiro-spec-batch
     rules:
-      - condition: roadmap parsed from ## Specs (dependency order) and awareness-only sections separated
-        next: plan-waves
       - condition: roadmap missing or missing dependency or circular dependency or missing brief.md
         next: finalize-batch
+      - condition: roadmap parsed from ## Specs (dependency order) and awareness-only sections separated and no missing brief.md
+        next: plan-waves
 
   - name: plan-waves
     edit: false
