@@ -1,0 +1,132 @@
+name: kiro-discovery-ai-quality-gate
+description: Kiro - discovery artifact 向けの callable AI antipattern quality gate
+subworkflow:
+  callable: true
+  visibility: internal
+  returns:
+    - need_replan
+  params:
+    fix_instruction:
+      type: facet_ref
+      facet_kind: instruction
+      default: kiro-ai-antipattern-fix-discovery
+    domain_knowledge:
+      type: facet_ref[]
+      facet_kind: knowledge
+      default:
+        - architecture
+workflow_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_steps: 12
+initial_step: ai-antipattern-review-1st
+
+instructions:
+  kiro-ai-antipattern-fix-discovery: ../facets/instructions/kiro-ai-antipattern-fix-discovery.md
+
+policies:
+  kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
+  kiro-discovery-routing: ../facets/policies/kiro-discovery-routing.md
+
+report_formats:
+  kiro-discovery-ai-antipattern-fix-result: ../facets/output-contracts/kiro-discovery-ai-antipattern-fix-result.md
+
+loop_monitors:
+  - cycle:
+      - ai-antipattern-review-1st
+      - ai-antipattern-fix
+    threshold: 3
+    judge:
+      persona: supervisor
+      instruction: loop-monitor-ai-antipattern-fix
+      rules:
+        - condition: Healthy (findings are shrinking or the latest fix has concrete finding_decisions)
+          next: ai-antipattern-review-1st
+        - condition: Unproductive (loop_monitors.threshold reached for ai-antipattern-review-1st and ai-antipattern-fix)
+          next: request-replan
+
+steps:
+  - name: ai-antipattern-review-1st
+    edit: false
+    persona: ai-antipattern-reviewer
+    policy:
+      - review
+      - ai-antipattern
+      - kiro-artifact-operations
+      - kiro-discovery-routing
+    knowledge:
+      $param: domain_knowledge
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+    required_permission_mode: readonly
+    instruction: ai-antipattern-review
+    output_contracts:
+      report:
+        - name: kiro-discovery-ai-antipattern-review.md
+          format: ai-antipattern-review
+    rules:
+      - condition: No AI-specific issues
+        next: COMPLETE
+      - condition: AI-specific issues found
+        next: ai-antipattern-fix
+      - when: "true"
+        next: request-replan
+        appendix: Treat ambiguous, blocked, or internally inconsistent review outcomes as requiring replanning.
+
+  - name: ai-antipattern-fix
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+      - ai-antipattern
+      - kiro-artifact-operations
+      - kiro-discovery-routing
+    session: refresh
+    knowledge:
+      $param: domain_knowledge
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Write
+          - Bash
+    required_permission_mode: edit
+    pass_previous_response: false
+    instruction:
+      $param: fix_instruction
+    output_contracts:
+      report:
+        - name: kiro-discovery-ai-antipattern-fix.md
+          format: kiro-discovery-ai-antipattern-fix-result
+    rules:
+      - condition: STATUS FIXED
+        next: ai-antipattern-review-1st
+      - condition: STATUS NO_FIX_NEEDED and finding-level evidence supports every finding_decision
+        next: COMPLETE
+      - condition: STATUS NEED_REPLAN
+        return: need_replan
+      - condition: STATUS BLOCKED
+        next: request-replan
+
+  - name: request-replan
+    edit: false
+    persona: supervisor
+    required_permission_mode: readonly
+    instruction: |
+      discovery AI antipattern quality gate で、review outcome が ambiguous、blocked、internally inconsistent、または review/fix loop が収束しないため replan が必要。
+      caller workflow が completion reporting に進まず、discovery artifact planning へ戻れるように need_replan を返す。
+    rules:
+      - condition: Replan is required after an ambiguous, blocked, or internally inconsistent AI antipattern review outcome or an unproductive AI antipattern fix loop
+        return: need_replan

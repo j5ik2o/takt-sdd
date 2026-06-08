@@ -58,7 +58,9 @@ test("kiro AI quality gate coverage inventory records current Kiro workflow boun
   assert.equal(byName.get("kiro-spec-requirements").allowedGateCall, "./kiro-spec-ai-quality-gate.yaml");
   assert.equal(byName.get("kiro-spec-quick").category, "generation_scoped_gate_required");
   assert.equal(byName.get("kiro-spec-init").category, "intentionally_not_applicable");
-  assert.equal(byName.get("kiro-discovery").category, "orchestration_delegated");
+  assert.equal(byName.get("kiro-discovery").category, "discovery_artifact_gate_required");
+  assert.equal(byName.get("kiro-discovery").allowedGateCall, "./kiro-discovery-ai-quality-gate.yaml");
+  assert.equal(byName.get("kiro-discovery-ai-quality-gate").category, "existing_gate_coverage");
   assert.equal(byName.get("kiro-spec-batch").category, "orchestration_delegated");
 
   for (const name of ["kiro-spec-status", "kiro-validate-design", "kiro-validate-gap", "kiro-validate-impl"]) {
@@ -66,21 +68,36 @@ test("kiro AI quality gate coverage inventory records current Kiro workflow boun
   }
 });
 
-test("orchestration workflows delegate artifact-level AI review without direct AI gate calls", () => {
+test("batch orchestration delegates artifact-level AI review without direct AI gate calls", () => {
   const byName = new Map(getKiroWorkflowCoverageEntries().map((entry) => [entry.workflowName, entry]));
 
-  for (const workflowName of ["kiro-discovery", "kiro-spec-batch"]) {
-    const entry = byName.get(workflowName);
-    assert.equal(entry.category, "orchestration_delegated");
-    assert.match(entry.adjacentOwner, /kiro-spec-/);
-    assert.equal(entry.allowedGateCall, undefined);
+  const entry = byName.get("kiro-spec-batch");
+  assert.equal(entry.category, "orchestration_delegated");
+  assert.match(entry.adjacentOwner, /kiro-spec-/);
+  assert.equal(entry.allowedGateCall, undefined);
 
-    for (const language of languages) {
-      const path = join(repoRoot, ".takt", language, "workflows", `${workflowName}.yaml`);
-      const content = readFileSync(path, "utf8");
-      assert.equal(content.includes("kiro-ai-quality-gate"), false, `${path} must not call implementation AI gate`);
-      assert.equal(content.includes("kiro-spec-ai-quality-gate"), false, `${path} must not call spec AI gate directly`);
-    }
+  for (const language of languages) {
+    const path = join(repoRoot, ".takt", language, "workflows", "kiro-spec-batch.yaml");
+    const content = readFileSync(path, "utf8");
+    assert.equal(content.includes("kiro-ai-quality-gate"), false, `${path} must not call implementation AI gate`);
+    assert.equal(content.includes("kiro-spec-ai-quality-gate"), false, `${path} must not call spec AI gate directly`);
+  }
+});
+
+test("discovery workflow routes discovery artifacts through discovery AI quality gate", () => {
+  for (const language of languages) {
+    const path = join(repoRoot, ".takt", language, "workflows", "kiro-discovery.yaml");
+    const content = readFileSync(path, "utf8");
+
+    assert.match(content, /- name: ai-quality-gate-discovery[\s\S]*kind: workflow_call[\s\S]*call: \.\/kiro-discovery-ai-quality-gate\.yaml/);
+    assert.match(content, /- name: write-discovery-artifacts[\s\S]*createdFiles include target brief\.md and actionPath SINGLE_SPEC[\s\S]*next: ai-quality-gate-discovery/);
+    assert.match(content, /- name: ai-quality-gate-discovery[\s\S]*condition: COMPLETE[\s\S]*next: report-discovery/);
+    assert.match(content, /- name: ai-quality-gate-discovery[\s\S]*condition: need_replan[\s\S]*next: plan-discovery-artifacts/);
+    assert.ok(content.includes("- plan-discovery-artifacts"), `${path} loop monitor should include plan-discovery-artifacts`);
+    assert.ok(content.includes("- write-discovery-artifacts"), `${path} loop monitor should include write-discovery-artifacts`);
+    assert.ok(content.includes("- ai-quality-gate-discovery"), `${path} loop monitor should include ai-quality-gate-discovery`);
+    assert.equal(content.includes("kiro-ai-antipattern-fix-implementation"), false, `${path} must not use implementation fix instruction`);
+    assert.equal(content.includes("kiro-spec-ai-antipattern-review.md"), false, `${path} must not use spec generation report names`);
   }
 });
 
@@ -89,6 +106,7 @@ test("kiro AI quality gate coverage policy facets explain categories without dup
   const requiredTerms = [
     "scripts/kiro-ai-quality-gate-contracts.mjs",
     "existing_gate_coverage",
+    "discovery_artifact_gate_required",
     "generation_scoped_gate_required",
     "orchestration_decision_required",
     "orchestration_delegated",
@@ -135,6 +153,92 @@ test("spec generation AI quality gate workflow is callable and separates spec re
       assert.ok(content.includes(term), `${path} should include ${term}`);
     }
     assert.equal(content.includes("kiro-ai-antipattern-review.md"), false, `${path} should not reuse implementation review report name`);
+  }
+});
+
+test("discovery AI quality gate workflow is callable and separates discovery reports from other gate reports", () => {
+  const requiredTerms = [
+    "subworkflow:",
+    "callable: true",
+    "visibility: internal",
+    "kiro-discovery-ai-antipattern-review.md",
+    "kiro-discovery-ai-antipattern-fix.md",
+    "No AI-specific issues",
+    "AI-specific issues found",
+    "request-replan",
+    "ambiguous",
+    "blocked",
+    "internally inconsistent",
+    "return: need_replan",
+  ];
+
+  for (const language of languages) {
+    const path = join(repoRoot, ".takt", language, "workflows", "kiro-discovery-ai-quality-gate.yaml");
+    const content = readFileSync(path, "utf8");
+
+    for (const term of requiredTerms) {
+      assert.ok(content.includes(term), `${path} should include ${term}`);
+    }
+    assert.equal(content.includes("kiro-ai-antipattern-review.md"), false, `${path} should not reuse implementation review report name`);
+    assert.equal(content.includes("kiro-spec-ai-antipattern-review.md"), false, `${path} should not reuse spec generation review report name`);
+  }
+});
+
+test("discovery AI quality gate uses discovery-specific fix instruction and output contract", () => {
+  const requiredInstructionTerms = [
+    "kiro-discovery-ai-antipattern-review.md",
+    "kiro-discovery-ai-antipattern-fix.md",
+    "current discovery artifact boundary",
+    "brief.md",
+    ".kiro/steering/roadmap.md",
+    "FIXED",
+    "NO_FIX_NEEDED",
+    "NEED_REPLAN",
+    "BLOCKED",
+  ];
+  const requiredContractTerms = [
+    "STATUS",
+    "finding_decisions",
+    "changed_files",
+    "scope_guard",
+    "validation_evidence",
+    "no_fix_rationale",
+    "missing_context",
+    "kiro-discovery-ai-antipattern-fix.md",
+    "optional fix report",
+  ];
+
+  for (const language of languages) {
+    const workflowPath = join(repoRoot, ".takt", language, "workflows", "kiro-discovery-ai-quality-gate.yaml");
+    const workflowContent = readFileSync(workflowPath, "utf8");
+    assert.ok(workflowContent.includes("kiro-ai-antipattern-fix-discovery"));
+    assert.ok(workflowContent.includes("kiro-discovery-ai-antipattern-fix-result"));
+
+    const instructionPath = join(
+      repoRoot,
+      ".takt",
+      language,
+      "facets",
+      "instructions",
+      "kiro-ai-antipattern-fix-discovery.md",
+    );
+    const instructionContent = readFileSync(instructionPath, "utf8");
+    for (const term of requiredInstructionTerms) {
+      assert.ok(instructionContent.includes(term), `${instructionPath} should include ${term}`);
+    }
+
+    const contractPath = join(
+      repoRoot,
+      ".takt",
+      language,
+      "facets",
+      "output-contracts",
+      "kiro-discovery-ai-antipattern-fix-result.md",
+    );
+    const contractContent = readFileSync(contractPath, "utf8");
+    for (const term of requiredContractTerms) {
+      assert.ok(contractContent.includes(term), `${contractPath} should include ${term}`);
+    }
   }
 });
 
@@ -614,6 +718,8 @@ test("repository scripts and CI run Kiro AI quality gate coverage checks", () =>
     "test:kiro-ai-quality-gate-workflow-coverage":
       "node --test tests/kiro-ai-quality-gate-workflow-coverage.test.mjs",
     "test:kiro-ai-quality-gate-runtime-smoke": "node --test tests/kiro-ai-quality-gate-runtime-smoke.test.mjs",
+    "test:kiro-discovery-ai-quality-gate-runtime-smoke":
+      'node --test --test-name-pattern "kiro discovery runtime wiring" tests/kiro-ai-quality-gate-runtime-smoke.test.mjs',
   };
 
   for (const [scriptName, command] of Object.entries(requiredScripts)) {

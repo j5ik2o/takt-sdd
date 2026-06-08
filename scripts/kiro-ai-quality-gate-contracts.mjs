@@ -1,5 +1,6 @@
 export const kiroWorkflowCoverageCategories = Object.freeze([
   "existing_gate_coverage",
+  "discovery_artifact_gate_required",
   "generation_scoped_gate_required",
   "orchestration_decision_required",
   "orchestration_delegated",
@@ -18,6 +19,11 @@ const coverageEntries = Object.freeze([
     workflowName: "kiro-spec-ai-quality-gate",
     category: "existing_gate_coverage",
     reason: "Callable spec generation AI quality gate owns AI antipattern review and fix behavior for generated drafts.",
+  },
+  {
+    workflowName: "kiro-discovery-ai-quality-gate",
+    category: "existing_gate_coverage",
+    reason: "Callable discovery artifact AI quality gate owns AI antipattern review and fix behavior for discovery drafts.",
   },
   {
     workflowName: "kiro-impl",
@@ -57,9 +63,9 @@ const coverageEntries = Object.freeze([
   },
   {
     workflowName: "kiro-discovery",
-    category: "orchestration_delegated",
-    reason: "Discovery writes planning inputs, while downstream spec generation workflows own artifact-level AI review.",
-    adjacentOwner: "kiro-spec-init, kiro-spec-requirements",
+    category: "discovery_artifact_gate_required",
+    reason: "Discovery writes brief and roadmap planning artifacts that must pass a discovery-scoped AI gate before reporting completion.",
+    allowedGateCall: "./kiro-discovery-ai-quality-gate.yaml",
   },
   {
     workflowName: "kiro-spec-batch",
@@ -95,6 +101,12 @@ const allowedGateCallSites = Object.freeze([
     stepName: "ai-quality-gate",
     callPath: "./kiro-ai-quality-gate.yaml",
     gateKind: "implementation",
+  },
+  {
+    workflowName: "kiro-discovery",
+    stepName: "ai-quality-gate-discovery",
+    callPath: "./kiro-discovery-ai-quality-gate.yaml",
+    gateKind: "discovery_artifact",
   },
   {
     workflowName: "kiro-spec-requirements",
@@ -143,10 +155,15 @@ const gateContractTerms = Object.freeze({
     reviewReports: Object.freeze(["kiro-spec-ai-antipattern-review.md"]),
     optionalFixReports: Object.freeze(["kiro-spec-ai-antipattern-fix.md"]),
   }),
+  discoveryArtifact: Object.freeze({
+    reviewReports: Object.freeze(["kiro-discovery-ai-antipattern-review.md"]),
+    optionalFixReports: Object.freeze(["kiro-discovery-ai-antipattern-fix.md"]),
+  }),
   shared: Object.freeze({
     routingTerms: Object.freeze(["No AI-specific issues", "AI-specific issues found"]),
     catchAllTerms: Object.freeze(["ambiguous", "blocked", "internally inconsistent"]),
     loopOutcomeTerms: Object.freeze(["need_replan", "replan"]),
+    callTerms: Object.freeze(["callable: true", "visibility: internal"]),
   }),
 });
 
@@ -179,10 +196,15 @@ export function getKiroAiQualityGateContractTerms() {
       reviewReports: [...gateContractTerms.specGeneration.reviewReports],
       optionalFixReports: [...gateContractTerms.specGeneration.optionalFixReports],
     },
+    discoveryArtifact: {
+      reviewReports: [...gateContractTerms.discoveryArtifact.reviewReports],
+      optionalFixReports: [...gateContractTerms.discoveryArtifact.optionalFixReports],
+    },
     shared: {
       routingTerms: [...gateContractTerms.shared.routingTerms],
       catchAllTerms: [...gateContractTerms.shared.catchAllTerms],
       loopOutcomeTerms: [...gateContractTerms.shared.loopOutcomeTerms],
+      callTerms: [...gateContractTerms.shared.callTerms],
     },
   };
 }

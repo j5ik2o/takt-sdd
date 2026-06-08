@@ -6,18 +6,20 @@
 
 この spec は、`cc-sdd-*`、`opsx-*`、OpenSpec-compatible workflow、upstream `.agents/skills/kiro-*` asset を対象にしない。また、read-only status / validation workflow を edit workflow に変えない。Kiro workflow ごとの分類、PR #90 由来の 6 点契約、generation-scoped gate の成果物境界、検証と smoke coverage を要求として定義する。
 
+この改訂では、`kiro-discovery` を単なる downstream delegation ではなく、discovery-owned artifact を書く workflow として扱う。`kiro-discovery` が `brief.md` や roadmap artifact を生成・更新する場合は、discovery 完了報告の前に discovery-scoped AI quality gate を通し、spec generation artifact 向けの gate とは別の境界で AI antipattern を検出・是正する。
+
 ## Boundary Context
 
-- **In scope（対象範囲）**: Kiro workflow coverage inventory、gate 適用対象と対象外の分類、generation / edit workflow の AI quality gate 契約、Kiro-specific facet の追加または更新、validator / test / smoke coverage による drift 検出、en/ja workflow parity。
-- **Out of scope（対象外）**: `cc-sdd-*` workflow、`opsx-*` workflow、OpenSpec-compatible workflow、upstream `.agents/skills/kiro-*` asset の直接変更、`CC-SDD-CODEX.md` の直接編集、read-only validation / status workflow への修正ループ追加、全 `kiro-*` workflow への機械的な `workflow_call` 挿入。
-- **Adjacent expectations（隣接システム／スペックへの期待）**: `kiro-ai-quality-gate` は初期 gate 契約と PR #90 の学びを提供し、`kiro-spec-generation-workflows` は generation workflow の既存 review / repair / finalize 境界を提供する。`kiro-shared-workflow-contracts` は workflow shape validation と callable subworkflow boundary を提供する。
+- **In scope（対象範囲）**: Kiro workflow coverage inventory、gate 適用対象と対象外の分類、generation / edit workflow の AI quality gate 契約、`kiro-discovery` の discovery artifact gate 契約、Kiro-specific facet の追加または更新、validator / test / smoke coverage による drift 検出、en/ja workflow parity。
+- **Out of scope（対象外）**: `cc-sdd-*` workflow、`opsx-*` workflow、OpenSpec-compatible workflow、upstream `.agents/skills/kiro-*` asset の直接変更、`CC-SDD-CODEX.md` の直接編集、read-only validation / status workflow への修正ループ追加、全 `kiro-*` workflow への機械的な `workflow_call` 挿入、`kiro-spec-batch` への artifact-level AI fix loop 追加。
+- **Adjacent expectations（隣接システム／スペックへの期待）**: `kiro-ai-quality-gate` は初期 gate 契約と PR #90 の学びを提供し、`kiro-spec-generation-workflows` は generation workflow の既存 review / repair / finalize 境界を提供する。`kiro-shared-workflow-contracts` は workflow shape validation と callable subworkflow boundary を提供する。`kiro-discovery` の gate は discovery-owned artifact だけを扱い、後続 spec generation workflow の artifact-level review を置き換えない。
 
 ## Project Description (Input)
 TAKT の Kiro workflow 開発者は、PR #90 で得た信頼性上の学びを `kiro-impl` 初期導入だけで終わらせず、他の Kiro workflow にも必要な範囲で適用したい。明示的な横展開境界がないと、他の Kiro write/edit または spec generation workflow では、domain-specific review gate の前に AI 特有のハルシネーション、スコープ逸脱、証跡不足、曖昧な review outcome、runtime wiring regressions を取りこぼす可能性が残る。
 
 現在、`kiro-ai-quality-gate` は callable subworkflow として存在し、`kiro-impl` に統合済みである。PR #90 では、次の 6 点が重要な契約として確認された: relative path による `workflow_call`、built-in `ai-antipattern-review` に合わせた routing vocabulary、ambiguous / blocked / inconsistent outcome 用の catch-all replan routing、optional な fix report、replan / repair 可能な loop exhaustion の非 `ABORT` 化、caller 側 `loop_monitors.cycle` への gate step 追加。
 
-この変更では、すべての Kiro workflow について PR #90 の 6 点に対する分類結果を持たせる。分類結果は、既存 gate で covered、generation-scoped gate が必要、orchestration として個別判断、read-only のため対象外、のいずれかである。gate 適用対象になった spec generation や edit workflow は、domain-specific review または finalize の前に適切な AI quality gate を通す。read-only な validation / status workflow は read-only のまま維持し、修正ループを追加しない。
+この変更では、すべての Kiro workflow について PR #90 の 6 点に対する分類結果を持たせる。分類結果は、既存 gate で covered、generation-scoped gate が必要、discovery artifact gate が必要、orchestration として個別判断、read-only のため対象外、のいずれかである。gate 適用対象になった spec generation、discovery artifact generation、edit workflow は、domain-specific review、discovery report、または finalize の前に適切な AI quality gate を通す。read-only な validation / status workflow は read-only のまま維持し、修正ループを追加しない。
 
 ## Requirements
 
@@ -28,7 +30,7 @@ TAKT の Kiro workflow 開発者は、PR #90 で得た信頼性上の学びを `
 #### Acceptance Criteria
 
 1. When Kiro AI quality gate coverage is evaluated, the TAKT Kiro workflow set shall classify every `.takt/{en,ja}/workflows/kiro-*` workflow into exactly one coverage category.
-2. The TAKT Kiro workflow set shall support coverage categories for existing gate coverage, generation-scoped gate required, orchestration-specific decision required, read-only out of scope, and intentionally not applicable.
+2. The TAKT Kiro workflow set shall support coverage categories for existing gate coverage, generation-scoped gate required, discovery artifact gate required, orchestration-specific decision required, read-only out of scope, and intentionally not applicable.
 3. When a workflow is classified as out of scope, the TAKT Kiro workflow set shall record the user-observable or operator-observable reason for that classification.
 4. If a Kiro workflow cannot be classified from available evidence, the TAKT Kiro workflow set shall report the workflow as requiring maintainer decision rather than silently treating it as covered.
 
@@ -43,6 +45,8 @@ TAKT の Kiro workflow 開発者は、PR #90 で得た信頼性上の学びを `
 3. Where a Kiro workflow performs orchestration or decomposition and may write planning artifacts, the TAKT Kiro workflow set shall require an explicit gate applicability decision before adding review/fix behavior.
 4. If applying the gate would change a workflow from read-only to edit-capable behavior, the TAKT Kiro workflow set shall reject that coverage plan.
 5. The TAKT Kiro workflow set shall not add AI quality gate calls to all `kiro-*` workflows mechanically.
+6. Where `kiro-discovery` writes discovery-owned `brief.md` or roadmap artifacts, the TAKT Kiro workflow set shall treat those artifacts as eligible for discovery-scoped AI quality gate evaluation.
+7. The TAKT Kiro workflow set shall keep discovery-scoped gate findings separate from implementation-scoped fix instructions.
 
 ### Requirement 3: PR #90 の 6 点契約を gate 適用対象に要求する
 
@@ -56,6 +60,7 @@ TAKT の Kiro workflow 開発者は、PR #90 で得た信頼性上の学びを `
 4. When the first AI antipattern review finds no blocking issue, the TAKT Kiro workflow set shall allow completion without requiring a fix report.
 5. If an AI review/fix loop reaches its threshold while replan or repair remains possible, the TAKT Kiro workflow set shall return the corresponding replan or repair outcome instead of bluntly aborting.
 6. When a caller workflow inserts an AI quality gate step into an existing monitored cycle, the TAKT Kiro workflow set shall include that gate step in the caller's loop monitor cycle.
+7. When `kiro-discovery` calls an AI quality gate subworkflow, the TAKT Kiro workflow set shall apply the same routing and loop contracts to discovery-specific outcomes.
 
 ### Requirement 4: Generation-scoped gate は spec artifact の境界を守る
 
@@ -80,18 +85,21 @@ TAKT の Kiro workflow 開発者は、PR #90 で得た信頼性上の学びを `
 3. When no fix report exists because the first AI antipattern review found no blocking issue, the downstream Kiro review or finalize step shall not treat the missing fix report as a failure.
 4. If downstream review rejects AI quality gate evidence, the TAKT Kiro workflow set shall route through the workflow's existing repair, replan, or blocked path.
 5. The TAKT Kiro workflow set shall keep progress or lifecycle promotion dependent on the appropriate verified review/finalize result rather than making promotion steps re-review raw gate reports independently.
+6. When `kiro-discovery` produces a discovery report after writing artifacts, the discovery report step shall account for unresolved discovery-scoped AI antipattern findings before reporting completion.
 
-### Requirement 6: read-only と orchestration workflow の対象外境界を維持する
+### Requirement 6: discovery artifact gate と read-only / orchestration 境界を維持する
 
-**Objective:** TAKT Kiro workflow maintainer として、品質ゲート横展開によって既存 workflow の責務を崩したくない。そうすることで、status、validation、discovery、batch の operator expectations を壊さずに coverage を増やせる。
+**Objective:** TAKT Kiro workflow maintainer として、品質ゲート横展開によって既存 workflow の責務を崩したくない。そうすることで、status、validation、batch の operator expectations を壊さず、`kiro-discovery` が所有する discovery artifact には必要な AI quality gate coverage を追加できる。
 
 #### Acceptance Criteria
 
 1. While `kiro-spec-status` or `kiro-validate-*` workflows remain read-only, the TAKT Kiro workflow set shall not add edit-capable AI fix behavior to those workflows.
-2. Where `kiro-discovery` writes brief or roadmap artifacts, the TAKT Kiro workflow set shall classify whether AI quality gate coverage belongs to discovery output review or to a later spec generation phase.
-3. Where `kiro-spec-batch` orchestrates worker results and cross-spec review, the TAKT Kiro workflow set shall classify whether AI quality gate coverage belongs to worker generation workflows, batch aggregation, or neither.
-4. If a workflow is classified as orchestration-only out of scope, the TAKT Kiro workflow set shall document the adjacent workflow that owns artifact-level AI quality review.
-5. The TAKT Kiro workflow set shall keep roadmap checkbox markers out of implementation progress decisions when classifying coverage.
+2. When `kiro-discovery` writes `brief.md` or roadmap artifacts, the TAKT Kiro workflow set shall evaluate discovery-scoped AI quality before reporting discovery complete.
+3. If `kiro-discovery` AI quality findings can be corrected within discovery-owned artifacts, the TAKT Kiro workflow set shall route through discovery-scoped repair before completion.
+4. If `kiro-discovery` AI quality findings require different decomposition, existing spec ownership changes, or human clarification, the TAKT Kiro workflow set shall route to replan or maintainer-decision behavior instead of silently editing unrelated spec artifacts.
+5. Where `kiro-spec-batch` orchestrates worker results and cross-spec review, the TAKT Kiro workflow set shall classify whether AI quality gate coverage belongs to worker generation workflows, batch aggregation, or neither.
+6. If a workflow is classified as orchestration-only out of scope, the TAKT Kiro workflow set shall document the adjacent workflow that owns artifact-level AI quality review.
+7. The TAKT Kiro workflow set shall keep roadmap checkbox markers out of implementation progress decisions when classifying coverage.
 
 ### Requirement 7: Validation と smoke coverage で drift を検出する
 
@@ -104,6 +112,8 @@ TAKT の Kiro workflow 開発者は、PR #90 で得た信頼性上の学びを `
 3. When repository validation runs, the TAKT Kiro workflow set shall detect drift from the relative `workflow_call`, routing vocabulary, catch-all routing, optional fix report, loop exhaustion, and caller loop monitor contracts.
 4. When runtime smoke coverage runs for AI quality gate wiring, the TAKT Kiro workflow set shall exercise at least one deterministic successful gate path for a covered workflow.
 5. If validator or smoke coverage cannot determine whether a workflow is covered or intentionally out of scope, the TAKT Kiro workflow set shall fail with an actionable classification finding.
+6. When repository validation runs, the TAKT Kiro workflow set shall detect missing discovery-scoped AI quality gate coverage for `kiro-discovery`.
+7. When repository validation runs, the TAKT Kiro workflow set shall detect implementation-scoped fix instructions wired into `kiro-discovery` discovery artifact review.
 
 ### Requirement 8: Language parity と upstream asset 境界を守る
 

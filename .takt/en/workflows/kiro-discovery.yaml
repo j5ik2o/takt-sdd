@@ -6,11 +6,12 @@ workflow_config:
       network_access: true
     opencode:
       network_access: true
-max_steps: 8
+max_steps: 12
 initial_step: classify-action-path
 
 instructions:
   kiro-discovery: ../facets/instructions/kiro-discovery.md
+  kiro-ai-antipattern-fix-discovery: ../facets/instructions/kiro-ai-antipattern-fix-discovery.md
 
 policies:
   kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
@@ -18,6 +19,21 @@ policies:
 
 report_formats:
   kiro-discovery-result: ../facets/output-contracts/kiro-discovery-result.md
+
+loop_monitors:
+  - cycle:
+      - plan-discovery-artifacts
+      - write-discovery-artifacts
+      - ai-quality-gate-discovery
+    threshold: 2
+    judge:
+      persona: supervisor
+      instruction: kiro-discovery
+      rules:
+        - condition: Healthy (discovery artifacts are converging and loop_monitors.threshold not reached)
+          next: plan-discovery-artifacts
+        - condition: Unproductive (loop_monitors.threshold reached for plan-discovery-artifacts, write-discovery-artifacts, and ai-quality-gate-discovery)
+          next: report-discovery
 
 steps:
   - name: classify-action-path
@@ -68,13 +84,28 @@ steps:
       - condition: artifact write failed or blockingReason present
         next: report-discovery
       - condition: createdFiles include target brief.md and actionPath SINGLE_SPEC
-        next: report-discovery
+        next: ai-quality-gate-discovery
       - condition: createdFiles include every new spec brief.md and .kiro/steering/roadmap.md and actionPath MULTI_SPEC
-        next: report-discovery
+        next: ai-quality-gate-discovery
       - condition: createdFiles include every new spec brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems non-empty and separated and actionPath MIXED_DECOMPOSITION
-        next: report-discovery
+        next: ai-quality-gate-discovery
       - condition: required createdFiles missing for actionPath SINGLE_SPEC or actionPath MULTI_SPEC or actionPath MIXED_DECOMPOSITION
         next: report-discovery
+
+  - name: ai-quality-gate-discovery
+    kind: workflow_call
+    call: ./kiro-discovery-ai-quality-gate.yaml
+    args:
+      fix_instruction: kiro-ai-antipattern-fix-discovery
+      domain_knowledge:
+        - architecture
+    rules:
+      - condition: COMPLETE
+        next: report-discovery
+      - condition: need_replan
+        next: plan-discovery-artifacts
+      - condition: ABORT
+        next: ABORT
 
   - name: report-discovery
     edit: false
@@ -89,13 +120,13 @@ steps:
         - name: kiro-discovery-result.md
           format: kiro-discovery-result
     rules:
-      - condition: blockingReason present or artifact write failed or brief.md roadmap contradiction found or required discovery artifacts missing
+      - condition: blockingReason present or artifact write failed or brief.md roadmap contradiction found or required discovery artifacts missing or discovery AI quality gate blocked or loop_monitors.threshold reached
         next: ABORT
       - condition: actionPath EXISTING_SPEC_UPDATE or actionPath DIRECT_IMPLEMENTATION
         next: COMPLETE
-      - condition: actionPath SINGLE_SPEC and target brief.md present
+      - condition: actionPath SINGLE_SPEC and target brief.md present and discovery AI quality gate passed
         next: COMPLETE
-      - condition: actionPath MULTI_SPEC and every new spec brief.md present and .kiro/steering/roadmap.md present
+      - condition: actionPath MULTI_SPEC and every new spec brief.md present and .kiro/steering/roadmap.md present and discovery AI quality gate passed
         next: COMPLETE
-      - condition: actionPath MIXED_DECOMPOSITION and every new spec brief.md present and .kiro/steering/roadmap.md present and awarenessOnlyItems non-empty and separated
+      - condition: actionPath MIXED_DECOMPOSITION and every new spec brief.md present and .kiro/steering/roadmap.md present and awarenessOnlyItems non-empty and separated and discovery AI quality gate passed
         next: COMPLETE

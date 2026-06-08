@@ -27,6 +27,7 @@ function makeRuntimeFixture() {
     `${JSON.stringify(
       {
         scripts: {
+          "kiro:discovery": "node scripts/kiro-staged.mjs kiro-discovery --pipeline --skip-git -t",
           "kiro:impl": "node scripts/kiro-staged.mjs kiro-impl --pipeline --skip-git -t",
           "kiro:spec:requirements": "node scripts/kiro-staged.mjs kiro-spec-requirements --pipeline --skip-git -t",
         },
@@ -41,6 +42,70 @@ function makeRuntimeFixture() {
     "provider: mock\nlanguage: ja\nmodel: claude-opus-4-8\nconcurrency: 1\nbase_branch: main\nsubmodules: all\n",
   );
   return root;
+}
+
+function writeDiscoverySmokeContext(root) {
+  writeFixtureFile(root, ".kiro/steering/product.md", "# Product\n\nRuntime smoke fixture.\n");
+  writeFixtureFile(root, ".kiro/steering/roadmap.md", "# Roadmap\n\n## Specs (dependency order)\n");
+}
+
+function writeDiscoveryMockScenario(root) {
+  const entries = [
+    {
+      persona: "planner",
+      content:
+        "## Discovery Classification\n\nactionPath: SINGLE_SPEC\nreason: deterministic discovery runtime smoke\nplannedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\ncreatedFiles: []\nblockingReason: none\nsummary: classify as single spec",
+    },
+    {
+      persona: "planner",
+      content:
+        "## Kiro Discovery Result\n\nactionPath: SINGLE_SPEC\nreason: deterministic discovery runtime smoke\nplannedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\ncreatedFiles: []\nnextAction: write discovery artifact\nblockingReason: none\nawarenessOnlyItems: []\nsummary: classify as single spec",
+    },
+    { persona: "conductor", content: '{"step":3}', structured_output: { step: 3 } },
+    {
+      persona: "planner",
+      content:
+        "## Discovery Plan\n\nactionPath: SINGLE_SPEC\nplannedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\nblockingReason: none\nsummary: plan brief artifact",
+    },
+    {
+      persona: "planner",
+      content:
+        "## Kiro Discovery Result\n\nactionPath: SINGLE_SPEC\nreason: deterministic discovery runtime smoke\nplannedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\ncreatedFiles: []\nnextAction: write discovery artifact\nblockingReason: none\nawarenessOnlyItems: []\nsummary: plan brief artifact",
+    },
+    { persona: "conductor", content: '{"step":2}', structured_output: { step: 2 } },
+    {
+      persona: "planner",
+      content:
+        "## Discovery Write\n\nactionPath: SINGLE_SPEC\ncreatedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\nblockingReason: none\nsummary: discovery artifact written",
+    },
+    {
+      persona: "planner",
+      content:
+        "## Kiro Discovery Result\n\nactionPath: SINGLE_SPEC\nreason: deterministic discovery runtime smoke\nplannedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\ncreatedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\nnextAction: run discovery AI quality gate\nblockingReason: none\nawarenessOnlyItems: []\nsummary: discovery artifact written",
+    },
+    { persona: "conductor", content: '{"step":2}', structured_output: { step: 2 } },
+    { persona: "ai-antipattern-reviewer", content: "Discovery AI antipattern smoke review complete. No AI-specific issues." },
+    {
+      persona: "ai-antipattern-reviewer",
+      content:
+        "# Discovery AI Antipattern Review\n\n## Result: APPROVE\n\nNo AI-specific issues.\n\nNo fix report is required for this successful smoke path.",
+    },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    {
+      persona: "supervisor",
+      content:
+        "## Discovery Final Report\n\nactionPath: SINGLE_SPEC\nreason: deterministic discovery runtime smoke\nplannedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\ncreatedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\nnextAction: run kiro-spec-init\nblockingReason: none\nawarenessOnlyItems: []\ndiscovery AI quality gate passed\nsummary: report discovery after gate",
+    },
+    {
+      persona: "supervisor",
+      content:
+        "## Kiro Discovery Result\n\nactionPath: SINGLE_SPEC\nreason: deterministic discovery runtime smoke\nplannedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\ncreatedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\nnextAction: run kiro-spec-init\nblockingReason: none\nawarenessOnlyItems: []\ndiscovery AI quality gate passed\nsummary: report discovery after gate",
+    },
+    { persona: "conductor", content: '{"step":3}', structured_output: { step: 3 } },
+  ];
+  const scenarioPath = join(root, ".takt", "runs", "kiro-discovery-ai-quality-gate-runtime-smoke-scenario.json");
+  writeFixtureFile(root, ".takt/runs/kiro-discovery-ai-quality-gate-runtime-smoke-scenario.json", `${JSON.stringify(entries, null, 2)}\n`);
+  return scenarioPath;
 }
 
 function writeRequirementsSmokeSpec(root) {
@@ -369,6 +434,51 @@ test("kiro spec generation runtime wiring calls spec AI gate before requirements
     assert.match(readFileSync(specAiReportPath, "utf8"), /No AI-specific issues/);
     assert.equal(findFile(reportsDir, "kiro-spec-ai-antipattern-fix.md"), undefined);
     assert.match(readFileSync(join(reportsDir, "kiro-spec-requirements-review.md"), "utf8"), /requirements review gate passed/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("kiro discovery runtime wiring calls discovery AI gate before report", () => {
+  const root = makeRuntimeFixture();
+  try {
+    writeDiscoverySmokeContext(root);
+    const scenarioPath = writeDiscoveryMockScenario(root);
+
+    const result = spawnSync(
+      "npm",
+      ["run", "kiro:discovery", "--", "Create a smoke feature brief for kiro-discovery-ai-quality-gate-smoke"],
+      {
+        cwd: root,
+        env: {
+          ...process.env,
+          TAKT_MOCK_SCENARIO: scenarioPath,
+        },
+        encoding: "utf8",
+      },
+    );
+    const output = `${result.stdout}\n${result.stderr}`;
+
+    assert.equal(result.status, 0, output);
+    assert.match(output, /\[3\/12\] write-discovery-artifacts/);
+    assert.match(output, /\[4\/12\] ai-quality-gate-discovery/);
+    assert.match(output, /\[5\/12\] ai-antipattern-review-1st/);
+    assert.match(output, /Status: COMPLETE/);
+    assert.match(output, /\[6\/12\] report-discovery/);
+    assert.match(output, /Result: Success/);
+
+    const reportRoot = join(root, ".takt", "runs");
+    const latestRun = readdirSync(reportRoot)
+      .filter((entry) => statSync(join(reportRoot, entry)).isDirectory())
+      .sort()
+      .at(-1);
+    assert.ok(latestRun, output);
+    const reportsDir = join(reportRoot, latestRun, "reports");
+    const discoveryAiReportPath = findFile(reportsDir, "kiro-discovery-ai-antipattern-review.md");
+    assert.ok(discoveryAiReportPath, "expected the discovery AI antipattern review report to be emitted");
+    assert.match(readFileSync(discoveryAiReportPath, "utf8"), /No AI-specific issues/);
+    assert.equal(findFile(reportsDir, "kiro-discovery-ai-antipattern-fix.md"), undefined);
+    assert.match(readFileSync(join(reportsDir, "kiro-discovery-result.md"), "utf8"), /discovery AI quality gate passed/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
