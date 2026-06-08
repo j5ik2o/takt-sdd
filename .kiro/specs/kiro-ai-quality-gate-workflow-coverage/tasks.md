@@ -35,7 +35,7 @@
   - _Boundary:_ SpecAiQualityGateWorkflow, GateEvidenceAdapters
   - _Depends:_ 2.1
 
-- [ ] 2.3 downstream review/finalize が gate evidence を消費するように facet 指示を更新する
+- [x] 2.3 downstream review/finalize が gate evidence を消費するように facet 指示を更新する
   - unresolved AI antipattern findings がある draft は domain review/finalize で accept されない。
   - optional fix report が存在する場合、blocked、stale、cross-run、evidence-free no-fix が reject される。
   - first-pass no blocking で fix report がない場合は failure にならない。

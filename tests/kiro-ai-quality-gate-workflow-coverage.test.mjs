@@ -156,3 +156,31 @@ test("spec generation AI quality gate uses generation-specific fix instruction a
     }
   }
 });
+
+test("downstream generation review facets consume spec AI quality gate evidence", () => {
+  const facetNames = [
+    "kiro-spec-requirements-review.md",
+    "kiro-validate-design-readiness.md",
+    "kiro-spec-tasks-review.md",
+    "kiro-spec-quick-sanity-review.md",
+  ];
+  const requiredTerms = [
+    "kiro-spec-ai-antipattern-review.md",
+    "kiro-spec-ai-antipattern-fix.md",
+    "unresolved",
+    "stale",
+    "cross-run",
+    "evidence-free",
+    "optional fix report",
+  ];
+
+  for (const language of languages) {
+    for (const facetName of facetNames) {
+      const path = join(repoRoot, ".takt", language, "facets", "instructions", facetName);
+      const content = readFileSync(path, "utf8");
+      for (const term of requiredTerms) {
+        assert.ok(content.includes(term), `${path} should include ${term}`);
+      }
+    }
+  }
+});

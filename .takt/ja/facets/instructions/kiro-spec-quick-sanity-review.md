@@ -45,3 +45,11 @@ extends_skill_section: "#### Final Sanity Review"
 - pass の場合、`kiro-spec-sanity-review` output contract で `verdict: "PASS"` と `quick-completion` の evidence を返す。
 - needs-fix の場合、requirements、design、tasks の具体的な `fix_targets` とともに `verdict: "NEEDS_FIX"` を返す。
 - blocked の場合、不足している phase result、artifact、または unsafe boundary を `blockingReason` とし、blocked correction target の `fix_targets` とともに `verdict: "BLOCKED"` を返す。
+
+## AI quality gate evidence
+
+- `verdict: "PASS"` を返す前に、各 quick phase の `kiro-spec-ai-antipattern-review.md` を確認する。
+- unresolved AI antipattern findings が残る場合は `verdict: "NEEDS_FIX"` または `verdict: "BLOCKED"` を返す。
+- `kiro-spec-ai-antipattern-fix.md` が存在する場合、stale、cross-run、blocked、evidence-free no-fix outcomes を reject する。
+- first review が blocking issue を見つけなかった場合だけ、`kiro-spec-ai-antipattern-fix.md` が存在しなくても valid と扱う。これは optional fix report であり、required success artifact ではない。
+- rejected AI gate evidence は quick-completion accept ではなく affected `fix_targets` へ route する。

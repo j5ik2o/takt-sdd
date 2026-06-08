@@ -23,3 +23,11 @@ Review the draft `.kiro/specs/<feature>/requirements.md` before lifecycle metada
 
 - On pass, report `requirements review gate passed` and do not update lifecycle metadata.
 - On needs-fix or blocked, include concrete findings and keep `spec.json` out of the `requirements-generated` success state.
+
+## AI quality gate evidence
+
+- Inspect `kiro-spec-ai-antipattern-review.md` before accepting the draft.
+- Reject the draft when unresolved AI antipattern findings remain.
+- If `kiro-spec-ai-antipattern-fix.md` exists, reject stale, cross-run, blocked, or evidence-free no-fix outcomes.
+- Treat the missing `kiro-spec-ai-antipattern-fix.md` as valid only when the first review found no blocking issue; it is an optional fix report, not a required success artifact.
+- Route rejected AI gate evidence through the existing needs-fix or blocked result instead of accepting the draft.
