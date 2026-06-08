@@ -71,7 +71,7 @@ steps:
         next: report-discovery
       - condition: createdFiles include every new spec brief.md and .kiro/steering/roadmap.md and actionPath MULTI_SPEC
         next: report-discovery
-      - condition: createdFiles include every new spec brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems non-empty and actionPath MIXED_DECOMPOSITION
+      - condition: createdFiles include every new spec brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems non-empty and separated and actionPath MIXED_DECOMPOSITION
         next: report-discovery
       - condition: required createdFiles missing for actionPath SINGLE_SPEC or actionPath MULTI_SPEC or actionPath MIXED_DECOMPOSITION
         next: report-discovery
@@ -97,5 +97,5 @@ steps:
         next: COMPLETE
       - condition: actionPath MULTI_SPEC and every new spec brief.md present and .kiro/steering/roadmap.md present
         next: COMPLETE
-      - condition: actionPath MIXED_DECOMPOSITION and every new spec brief.md present and .kiro/steering/roadmap.md present and awarenessOnlyItems non-empty
+      - condition: actionPath MIXED_DECOMPOSITION and every new spec brief.md present and .kiro/steering/roadmap.md present and awarenessOnlyItems non-empty and separated
         next: COMPLETE

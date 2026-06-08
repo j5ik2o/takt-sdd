@@ -375,10 +375,11 @@ function parseRoadmapLine(line) {
 }
 
 export function parseRoadmap(content) {
+  const normalizedContent = content.replace(/\r\n?/g, "\n");
   const errors = [];
   const specs = [];
   const seenFeatureNames = new Set();
-  const specsBody = sectionBody(content, "## Specs (dependency order)");
+  const specsBody = sectionBody(normalizedContent, "## Specs (dependency order)");
   if (specsBody === null) {
     errors.push("missing ## Specs (dependency order) section");
   }
@@ -417,7 +418,7 @@ export function parseRoadmap(content) {
   return {
     specs,
     awarenessOnlySections: ["Existing Spec Updates", "Direct Implementation Candidates"].filter((section) =>
-      content.includes(`## ${section}`),
+      normalizedContent.includes(`## ${section}`),
     ),
     errors,
   };

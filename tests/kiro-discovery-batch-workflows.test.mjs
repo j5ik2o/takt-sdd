@@ -75,6 +75,24 @@ test("roadmap parser separates dependency-order specs from awareness-only sectio
   assert.deepEqual(result.awarenessOnlySections, ["Existing Spec Updates", "Direct Implementation Candidates"]);
 });
 
+test("roadmap parser accepts CRLF section headings", () => {
+  const roadmap = [
+    "# Roadmap",
+    "",
+    "## Specs (dependency order)",
+    "- [ ] feature-a -- First pending feature. Dependencies: none",
+    "",
+    "## Direct Implementation Candidates",
+    "- [ ] docs-cleanup -- Awareness only.",
+  ].join("\r\n");
+
+  const result = parseRoadmap(roadmap);
+
+  assert.deepEqual(result.errors, []);
+  assert.deepEqual(result.specs.map((spec) => spec.featureName), ["feature-a"]);
+  assert.deepEqual(result.awarenessOnlySections, ["Direct Implementation Candidates"]);
+});
+
 test("roadmap parser rejects malformed dependency-order lines", () => {
   const roadmap = [
     "# Roadmap",
@@ -283,15 +301,15 @@ test("kiro-discovery workflow uses multi-step routing and skill adapter metadata
     );
     assert.ok(
       workflow.includes(
-        "createdFiles include every new spec brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems non-empty and actionPath MIXED_DECOMPOSITION",
+        "createdFiles include every new spec brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems non-empty and separated and actionPath MIXED_DECOMPOSITION",
       ),
-      `${workflowPath} should require mixed decomposition awareness-only items before reporting`,
+      `${workflowPath} should require mixed decomposition separated awareness-only items before reporting`,
     );
     assert.ok(
       workflow.includes(
-        "actionPath MIXED_DECOMPOSITION and every new spec brief.md present and .kiro/steering/roadmap.md present and awarenessOnlyItems non-empty",
+        "actionPath MIXED_DECOMPOSITION and every new spec brief.md present and .kiro/steering/roadmap.md present and awarenessOnlyItems non-empty and separated",
       ),
-      `${workflowPath} should require roadmap and awareness-only items before mixed decomposition completion`,
+      `${workflowPath} should require roadmap and separated awareness-only items before mixed decomposition completion`,
     );
     assert.ok(
       workflow.includes("actionPath MULTI_SPEC and every new spec brief.md present and .kiro/steering/roadmap.md present"),
