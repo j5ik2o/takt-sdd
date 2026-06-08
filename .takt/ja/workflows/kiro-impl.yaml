@@ -48,6 +48,7 @@ loop_monitors:
 
   - cycle:
       - execute-task
+      - ai-quality-gate
       - review-task
       - debug-task
     threshold: 2
@@ -57,7 +58,7 @@ loop_monitors:
       rules:
         - condition: Healthy (review findings are converging toward VERDICT APPROVED)
           next: execute-task
-        - condition: Unproductive (loop_monitors.threshold reached for execute-task, review-task, and debug-task)
+        - condition: Unproductive (loop_monitors.threshold reached for execute-task, ai-quality-gate, review-task, and debug-task)
           next: update-progress
 
 steps:

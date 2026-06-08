@@ -172,6 +172,23 @@ test("validator rejects direct review routing that bypasses AI quality gate", ()
   assert.ok(result.failures.some((failure) => failure.includes("ai-quality-gate")));
 });
 
+test("validator rejects parent loop monitor that skips AI quality gate", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8")
+    .replace("      - ai-quality-gate\n", "")
+    .replace(
+      "loop_monitors.threshold reached for execute-task, ai-quality-gate, review-task, and debug-task",
+      "loop_monitors.threshold reached for execute-task, review-task, and debug-task",
+    );
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("loop monitor must include ai-quality-gate")));
+});
+
 test("validator rejects missing AI quality gate workflow", () => {
   const root = makeCurrentSurfaceFixture();
   rmSync(join(root, ".takt", "ja", "workflows", "kiro-ai-quality-gate.yaml"));

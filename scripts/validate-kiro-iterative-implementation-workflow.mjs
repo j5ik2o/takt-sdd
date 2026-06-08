@@ -493,6 +493,13 @@ function validateWorkflowFiles(repoRoot) {
     if (!canonicalBlock(content, "loop_monitors").join("\n").includes("debug-task")) {
       failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, workflowPath)} loop_monitors must cover debug-task`);
     }
+    if (
+      !content.includes(
+        "cycle:\n      - execute-task\n      - ai-quality-gate\n      - review-task\n      - debug-task\n    threshold: 2",
+      )
+    ) {
+      failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, workflowPath)} review/debug loop monitor must include ai-quality-gate between execute-task and review-task`);
+    }
     const workflowCallBlocks = stepBlocks(content).filter((block) => block.join("\n").includes("kind: workflow_call"));
     for (const block of workflowCallBlocks) {
       if (stepScalar(block, "name") !== "ai-quality-gate" || stepScalar(block, "call") !== "./kiro-ai-quality-gate.yaml") {
@@ -863,6 +870,7 @@ function validateTaskFixtureCoverage(repoRoot) {
       "validator rejects direct review routing that bypasses AI quality gate",
       "validator rejects missing AI quality gate workflow",
       "validator rejects unapproved nested Kiro workflow call",
+      "validator rejects parent loop monitor that skips AI quality gate",
       "validator rejects AI quality gate loop threshold drift",
       "validator rejects AI quality gate review routing gaps",
       "validator rejects AI quality gate loop exhaustion that aborts instead of replanning",

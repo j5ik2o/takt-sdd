@@ -343,7 +343,7 @@ interface KiroAiQualityGateResult {
 - Gate abort path: `ai-quality-gate -> ABORT`。
 
 **Implementation Notes**
-- Integration: maintain existing loop monitors for execute/review/debug and add separate gate loop monitor only inside callable gate.
+- Integration: update the parent review/debug loop monitor to cover `execute-task -> ai-quality-gate -> review-task -> debug-task`, and keep the gate's own review/fix loop monitor inside the callable gate.
 - Validation: step order includes `ai-quality-gate` between `execute-task` and `review-task`.
 - Risks: Allowing unrestricted nested Kiro workflow calls reopens previous boundary drift; validator permits only this named gate.
 
