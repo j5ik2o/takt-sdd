@@ -11,6 +11,7 @@ Full custom reason: upstream Kiro skills do not define TAKT-specific AI quality 
 ## Category Semantics
 
 - `existing_gate_coverage`: the workflow already owns or calls an approved AI quality gate.
+- `discovery_artifact_gate_required`: the workflow writes discovery artifacts that proceed to discovery reporting and must pass a discovery-scoped AI quality gate.
 - `generation_scoped_gate_required`: the workflow generates or repairs spec artifacts that proceed to domain review or lifecycle promotion.
 - `orchestration_decision_required`: the workflow writes planning or coordination artifacts and needs an explicit maintainer decision before any AI review or fix loop is added.
 - `orchestration_delegated`: artifact-level AI quality review belongs to adjacent generation workflows rather than the orchestration workflow itself.
@@ -22,6 +23,6 @@ Full custom reason: upstream Kiro skills do not define TAKT-specific AI quality 
 
 - Add an AI quality gate only where generated or repaired artifacts proceed to domain-specific review or finalization.
 - Keep read-only workflows read-only. Do not add repair, debug, edit, or nested workflow behavior to make coverage look complete.
-- Treat orchestration workflows as explicit design decisions, not automatic gate targets.
+- Treat orchestration workflows as explicit design decisions, not automatic gate targets. Discovery artifact gates are allowed only when listed in `scripts/kiro-ai-quality-gate-contracts.mjs`.
 - A `roadmap checkbox` marks spec generation state only. It is not implementation progress evidence and must not drive coverage classification.
 - If a new Kiro workflow cannot be classified from its artifact boundary and operator-visible responsibility, return `maintainer_decision_required`.

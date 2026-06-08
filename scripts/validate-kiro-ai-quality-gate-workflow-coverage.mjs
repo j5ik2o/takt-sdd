@@ -12,7 +12,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const defaultRepoRoot = join(__dirname, "..");
 const languages = ["en", "ja"];
-const generationGateRequiredCategories = new Set(["existing_gate_coverage", "generation_scoped_gate_required"]);
+const gateRequiredCategories = new Set([
+  "existing_gate_coverage",
+  "discovery_artifact_gate_required",
+  "generation_scoped_gate_required",
+]);
 const noDirectGateCategories = new Set(["orchestration_delegated", "orchestration_decision_required"]);
 const decisionRequiredCategories = new Set(["maintainer_decision_required", "orchestration_decision_required"]);
 
@@ -161,7 +165,7 @@ function validateGatePlacement(repoRoot, coverageEntries) {
   const entries = coverageEntries;
   const allowedSites = getAllowedKiroAiQualityGateCallSites();
 
-  for (const entry of entries.filter((candidate) => generationGateRequiredCategories.has(candidate.category))) {
+  for (const entry of entries.filter((candidate) => gateRequiredCategories.has(candidate.category))) {
     const sites = allowedSites.filter((site) => site.workflowName === entry.workflowName);
     if (entry.allowedGateCall && sites.length === 0) {
       failures.push(`ELIGIBLE_GATE_BYPASS: ${entry.workflowName} requires ${entry.allowedGateCall} but has no allowed call sites`);
@@ -194,6 +198,35 @@ function validateGatePlacement(repoRoot, coverageEntries) {
           if (!content.includes(`condition: Healthy (review findings are converging)\n          next: ${site.stepName}`)) {
             failures.push(
               `LOOP_MONITOR_GATE_BYPASS: ${rel(repoRoot, path)} loop monitor Healthy branch must route to ${site.stepName} before domain review`,
+            );
+          }
+        }
+        if (site.gateKind === "discovery_artifact") {
+          const gateBlock = stepBlocks(content).find((block) => stepScalar(block, "name") === site.stepName) ?? [];
+          if (ruleNextForCondition(gateBlock, "need_replan") !== "plan-discovery-artifacts") {
+            failures.push(
+              `REPLAN_ROUTING_DRIFT: ${rel(repoRoot, path)} ${site.stepName} must route need_replan to plan-discovery-artifacts`,
+            );
+          }
+          if (ruleNextForCondition(gateBlock, "COMPLETE") !== "report-discovery") {
+            failures.push(
+              `ELIGIBLE_GATE_BYPASS: ${rel(repoRoot, path)} ${site.stepName} COMPLETE must route to report-discovery`,
+            );
+          }
+          for (const term of [
+            "loop_monitors:",
+            "- plan-discovery-artifacts",
+            "- write-discovery-artifacts",
+            "- ai-quality-gate-discovery",
+            "loop_monitors.threshold reached for plan-discovery-artifacts, write-discovery-artifacts, and ai-quality-gate-discovery",
+          ]) {
+            if (!content.includes(term)) {
+              failures.push(`LOOP_MONITOR_GATE_BYPASS: ${rel(repoRoot, path)} missing discovery gate loop term: ${term}`);
+            }
+          }
+          if (content.includes("kiro-ai-antipattern-fix-implementation") || content.includes("kiro-spec-ai-antipattern-review.md")) {
+            failures.push(
+              `DISCOVERY_GATE_SCOPE_DRIFT: ${rel(repoRoot, path)} must use discovery-scoped fix instruction and report names`,
             );
           }
         }
@@ -256,23 +289,74 @@ function validateReadOnlyAndDelegatedBoundaries(repoRoot, coverageEntries) {
 function validateGateContractTerms(repoRoot) {
   const failures = [];
   const terms = getKiroAiQualityGateContractTerms();
-  const specTerms = [
-    ...terms.specGeneration.reviewReports,
-    ...terms.specGeneration.optionalFixReports,
-    ...terms.shared.routingTerms,
-    ...terms.shared.catchAllTerms,
-    ...terms.shared.loopOutcomeTerms,
+  const gateSpecs = [
+    {
+      workflowName: "kiro-spec-ai-quality-gate",
+      terms: [
+        ...terms.specGeneration.reviewReports,
+        ...terms.specGeneration.optionalFixReports,
+        ...terms.shared.routingTerms,
+        ...terms.shared.catchAllTerms,
+        ...terms.shared.loopOutcomeTerms,
+        ...terms.shared.callTerms,
+      ],
+    },
+    {
+      workflowName: "kiro-discovery-ai-quality-gate",
+      terms: [
+        ...terms.discoveryArtifact.reviewReports,
+        ...terms.discoveryArtifact.optionalFixReports,
+        ...terms.shared.routingTerms,
+        ...terms.shared.catchAllTerms,
+        ...terms.shared.loopOutcomeTerms,
+        ...terms.shared.callTerms,
+      ],
+    },
   ];
   for (const language of languages) {
-    const path = workflowPath(repoRoot, language, "kiro-spec-ai-quality-gate");
+    for (const gateSpec of gateSpecs) {
+      const path = workflowPath(repoRoot, language, gateSpec.workflowName);
+      if (!existsSync(path)) {
+        failures.push(`GATE_CONTRACT_DRIFT: ${rel(repoRoot, path)} missing`);
+        continue;
+      }
+      const content = readText(path);
+      for (const term of gateSpec.terms) {
+        if (!content.includes(term)) {
+          failures.push(`GATE_CONTRACT_DRIFT: ${rel(repoRoot, path)} missing required gate contract term: ${term}`);
+        }
+      }
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
+function validateDiscoveryGateEvidenceInstructions(repoRoot) {
+  const failures = [];
+  const requiredTerms = [
+    "reports/subworkflows/iteration-*--step-ai-quality-gate-discovery--workflow-kiro-discovery-ai-quality-gate/kiro-discovery-ai-antipattern-review.md",
+    "reports/subworkflows/iteration-*--step-ai-quality-gate-discovery--workflow-kiro-discovery-ai-quality-gate/kiro-discovery-ai-antipattern-fix.md",
+    "namespaced",
+    "kiro-discovery-ai-antipattern-review.md",
+    "kiro-discovery-ai-antipattern-fix.md",
+    "unresolved",
+    "stale",
+    "cross-run",
+    "evidence-free",
+    "optional fix report",
+    "kiro-ai-antipattern-review.md",
+    "kiro-spec-ai-antipattern-review.md",
+  ];
+  for (const language of languages) {
+    const path = join(repoRoot, ".takt", language, "facets", "instructions", "kiro-discovery.md");
     if (!existsSync(path)) {
-      failures.push(`GATE_CONTRACT_DRIFT: ${rel(repoRoot, path)} missing`);
+      failures.push(`DISCOVERY_GATE_EVIDENCE_DRIFT: ${rel(repoRoot, path)} missing`);
       continue;
     }
     const content = readText(path);
-    for (const term of specTerms) {
+    for (const term of requiredTerms) {
       if (!content.includes(term)) {
-        failures.push(`GATE_CONTRACT_DRIFT: ${rel(repoRoot, path)} missing required gate contract term: ${term}`);
+        failures.push(`DISCOVERY_GATE_EVIDENCE_DRIFT: ${rel(repoRoot, path)} missing required discovery gate evidence term: ${term}`);
       }
     }
   }
@@ -391,6 +475,7 @@ export function validateKiroAiQualityGateWorkflowCoverage(options = {}) {
     gatePlacement: validateGatePlacement(repoRoot, coverageEntries),
     readOnlyAndDelegatedBoundaries: validateReadOnlyAndDelegatedBoundaries(repoRoot, coverageEntries),
     gateContractTerms: validateGateContractTerms(repoRoot),
+    discoveryGateEvidenceInstructions: validateDiscoveryGateEvidenceInstructions(repoRoot),
     downstreamGateEvidenceInstructions: validateDownstreamGateEvidenceInstructions(repoRoot),
     quickGateEvidenceInstructions: validateQuickGateEvidenceInstructions(repoRoot),
     policyFacetBoundaries: validatePolicyFacetBoundaries(repoRoot, coverageEntries),

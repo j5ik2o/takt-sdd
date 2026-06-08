@@ -37,6 +37,7 @@
     "validate:kiro-iterative-implementation-workflow": "node scripts/validate-kiro-iterative-implementation-workflow.mjs",
     "test:kiro-iterative-implementation-workflow": "node --test tests/kiro-iterative-implementation-workflow.test.mjs",
     "test:kiro-ai-quality-gate-runtime-smoke": "node --test tests/kiro-ai-quality-gate-runtime-smoke.test.mjs",
+    "test:kiro-discovery-ai-quality-gate-runtime-smoke": "node --test --test-name-pattern \"kiro discovery runtime wiring\" tests/kiro-ai-quality-gate-runtime-smoke.test.mjs",
     "cc-sdd:full": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-full -t",
     "cc-sdd:requirements": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-requirements -t",
     "cc-sdd:validate-gap": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-validate-gap -t",

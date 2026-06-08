@@ -51,3 +51,12 @@ brief は対象 feature に閉じる。既存 spec 更新や direct implementati
 - `actionPath`、`reason`、`createdFiles`、`plannedFiles`、`nextAction`、`blockingReason`、`awarenessOnlyItems` を含む `kiro-discovery-result` を返す。
 - JSON key、path、script name、enum spelling は正確に維持する。
 - OpenSpec artifacts を `.kiro/*` discovery artifact の source of truth に混ぜない。
+
+## Discovery AI Gate Evidence
+
+`report-discovery` が `SINGLE_SPEC`、`MULTI_SPEC`、`MIXED_DECOMPOSITION` の completion を返す前に、current run の namespaced subworkflow evidence を確認する:
+
+- `reports/subworkflows/iteration-*--step-ai-quality-gate-discovery--workflow-kiro-discovery-ai-quality-gate/kiro-discovery-ai-antipattern-review.md`
+- optional fix report: `reports/subworkflows/iteration-*--step-ai-quality-gate-discovery--workflow-kiro-discovery-ai-quality-gate/kiro-discovery-ai-antipattern-fix.md`
+
+unresolved findings、stale evidence、cross-run evidence、evidence-free no-fix claims、または `kiro-ai-antipattern-review.md` や `kiro-spec-ai-antipattern-review.md` のような implementation/spec generation report names は complete と扱わない。first-pass `kiro-discovery-ai-antipattern-review.md` に blocking findings がない場合だけ、`kiro-discovery-ai-antipattern-fix.md` が missing でも許容する。

@@ -3,6 +3,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { getAllowedKiroAiQualityGateCallSites } from "./kiro-ai-quality-gate-contracts.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,13 +21,25 @@ const actionPathEnums = [
 const workflowSpecs = [
   {
     file: "kiro-discovery.yaml",
-    expectedSteps: ["classify-action-path", "plan-discovery-artifacts", "write-discovery-artifacts", "report-discovery"],
-    instructions: ["kiro-discovery"],
+    expectedSteps: [
+      "classify-action-path",
+      "plan-discovery-artifacts",
+      "write-discovery-artifacts",
+      "ai-quality-gate-discovery",
+      "report-discovery",
+    ],
+    instructions: ["kiro-discovery", "kiro-ai-antipattern-fix-discovery"],
     policies: ["kiro-discovery-routing"],
     reports: ["kiro-discovery-result"],
     requiredTerms: [
       "brief.md",
       ".kiro/steering/roadmap.md",
+      "workflow_call",
+      "kiro-discovery-ai-quality-gate",
+      "ai-quality-gate-discovery",
+      "need_replan",
+      "loop_monitors",
+      "loop_monitors.threshold",
       "required plannedFiles missing",
       "required createdFiles missing",
       "required discovery artifacts missing",
@@ -64,6 +77,22 @@ const facetSpecs = [
     skill: "kiro-discovery",
     skillSection: "## Step 2: Determine Action Path",
     terms: ["brief.md", ".kiro/steering/roadmap.md", "blockingReason", "ready_for_implementation", ...actionPathEnums],
+  },
+  {
+    kind: "instructions",
+    file: "kiro-ai-antipattern-fix-discovery.md",
+    parent: "fix",
+    terms: [
+      "kiro-discovery-ai-antipattern-review.md",
+      "kiro-discovery-ai-antipattern-fix.md",
+      "current discovery artifact boundary",
+      "brief.md",
+      ".kiro/steering/roadmap.md",
+      "FIXED",
+      "NO_FIX_NEEDED",
+      "NEED_REPLAN",
+      "BLOCKED",
+    ],
   },
   {
     kind: "instructions",
@@ -115,6 +144,22 @@ const facetSpecs = [
   },
   {
     kind: "output-contracts",
+    file: "kiro-discovery-ai-antipattern-fix-result.md",
+    parent: "validation",
+    terms: [
+      "STATUS",
+      "finding_decisions",
+      "changed_files",
+      "scope_guard",
+      "validation_evidence",
+      "no_fix_rationale",
+      "missing_context",
+      "kiro-discovery-ai-antipattern-fix.md",
+      "optional fix report",
+    ],
+  },
+  {
+    kind: "output-contracts",
     file: "kiro-batch-summary.md",
     parent: "validation",
     terms: ["wavePlan", "skippedSpecReady", "featureResults", "failedFeatures", "crossSpecReview", "implementationReady"],
@@ -163,6 +208,52 @@ function parseFacetParent(content) {
 
 function getStepNames(content) {
   return [...content.matchAll(/^  - name:\s*(.+)\s*$/gm)].map((match) => match[1]);
+}
+
+function stepBlocks(content) {
+  const lines = content.split("\n");
+  const blocks = [];
+  let current = null;
+  for (const line of lines) {
+    if (/^  - name:\s+/.test(line)) {
+      if (current) {
+        blocks.push(current);
+      }
+      current = [line];
+    } else if (current) {
+      if (/^\S/.test(line)) {
+        blocks.push(current);
+        current = null;
+      } else {
+        current.push(line);
+      }
+    }
+  }
+  if (current) {
+    blocks.push(current);
+  }
+  return blocks;
+}
+
+function stepScalar(block, key) {
+  if (key === "name") {
+    return block.join("\n").match(/^  - name:\s*(.+)\s*$/m)?.[1] ?? "";
+  }
+  return block.join("\n").match(new RegExp(`^    ${key}:\\s*(.+)\\s*$`, "m"))?.[1] ?? "";
+}
+
+function validateApprovedWorkflowCalls(repoRoot, path, workflowName, content) {
+  const failures = [];
+  const allowedSites = getAllowedKiroAiQualityGateCallSites().filter((site) => site.workflowName === workflowName);
+  for (const block of stepBlocks(content).filter((candidate) => stepScalar(candidate, "kind") === "workflow_call")) {
+    const stepName = stepScalar(block, "name");
+    const callPath = stepScalar(block, "call");
+    const allowed = allowedSites.some((site) => site.stepName === stepName && site.callPath === callPath);
+    if (!allowed) {
+      failures.push(`WORKFLOW_DRIFT: ${rel(repoRoot, path)} must not use unapproved workflow_call ${stepName} -> ${callPath}`);
+    }
+  }
+  return failures;
 }
 
 function extractMachineTokens(content) {
@@ -227,9 +318,7 @@ function validateWorkflow(repoRoot, lang, spec) {
       failures.push(`WORKFLOW_DRIFT: ${rel(repoRoot, path)} missing report format ${report}`);
     }
   }
-  if (/\bworkflow_call\b/.test(content)) {
-    failures.push(`WORKFLOW_DRIFT: ${rel(repoRoot, path)} must not use workflow_call for phase reuse`);
-  }
+  failures.push(...validateApprovedWorkflowCalls(repoRoot, path, spec.file.replace(/\.yaml$/, ""), content));
   if (/\btakt\s+-w\b|\btakt\s+.*\s-w\s+/.test(content)) {
     failures.push(`WORKFLOW_DRIFT: ${rel(repoRoot, path)} must not use shell takt -w for phase reuse`);
   }

@@ -51,3 +51,12 @@ Keep the brief scoped to the target feature. Do not place existing spec updates 
 - Return `kiro-discovery-result` with `actionPath`, `reason`, `createdFiles`, `plannedFiles`, `nextAction`, `blockingReason`, and `awarenessOnlyItems`.
 - Preserve JSON key, path, script name, and enum spelling exactly.
 - Do not mix OpenSpec artifacts into `.kiro/*` discovery artifact source of truth.
+
+## Discovery AI Gate Evidence
+
+Before `report-discovery` returns completion for `SINGLE_SPEC`, `MULTI_SPEC`, or `MIXED_DECOMPOSITION`, inspect the namespaced subworkflow evidence for the current run:
+
+- `reports/subworkflows/iteration-*--step-ai-quality-gate-discovery--workflow-kiro-discovery-ai-quality-gate/kiro-discovery-ai-antipattern-review.md`
+- optional fix report: `reports/subworkflows/iteration-*--step-ai-quality-gate-discovery--workflow-kiro-discovery-ai-quality-gate/kiro-discovery-ai-antipattern-fix.md`
+
+Treat unresolved findings, stale evidence, cross-run evidence, evidence-free no-fix claims, or implementation/spec generation report names such as `kiro-ai-antipattern-review.md` and `kiro-spec-ai-antipattern-review.md` as not complete. Missing `kiro-discovery-ai-antipattern-fix.md` is acceptable only when the first-pass `kiro-discovery-ai-antipattern-review.md` reports no blocking findings.
