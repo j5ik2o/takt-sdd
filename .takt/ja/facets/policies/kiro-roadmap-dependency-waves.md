@@ -20,7 +20,27 @@
 - [ ] downstream-feature -- One-line description. Dependencies: feature-name
 ```
 
-`Dependencies: none` は、その feature が未完了なら最初の wave に入れることを意味します。
+`Dependencies: none` は、その feature が spec pending なら最初の wave に入れることを意味します。
+
+## Roadmap Marker Semantics
+
+roadmap の checklist marker は spec readiness を表す。implementation completion を表してはいけない。
+
+- `[x]` は spec ready marker である。次の evidence がすべて成り立つ場合だけ使う:
+  - `spec.json.phase == "tasks-generated"`
+  - `approvals.requirements.generated == true`
+  - `approvals.requirements.approved == true`
+  - `approvals.design.generated == true`
+  - `approvals.design.approved == true`
+  - `approvals.tasks.generated == true`
+  - `approvals.tasks.approved == true`
+  - `ready_for_implementation == true`
+  - `.kiro/specs/<feature>/requirements.md` が存在する
+  - `.kiro/specs/<feature>/design.md` が存在する
+  - `.kiro/specs/<feature>/tasks.md` が存在する
+- `[ ]` は spec not ready / spec pending marker である。
+- implementation progress は roadmap marker ではなく `.kiro/specs/<feature>/tasks.md` の task checkbox を読む。
+- roadmap marker は implementation completion を表さない。`tasks.md` が存在するだけで `[x]` にしてはいけない。
 
 ## Awareness-Only Sections
 
@@ -39,6 +59,6 @@ roadmap には次の section を context として置けるが、これらは aw
 - dependency-order feature name が重複する場合は `duplicate roadmap spec entry` として batch execution を止める。
 - missing dependency name は batch execution を止める。
 - `circular dependency` は batch execution を止める。
-- unknown completion marker は batch execution を止める。
+- unknown readiness marker は batch execution を止める。
 - pending spec に `.kiro/specs/<feature>/brief.md` がない場合は worker dispatch 前に止める。
-- empty, invalid, duplicate の roadmap parse state を `all roadmap specs already complete` として扱ってはいけない。
+- empty, invalid, duplicate の roadmap parse state を `all roadmap specs spec-ready` として扱ってはいけない。

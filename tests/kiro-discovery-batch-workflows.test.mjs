@@ -66,7 +66,7 @@ test("roadmap parser separates dependency-order specs from awareness-only sectio
   assert.deepEqual(
     result.specs.map((spec) => [spec.featureName, spec.status, spec.dependencies]),
     [
-      ["foundation", "done", []],
+      ["foundation", "ready", []],
       ["feature-a", "pending", ["foundation"]],
       ["feature-b", "pending", ["foundation"]],
       ["feature-c", "pending", ["feature-a", "feature-b"]],
@@ -115,17 +115,17 @@ test("roadmap parser rejects duplicate dependency-order features", () => {
     "# Roadmap",
     "",
     "## Specs (dependency order)",
-    "- [x] feature-a -- Existing completion. Dependencies: none",
+    "- [x] feature-a -- Existing spec-ready entry. Dependencies: none",
     "- [ ] feature-a -- Duplicate pending entry. Dependencies: none",
   ].join("\n");
 
   const result = parseRoadmap(roadmap);
   const wavePlan = buildDependencyWaves([
-    { featureName: "feature-a", description: "Existing completion", dependencies: [], status: "done" },
+    { featureName: "feature-a", description: "Existing spec-ready entry", dependencies: [], status: "ready" },
     { featureName: "feature-a", description: "Duplicate pending entry", dependencies: [], status: "pending" },
   ]);
 
-  assert.deepEqual(result.specs.map((spec) => spec.status), ["done"]);
+  assert.deepEqual(result.specs.map((spec) => spec.status), ["ready"]);
   assert.ok(result.errors.some((error) => error.includes("duplicate roadmap spec entry: feature-a")));
   assert.equal(wavePlan.ok, false);
   assert.ok(wavePlan.errors.some((error) => error.includes("duplicate roadmap spec entry: feature-a")));
@@ -191,13 +191,13 @@ test("validation reports roadmap missing dependencies once", () => {
 test("batch plan prerequisites reject pending specs without brief", () => {
   const root = makeFixture();
   const result = validateBatchPlanPrerequisites(root, [
-    { featureName: "done-feature", description: "Done", dependencies: [], status: "done" },
+    { featureName: "ready-feature", description: "Spec ready", dependencies: [], status: "ready" },
     { featureName: "pending-feature", description: "Pending", dependencies: [], status: "pending" },
   ]);
 
   assert.equal(result.ok, false);
   assert.ok(result.errors.some((error) => error.includes(".kiro/specs/pending-feature/brief.md")));
-  assert.equal(result.errors.some((error) => error.includes("done-feature")), false);
+  assert.equal(result.errors.some((error) => error.includes("ready-feature")), false);
 });
 
 test("batch plan prerequisites accept pending specs with brief", () => {
@@ -409,7 +409,20 @@ test("roadmap dependency wave policy keeps awareness-only sections out of batch 
       "missing roadmap spec entries",
       "invalid roadmap spec entry",
       "duplicate roadmap spec entry",
-      "all roadmap specs already complete",
+      "all roadmap specs spec-ready",
+      "spec.json.phase == \"tasks-generated\"",
+      "approvals.requirements.generated == true",
+      "approvals.requirements.approved == true",
+      "approvals.design.generated == true",
+      "approvals.design.approved == true",
+      "approvals.tasks.generated == true",
+      "approvals.tasks.approved == true",
+      "ready_for_implementation == true",
+      ".kiro/specs/<feature>/requirements.md",
+      ".kiro/specs/<feature>/design.md",
+      ".kiro/specs/<feature>/tasks.md",
+      "implementation progress",
+      "task checkbox",
     ]) {
       assert.ok(policy.includes(term), `${policyPath} should include ${term}`);
     }
@@ -453,20 +466,20 @@ test("kiro-spec-batch workflow uses dynamic worker dispatch without workflow reu
       `${workflowPath} should not allow parsed roadmap to bypass missing brief checks`,
     );
     assert.equal(
-      workflow.includes("condition: all roadmap specs already complete\n"),
+      workflow.includes("condition: all roadmap specs spec-ready\n"),
       false,
-      `${workflowPath} should not route empty roadmaps as already complete`,
+      `${workflowPath} should not route empty roadmaps as spec-ready`,
     );
-    assert.ok(workflow.includes("condition: all roadmap specs already complete and roadmap spec entries present"));
+    assert.ok(workflow.includes("condition: all roadmap specs spec-ready and roadmap spec entries present"));
     assert.ok(workflow.includes("verdict PASS"));
     assert.ok(workflow.includes("verdict NEEDS_FIX"));
     assert.ok(workflow.includes("verdict DECOMPOSITION_RETURN"));
     assert.equal(workflow.includes("condition: DECOMPOSITION_RETURN or loop_monitors.threshold reached"), false);
     assert.equal(workflow.includes("crossSpecReview PASS"), false);
     assert.ok(
-      workflow.indexOf("condition: all roadmap specs already complete and roadmap spec entries present") <
+      workflow.indexOf("condition: all roadmap specs spec-ready and roadmap spec entries present") <
         workflow.indexOf("condition: verdict PASS"),
-      `${workflowPath} should route already-complete roadmaps through cross-spec review before finalization`,
+      `${workflowPath} should route spec-ready roadmaps through cross-spec review before finalization`,
     );
     assert.equal(/\btakt\s+-w\b|\btakt\s+.*\s-w\s+/.test(workflow), false);
     assert.equal(workflow.includes("workflow_call"), false);
@@ -514,6 +527,7 @@ test("batch summary contract separates worker results from implementation readin
     const content = readFileSync(join(repoRoot, path), "utf8");
     for (const term of [
       "wavePlan",
+      "skippedSpecReady",
       "featureResults",
       "failedFeatures",
       "awarenessOnlyItems",

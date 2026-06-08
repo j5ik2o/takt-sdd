@@ -17,7 +17,7 @@ batch worker dispatch 後の generated specs を review します。individual g
 - primary architecture input としての generated `.kiro/specs/*/design.md`。
 - scope と acceptance criteria 用の generated `.kiro/specs/*/requirements.md`。
 - `_Boundary:_` annotation 用の generated `.kiro/specs/*/tasks.md`。
-- `kiro-spec-batch` の worker feature results と skipped completed specs。
+- `kiro-spec-batch` の worker feature results と skipped spec-ready entries。
 
 ## Review Checks
 

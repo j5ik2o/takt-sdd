@@ -26,8 +26,10 @@ Classify a user work request into one Kiro discovery `actionPath` and decide whe
 3. For `EXISTING_SPEC_UPDATE` and `DIRECT_IMPLEMENTATION`, do not write new discovery artifacts. Return a concrete `nextAction`.
 4. For `SINGLE_SPEC`, plan or write `.kiro/specs/<feature>/brief.md`.
 5. For `MULTI_SPEC` and `MIXED_DECOMPOSITION`, plan or write `.kiro/steering/roadmap.md` and each new spec `brief.md`.
-6. For `MIXED_DECOMPOSITION`, keep existing spec updates and direct implementation candidates as `awarenessOnlyItems`.
-7. If the action path or boundary ownership is ambiguous, return `blockingReason` and keep `createdFiles` empty.
+6. Roadmap checklist markers represent spec readiness only. Keep new or unapproved specs as `[ ]`; use `[x]` only when `spec.json.phase == "tasks-generated"`, requirements/design/tasks approvals, `ready_for_implementation == true`, and required artifact existence are confirmed.
+7. Read implementation progress from task checkboxes in `.kiro/specs/<feature>/tasks.md`; do not infer implementation completion from roadmap markers.
+8. For `MIXED_DECOMPOSITION`, keep existing spec updates and direct implementation candidates as `awarenessOnlyItems`.
+9. If the action path or boundary ownership is ambiguous, return `blockingReason` and keep `createdFiles` empty.
 
 ## Brief Artifact Structure
 
