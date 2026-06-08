@@ -1,69 +1,69 @@
-# API Standards
+# API 標準
 
-[Purpose: consistent API patterns for naming, structure, auth, versioning, and errors]
+[目的: 命名・構造・認証・バージョニング・エラーについて一貫した API パターンを定める]
 
-## Philosophy
-- Prefer predictable, resource-oriented design
-- Be explicit in contracts; minimize breaking changes
-- Secure by default (auth first, least privilege)
+## 基本方針
+- 予測可能で、リソース指向の設計を優先する
+- 契約（contract）は明示的にする。破壊的変更を最小化する
+- セキュアバイデフォルト（まず認証、最小権限）
 
-## Endpoint Pattern
+## エンドポイントのパターン
 ```
 /{version}/{resource}[/{id}][/{sub-resource}]
 ```
-Examples:
+例:
 - `/api/v1/users`
 - `/api/v1/users/:id`
 - `/api/v1/users/:id/posts`
 
-HTTP verbs:
-- GET (read, safe, idempotent)
-- POST (create)
-- PUT/PATCH (update)
-- DELETE (remove, idempotent)
+HTTP メソッド:
+- GET（読み取り、安全、冪等）
+- POST（作成）
+- PUT/PATCH（更新）
+- DELETE（削除、冪等）
 
-## Request/Response
+## リクエスト／レスポンス
 
-Request (typical):
+リクエスト（典型例）:
 ```json
 { "data": { ... }, "metadata": { "requestId": "..." } }
 ```
 
-Success:
+成功時:
 ```json
 { "data": { ... }, "meta": { "timestamp": "...", "version": "..." } }
 ```
 
-Error:
+エラー時:
 ```json
 { "error": { "code": "ERROR_CODE", "message": "...", "field": "optional" } }
 ```
-(See error-handling for rules.)
+（ルールは error-handling を参照）
 
-## Status Codes (pattern)
-- 2xx: Success (200 read, 201 create, 204 delete)
-- 4xx: Client issues (400 validation, 401/403 auth, 404 missing)
-- 5xx: Server issues (500 generic, 503 unavailable)
-Choose the status that best reflects the outcome.
+## ステータスコード（パターン）
+- 2xx: 成功（200 読み取り、201 作成、204 削除）
+- 4xx: クライアント側の問題（400 バリデーション、401/403 認証・認可、404 未検出）
+- 5xx: サーバー側の問題（500 汎用、503 利用不可）
+結果を最もよく表すステータスを選ぶこと。
 
-## Authentication
-- Credentials in standard location
+## 認証
+- 認証情報は標準的な場所に置く
 ```
 Authorization: Bearer {token}
 ```
-- Reject unauthenticated before business logic
+- ビジネスロジックの前に、未認証リクエストを拒否する
 
-## Versioning
-- Version via URL/header/media-type
-- Breaking change → new version
-- Non-breaking → same version
-- Provide deprecation window and comms
+## バージョニング
+- URL／ヘッダー／メディアタイプでバージョン管理する
+- 破壊的変更 → 新バージョン
+- 非破壊的変更 → 同一バージョン
+- 廃止（deprecation）の猶予期間と周知を設ける
 
-## Pagination/Filtering (if applicable)
-- Pagination: `page`, `pageSize` or cursor-based
-- Filtering: explicit query params
-- Sorting: `sort=field:asc|desc`
-Return pagination metadata in `meta`.
+## ページネーション／フィルタリング（該当する場合）
+- ページネーション: `page`・`pageSize`、またはカーソルベース
+- フィルタリング: 明示的なクエリパラメータ
+- ソート: `sort=field:asc|desc`
+ページネーションのメタ情報は `meta` に返す。
 
 ---
-_Focus on patterns and decisions, not endpoint catalogs._
+_エンドポイント一覧ではなく、パターンと意思決定に焦点を当てること。_

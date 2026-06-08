@@ -1,67 +1,67 @@
-# Authentication & Authorization Standards
+# 認証・認可の標準
 
-[Purpose: unify auth model, token/session lifecycle, permission checks, and security]
+[目的: 認証モデル、トークン／セッションのライフサイクル、権限チェック、セキュリティを統一する]
 
-## Philosophy
-- Clear separation: authentication (who) vs authorization (what)
-- Secure by default: least privilege, fail closed, short-lived tokens
-- UX-aware: friction where risk is high, smooth otherwise
+## 基本方針
+- 明確な分離: 認証（誰か / who）と認可（何ができるか / what）を分ける
+- セキュアバイデフォルト: 最小権限、フェイルクローズ（既定で拒否）、短命トークン
+- UX への配慮: リスクが高い箇所には摩擦を設け、それ以外はスムーズに
 
-## Authentication
+## 認証（Authentication）
 
-### Method (choose + rationale)
-- Options: JWT, Session, OAuth2, hybrid
-- Choice: [our method] because [reason]
+### 方式（選択 + 根拠）
+- 選択肢: JWT、セッション、OAuth2、ハイブリッド
+- 採用: [採用する方式]、理由は [根拠]
 
-### Flow (high-level)
+### フロー（高レベル）
 ```
-1) User proves identity (credentials or provider)
-2) Server verifies and issues token/session
-3) Client sends token per request
-4) Server verifies token and proceeds
+1) ユーザーが本人性を証明する（認証情報またはプロバイダ経由）
+2) サーバーが検証し、トークン／セッションを発行する
+3) クライアントがリクエストごとにトークンを送信する
+4) サーバーがトークンを検証し、処理を続行する
 ```
 
-### Token/Session Lifecycle
-- Storage: httpOnly cookie or Authorization header
-- Expiration: short-lived access, longer refresh (if used)
-- Refresh: rotate tokens; respect revocation
-- Revocation: blacklist/rotate on logout/compromise
+### トークン／セッションのライフサイクル
+- 保存先: httpOnly クッキー、または Authorization ヘッダー
+- 有効期限: アクセストークンは短命、リフレッシュ（使う場合）は長め
+- リフレッシュ: トークンをローテーションする。失効を尊重する
+- 失効: ログアウト時や漏洩時にブラックリスト化／ローテーションする
 
-### Security Pattern
-- Enforce TLS; never expose tokens to JS when avoidable
-- Bind token to audience/issuer; include minimal claims
-- Consider device binding and IP/risk checks for sensitive actions
+### セキュリティパターン
+- TLS を強制する。可能な限りトークンを JS に露出しない
+- トークンを audience／issuer に紐付ける。クレームは最小限にする
+- 機微な操作にはデバイスバインディングや IP／リスクチェックを検討する
 
-## Authorization
+## 認可（Authorization）
 
-### Permission Model
-- Choose one: RBAC / ABAC / ownership-based / hybrid
-- Define roles/attributes centrally; avoid hardcoding across codebase
+### 権限モデル
+- いずれかを選択: RBAC / ABAC / 所有権ベース / ハイブリッド
+- ロールや属性は一元的に定義する。コードベース全体にハードコードしない
 
-### Checks (where to enforce)
-- Route/middleware: coarse-grained gate
-- Domain/service: fine-grained decisions
-- UI: conditional rendering (no security reliance)
+### チェック（どこで強制するか）
+- ルート／ミドルウェア: 粗粒度のゲート
+- ドメイン／サービス: 細粒度の判定
+- UI: 条件付きレンダリング（セキュリティを UI に依存しない）
 
-Example pattern:
+パターンの例:
 ```typescript
-requirePermission('resource:action'); // route
-if (!user.can('resource:action')) throw ForbiddenError(); // domain
+requirePermission('resource:action'); // ルート
+if (!user.can('resource:action')) throw ForbiddenError(); // ドメイン
 ```
 
-### Ownership
-- Pattern: owner OR privileged role can act
-- Verify on entity boundary before mutation
+### 所有権
+- パターン: 所有者 または 特権ロールが操作できる
+- 変更（mutation）の前に、エンティティ境界で検証する
 
-## Passwords & MFA
-- Passwords: strong policy, hashed (bcrypt/argon2), never plaintext
-- Reset: time-limited token, single-use, notify user
-- MFA: step-up for risky operations (policy-driven)
+## パスワードと MFA
+- パスワード: 強固なポリシー、ハッシュ化（bcrypt／argon2）、平文保存は厳禁
+- リセット: 有効期限付き・単回利用のトークン、ユーザーへ通知する
+- MFA: リスクの高い操作にはステップアップ認証（ポリシー駆動）
 
-## API-to-API Auth
-- Use API keys or OAuth client credentials
-- Scope keys minimally; rotate and audit usage
-- Rate limit by identity (user/key)
+## API 間（API-to-API）認証
+- API キーまたは OAuth クライアントクレデンシャルを使う
+- キーのスコープは最小限にする。ローテーションと利用監査を行う
+- アイデンティティ（ユーザー／キー）単位でレートリミットをかける
 
 ---
-_Focus on patterns and decisions. No library-specific code._
+_パターンと意思決定に焦点を当てること。ライブラリ固有のコードは記載しない。_

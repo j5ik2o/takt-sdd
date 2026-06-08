@@ -4,4 +4,4 @@
 {{PROJECT_DESCRIPTION}}
 
 ## Requirements
-<!-- Will be generated in /kiro-spec-requirements phase -->
+<!-- /kiro-spec-requirements フェーズで生成されます -->

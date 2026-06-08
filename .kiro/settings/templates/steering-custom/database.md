@@ -1,46 +1,46 @@
-# Database Standards
+# データベース標準
 
-[Purpose: guide schema design, queries, migrations, and integrity]
+[目的: スキーマ設計、クエリ、マイグレーション、整合性の指針を示す]
 
-## Philosophy
-- Model the domain first; optimize after correctness
-- Prefer explicit constraints; let database enforce invariants
-- Query only what you need; measure before optimizing
+## 基本方針
+- まずドメインをモデリングする。正しさを確保してから最適化する
+- 明示的な制約を優先する。不変条件はデータベースに強制させる
+- 必要なものだけをクエリする。最適化の前に計測する
 
-## Naming & Types
-- Tables: `snake_case`, plural (`users`, `order_items`)
-- Columns: `snake_case` (`created_at`, `user_id`)
-- FKs: `{table}_id` referencing `{table}.id`
-- Types: timezone-aware timestamps; strong IDs; precise money types
+## 命名と型
+- テーブル: `snake_case`、複数形（`users`、`order_items`）
+- カラム: `snake_case`（`created_at`、`user_id`）
+- 外部キー: `{table}.id` を参照する `{table}_id`
+- 型: タイムゾーン対応のタイムスタンプ、堅牢な ID、正確な金額型
 
-## Relationships
-- 1:N: FK in child
-- N:N: join table with compound key
-- 1:1: FK + UNIQUE
+## リレーション
+- 1:N: 子側に外部キー
+- N:N: 複合キーを持つ中間テーブル
+- 1:1: 外部キー + UNIQUE
 
-## Migrations
-- Immutable migrations; always add rollback
-- Small, focused steps; test on non-prod first
-- Naming: `{seq}_{action}_{object}` (e.g., `002_add_email_index`)
+## マイグレーション
+- マイグレーションは不変（immutable）にする。常にロールバックを用意する
+- 小さく焦点を絞ったステップにする。まず非本番でテストする
+- 命名: `{seq}_{action}_{object}`（例: `002_add_email_index`）
 
-## Query Patterns
-- ORM for simple CRUD and safety; raw SQL for complex/perf-critical
-- Avoid N+1 (eager load/batching); paginate large sets
-- Index FKs and frequently filtered/sorted columns
+## クエリのパターン
+- 単純な CRUD と安全性には ORM、複雑／性能が重要な箇所には生 SQL を使う
+- N+1 を避ける（eager load／バッチ化）。大きな結果セットはページネーションする
+- 外部キーや、頻繁にフィルタ／ソートするカラムにインデックスを張る
 
-## Connection & Transactions
-- Use pooling (size/timeouts based on workload)
-- One connection per unit of work; close/return promptly
-- Wrap multi-step changes in transactions
+## 接続とトランザクション
+- コネクションプールを使う（サイズ／タイムアウトはワークロードに応じて）
+- 作業単位（unit of work）ごとに1接続。速やかにクローズ／返却する
+- 複数ステップの変更はトランザクションで包む
 
-## Data Integrity
-- Use NOT NULL/UNIQUE/CHECK/FK constraints
-- Validate at DB when appropriate (defense in depth)
-- Prefer generated columns for consistent derivations
+## データ整合性
+- NOT NULL／UNIQUE／CHECK／外部キー制約を使う
+- 適切な場合は DB 側で検証する（多層防御）
+- 一貫した導出値には生成カラム（generated column）を優先する
 
-## Backup & Recovery
-- Regular backups with retention; test restores
-- Document RPO/RTO targets; monitor backup jobs
+## バックアップとリカバリ
+- 保持期間付きの定期バックアップ、リストアのテスト
+- RPO／RTO の目標を文書化する。バックアップジョブを監視する
 
 ---
-_Focus on patterns and decisions. No environment-specific settings._
+_パターンと意思決定に焦点を当てること。環境固有の設定は記載しない。_

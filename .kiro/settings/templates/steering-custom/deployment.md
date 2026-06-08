@@ -1,54 +1,54 @@
-# Deployment Standards
+# デプロイ標準
 
-[Purpose: safe, repeatable releases with clear environment and pipeline patterns]
+[目的: 環境とパイプラインのパターンを明確にし、安全で再現可能なリリースを実現する]
 
-## Philosophy
-- Automate; test before deploy; verify after deploy
-- Prefer incremental rollout with fast rollback
-- Production changes must be observable and reversible
+## 基本方針
+- 自動化する。デプロイ前にテストし、デプロイ後に検証する
+- 高速なロールバックを伴う段階的ロールアウトを優先する
+- 本番の変更は、可観測（observable）かつ可逆（reversible）でなければならない
 
-## Environments
-- Dev: fast iteration; debugging enabled
-- Staging: mirrors prod; release validation
-- Prod: hardened; monitored; least privilege
+## 環境
+- Dev: 高速なイテレーション、デバッグ有効
+- Staging: 本番をミラーリング、リリース検証
+- Prod: 堅牢化、監視あり、最小権限
 
-## CI/CD Flow
+## CI/CD フロー
 ```
-Code → Test → Build → Scan → Deploy (staged) → Verify
+コード → テスト → ビルド → スキャン → デプロイ（段階的）→ 検証
 ```
-Principles:
-- Fail fast on tests/scans; block deploy
-- Artifact builds are reproducible (lockfiles, pinned versions)
-- Manual approval for prod; auditable trail
+原則:
+- テスト／スキャンは早期に失敗させ、デプロイをブロックする
+- 成果物のビルドは再現可能にする（ロックファイル、バージョン固定）
+- 本番は手動承認を要し、監査可能な記録を残す
 
-## Deployment Strategies
-- Rolling: gradual instance replacement
-- Blue-Green: switch traffic between two pools
-- Canary: small % users first, expand on health
-Choose per risk profile; document default.
+## デプロイ戦略
+- ローリング: インスタンスを段階的に置き換える
+- ブルーグリーン: 2つのプール間でトラフィックを切り替える
+- カナリア: まず少数の % のユーザーに展開し、健全性を見て拡大する
+リスクプロファイルに応じて選択し、既定を文書化する。
 
-## Zero-Downtime & Migrations
-- Health checks gate traffic; graceful shutdown
-- Backwards-compatible DB changes during rollout
-- Separate migration step; test rollback paths
+## ゼロダウンタイムとマイグレーション
+- ヘルスチェックでトラフィックを制御する。グレースフルシャットダウンを行う
+- ロールアウト中は後方互換な DB 変更にする
+- マイグレーションは別ステップに分け、ロールバック経路をテストする
 
-## Rollback
-- Keep previous version ready; automate revert
-- Rollback faster than fix-forward; document triggers
+## ロールバック
+- 直前バージョンを待機させておき、切り戻しを自動化する
+- 修正して前進（fix-forward）するより速くロールバックする。トリガーを文書化する
 
-## Configuration & Secrets
-- 12-factor config via env; never commit secrets
-- Secret manager; rotate; least privilege; audit access
-- Validate required env vars at startup
+## 設定とシークレット
+- 12-factor に従い env で設定する。シークレットは絶対にコミットしない
+- シークレットマネージャを使う。ローテーション、最小権限、アクセス監査を行う
+- 起動時に必須の環境変数を検証する
 
-## Health & Monitoring
-- Endpoints: `/health`, `/health/live`, `/health/ready`
-- Monitor latency, error rate, throughput, saturation
-- Alerts on SLO breaches/spikes; tune to avoid fatigue
+## ヘルスと監視
+- エンドポイント: `/health`、`/health/live`、`/health/ready`
+- レイテンシ、エラー率、スループット、飽和度を監視する
+- SLO 違反やスパイクでアラートする。疲労を避けるよう調整する
 
-## Incident Response & DR
-- Standard playbook: detect → assess → mitigate → communicate → resolve → post-mortem
-- Backups with retention; test restore; defined RPO/RTO
+## インシデント対応と DR
+- 標準プレイブック: 検知 → 評価 → 緩和 → 周知 → 解決 → ポストモーテム
+- 保持期間付きのバックアップ、リストアのテスト、RPO／RTO の定義
 
 ---
-_Focus on rollout patterns and safeguards. No provider-specific steps._
+_ロールアウトのパターンとセーフガードに焦点を当てること。プロバイダ固有の手順は記載しない。_

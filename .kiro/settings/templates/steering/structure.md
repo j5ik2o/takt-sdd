@@ -1,41 +1,41 @@
-# Project Structure
+# プロジェクト構成
 
-## Organization Philosophy
+## 構成の方針
 
-[Describe approach: feature-first, layered, domain-driven, etc.]
+[アプローチを記述する: 機能優先（feature-first）、レイヤー型、ドメイン駆動 など]
 
-## Directory Patterns
+## ディレクトリのパターン
 
-### [Pattern Name]
-**Location**: `/path/`
-**Purpose**: [What belongs here]
-**Example**: [Brief example]
+### [パターン名]
+**配置場所**: `/path/`
+**目的**: [ここに何を置くか]
+**例**: [簡単な例]
 
-### [Pattern Name]
-**Location**: `/path/`
-**Purpose**: [What belongs here]
-**Example**: [Brief example]
+### [パターン名]
+**配置場所**: `/path/`
+**目的**: [ここに何を置くか]
+**例**: [簡単な例]
 
-## Naming Conventions
+## 命名規約
 
-- **Files**: [Pattern, e.g., PascalCase, kebab-case]
-- **Components**: [Pattern]
-- **Functions**: [Pattern]
+- **ファイル**: [パターン。例: PascalCase、kebab-case]
+- **コンポーネント**: [パターン]
+- **関数**: [パターン]
 
-## Import Organization
+## import の構成
 
 ```typescript
-// Example import patterns
-import { Something } from '@/path'  // Absolute
-import { Local } from './local'     // Relative
+// import パターンの例
+import { Something } from '@/path'  // 絶対パス
+import { Local } from './local'     // 相対パス
 ```
 
-**Path Aliases**:
-- `@/`: [Maps to]
+**パスエイリアス**:
+- `@/`: [対応先]
 
-## Code Organization Principles
+## コード構成の原則
 
-[Key architectural patterns and dependency rules]
+[主要なアーキテクチャパターンと依存関係のルール]
 
 ---
-_Document patterns, not file trees. New files following patterns shouldn't require updates_
+_ファイルツリーではなくパターンを記録すること。パターンに従った新規ファイルの追加で更新が必要になるべきではない_
