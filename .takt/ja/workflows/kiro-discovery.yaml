@@ -51,6 +51,8 @@ steps:
         next: write-discovery-artifacts
       - condition: plannedFiles include brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems separated and actionPath MIXED_DECOMPOSITION
         next: write-discovery-artifacts
+      - condition: required plannedFiles missing for actionPath SINGLE_SPEC or actionPath MULTI_SPEC or actionPath MIXED_DECOMPOSITION
+        next: report-discovery
       - condition: blockingReason present or brief.md roadmap contradiction found
         next: report-discovery
 
@@ -69,6 +71,8 @@ steps:
         next: report-discovery
       - condition: createdFiles include brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems present and actionPath MIXED_DECOMPOSITION
         next: report-discovery
+      - condition: required createdFiles missing for actionPath SINGLE_SPEC or actionPath MULTI_SPEC or actionPath MIXED_DECOMPOSITION
+        next: report-discovery
       - condition: artifact write failed or blockingReason present
         next: report-discovery
 
@@ -85,7 +89,7 @@ steps:
         - name: kiro-discovery-result.md
           format: kiro-discovery-result
     rules:
-      - condition: blockingReason present or artifact write failed or brief.md roadmap contradiction found
+      - condition: blockingReason present or artifact write failed or brief.md roadmap contradiction found or required discovery artifacts missing
         next: ABORT
       - condition: actionPath EXISTING_SPEC_UPDATE or actionPath DIRECT_IMPLEMENTATION
         next: COMPLETE

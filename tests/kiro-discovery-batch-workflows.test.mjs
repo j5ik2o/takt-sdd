@@ -232,6 +232,22 @@ test("kiro-discovery workflow uses multi-step routing and skill adapter metadata
       workflow.includes("blockingReason present or artifact write failed or brief.md roadmap contradiction found"),
       `${workflowPath} should abort discovery reports on artifact failures and roadmap contradictions`,
     );
+    assert.ok(
+      workflow.includes(
+        "required plannedFiles missing for actionPath SINGLE_SPEC or actionPath MULTI_SPEC or actionPath MIXED_DECOMPOSITION",
+      ),
+      `${workflowPath} should route incomplete discovery plans to reporting`,
+    );
+    assert.ok(
+      workflow.includes(
+        "required createdFiles missing for actionPath SINGLE_SPEC or actionPath MULTI_SPEC or actionPath MIXED_DECOMPOSITION",
+      ),
+      `${workflowPath} should route incomplete discovery writes to reporting`,
+    );
+    assert.ok(
+      workflow.includes("required discovery artifacts missing"),
+      `${workflowPath} should abort reports when required discovery artifacts are missing`,
+    );
 
     const instructionPath = `.takt/${lang}/facets/instructions/kiro-discovery.md`;
     assert.equal(existsSync(join(repoRoot, instructionPath)), true, `${instructionPath} should exist`);

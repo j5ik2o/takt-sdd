@@ -24,7 +24,14 @@ const workflowSpecs = [
     instructions: ["kiro-discovery"],
     policies: ["kiro-discovery-routing"],
     reports: ["kiro-discovery-result"],
-    requiredTerms: ["brief.md", ".kiro/steering/roadmap.md", ...actionPathEnums],
+    requiredTerms: [
+      "brief.md",
+      ".kiro/steering/roadmap.md",
+      "required plannedFiles missing",
+      "required createdFiles missing",
+      "required discovery artifacts missing",
+      ...actionPathEnums,
+    ],
   },
   {
     file: "kiro-spec-batch.yaml",
