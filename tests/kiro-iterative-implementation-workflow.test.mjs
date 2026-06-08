@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { validateKiroIterativeImplementationWorkflow } from "../scripts/validate-kiro-iterative-implementation-workflow.mjs";
@@ -155,6 +155,79 @@ test("validator rejects completion-before-checkbox gate drift", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("verify-task-completion")));
+});
+
+test("validator rejects direct review routing that bypasses AI quality gate", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    "STATUS READY_FOR_REVIEW\n        next: ai-quality-gate",
+    "STATUS READY_FOR_REVIEW\n        next: review-task",
+  );
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("ai-quality-gate")));
+});
+
+test("validator rejects missing AI quality gate workflow", () => {
+  const root = makeCurrentSurfaceFixture();
+  rmSync(join(root, ".takt", "ja", "workflows", "kiro-ai-quality-gate.yaml"));
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("GATE_WORKFLOW_MISSING")));
+});
+
+test("validator rejects unapproved nested Kiro workflow call", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace("call: kiro-ai-quality-gate", "call: kiro-spec-design");
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("workflow_call")));
+});
+
+test("validator rejects AI quality gate loop threshold drift", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-ai-quality-gate.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace("threshold: 3", "threshold: 1");
+  writeFixtureFile(root, ".takt/ja/workflows/kiro-ai-quality-gate.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("threshold: 3")));
+});
+
+test("validator rejects missing AI gate evidence hooks in review adapter", () => {
+  const root = makeCurrentSurfaceFixture();
+  const reviewPath = join(root, ".takt", "en", "facets", "instructions", "kiro-review-task.md");
+  const review = readFileSync(reviewPath, "utf8").replaceAll("kiro-ai-antipattern-review.md", "missing-ai-review.md");
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-review-task.md", review);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("kiro-review-task.md")));
+});
+
+test("validator rejects progress adapter reading AI gate reports directly", () => {
+  const root = makeCurrentSurfaceFixture();
+  const progressPath = join(root, ".takt", "en", "facets", "instructions", "kiro-impl-update-progress.md");
+  const progress = `${readFileSync(progressPath, "utf8")}\nRead kiro-ai-antipattern-review.md before updating progress.\n`;
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-impl-update-progress.md", progress);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("update-progress must not read")));
 });
 
 test("validator rejects debug retry routing without retry eligibility", () => {

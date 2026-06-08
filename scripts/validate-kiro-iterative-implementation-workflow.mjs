@@ -91,6 +91,27 @@ const instructionSpecs = [
   },
 ];
 
+const gateInstructionSpecs = [
+  {
+    name: "kiro-ai-antipattern-fix-implementation",
+    terms: [
+      "kiro-task-implementation-result.md",
+      "kiro-ai-antipattern-review.md",
+      "kiro-ai-antipattern-fix.md",
+      "selected task",
+      "tasks.md",
+      "Implementation Notes",
+      "FIXED",
+      "NO_FIX_NEEDED",
+      "NEED_REPLAN",
+      "BLOCKED",
+      "finding-level evidence",
+      "WebSearch",
+      "WebFetch",
+    ],
+  },
+];
+
 const outputContractSpecs = [
   {
     name: "kiro-implementation-result",
@@ -110,6 +131,27 @@ const outputContractSpecs = [
       "missing_context",
       "RED_PHASE_OUTPUT",
       "summary",
+    ],
+  },
+];
+
+const gateOutputContractSpecs = [
+  {
+    name: "kiro-ai-antipattern-fix-result",
+    parent: "validation",
+    terms: [
+      "STATUS",
+      "FIXED",
+      "NO_FIX_NEEDED",
+      "NEED_REPLAN",
+      "BLOCKED",
+      "finding_decisions",
+      "changed_files",
+      "scope_guard",
+      "validation_evidence",
+      "no_fix_rationale",
+      "missing_context",
+      "kiro-ai-antipattern-fix.md",
     ],
   },
 ];
@@ -137,6 +179,7 @@ const workflowReportFormats = [
   "kiro-review-verdict",
   "kiro-debug-decision",
   "kiro-completion-verification",
+  "kiro-ai-antipattern-fix-result",
   "kiro-validation-result",
 ];
 const workflowPolicyNames = [
@@ -148,6 +191,7 @@ const workflowPolicyNames = [
 const expectedSteps = [
   "plan-one-task",
   "execute-task",
+  "ai-quality-gate",
   "review-task",
   "debug-task",
   "verify-task-completion",
@@ -379,14 +423,35 @@ function validateWorkflowFiles(repoRoot) {
       failures.push(`GATE_ORDER_DRIFT: ${rel(repoRoot, workflowPath)} plan-one-task must stop readiness-level blockers without writing tasks.md`);
     }
     const executeBlock = blocks.get("execute-task") ?? [];
-    if (!hasRuleWithTerms(executeBlock, ["STATUS READY_FOR_REVIEW", "next: review-task"])) {
-      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} execute-task must branch READY_FOR_REVIEW to review-task`);
+    if (!hasRuleWithTerms(executeBlock, ["STATUS READY_FOR_REVIEW", "next: ai-quality-gate"])) {
+      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} execute-task must branch READY_FOR_REVIEW to ai-quality-gate`);
     }
     if (!hasRuleWithTerms(executeBlock, ["STATUS BLOCKED", "next: debug-task"])) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} execute-task must branch BLOCKED to debug-task`);
     }
     if (!hasRuleWithTerms(executeBlock, ["STATUS NEEDS_CONTEXT", "next: debug-task"])) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} execute-task must branch NEEDS_CONTEXT to debug-task`);
+    }
+    const gateBlock = blocks.get("ai-quality-gate") ?? [];
+    if (stepScalar(gateBlock, "kind") !== "workflow_call" || stepScalar(gateBlock, "call") !== "kiro-ai-quality-gate") {
+      failures.push(`AI_QUALITY_GATE_DRIFT: ${rel(repoRoot, workflowPath)} ai-quality-gate must call kiro-ai-quality-gate via workflow_call`);
+    }
+    containsAll(
+      gateBlock.join("\n"),
+      ["fix_instruction: kiro-ai-antipattern-fix-implementation", "domain_knowledge:", "backend", "architecture"],
+      workflowPath,
+      failures,
+      repoRoot,
+      "AI_QUALITY_GATE_DRIFT",
+    );
+    if (!hasRuleWithTerms(gateBlock, ["COMPLETE", "next: review-task"])) {
+      failures.push(`AI_QUALITY_GATE_DRIFT: ${rel(repoRoot, workflowPath)} ai-quality-gate must route COMPLETE to review-task`);
+    }
+    if (!hasRuleWithTerms(gateBlock, ["need_replan", "next: debug-task"])) {
+      failures.push(`AI_QUALITY_GATE_DRIFT: ${rel(repoRoot, workflowPath)} ai-quality-gate must route need_replan to debug-task`);
+    }
+    if (!hasRuleWithTerms(gateBlock, ["ABORT", "next: ABORT"])) {
+      failures.push(`AI_QUALITY_GATE_DRIFT: ${rel(repoRoot, workflowPath)} ai-quality-gate must route ABORT to ABORT`);
     }
     const reviewBlock = blocks.get("review-task") ?? [];
     if (!hasRuleWithTerms(reviewBlock, ["VERDICT APPROVED", "next: verify-task-completion"])) {
@@ -428,8 +493,14 @@ function validateWorkflowFiles(repoRoot) {
     if (!canonicalBlock(content, "loop_monitors").join("\n").includes("debug-task")) {
       failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, workflowPath)} loop_monitors must cover debug-task`);
     }
-    if (/\bworkflow_call\b|\btakt\b[^\n]*(?:-w\s+|--workflow(?:\s+|=))kiro-/.test(content)) {
-      failures.push(`BOUNDARY_DRIFT: ${rel(repoRoot, workflowPath)} must not call nested Kiro workflows`);
+    const workflowCallBlocks = stepBlocks(content).filter((block) => block.join("\n").includes("kind: workflow_call"));
+    for (const block of workflowCallBlocks) {
+      if (stepScalar(block, "name") !== "ai-quality-gate" || stepScalar(block, "call") !== "kiro-ai-quality-gate") {
+        failures.push(`BOUNDARY_DRIFT: ${rel(repoRoot, workflowPath)} only ai-quality-gate may use workflow_call`);
+      }
+    }
+    if (/\btakt\b[^\n]*(?:-w\s+|--workflow(?:\s+|=))kiro-/.test(content)) {
+      failures.push(`BOUNDARY_DRIFT: ${rel(repoRoot, workflowPath)} must not shell out to nested Kiro workflows`);
     }
     for (const term of forbiddenBoundaryTerms) {
       if (content.includes(term)) {
@@ -443,12 +514,104 @@ function validateWorkflowFiles(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
+function validateGateWorkflowFiles(repoRoot) {
+  const failures = [];
+  for (const lang of languages) {
+    const workflowPath = join(repoRoot, ".takt", lang, "workflows", "kiro-ai-quality-gate.yaml");
+    if (!existsSync(workflowPath)) {
+      failures.push(`GATE_WORKFLOW_MISSING: ${rel(repoRoot, workflowPath)} missing`);
+      continue;
+    }
+    const content = readText(workflowPath);
+    containsAll(
+      content,
+      [
+        "name: kiro-ai-quality-gate",
+        "callable: true",
+        "visibility: internal",
+        "returns:",
+        "need_replan",
+        "fix_instruction:",
+        "type: facet_ref",
+        "facet_kind: instruction",
+        "domain_knowledge:",
+        "type: facet_ref[]",
+        "facet_kind: knowledge",
+        "initial_step: ai-antipattern-review-1st",
+        "loop-monitor-ai-antipattern-fix",
+        "threshold: 3",
+        "kiro-ai-antipattern-review.md",
+        "kiro-ai-antipattern-fix.md",
+        "kiro-ai-antipattern-fix-result",
+      ],
+      workflowPath,
+      failures,
+      repoRoot,
+      "GATE_WORKFLOW_DRIFT",
+    );
+    const stepNames = stepBlocks(content).map((block) => stepScalar(block, "name"));
+    const expectedGateSteps = ["ai-antipattern-review-1st", "ai-antipattern-fix"];
+    if (JSON.stringify(stepNames) !== JSON.stringify(expectedGateSteps)) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} step order must be ${expectedGateSteps.join(" -> ")}`);
+    }
+    const blocks = new Map(stepBlocks(content).map((block) => [stepScalar(block, "name"), block]));
+    const reviewBlock = blocks.get("ai-antipattern-review-1st") ?? [];
+    containsAll(
+      reviewBlock.join("\n"),
+      ["persona: ai-antipattern-reviewer", "ai-antipattern", "$param: domain_knowledge", "instruction: ai-antipattern-review"],
+      workflowPath,
+      failures,
+      repoRoot,
+      "GATE_WORKFLOW_DRIFT",
+    );
+    if (reviewBlock.join("\n").includes("WebSearch") || reviewBlock.join("\n").includes("WebFetch")) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern review step must not use web tools`);
+    }
+    if (!hasRuleWithTerms(reviewBlock, ["VERDICT APPROVED", "next: COMPLETE"])) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern review must complete on APPROVED`);
+    }
+    if (!hasRuleWithTerms(reviewBlock, ["VERDICT REJECTED", "next: ai-antipattern-fix"])) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern review must route REJECTED to fix`);
+    }
+    const fixBlock = blocks.get("ai-antipattern-fix") ?? [];
+    containsAll(
+      fixBlock.join("\n"),
+      ["persona: coder", "ai-antipattern", "$param: domain_knowledge", "$param: fix_instruction", "format: kiro-ai-antipattern-fix-result"],
+      workflowPath,
+      failures,
+      repoRoot,
+      "GATE_WORKFLOW_DRIFT",
+    );
+    if (fixBlock.join("\n").includes("WebSearch") || fixBlock.join("\n").includes("WebFetch")) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern fix step must not use web tools`);
+    }
+    if (!hasRuleWithTerms(fixBlock, ["STATUS FIXED", "next: ai-antipattern-review-1st"])) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} fix must re-review after FIXED`);
+    }
+    if (!hasRuleWithTerms(fixBlock, ["STATUS NO_FIX_NEEDED", "finding-level evidence", "next: COMPLETE"])) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} NO_FIX_NEEDED must require finding-level evidence`);
+    }
+    if (!hasRuleWithTerms(fixBlock, ["STATUS NEED_REPLAN", "return: need_replan"])) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} NEED_REPLAN must return need_replan`);
+    }
+    if (!hasRuleWithTerms(fixBlock, ["STATUS BLOCKED", "next: ABORT"])) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} BLOCKED must abort`);
+    }
+    if (customLoopSourcePattern.test(content)) {
+      failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, workflowPath)} must rely on TAKT loop_monitors, not custom retry state`);
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
 function validateFacetFiles(repoRoot) {
   const failures = [];
   for (const lang of languages) {
     const specs = [
       ...instructionSpecs.map((spec) => ({ ...spec, kind: "instructions" })),
+      ...gateInstructionSpecs.map((spec) => ({ ...spec, kind: "instructions" })),
       ...outputContractSpecs.map((spec) => ({ ...spec, kind: "output-contracts" })),
+      ...gateOutputContractSpecs.map((spec) => ({ ...spec, kind: "output-contracts" })),
       ...policySpecs.map((spec) => ({ ...spec, kind: "policies" })),
     ];
     for (const spec of specs) {
@@ -459,18 +622,47 @@ function validateFacetFiles(repoRoot) {
       }
       const content = readText(path);
       containsAll(content, spec.terms, path, failures, repoRoot, "FACET_DRIFT");
-      const parent = extendsParent(content);
-      if (parent !== spec.parent) {
-        failures.push(`BUILTIN_FACET_INHERITANCE_DRIFT: ${rel(repoRoot, path)} must use {extends: ${spec.parent}}`);
+      if (spec.name === "kiro-review-task") {
+        containsAll(
+          content,
+          ["kiro-ai-antipattern-review.md", "kiro-ai-antipattern-fix.md", "NO_FIX_NEEDED", "NEED_REPLAN", "BLOCKED"],
+          path,
+          failures,
+          repoRoot,
+          "AI_QUALITY_GATE_DRIFT",
+        );
       }
-      const parentPath = join(repoRoot, "node_modules", "takt", "builtins", lang, "facets", spec.kind, `${spec.parent}.md`);
-      if (!existsSync(parentPath)) {
-        failures.push(`BUILTIN_FACET_NOT_FOUND: ${rel(repoRoot, path)} extends missing built-in facet ${rel(repoRoot, parentPath)}`);
+      if (spec.name === "kiro-verify-task-completion") {
+        containsAll(
+          content,
+          ["kiro-ai-antipattern-review.md", "kiro-ai-antipattern-fix.md", "AI antipattern gate"],
+          path,
+          failures,
+          repoRoot,
+          "AI_QUALITY_GATE_DRIFT",
+        );
+      }
+      if (spec.name === "kiro-impl-update-progress") {
+        for (const forbiddenReport of ["kiro-ai-antipattern-review.md", "kiro-ai-antipattern-fix.md"]) {
+          if (content.includes(forbiddenReport)) {
+            failures.push(`AI_QUALITY_GATE_DRIFT: ${rel(repoRoot, path)} update-progress must not read ${forbiddenReport} directly`);
+          }
+        }
+      }
+      const parent = extendsParent(content);
+      if (spec.parent) {
+        if (parent !== spec.parent) {
+          failures.push(`BUILTIN_FACET_INHERITANCE_DRIFT: ${rel(repoRoot, path)} must use {extends: ${spec.parent}}`);
+        }
+        const parentPath = join(repoRoot, "node_modules", "takt", "builtins", lang, "facets", spec.kind, `${spec.parent}.md`);
+        if (!existsSync(parentPath)) {
+          failures.push(`BUILTIN_FACET_NOT_FOUND: ${rel(repoRoot, path)} extends missing built-in facet ${rel(repoRoot, parentPath)}`);
+        }
       }
       if (customLoopSourcePattern.test(content)) {
         failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, path)} must not define custom retry or loop-health source of truth`);
       }
-      if (spec.kind === "instructions") {
+      if (spec.kind === "instructions" && spec.skill) {
         const frontmatter = parseFrontmatter(content);
         if (frontmatter.extends_skill !== spec.skill) {
           failures.push(`KIRO_SKILL_INHERITANCE_DRIFT: ${rel(repoRoot, path)} must extend skill ${spec.skill}`);
@@ -513,8 +705,11 @@ function validateLanguageParity(repoRoot) {
   const failures = [];
   const relativeFiles = [
     "workflows/kiro-impl.yaml",
+    "workflows/kiro-ai-quality-gate.yaml",
     ...instructionSpecs.map((spec) => `facets/instructions/${spec.name}.md`),
+    ...gateInstructionSpecs.map((spec) => `facets/instructions/${spec.name}.md`),
     ...outputContractSpecs.map((spec) => `facets/output-contracts/${spec.name}.md`),
+    ...gateOutputContractSpecs.map((spec) => `facets/output-contracts/${spec.name}.md`),
     ...policySpecs.map((spec) => `facets/policies/${spec.name}.md`),
   ];
   for (const file of relativeFiles) {
@@ -540,7 +735,26 @@ function validateLanguageParity(repoRoot) {
       }
     }
     const enMachineTerms = workflowReportFormats
-      .concat(["STATUS", "VERDICT", "NEXT_ACTION", "DECISION", "READY_FOR_REVIEW", "BLOCKED", "NEEDS_CONTEXT", "APPROVED", "REJECTED", "RETRY_TASK", "STOP_FOR_HUMAN", "VERIFIED"])
+      .concat([
+        "STATUS",
+        "VERDICT",
+        "NEXT_ACTION",
+        "DECISION",
+        "READY_FOR_REVIEW",
+        "BLOCKED",
+        "NEEDS_CONTEXT",
+        "APPROVED",
+        "REJECTED",
+        "RETRY_TASK",
+        "STOP_FOR_HUMAN",
+        "VERIFIED",
+        "FIXED",
+        "NO_FIX_NEEDED",
+        "NEED_REPLAN",
+        "need_replan",
+        "kiro-ai-antipattern-review.md",
+        "kiro-ai-antipattern-fix.md",
+      ])
       .filter((term) => readText(enPath).includes(term));
     for (const term of enMachineTerms) {
       if (!readText(jaPath).includes(term)) {
@@ -601,6 +815,12 @@ function validateTaskFixtureCoverage(repoRoot) {
     content,
     [
       "validator rejects completion-before-checkbox gate drift",
+      "validator rejects direct review routing that bypasses AI quality gate",
+      "validator rejects missing AI quality gate workflow",
+      "validator rejects unapproved nested Kiro workflow call",
+      "validator rejects AI quality gate loop threshold drift",
+      "validator rejects missing AI gate evidence hooks in review adapter",
+      "validator rejects progress adapter reading AI gate reports directly",
       "validator rejects plan blockers that bypass progress blocker notes",
       "validator rejects progress updates that omit routing status outputs",
       "validator rejects progress policy drift that loses selected task guard",
@@ -617,6 +837,7 @@ export function validateKiroIterativeImplementationWorkflow(options = {}) {
   const repoRoot = options.repoRoot ?? defaultRepoRoot;
   const sections = {
     workflowFiles: validateWorkflowFiles(repoRoot),
+    gateWorkflowFiles: validateGateWorkflowFiles(repoRoot),
     facetFiles: validateFacetFiles(repoRoot),
     standaloneAdapterWorkflows: validateNoStandaloneAdapterWorkflows(repoRoot),
     languageParity: validateLanguageParity(repoRoot),

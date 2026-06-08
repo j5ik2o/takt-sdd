@@ -535,7 +535,12 @@ function validateKiroWorkflowShapeRules() {
       const content = readText(workflow);
       const workflowName = basename(workflow);
       const stepCount = (content.match(/^  - name:/gm) ?? []).length;
-      if (/\bworkflow_call\b/.test(content)) {
+      const allowedAiQualityGateCall =
+        workflowName === "kiro-impl.yaml" &&
+        content.includes("name: ai-quality-gate") &&
+        content.includes("kind: workflow_call") &&
+        content.includes("call: kiro-ai-quality-gate");
+      if (/\bworkflow_call\b/.test(content) && !allowedAiQualityGateCall) {
         failures.push(`${rel(workflow)} must not use workflow_call for Kiro workflow reuse`);
       }
       if (/\btakt\s+-w\b|\btakt\s+.*\s-w\b/.test(content)) {

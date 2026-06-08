@@ -11,6 +11,8 @@ extends_skill_section: "## Outputs"
 
 Review only the selected task implementation against requirements, design boundary, task `_Boundary:_`, validation evidence, and the actual diff.
 
+Read `kiro-ai-antipattern-review.md` and `kiro-ai-antipattern-fix.md` before forming the verdict. Treat unresolved AI antipattern findings, missing finding-level `NO_FIX_NEEDED` evidence, or a `NEED_REPLAN` / `BLOCKED` fix result as review findings tied to the selected task.
+
 ## Output mapping
 
 Return the `## Review Verdict` shape from `kiro-review`.

@@ -29,6 +29,7 @@ report_formats:
   kiro-review-verdict: ../facets/output-contracts/kiro-review-verdict.md
   kiro-debug-decision: ../facets/output-contracts/kiro-debug-decision.md
   kiro-completion-verification: ../facets/output-contracts/kiro-completion-verification.md
+  kiro-ai-antipattern-fix-result: ../facets/output-contracts/kiro-ai-antipattern-fix-result.md
   kiro-validation-result: ../facets/output-contracts/kiro-validation-result.md
 
 loop_monitors:
@@ -122,11 +123,27 @@ steps:
           format: kiro-implementation-result
     rules:
       - condition: STATUS READY_FOR_REVIEW
-        next: review-task
+        next: ai-quality-gate
       - condition: STATUS BLOCKED
         next: debug-task
       - condition: STATUS NEEDS_CONTEXT
         next: debug-task
+
+  - name: ai-quality-gate
+    kind: workflow_call
+    call: kiro-ai-quality-gate
+    args:
+      fix_instruction: kiro-ai-antipattern-fix-implementation
+      domain_knowledge:
+        - backend
+        - architecture
+    rules:
+      - condition: COMPLETE
+        next: review-task
+      - condition: need_replan
+        next: debug-task
+      - condition: ABORT
+        next: ABORT
 
   - name: review-task
     edit: false
