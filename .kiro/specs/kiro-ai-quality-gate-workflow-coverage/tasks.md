@@ -70,7 +70,7 @@
   - _Depends:_ 1.1, 3.1, 3.2
 
 - [ ] 4. Validator と unit tests で drift を検出する
-- [ ] 4.1 coverage validator を追加して未分類・eligible bypass・不正 gate を検出する
+- [x] 4.1 coverage validator を追加して未分類・eligible bypass・不正 gate を検出する
   - 全 Kiro workflow の分類過不足、eligible generation workflow の gate bypass、判定不能 workflow が actionable finding として fail する。
   - read-only workflow に gate/fix behavior が入った場合、対象 workflow と violation reason が表示される。
   - en/ja の workflow structure、call paths、report names、machine routing terms の drift が covered 扱い前に fail する。

@@ -1,11 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import {
   getKiroWorkflowCoverageEntries,
   kiroWorkflowCoverageCategories,
 } from "../scripts/kiro-ai-quality-gate-contracts.mjs";
+import { validateKiroAiQualityGateWorkflowCoverage } from "../scripts/validate-kiro-ai-quality-gate-workflow-coverage.mjs";
 
 const repoRoot = join(import.meta.dirname, "..");
 const languages = ["en", "ja"];
@@ -15,6 +17,22 @@ function listKiroWorkflowNames(language) {
     .filter((file) => file.startsWith("kiro-") && file.endsWith(".yaml"))
     .map((file) => file.replace(/\.yaml$/, ""))
     .sort();
+}
+
+function makeCoverageFixture() {
+  const root = mkdtempSync(join(tmpdir(), "kiro-ai-quality-gate-coverage-"));
+  cpSync(join(repoRoot, ".takt"), join(root, ".takt"), { recursive: true });
+  return root;
+}
+
+function writeFixtureFile(root, path, content) {
+  const fullPath = join(root, path);
+  mkdirSync(dirname(fullPath), { recursive: true });
+  writeFileSync(fullPath, content);
+}
+
+function readFixtureFile(root, path) {
+  return readFileSync(join(root, path), "utf8");
 }
 
 test("kiro AI quality gate coverage inventory classifies every Kiro workflow exactly once", () => {
@@ -286,4 +304,104 @@ test("quick spec workflow routes each phase draft through spec AI quality gate b
       assert.equal(content.includes(forbiddenCall), false, `${path} must not reuse standalone phase workflows`);
     }
   }
+});
+
+test("coverage validator accepts current Kiro AI quality gate coverage surface", () => {
+  const result = validateKiroAiQualityGateWorkflowCoverage();
+
+  assert.equal(result.ok, true, result.failures.join("\n"));
+});
+
+test("coverage validator reports unclassified Kiro workflows as maintainer decisions", () => {
+  const root = makeCoverageFixture();
+  writeFixtureFile(
+    root,
+    ".takt/en/workflows/kiro-new-orchestration.yaml",
+    "name: kiro-new-orchestration\nsteps:\n  - name: inspect\n    edit: false\n",
+  );
+  writeFixtureFile(
+    root,
+    ".takt/ja/workflows/kiro-new-orchestration.yaml",
+    "name: kiro-new-orchestration\nsteps:\n  - name: inspect\n    edit: false\n",
+  );
+
+  const result = validateKiroAiQualityGateWorkflowCoverage({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.failures.some((failure) => failure.includes("MAINTAINER_DECISION_REQUIRED") && failure.includes("kiro-new-orchestration")),
+    result.failures.join("\n"),
+  );
+});
+
+test("coverage validator rejects decision-required coverage entries as not yet covered", () => {
+  const coverageEntries = getKiroWorkflowCoverageEntries().map((entry) =>
+    entry.workflowName === "kiro-discovery"
+      ? { ...entry, category: "maintainer_decision_required", adjacentOwner: undefined }
+      : entry,
+  );
+
+  const result = validateKiroAiQualityGateWorkflowCoverage({ coverageEntries });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.failures.some((failure) => failure.includes("MAINTAINER_DECISION_REQUIRED") && failure.includes("kiro-discovery")),
+    result.failures.join("\n"),
+  );
+});
+
+test("coverage validator detects eligible generation workflows that bypass the spec AI quality gate", () => {
+  const root = makeCoverageFixture();
+  const path = ".takt/en/workflows/kiro-spec-requirements.yaml";
+  writeFixtureFile(root, path, readFixtureFile(root, path).replaceAll("ai-quality-gate-requirements", "review-requirements"));
+
+  const result = validateKiroAiQualityGateWorkflowCoverage({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.failures.some((failure) => failure.includes("ELIGIBLE_GATE_BYPASS") && failure.includes("kiro-spec-requirements")),
+    result.failures.join("\n"),
+  );
+});
+
+test("coverage validator detects read-only workflows that gain AI fix loop behavior", () => {
+  const root = makeCoverageFixture();
+  const path = ".takt/en/workflows/kiro-validate-design.yaml";
+  writeFixtureFile(
+    root,
+    path,
+    readFixtureFile(root, path).replace(
+      "\nsteps:\n",
+      "\nloop_monitors:\n  - cycle:\n      - ai-quality-gate-design\n      - validate-design\n    threshold: 2\n\nsteps:\n",
+    ),
+  );
+
+  const result = validateKiroAiQualityGateWorkflowCoverage({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.failures.some((failure) => failure.includes("READ_ONLY_GATE_BEHAVIOR") && failure.includes("kiro-validate-design")),
+    result.failures.join("\n"),
+  );
+});
+
+test("coverage validator detects language drift in gate call paths before treating workflows as covered", () => {
+  const root = makeCoverageFixture();
+  const path = ".takt/ja/workflows/kiro-spec-quick.yaml";
+  writeFixtureFile(
+    root,
+    path,
+    readFixtureFile(root, path).replace(
+      "call: ./kiro-spec-ai-quality-gate.yaml",
+      "call: ./kiro-spec-ai-quality-gate-drift.yaml",
+    ),
+  );
+
+  const result = validateKiroAiQualityGateWorkflowCoverage({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.failures.some((failure) => failure.includes("LANGUAGE_PARITY_DRIFT") && failure.includes("kiro-spec-quick")),
+    result.failures.join("\n"),
+  );
 });
