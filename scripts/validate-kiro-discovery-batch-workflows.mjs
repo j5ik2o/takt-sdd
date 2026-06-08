@@ -350,7 +350,7 @@ function validateLanguageParity(repoRoot) {
 function sectionBody(content, heading) {
   const start = content.indexOf(`${heading}\n`);
   if (start === -1) {
-    return "";
+    return null;
   }
   const bodyStart = start + heading.length + 1;
   const next = content.slice(bodyStart).search(/^##\s+/m);
@@ -377,10 +377,10 @@ export function parseRoadmap(content) {
   const specs = [];
   const seenFeatureNames = new Set();
   const specsBody = sectionBody(content, "## Specs (dependency order)");
-  if (!specsBody) {
+  if (specsBody === null) {
     errors.push("missing ## Specs (dependency order) section");
   }
-  for (const line of specsBody.split("\n")) {
+  for (const line of (specsBody ?? "").split("\n")) {
     const trimmed = line.trim();
     if (!trimmed) {
       continue;

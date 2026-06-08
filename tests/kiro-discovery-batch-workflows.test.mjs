@@ -128,6 +128,7 @@ test("roadmap parser rejects empty dependency-order spec section", () => {
 
   assert.deepEqual(result.specs, []);
   assert.ok(result.errors.some((error) => error.includes("missing roadmap spec entries")));
+  assert.equal(result.errors.some((error) => error.includes("missing ## Specs (dependency order) section")), false);
   assert.equal(wavePlan.ok, false);
   assert.ok(wavePlan.errors.some((error) => error.includes("missing roadmap spec entries")));
 });
@@ -254,19 +255,23 @@ test("kiro-discovery workflow uses multi-step routing and skill adapter metadata
     assert.ok(workflow.includes("kiro-discovery-result"), `${workflowPath} should report kiro-discovery-result`);
     assert.ok(
       workflow.includes(
-        "plannedFiles include brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems non-empty and separated and actionPath MIXED_DECOMPOSITION",
+        "plannedFiles include every new spec brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems non-empty and separated and actionPath MIXED_DECOMPOSITION",
       ),
       `${workflowPath} should require mixed decomposition brief and roadmap planning`,
     );
     assert.ok(
       workflow.includes(
-        "createdFiles include brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems non-empty and actionPath MIXED_DECOMPOSITION",
+        "createdFiles include every new spec brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems non-empty and actionPath MIXED_DECOMPOSITION",
       ),
       `${workflowPath} should require mixed decomposition awareness-only items before reporting`,
     );
     assert.ok(
-      workflow.includes("actionPath MIXED_DECOMPOSITION and awarenessOnlyItems non-empty"),
+      workflow.includes("actionPath MIXED_DECOMPOSITION and every new spec brief.md present and awarenessOnlyItems non-empty"),
       `${workflowPath} should require awareness-only items before mixed decomposition completion`,
+    );
+    assert.ok(
+      workflow.includes("actionPath MULTI_SPEC and every new spec brief.md present"),
+      `${workflowPath} should require every new spec brief before multi-spec completion`,
     );
     assert.equal(
       workflow.includes("actionPath MIXED_DECOMPOSITION and awarenessOnlyItems present"),
@@ -298,9 +303,9 @@ test("kiro-discovery workflow uses multi-step routing and skill adapter metadata
       "actionPath SINGLE_SPEC or actionPath MULTI_SPEC or actionPath MIXED_DECOMPOSITION",
     );
     const planBlock = workflow.indexOf("blockingReason present or brief.md roadmap contradiction found");
-    const planSuccess = workflow.indexOf("plannedFiles include brief.md and actionPath SINGLE_SPEC");
+    const planSuccess = workflow.indexOf("plannedFiles include target brief.md and actionPath SINGLE_SPEC");
     const writeBlock = workflow.indexOf("artifact write failed or blockingReason present");
-    const writeSuccess = workflow.indexOf("createdFiles include brief.md and actionPath SINGLE_SPEC");
+    const writeSuccess = workflow.indexOf("createdFiles include target brief.md and actionPath SINGLE_SPEC");
     assert.ok(classifyBlock >= 0 && classifyBlock < classifySuccess, `${workflowPath} should classify blockers first`);
     assert.ok(planBlock >= 0 && planBlock < planSuccess, `${workflowPath} should plan blockers first`);
     assert.ok(writeBlock >= 0 && writeBlock < writeSuccess, `${workflowPath} should route write blockers first`);
@@ -388,6 +393,11 @@ test("kiro-spec-batch workflow uses dynamic worker dispatch without workflow reu
     assert.ok(workflow.includes("verdict DECOMPOSITION_RETURN"));
     assert.equal(workflow.includes("condition: DECOMPOSITION_RETURN or loop_monitors.threshold reached"), false);
     assert.equal(workflow.includes("crossSpecReview PASS"), false);
+    assert.ok(
+      workflow.indexOf("condition: all roadmap specs already complete") <
+        workflow.indexOf("condition: verdict PASS"),
+      `${workflowPath} should route already-complete roadmaps through cross-spec review before finalization`,
+    );
     assert.equal(/\btakt\s+-w\b|\btakt\s+.*\s-w\s+/.test(workflow), false);
     assert.equal(workflow.includes("workflow_call"), false);
 
