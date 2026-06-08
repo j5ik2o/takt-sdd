@@ -185,7 +185,7 @@ test("validator rejects missing AI quality gate workflow", () => {
 test("validator rejects unapproved nested Kiro workflow call", () => {
   const root = makeCurrentSurfaceFixture();
   const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
-  const workflow = readFileSync(workflowPath, "utf8").replace("call: kiro-ai-quality-gate", "call: kiro-spec-design");
+  const workflow = readFileSync(workflowPath, "utf8").replace("call: ./kiro-ai-quality-gate.yaml", "call: kiro-spec-design");
   writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
 
   const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });

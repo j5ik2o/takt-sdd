@@ -131,7 +131,7 @@ steps:
 
   - name: ai-quality-gate
     kind: workflow_call
-    call: kiro-ai-quality-gate
+    call: ./kiro-ai-quality-gate.yaml
     args:
       fix_instruction: kiro-ai-antipattern-fix-implementation
       domain_knowledge:

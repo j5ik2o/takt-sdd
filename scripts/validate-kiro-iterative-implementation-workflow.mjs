@@ -433,8 +433,8 @@ function validateWorkflowFiles(repoRoot) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} execute-task must branch NEEDS_CONTEXT to debug-task`);
     }
     const gateBlock = blocks.get("ai-quality-gate") ?? [];
-    if (stepScalar(gateBlock, "kind") !== "workflow_call" || stepScalar(gateBlock, "call") !== "kiro-ai-quality-gate") {
-      failures.push(`AI_QUALITY_GATE_DRIFT: ${rel(repoRoot, workflowPath)} ai-quality-gate must call kiro-ai-quality-gate via workflow_call`);
+    if (stepScalar(gateBlock, "kind") !== "workflow_call" || stepScalar(gateBlock, "call") !== "./kiro-ai-quality-gate.yaml") {
+      failures.push(`AI_QUALITY_GATE_DRIFT: ${rel(repoRoot, workflowPath)} ai-quality-gate must call ./kiro-ai-quality-gate.yaml via workflow_call`);
     }
     containsAll(
       gateBlock.join("\n"),
@@ -495,7 +495,7 @@ function validateWorkflowFiles(repoRoot) {
     }
     const workflowCallBlocks = stepBlocks(content).filter((block) => block.join("\n").includes("kind: workflow_call"));
     for (const block of workflowCallBlocks) {
-      if (stepScalar(block, "name") !== "ai-quality-gate" || stepScalar(block, "call") !== "kiro-ai-quality-gate") {
+      if (stepScalar(block, "name") !== "ai-quality-gate" || stepScalar(block, "call") !== "./kiro-ai-quality-gate.yaml") {
         failures.push(`BOUNDARY_DRIFT: ${rel(repoRoot, workflowPath)} only ai-quality-gate may use workflow_call`);
       }
     }
