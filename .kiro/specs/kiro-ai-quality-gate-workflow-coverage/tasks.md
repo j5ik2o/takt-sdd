@@ -19,7 +19,7 @@
   - _Depends:_ 1.1
 
 - [ ] 2. Generation-scoped AI quality gate と facet 契約を作る
-- [ ] 2.1 (P) spec generation draft 用の callable AI quality gate を追加する
+- [x] 2.1 (P) spec generation draft 用の callable AI quality gate を追加する
   - requirements/design/tasks draft を first-pass AI antipattern review に通し、blocking issue がない場合は fix report なしで完了できる。
   - fixable issue は current artifact boundary の repair route に戻り、upstream phase 変更や roadmap 再分解が必要な issue は replan/upstream-repair outcome へ分岐する。
   - ambiguous、blocked、inconsistent outcome が未一致で落ちない catch-all route を持つ。

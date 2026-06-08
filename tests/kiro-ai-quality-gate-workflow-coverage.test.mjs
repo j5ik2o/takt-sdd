@@ -74,3 +74,30 @@ test("kiro AI quality gate coverage policy facets explain categories without dup
     }
   }
 });
+
+test("spec generation AI quality gate workflow is callable and separates spec reports from implementation reports", () => {
+  const requiredTerms = [
+    "subworkflow:",
+    "callable: true",
+    "visibility: internal",
+    "kiro-spec-ai-antipattern-review.md",
+    "kiro-spec-ai-antipattern-fix.md",
+    "No AI-specific issues",
+    "AI-specific issues found",
+    "request-replan",
+    "ambiguous",
+    "blocked",
+    "internally inconsistent",
+    "return: need_replan",
+  ];
+
+  for (const language of languages) {
+    const path = join(repoRoot, ".takt", language, "workflows", "kiro-spec-ai-quality-gate.yaml");
+    const content = readFileSync(path, "utf8");
+
+    for (const term of requiredTerms) {
+      assert.ok(content.includes(term), `${path} should include ${term}`);
+    }
+    assert.equal(content.includes("kiro-ai-antipattern-review.md"), false, `${path} should not reuse implementation review report name`);
+  }
+});

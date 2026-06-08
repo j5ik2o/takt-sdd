@@ -15,6 +15,11 @@ const coverageEntries = Object.freeze([
     reason: "Callable implementation AI quality gate already owns AI antipattern review and fix behavior.",
   },
   {
+    workflowName: "kiro-spec-ai-quality-gate",
+    category: "existing_gate_coverage",
+    reason: "Callable spec generation AI quality gate owns AI antipattern review and fix behavior for generated drafts.",
+  },
+  {
     workflowName: "kiro-impl",
     category: "existing_gate_coverage",
     reason: "Implementation workflow already calls the implementation AI quality gate before task review.",
