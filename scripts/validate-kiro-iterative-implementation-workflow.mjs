@@ -540,6 +540,7 @@ function validateGateWorkflowFiles(repoRoot) {
         "initial_step: ai-antipattern-review-1st",
         "loop-monitor-ai-antipattern-fix",
         "threshold: 3",
+        "next: request-replan",
         "kiro-ai-antipattern-review.md",
         "kiro-ai-antipattern-fix.md",
         "kiro-ai-antipattern-fix-result",
@@ -550,7 +551,7 @@ function validateGateWorkflowFiles(repoRoot) {
       "GATE_WORKFLOW_DRIFT",
     );
     const stepNames = stepBlocks(content).map((block) => stepScalar(block, "name"));
-    const expectedGateSteps = ["ai-antipattern-review-1st", "ai-antipattern-fix"];
+    const expectedGateSteps = ["ai-antipattern-review-1st", "ai-antipattern-fix", "request-replan"];
     if (JSON.stringify(stepNames) !== JSON.stringify(expectedGateSteps)) {
       failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} step order must be ${expectedGateSteps.join(" -> ")}`);
     }
@@ -596,6 +597,18 @@ function validateGateWorkflowFiles(repoRoot) {
     }
     if (!hasRuleWithTerms(fixBlock, ["STATUS BLOCKED", "next: ABORT"])) {
       failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} BLOCKED must abort`);
+    }
+    const replanBlock = blocks.get("request-replan") ?? [];
+    containsAll(
+      replanBlock.join("\n"),
+      ["persona: supervisor", "required_permission_mode: readonly", "need_replan"],
+      workflowPath,
+      failures,
+      repoRoot,
+      "GATE_WORKFLOW_DRIFT",
+    );
+    if (!hasRuleWithTerms(replanBlock, ["unproductive AI antipattern fix loop", "return: need_replan"])) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} request-replan must return need_replan after loop monitor exhaustion`);
     }
     if (customLoopSourcePattern.test(content)) {
       failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, workflowPath)} must rely on TAKT loop_monitors, not custom retry state`);

@@ -47,7 +47,7 @@ loop_monitors:
         - condition: Healthy (findings are shrinking or the latest fix has concrete finding_decisions)
           next: ai-antipattern-review-1st
         - condition: Unproductive (loop_monitors.threshold reached for ai-antipattern-review-1st and ai-antipattern-fix)
-          next: ABORT
+          next: request-replan
 
 steps:
   - name: ai-antipattern-review-1st
@@ -117,3 +117,14 @@ steps:
         return: need_replan
       - condition: STATUS BLOCKED
         next: ABORT
+
+  - name: request-replan
+    edit: false
+    persona: supervisor
+    required_permission_mode: readonly
+    instruction: |
+      AI アンチパターン review/fix ループが収束せず loop_monitors.threshold に達した。
+      親の実装ワークフローが debug-task に戻れるように need_replan を返す。
+    rules:
+      - condition: Replan is required after an unproductive AI antipattern fix loop
+        return: need_replan
