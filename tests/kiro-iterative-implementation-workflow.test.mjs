@@ -238,6 +238,21 @@ test("validator rejects AI quality gate review routing gaps", () => {
   assert.ok(result.failures.some((failure) => failure.includes("ambiguous outcomes")));
 });
 
+test("validator rejects AI quality gate review vocabulary drift", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-ai-quality-gate.yaml");
+  const workflow = readFileSync(workflowPath, "utf8")
+    .replace("condition: No AI-specific issues", "condition: VERDICT APPROVED and no persistent AI antipattern findings remain")
+    .replace("condition: AI-specific issues found", "condition: VERDICT REJECTED and actionable AI antipattern findings exist");
+  writeFixtureFile(root, ".takt/en/workflows/kiro-ai-quality-gate.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("no AI-specific issues")));
+  assert.ok(result.failures.some((failure) => failure.includes("AI-specific issues to fix")));
+});
+
 test("validator rejects AI quality gate loop exhaustion that aborts instead of replanning", () => {
   const root = makeCurrentSurfaceFixture();
   const workflowPath = join(root, ".takt", "en", "workflows", "kiro-ai-quality-gate.yaml");

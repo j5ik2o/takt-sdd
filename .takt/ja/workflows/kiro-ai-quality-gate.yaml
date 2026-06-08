@@ -74,9 +74,9 @@ steps:
         - name: kiro-ai-antipattern-review.md
           format: ai-antipattern-review
     rules:
-      - condition: VERDICT APPROVED and no persistent AI antipattern findings remain
+      - condition: No AI-specific issues
         next: COMPLETE
-      - condition: VERDICT REJECTED and actionable AI antipattern findings exist for the selected task
+      - condition: AI-specific issues found
         next: ai-antipattern-fix
       - when: "true"
         next: request-replan

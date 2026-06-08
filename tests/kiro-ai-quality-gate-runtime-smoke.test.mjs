@@ -144,7 +144,7 @@ function writeMockScenario(root) {
         "## Status Report\n\nSTATUS: READY_FOR_REVIEW\nselected_task: 1.1 Create mock-only smoke evidence\nchanged_files: none\nvalidation_evidence: mock provider smoke\nRED_PHASE_OUTPUT: N/A\nsummary: smoke implementation ready for AI gate",
     },
     { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
-    { persona: "ai-antipattern-reviewer", content: "AI antipattern smoke review complete. VERDICT: APPROVED." },
+    { persona: "ai-antipattern-reviewer", content: "AI antipattern smoke review complete. No AI-specific issues." },
     {
       persona: "ai-antipattern-reviewer",
       content:

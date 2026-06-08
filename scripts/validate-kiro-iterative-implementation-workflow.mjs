@@ -582,11 +582,11 @@ function validateGateWorkflowFiles(repoRoot) {
     if (reviewBlock.join("\n").includes("WebSearch") || reviewBlock.join("\n").includes("WebFetch")) {
       failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern review step must not use web tools`);
     }
-    if (!hasRuleWithTerms(reviewBlock, ["VERDICT APPROVED", "next: COMPLETE"])) {
-      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern review must complete on APPROVED`);
+    if (!hasRuleWithTerms(reviewBlock, ["No AI-specific issues", "next: COMPLETE"])) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern review must complete when no AI-specific issues are found`);
     }
-    if (!hasRuleWithTerms(reviewBlock, ["VERDICT REJECTED", "next: ai-antipattern-fix"])) {
-      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern review must route REJECTED to fix`);
+    if (!hasRuleWithTerms(reviewBlock, ["AI-specific issues found", "next: ai-antipattern-fix"])) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern review must route AI-specific issues to fix`);
     }
     if (!hasRuleWithTerms(reviewBlock, ['when: "true"', "next: request-replan"])) {
       failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern review must route ambiguous outcomes to request-replan`);
@@ -873,6 +873,7 @@ function validateTaskFixtureCoverage(repoRoot) {
       "validator rejects parent loop monitor that skips AI quality gate",
       "validator rejects AI quality gate loop threshold drift",
       "validator rejects AI quality gate review routing gaps",
+      "validator rejects AI quality gate review vocabulary drift",
       "validator rejects AI quality gate loop exhaustion that aborts instead of replanning",
       "validator rejects missing AI gate evidence hooks in review adapter",
       "validator rejects adapters that require AI antipattern fix reports unconditionally",
