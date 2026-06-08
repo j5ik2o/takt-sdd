@@ -110,6 +110,54 @@ function containsAllContractTerms(content, terms, path, failures) {
   }
 }
 
+function stepBlocks(content) {
+  const lines = content.split("\n");
+  const blocks = [];
+  let current = null;
+  for (const line of lines) {
+    if (/^  - name:\s+/.test(line)) {
+      if (current) {
+        blocks.push(current);
+      }
+      current = [line];
+    } else if (current) {
+      if (/^\S/.test(line)) {
+        blocks.push(current);
+        current = null;
+      } else {
+        current.push(line);
+      }
+    }
+  }
+  if (current) {
+    blocks.push(current);
+  }
+  return blocks;
+}
+
+function stepScalar(block, key) {
+  if (key === "name") {
+    const match = block.join("\n").match(/^  - name:\s*(.+)\s*$/m);
+    return match?.[1] ?? "";
+  }
+  const match = block.join("\n").match(new RegExp(`^    ${key}:\\s*(.+)\\s*$`, "m"));
+  return match?.[1] ?? "";
+}
+
+export function validateKiroWorkflowCallBoundary(content, workflowName, workflowLabel = workflowName) {
+  const failures = [];
+  for (const block of stepBlocks(content).filter((step) => step.join("\n").includes("kind: workflow_call"))) {
+    const allowedAiQualityGateCall =
+      workflowName === "kiro-impl.yaml" &&
+      stepScalar(block, "name") === "ai-quality-gate" &&
+      stepScalar(block, "call") === "./kiro-ai-quality-gate.yaml";
+    if (!allowedAiQualityGateCall) {
+      failures.push(`${workflowLabel} must not use workflow_call for Kiro workflow reuse`);
+    }
+  }
+  return failures;
+}
+
 function parseFrontmatter(content) {
   if (!content.startsWith("---\n")) {
     return {};
@@ -535,9 +583,7 @@ function validateKiroWorkflowShapeRules() {
       const content = readText(workflow);
       const workflowName = basename(workflow);
       const stepCount = (content.match(/^  - name:/gm) ?? []).length;
-      if (/\bworkflow_call\b/.test(content)) {
-        failures.push(`${rel(workflow)} must not use workflow_call for Kiro workflow reuse`);
-      }
+      failures.push(...validateKiroWorkflowCallBoundary(content, workflowName, rel(workflow)));
       if (/\btakt\s+-w\b|\btakt\s+.*\s-w\b/.test(content)) {
         failures.push(`${rel(workflow)} must not shell out to takt -w for Kiro workflow reuse`);
       }

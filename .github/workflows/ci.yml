@@ -38,6 +38,9 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Install root dependencies
+        run: npm ci --ignore-scripts
+
       - name: Install takt
         run: npm install -g takt
 
@@ -59,6 +62,9 @@ jobs:
             echo "::endgroup::"
           done
           exit $failed
+
+      - name: Runtime smoke for Kiro implementation quality gate
+        run: npm run test:kiro-ai-quality-gate-runtime-smoke
 
       - name: Validate workflows (ja)
         run: |
