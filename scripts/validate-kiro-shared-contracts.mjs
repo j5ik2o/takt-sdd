@@ -2,6 +2,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { getAllowedKiroAiQualityGateCallSites } from "./kiro-ai-quality-gate-contracts.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -144,13 +145,21 @@ function stepScalar(block, key) {
   return match?.[1] ?? "";
 }
 
+function normalizeWorkflowName(workflowName) {
+  return workflowName.replace(/\.yaml$/, "");
+}
+
 export function validateKiroWorkflowCallBoundary(content, workflowName, workflowLabel = workflowName) {
   const failures = [];
+  const normalizedWorkflowName = normalizeWorkflowName(workflowName);
+  const allowedCallSites = getAllowedKiroAiQualityGateCallSites();
   for (const block of stepBlocks(content).filter((step) => step.join("\n").includes("kind: workflow_call"))) {
-    const allowedAiQualityGateCall =
-      workflowName === "kiro-impl.yaml" &&
-      stepScalar(block, "name") === "ai-quality-gate" &&
-      stepScalar(block, "call") === "./kiro-ai-quality-gate.yaml";
+    const allowedAiQualityGateCall = allowedCallSites.some(
+      (site) =>
+        site.workflowName === normalizedWorkflowName &&
+        site.stepName === stepScalar(block, "name") &&
+        site.callPath === stepScalar(block, "call"),
+    );
     if (!allowedAiQualityGateCall) {
       failures.push(`${workflowLabel} must not use workflow_call for Kiro workflow reuse`);
     }

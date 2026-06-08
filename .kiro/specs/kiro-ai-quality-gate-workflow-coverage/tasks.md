@@ -10,7 +10,7 @@
   - _Boundary:_ CoverageInventoryContract
   - _Depends:_ none
 
-- [ ] 1.2 PR #90 の 6 点契約と allowed gate call sites を共有契約として定義する
+- [x] 1.2 PR #90 の 6 点契約と allowed gate call sites を共有契約として定義する
   - implementation gate と generation gate の allowed call site が workflow name、step name、relative call path で表現される状態にする。
   - bare workflow name call、未分類 caller、read-only caller を拒否するための contract terms が揃っている状態にする。
   - routing vocabulary、catch-all routing、optional fix report、loop exhaustion、caller loop monitor membership の検証語彙が 1 箇所から参照できる。

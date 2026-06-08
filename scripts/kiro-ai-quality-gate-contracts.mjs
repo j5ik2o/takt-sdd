@@ -84,6 +84,67 @@ const coverageEntries = Object.freeze([
   },
 ]);
 
+const allowedGateCallSites = Object.freeze([
+  {
+    workflowName: "kiro-impl",
+    stepName: "ai-quality-gate",
+    callPath: "./kiro-ai-quality-gate.yaml",
+    gateKind: "implementation",
+  },
+  {
+    workflowName: "kiro-spec-requirements",
+    stepName: "ai-quality-gate-requirements",
+    callPath: "./kiro-spec-ai-quality-gate.yaml",
+    gateKind: "spec_generation",
+  },
+  {
+    workflowName: "kiro-spec-design",
+    stepName: "ai-quality-gate-design",
+    callPath: "./kiro-spec-ai-quality-gate.yaml",
+    gateKind: "spec_generation",
+  },
+  {
+    workflowName: "kiro-spec-tasks",
+    stepName: "ai-quality-gate-tasks",
+    callPath: "./kiro-spec-ai-quality-gate.yaml",
+    gateKind: "spec_generation",
+  },
+  {
+    workflowName: "kiro-spec-quick",
+    stepName: "quick-ai-quality-gate-requirements",
+    callPath: "./kiro-spec-ai-quality-gate.yaml",
+    gateKind: "spec_generation",
+  },
+  {
+    workflowName: "kiro-spec-quick",
+    stepName: "quick-ai-quality-gate-design",
+    callPath: "./kiro-spec-ai-quality-gate.yaml",
+    gateKind: "spec_generation",
+  },
+  {
+    workflowName: "kiro-spec-quick",
+    stepName: "quick-ai-quality-gate-tasks",
+    callPath: "./kiro-spec-ai-quality-gate.yaml",
+    gateKind: "spec_generation",
+  },
+]);
+
+const gateContractTerms = Object.freeze({
+  implementation: Object.freeze({
+    reviewReports: Object.freeze(["kiro-ai-antipattern-review.md"]),
+    optionalFixReports: Object.freeze(["kiro-ai-antipattern-fix.md"]),
+  }),
+  specGeneration: Object.freeze({
+    reviewReports: Object.freeze(["kiro-spec-ai-antipattern-review.md"]),
+    optionalFixReports: Object.freeze(["kiro-spec-ai-antipattern-fix.md"]),
+  }),
+  shared: Object.freeze({
+    routingTerms: Object.freeze(["No AI-specific issues", "AI-specific issues found"]),
+    catchAllTerms: Object.freeze(["ambiguous", "blocked", "internally inconsistent"]),
+    loopOutcomeTerms: Object.freeze(["need_replan", "repair", "replan"]),
+  }),
+});
+
 export function getKiroWorkflowCoverageEntries() {
   return coverageEntries.map((entry) => Object.freeze({ ...entry }));
 }
@@ -97,4 +158,26 @@ export function getKiroWorkflowNamesByCoverageCategory(category) {
     throw new Error(`Unknown Kiro workflow coverage category: ${category}`);
   }
   return coverageEntries.filter((entry) => entry.category === category).map((entry) => entry.workflowName);
+}
+
+export function getAllowedKiroAiQualityGateCallSites() {
+  return allowedGateCallSites.map((site) => Object.freeze({ ...site }));
+}
+
+export function getKiroAiQualityGateContractTerms() {
+  return {
+    implementation: {
+      reviewReports: [...gateContractTerms.implementation.reviewReports],
+      optionalFixReports: [...gateContractTerms.implementation.optionalFixReports],
+    },
+    specGeneration: {
+      reviewReports: [...gateContractTerms.specGeneration.reviewReports],
+      optionalFixReports: [...gateContractTerms.specGeneration.optionalFixReports],
+    },
+    shared: {
+      routingTerms: [...gateContractTerms.shared.routingTerms],
+      catchAllTerms: [...gateContractTerms.shared.catchAllTerms],
+      loopOutcomeTerms: [...gateContractTerms.shared.loopOutcomeTerms],
+    },
+  };
 }
