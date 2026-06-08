@@ -26,10 +26,12 @@ shared `kiro-validation-result` contract を使う。継承元 skill の GO/NO-G
 
 ## AI quality gate evidence
 
-- `DECISION: GO` を返す前に `kiro-spec-ai-antipattern-review.md` を確認する。
+- `DECISION: GO` を返す前に、current run の namespaced AI gate review report を確認する:
+  `reports/subworkflows/iteration-*--step-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`
+  または `reports/subworkflows/iteration-*--step-quick-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`。
 - active workflow が standalone `kiro-validate-design` で、current run に `kiro-spec-ai-antipattern-review.md` が存在しない場合は、AI quality gate evidence check をスキップし、通常の validation procedure のみで判断する。この read-only workflow は gate を実行しない。
 - `kiro-spec-design` や `kiro-spec-quick` などの generation review workflow で `kiro-spec-ai-antipattern-review.md` が存在しない場合は、design readiness を accept せず `DECISION: MANUAL_VERIFY_REQUIRED` を返す。
 - unresolved AI antipattern findings が残る場合は `DECISION: NO-GO` を返す。
-- `kiro-spec-ai-antipattern-fix.md` が存在する場合、stale、cross-run、blocked、evidence-free no-fix outcomes を reject する。
+- 対応する namespaced `kiro-spec-ai-antipattern-fix.md` が存在する場合、stale、cross-run、blocked、evidence-free no-fix outcomes を reject する。
 - first review が blocking issue を見つけなかった場合だけ、`kiro-spec-ai-antipattern-fix.md` が存在しなくても valid と扱う。これは optional fix report であり、required success artifact ではない。
 - rejected AI gate evidence は design readiness accept ではなく既存の `NO-GO` または `MANUAL_VERIFY_REQUIRED` result へ route する。

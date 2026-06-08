@@ -304,6 +304,52 @@ function validateQuickGateEvidenceInstructions(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
+function validateDownstreamGateEvidenceInstructions(repoRoot) {
+  const failures = [];
+  const specs = [
+    {
+      facet: "kiro-spec-requirements-review.md",
+      terms: [
+        "reports/subworkflows/iteration-*--step-ai-quality-gate-requirements--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+        "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-requirements--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+        "namespaced `kiro-spec-ai-antipattern-fix.md`",
+      ],
+    },
+    {
+      facet: "kiro-validate-design-readiness.md",
+      terms: [
+        "reports/subworkflows/iteration-*--step-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+        "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+        "namespaced `kiro-spec-ai-antipattern-fix.md`",
+      ],
+    },
+    {
+      facet: "kiro-spec-tasks-review.md",
+      terms: [
+        "reports/subworkflows/iteration-*--step-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+        "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+        "namespaced `kiro-spec-ai-antipattern-fix.md`",
+      ],
+    },
+  ];
+  for (const language of languages) {
+    for (const spec of specs) {
+      const path = join(repoRoot, ".takt", language, "facets", "instructions", spec.facet);
+      if (!existsSync(path)) {
+        failures.push(`DOWNSTREAM_GATE_EVIDENCE_DRIFT: ${rel(repoRoot, path)} missing`);
+        continue;
+      }
+      const content = readText(path);
+      for (const term of spec.terms) {
+        if (!content.includes(term)) {
+          failures.push(`DOWNSTREAM_GATE_EVIDENCE_DRIFT: ${rel(repoRoot, path)} missing required namespaced gate evidence term: ${term}`);
+        }
+      }
+    }
+  }
+  return { ok: failures.length === 0, failures };
+}
+
 function validatePolicyFacetBoundaries(repoRoot, coverageEntries) {
   const failures = [];
   const requiredTerms = ["scripts/kiro-ai-quality-gate-contracts.mjs", "roadmap checkbox"];
@@ -345,6 +391,7 @@ export function validateKiroAiQualityGateWorkflowCoverage(options = {}) {
     gatePlacement: validateGatePlacement(repoRoot, coverageEntries),
     readOnlyAndDelegatedBoundaries: validateReadOnlyAndDelegatedBoundaries(repoRoot, coverageEntries),
     gateContractTerms: validateGateContractTerms(repoRoot),
+    downstreamGateEvidenceInstructions: validateDownstreamGateEvidenceInstructions(repoRoot),
     quickGateEvidenceInstructions: validateQuickGateEvidenceInstructions(repoRoot),
     policyFacetBoundaries: validatePolicyFacetBoundaries(repoRoot, coverageEntries),
   };

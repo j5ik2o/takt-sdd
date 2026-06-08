@@ -194,15 +194,41 @@ test("spec generation AI quality gate uses generation-specific fix instruction a
 });
 
 test("downstream generation review facets consume spec AI quality gate evidence", () => {
-  const facetNames = [
-    "kiro-spec-requirements-review.md",
-    "kiro-validate-design-readiness.md",
-    "kiro-spec-tasks-review.md",
-    "kiro-spec-quick-sanity-review.md",
+  const facetSpecs = [
+    {
+      name: "kiro-spec-requirements-review.md",
+      namespacedTerms: [
+        "reports/subworkflows/iteration-*--step-ai-quality-gate-requirements--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+        "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-requirements--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+      ],
+    },
+    {
+      name: "kiro-validate-design-readiness.md",
+      namespacedTerms: [
+        "reports/subworkflows/iteration-*--step-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+        "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+      ],
+    },
+    {
+      name: "kiro-spec-tasks-review.md",
+      namespacedTerms: [
+        "reports/subworkflows/iteration-*--step-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+        "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+      ],
+    },
+    {
+      name: "kiro-spec-quick-sanity-review.md",
+      namespacedTerms: [
+        "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-requirements--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+        "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+        "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+      ],
+    },
   ];
   const requiredTerms = [
     "kiro-spec-ai-antipattern-review.md",
     "kiro-spec-ai-antipattern-fix.md",
+    "namespaced",
     "unresolved",
     "stale",
     "cross-run",
@@ -211,10 +237,10 @@ test("downstream generation review facets consume spec AI quality gate evidence"
   ];
 
   for (const language of languages) {
-    for (const facetName of facetNames) {
-      const path = join(repoRoot, ".takt", language, "facets", "instructions", facetName);
+    for (const facetSpec of facetSpecs) {
+      const path = join(repoRoot, ".takt", language, "facets", "instructions", facetSpec.name);
       const content = readFileSync(path, "utf8");
-      for (const term of requiredTerms) {
+      for (const term of [...requiredTerms, ...facetSpec.namespacedTerms]) {
         assert.ok(content.includes(term), `${path} should include ${term}`);
       }
     }
@@ -517,6 +543,29 @@ test("coverage validator detects loop monitor Healthy routing that skips the spe
   assert.equal(result.ok, false);
   assert.ok(
     result.failures.some((failure) => failure.includes("LOOP_MONITOR_GATE_BYPASS") && failure.includes("quick-ai-quality-gate-design")),
+    result.failures.join("\n"),
+  );
+});
+
+test("coverage validator detects downstream review facets that omit namespaced gate evidence paths", () => {
+  const root = makeCoverageFixture();
+  const path = ".takt/en/facets/instructions/kiro-validate-design-readiness.md";
+  writeFixtureFile(
+    root,
+    path,
+    readFixtureFile(root, path).replace(
+      "reports/subworkflows/iteration-*--step-quick-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md",
+      "kiro-spec-ai-antipattern-review.md",
+    ),
+  );
+
+  const result = validateKiroAiQualityGateWorkflowCoverage({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.failures.some(
+      (failure) => failure.includes("DOWNSTREAM_GATE_EVIDENCE_DRIFT") && failure.includes("quick-ai-quality-gate-design"),
+    ),
     result.failures.join("\n"),
   );
 });

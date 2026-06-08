@@ -26,8 +26,10 @@ extends_skill_section: "### Step 4: Review Requirements Draft"
 
 ## AI quality gate evidence
 
-- draft を accept する前に `kiro-spec-ai-antipattern-review.md` を確認する。
+- draft を accept する前に、current run の namespaced AI gate review report を確認する:
+  `reports/subworkflows/iteration-*--step-ai-quality-gate-requirements--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`
+  または `reports/subworkflows/iteration-*--step-quick-ai-quality-gate-requirements--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`。
 - unresolved AI antipattern findings が残る場合は draft を reject する。
-- `kiro-spec-ai-antipattern-fix.md` が存在する場合、stale、cross-run、blocked、evidence-free no-fix outcomes を reject する。
+- 対応する namespaced `kiro-spec-ai-antipattern-fix.md` が存在する場合、stale、cross-run、blocked、evidence-free no-fix outcomes を reject する。
 - first review が blocking issue を見つけなかった場合だけ、`kiro-spec-ai-antipattern-fix.md` が存在しなくても valid と扱う。これは optional fix report であり、required success artifact ではない。
 - rejected AI gate evidence は draft accept ではなく既存の needs-fix または blocked result へ route する。
