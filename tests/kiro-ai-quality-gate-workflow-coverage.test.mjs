@@ -437,3 +437,28 @@ test("coverage validator detects policy facets that duplicate workflow inventory
     result.failures.join("\n"),
   );
 });
+
+test("repository scripts and CI run Kiro AI quality gate coverage checks", () => {
+  const packageJson = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"));
+  const ciWorkflow = readFileSync(join(repoRoot, ".github", "workflows", "ci.yml"), "utf8");
+  const requiredScripts = {
+    "validate:kiro-ai-quality-gate-workflow-coverage":
+      "node scripts/validate-kiro-ai-quality-gate-workflow-coverage.mjs",
+    "test:kiro-ai-quality-gate-workflow-coverage":
+      "node --test tests/kiro-ai-quality-gate-workflow-coverage.test.mjs",
+    "test:kiro-ai-quality-gate-runtime-smoke": "node --test tests/kiro-ai-quality-gate-runtime-smoke.test.mjs",
+  };
+
+  for (const [scriptName, command] of Object.entries(requiredScripts)) {
+    assert.equal(packageJson.scripts[scriptName], command, `${scriptName} should run ${command}`);
+    assert.ok(ciWorkflow.includes(`npm run ${scriptName}`), `CI should run ${scriptName}`);
+  }
+
+  for (const scriptName of [
+    "validate:kiro-shared-contracts",
+    "validate:kiro-spec-generation-workflows",
+    "validate:kiro-status-validation-workflows",
+  ]) {
+    assert.ok(ciWorkflow.includes(`npm run ${scriptName}`), `CI should run ${scriptName}`);
+  }
+});

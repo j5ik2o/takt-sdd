@@ -103,7 +103,7 @@
   - _Boundary:_ RuntimeSmokeFixture
   - _Depends:_ 3.1, 4.2
 
-- [ ] 5.2 npm scripts と CI から新しい validator/test/smoke を実行できるようにする
+- [x] 5.2 npm scripts と CI から新しい validator/test/smoke を実行できるようにする
   - 新しい validator、unit test、runtime smoke が既存の script naming pattern で実行できる。
   - CI が Kiro validator/test を個別列挙している場合、新しい checks が同じ段に含まれている。
   - repository validation を実行すると coverage、shared contract、spec generation、status validation、runtime smoke の対象がすべて検証される。
