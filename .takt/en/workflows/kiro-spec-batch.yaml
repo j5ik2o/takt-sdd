@@ -65,7 +65,7 @@ steps:
         next: finalize-batch
       - condition: dependency waves planned and pending feature count greater than zero
         next: dispatch-wave
-      - condition: all roadmap specs already complete and roadmap spec entries present
+      - condition: all roadmap specs spec-ready and roadmap spec entries present
         next: cross-spec-review
 
   - name: dispatch-wave

@@ -63,7 +63,7 @@ const facetSpecs = [
     parent: "plan",
     skill: "kiro-discovery",
     skillSection: "## Step 2: Determine Action Path",
-    terms: ["brief.md", ".kiro/steering/roadmap.md", "blockingReason", ...actionPathEnums],
+    terms: ["brief.md", ".kiro/steering/roadmap.md", "blockingReason", "ready_for_implementation", ...actionPathEnums],
   },
   {
     kind: "instructions",
@@ -71,7 +71,7 @@ const facetSpecs = [
     parent: "supervise",
     skill: "kiro-spec-batch",
     skillSection: "## Step 2: Build Dependency Waves",
-    terms: ["dependency wave", "dynamic subagent dispatch", "kiro-spec-generation-workflows", "feature result"],
+    terms: ["dependency wave", "dynamic subagent dispatch", "kiro-spec-generation-workflows", "feature result", "spec ready"],
   },
   {
     kind: "instructions",
@@ -91,7 +91,15 @@ const facetSpecs = [
     kind: "policies",
     file: "kiro-roadmap-dependency-waves.md",
     parent: "task-decomposition",
-    terms: ["## Specs (dependency order)", "Existing Spec Updates", "Direct Implementation Candidates", "circular dependency"],
+    terms: [
+      "## Specs (dependency order)",
+      "Existing Spec Updates",
+      "Direct Implementation Candidates",
+      "circular dependency",
+      "spec.json.phase == \"tasks-generated\"",
+      "ready_for_implementation == true",
+      "implementation progress",
+    ],
   },
   {
     kind: "policies",
@@ -109,7 +117,7 @@ const facetSpecs = [
     kind: "output-contracts",
     file: "kiro-batch-summary.md",
     parent: "validation",
-    terms: ["wavePlan", "featureResults", "failedFeatures", "crossSpecReview", "implementationReady"],
+    terms: ["wavePlan", "skippedSpecReady", "featureResults", "failedFeatures", "crossSpecReview", "implementationReady"],
   },
   {
     kind: "output-contracts",
@@ -370,7 +378,7 @@ function parseRoadmapLine(line) {
     dependencies: match[4].trim().toLowerCase() === "none"
       ? []
       : match[4].split(",").map((dependency) => dependency.trim()).filter(Boolean),
-    status: match[1].toLowerCase() === "x" ? "done" : "pending",
+    status: match[1].toLowerCase() === "x" ? "ready" : "pending",
   };
 }
 
@@ -445,23 +453,23 @@ export function buildDependencyWaves(specs) {
     }
   }
   if (errors.length > 0) {
-    return { ok: false, waves: [], skippedCompleted: [], errors };
+    return { ok: false, waves: [], skippedSpecReady: [], errors };
   }
 
-  const completed = new Set(specs.filter((spec) => spec.status === "done").map((spec) => spec.featureName));
+  const specReady = new Set(specs.filter((spec) => spec.status === "ready").map((spec) => spec.featureName));
   const pending = new Set(specs.filter((spec) => spec.status === "pending").map((spec) => spec.featureName));
   const waves = [];
 
   while (pending.size > 0) {
     const current = [...pending].filter((featureName) => {
       const spec = byName.get(featureName);
-      return spec.dependencies.every((dependency) => completed.has(dependency));
+      return spec.dependencies.every((dependency) => specReady.has(dependency));
     });
     if (current.length === 0) {
       return {
         ok: false,
         waves,
-        skippedCompleted: [...completed],
+        skippedSpecReady: [...specReady],
         errors: [`circular dependency among pending specs: ${[...pending].sort().join(", ")}`],
       };
     }
@@ -469,14 +477,14 @@ export function buildDependencyWaves(specs) {
     waves.push({ waveNumber: waves.length + 1, featureNames: current });
     for (const featureName of current) {
       pending.delete(featureName);
-      completed.add(featureName);
+      specReady.add(featureName);
     }
   }
 
   return {
     ok: true,
     waves,
-    skippedCompleted: specs.filter((spec) => spec.status === "done").map((spec) => spec.featureName).sort(),
+    skippedSpecReady: specs.filter((spec) => spec.status === "ready").map((spec) => spec.featureName).sort(),
     errors: [],
   };
 }

@@ -17,7 +17,7 @@ Review generated specs after batch worker dispatch. Focus on cross-spec consiste
 - Generated `.kiro/specs/*/design.md` as primary architecture input.
 - Generated `.kiro/specs/*/requirements.md` for scope and acceptance criteria.
 - Generated `.kiro/specs/*/tasks.md` for `_Boundary:_` annotations.
-- Worker feature results and skipped completed specs from `kiro-spec-batch`.
+- Worker feature results and skipped spec-ready entries from `kiro-spec-batch`.
 
 ## Review Checks
 

@@ -5,7 +5,7 @@
 ## Machine Fields
 
 - `wavePlan`: `## Specs (dependency order)` から作った dependency waves。
-- `skippedCompleted`: batch が skip した completed roadmap specs。
+- `skippedSpecReady`: batch が skip した spec-ready roadmap entries。
 - `featureResults`: `feature`、`status`、`generatedArtifacts`、`blockingReason`、`nextAction` を持つ worker result 配列。
 - `failedFeatures`: `BLOCKED`、`NEEDS_FIX`、worker failure で終わった feature 配列。
 - `awarenessOnlyItems`: worker dispatch から除外した既存 spec 更新と direct implementation candidates。

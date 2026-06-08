@@ -26,8 +26,10 @@ extends_skill_section: "## Step 2: Determine Action Path"
 3. `EXISTING_SPEC_UPDATE` と `DIRECT_IMPLEMENTATION` では新しい discovery artifact を書かず、具体的な `nextAction` を返す。
 4. `SINGLE_SPEC` では `.kiro/specs/<feature>/brief.md` を計画または作成する。
 5. `MULTI_SPEC` と `MIXED_DECOMPOSITION` では `.kiro/steering/roadmap.md` と新規 spec ごとの `brief.md` を計画または作成する。
-6. `MIXED_DECOMPOSITION` では既存 spec 更新と direct implementation candidate を `awarenessOnlyItems` に分離する。
-7. action path または boundary ownership が曖昧な場合は、`blockingReason` を返し `createdFiles` を空に保つ。
+6. roadmap の checklist marker は spec readiness だけを表す。新規または未承認 spec は `[ ]` とし、`[x]` は `spec.json.phase == "tasks-generated"`、requirements/design/tasks approvals、`ready_for_implementation == true`、required artifacts の存在を確認できる場合だけ使う。
+7. implementation progress は `.kiro/specs/<feature>/tasks.md` の task checkbox で判断し、roadmap marker から実装完了を推定しない。
+8. `MIXED_DECOMPOSITION` では既存 spec 更新と direct implementation candidate を `awarenessOnlyItems` に分離する。
+9. action path または boundary ownership が曖昧な場合は、`blockingReason` を返し `createdFiles` を空に保つ。
 
 ## Brief Artifact Structure
 

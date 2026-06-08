@@ -5,7 +5,7 @@
 ## Machine Fields
 
 - `wavePlan`: dependency waves built from `## Specs (dependency order)`.
-- `skippedCompleted`: completed roadmap specs skipped by the batch.
+- `skippedSpecReady`: spec-ready roadmap entries skipped by the batch.
 - `featureResults`: array of worker results with `feature`, `status`, `generatedArtifacts`, `blockingReason`, and `nextAction`.
 - `failedFeatures`: array of features that ended in `BLOCKED`, `NEEDS_FIX`, or worker failure.
 - `awarenessOnlyItems`: existing spec updates and direct implementation candidates excluded from worker dispatch.

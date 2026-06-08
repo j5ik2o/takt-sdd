@@ -15,14 +15,16 @@ extends_skill_section: "## Step 2: Build Dependency Waves"
 
 - `## Specs (dependency order)` を持つ `.kiro/steering/roadmap.md`。
 - optional awareness-only sections: `## Existing Spec Updates` と `## Direct Implementation Candidates`。
-- pending batch feature ごとの `.kiro/specs/<feature>/brief.md`。
+- spec pending batch feature ごとの `.kiro/specs/<feature>/brief.md`。
 - `kiro-spec-generation-workflows` phase contract と lifecycle result fields。
 
 ## Wave Planning
 
-- `## Specs (dependency order)` から pending specs と skipped completed specs を解析する。
-- strict dependency waves を作る。feature はすべての dependency が完了済み、または earlier wave に属する場合だけ wave に入れる。
-- missing dependency、circular dependency、missing `brief.md`、unknown completion marker は worker dispatch 前に報告する。
+- `## Specs (dependency order)` から spec pending entries と skipped spec-ready entries を解析する。
+- roadmap の `[x]` は spec ready marker として扱い、implementation completion や `tasks.md` checkbox completion として扱わない。
+- strict dependency waves を作る。feature はすべての dependency が spec ready、または earlier wave に属する場合だけ wave に入れる。
+- `tasks.md` が存在するだけで skip しない。`spec.json.phase == "tasks-generated"`、requirements/design/tasks approval、`ready_for_implementation == true`、required artifacts の存在を readiness evidence として確認する。
+- missing dependency、circular dependency、missing `brief.md`、unknown readiness marker は worker dispatch 前に報告する。
 
 ## Dynamic Worker Dispatch
 

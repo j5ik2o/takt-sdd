@@ -15,14 +15,16 @@ Run `kiro-spec-batch` as a dependency-wave controller for `.kiro/steering/roadma
 
 - `.kiro/steering/roadmap.md` with `## Specs (dependency order)`.
 - Optional awareness-only sections: `## Existing Spec Updates` and `## Direct Implementation Candidates`.
-- `.kiro/specs/<feature>/brief.md` for every pending batch feature.
+- `.kiro/specs/<feature>/brief.md` for every spec-pending batch feature.
 - `kiro-spec-generation-workflows` phase contract and lifecycle result fields.
 
 ## Wave Planning
 
-- Parse pending specs and skipped completed specs from `## Specs (dependency order)`.
-- Build strict dependency waves. A feature can enter a wave only when every dependency is completed or belongs to an earlier wave.
-- Report missing dependency, circular dependency, missing `brief.md`, and unknown completion markers before worker dispatch.
+- Parse spec-pending entries and skipped spec-ready entries from `## Specs (dependency order)`.
+- Treat roadmap `[x]` as a spec ready marker, not as implementation completion or `tasks.md` checkbox completion.
+- Build strict dependency waves. A feature can enter a wave only when every dependency is spec ready or belongs to an earlier wave.
+- Do not skip solely because `tasks.md` exists. Confirm readiness evidence from `spec.json.phase == "tasks-generated"`, requirements/design/tasks approvals, `ready_for_implementation == true`, and required artifact existence.
+- Report missing dependency, circular dependency, missing `brief.md`, and unknown readiness markers before worker dispatch.
 
 ## Dynamic Worker Dispatch
 
