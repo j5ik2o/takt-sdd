@@ -223,3 +223,49 @@ test("standalone spec generation workflows route drafts through spec AI quality 
     }
   }
 });
+
+test("quick spec workflow routes each phase draft through spec AI quality gate before local review", () => {
+  const phaseSpecs = [
+    {
+      gate: "quick-ai-quality-gate-requirements",
+      generate: "quick-requirements",
+      repair: "quick-repair-requirements",
+      review: "quick-review-requirements",
+    },
+    {
+      gate: "quick-ai-quality-gate-design",
+      generate: "quick-design",
+      repair: "quick-repair-design",
+      review: "quick-review-design",
+    },
+    {
+      gate: "quick-ai-quality-gate-tasks",
+      generate: "quick-tasks",
+      repair: "quick-repair-tasks",
+      review: "quick-review-tasks",
+    },
+  ];
+  const forbiddenStandaloneCalls = [
+    "call: ./kiro-spec-requirements.yaml",
+    "call: ./kiro-spec-design.yaml",
+    "call: ./kiro-spec-tasks.yaml",
+  ];
+
+  for (const language of languages) {
+    const path = join(repoRoot, ".takt", language, "workflows", "kiro-spec-quick.yaml");
+    const content = readFileSync(path, "utf8");
+
+    for (const spec of phaseSpecs) {
+      assert.ok(content.includes(`- ${spec.gate}`), `${path} loop monitor should include ${spec.gate}`);
+      assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*kind: workflow_call[\\s\\S]*call: ./kiro-spec-ai-quality-gate.yaml`));
+      assert.match(content, new RegExp(`- name: ${spec.generate}[\\s\\S]*next: ${spec.gate}`));
+      assert.match(content, new RegExp(`- name: ${spec.repair}[\\s\\S]*next: ${spec.gate}`));
+      assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*condition: COMPLETE[\\s\\S]*next: ${spec.review}`));
+      assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*condition: need_replan[\\s\\S]*next: ${spec.repair}`));
+    }
+
+    for (const forbiddenCall of forbiddenStandaloneCalls) {
+      assert.equal(content.includes(forbiddenCall), false, `${path} must not reuse standalone phase workflows`);
+    }
+  }
+});

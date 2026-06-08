@@ -6,7 +6,7 @@ workflow_config:
       network_access: true
     opencode:
       network_access: true
-max_steps: 24
+max_steps: 30
 initial_step: quick-init
 
 instructions:
@@ -33,6 +33,7 @@ report_formats:
 
 loop_monitors:
   - cycle:
+      - quick-ai-quality-gate-requirements
       - quick-review-requirements
       - quick-repair-requirements
       - quick-finalize-requirements
@@ -46,6 +47,7 @@ loop_monitors:
         - condition: Unproductive (same finding repeats or no improvement)
           next: ABORT
   - cycle:
+      - quick-ai-quality-gate-design
       - quick-review-design
       - quick-repair-design
       - quick-finalize-design
@@ -59,6 +61,7 @@ loop_monitors:
         - condition: Unproductive (same finding repeats or no improvement)
           next: ABORT
   - cycle:
+      - quick-ai-quality-gate-tasks
       - quick-review-tasks
       - quick-repair-tasks
       - quick-finalize-tasks
@@ -111,11 +114,26 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: validation.verdict PASS and phase requirements and draft_status READY_FOR_REVIEW and review_gate PENDING
-        next: quick-review-requirements
+        next: quick-ai-quality-gate-requirements
       - condition: validation.verdict BLOCKED or scope ambiguity remains or acceptance criteria not verifiable
         next: ABORT
       - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW
+        next: quick-ai-quality-gate-requirements
+
+  - name: quick-ai-quality-gate-requirements
+    kind: workflow_call
+    call: ./kiro-spec-ai-quality-gate.yaml
+    args:
+      fix_instruction: kiro-ai-antipattern-fix-spec-generation
+      domain_knowledge:
+        - architecture
+    rules:
+      - condition: COMPLETE
         next: quick-review-requirements
+      - condition: need_replan
+        next: quick-repair-requirements
+      - condition: ABORT
+        next: ABORT
 
   - name: quick-review-requirements
     edit: false
@@ -153,9 +171,9 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: validation.verdict PASS and draft_status READY_FOR_REVIEW
-        next: quick-review-requirements
+        next: quick-ai-quality-gate-requirements
       - condition: validation.verdict NEEDS_FIX and local repair attempted
-        next: quick-review-requirements
+        next: quick-ai-quality-gate-requirements
       - condition: validation.verdict BLOCKED or scope ambiguity remains or acceptance criteria not verifiable
         next: ABORT
 
@@ -211,11 +229,26 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: validation.verdict PASS and phase design and draft_status READY_FOR_REVIEW and review_gate PENDING
-        next: quick-review-design
+        next: quick-ai-quality-gate-design
       - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
         next: ABORT
       - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW
+        next: quick-ai-quality-gate-design
+
+  - name: quick-ai-quality-gate-design
+    kind: workflow_call
+    call: ./kiro-spec-ai-quality-gate.yaml
+    args:
+      fix_instruction: kiro-ai-antipattern-fix-spec-generation
+      domain_knowledge:
+        - architecture
+    rules:
+      - condition: COMPLETE
         next: quick-review-design
+      - condition: need_replan
+        next: quick-repair-design
+      - condition: ABORT
+        next: ABORT
 
   - name: quick-review-design
     edit: false
@@ -259,9 +292,9 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: validation.verdict PASS and draft_status READY_FOR_REVIEW
-        next: quick-review-design
+        next: quick-ai-quality-gate-design
       - condition: validation.verdict NEEDS_FIX and local repair attempted
-        next: quick-review-design
+        next: quick-ai-quality-gate-design
       - condition: validation.verdict BLOCKED or requirements approval gate failed or requirements/design gap remains
         next: ABORT
 
@@ -318,11 +351,26 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: validation.verdict PASS and phase tasks and draft_status READY_FOR_REVIEW and review_gate PENDING
-        next: quick-review-tasks
+        next: quick-ai-quality-gate-tasks
       - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
         next: ABORT
       - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW and review_gate PENDING
+        next: quick-ai-quality-gate-tasks
+
+  - name: quick-ai-quality-gate-tasks
+    kind: workflow_call
+    call: ./kiro-spec-ai-quality-gate.yaml
+    args:
+      fix_instruction: kiro-ai-antipattern-fix-spec-generation
+      domain_knowledge:
+        - architecture
+    rules:
+      - condition: COMPLETE
         next: quick-review-tasks
+      - condition: need_replan
+        next: quick-repair-tasks
+      - condition: ABORT
+        next: ABORT
 
   - name: quick-review-tasks
     edit: false
@@ -368,9 +416,9 @@ steps:
           format: kiro-spec-generation-result
     rules:
       - condition: validation.verdict PASS and phase tasks and draft_status READY_FOR_REVIEW and review_gate PENDING
-        next: quick-review-tasks
+        next: quick-ai-quality-gate-tasks
       - condition: validation.verdict NEEDS_FIX and draft_status READY_FOR_REVIEW and review_gate PENDING and local repair attempted
-        next: quick-review-tasks
+        next: quick-ai-quality-gate-tasks
       - condition: validation.verdict BLOCKED or requirements/design approval gate failed or hidden prerequisite remains or boundary overlap remains or coverage gap remains
         next: ABORT
 
@@ -425,7 +473,7 @@ steps:
 # validation/review 用の contract notes:
 # - automatic mode は phase finalizer 成功の間に user prompt を挟まず、init、requirements、design、tasks、sanity review を連続実行する。
 # - interactive mode は init -> requirements、requirements -> design、design -> tasks の間で phase approval を要求し、phase approval がなければ quick path を停止する。
-# - quick requirements、design、tasks は、この YAML 内で standalone workflow と同じ generate -> review -> repair -> finalize pattern を使い、finalize からの repair 戻りも loop_monitors cycle に含める。
+# - quick requirements、design、tasks は、この YAML 内で generate/repair -> quick-ai-quality-gate-* -> review -> finalize を使い、finalize からの repair 戻りも loop_monitors cycle に含める。
 # - この single YAML は phase steps を直接 compose する。外部 workflow orchestration や shell command による TAKT 再起動は使わない。
 # - quick path は discovery/batch/implementation behavior を呼ばない。
 # - final sanity review の verdict PASS だけが quick-completion と COMPLETE を許可する。

@@ -53,7 +53,7 @@
   - _Boundary:_ GenerationWorkflowIntegration
   - _Depends:_ 2.1, 2.3
 
-- [ ] 3.2 quick workflow に phase-local gate route と loop monitor を追加する
+- [x] 3.2 quick workflow に phase-local gate route と loop monitor を追加する
   - quick requirements/design/tasks の各 phase で generate/repair 直後に matching quick gate step が入り、既存 quick review step へ進む。
   - quick の allowed `workflow_call` は spec AI quality gate だけで、standalone phase workflow reuse は引き続き起きない。
   - quick の各 phase loop monitor に matching quick gate step が含まれている。
