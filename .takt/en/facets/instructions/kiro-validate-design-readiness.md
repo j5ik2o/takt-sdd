@@ -27,6 +27,8 @@ Use the shared `kiro-validation-result` contract. Translate the inherited skill'
 ## AI quality gate evidence
 
 - Inspect `kiro-spec-ai-antipattern-review.md` before returning `DECISION: GO`.
+- If the active workflow is standalone `kiro-validate-design` and no `kiro-spec-ai-antipattern-review.md` exists in the current run, skip the AI quality gate evidence check and use the normal validation procedure only; that read-only workflow does not execute the gate.
+- If a generation review workflow such as `kiro-spec-design` or `kiro-spec-quick` lacks `kiro-spec-ai-antipattern-review.md`, return `DECISION: MANUAL_VERIFY_REQUIRED` instead of accepting design readiness.
 - Return `DECISION: NO-GO` when unresolved AI antipattern findings remain.
 - If `kiro-spec-ai-antipattern-fix.md` exists, reject stale, cross-run, blocked, or evidence-free no-fix outcomes.
 - Treat the missing `kiro-spec-ai-antipattern-fix.md` as valid only when the first review found no blocking issue; it is an optional fix report, not a required success artifact.

@@ -221,6 +221,35 @@ test("downstream generation review facets consume spec AI quality gate evidence"
   }
 });
 
+test("design readiness allows missing spec AI gate evidence only for standalone validation", () => {
+  const requiredTermsByLanguage = {
+    en: [
+      "standalone `kiro-validate-design`",
+      "kiro-spec-ai-antipattern-review.md",
+      "skip the AI quality gate evidence check",
+      "kiro-spec-design",
+      "kiro-spec-quick",
+      "DECISION: MANUAL_VERIFY_REQUIRED",
+    ],
+    ja: [
+      "standalone `kiro-validate-design`",
+      "kiro-spec-ai-antipattern-review.md",
+      "AI quality gate evidence check をスキップ",
+      "kiro-spec-design",
+      "kiro-spec-quick",
+      "DECISION: MANUAL_VERIFY_REQUIRED",
+    ],
+  };
+
+  for (const language of languages) {
+    const path = join(repoRoot, ".takt", language, "facets", "instructions", "kiro-validate-design-readiness.md");
+    const content = readFileSync(path, "utf8");
+    for (const term of requiredTermsByLanguage[language]) {
+      assert.ok(content.includes(term), `${path} should include ${term}`);
+    }
+  }
+});
+
 test("standalone spec generation workflows route drafts through spec AI quality gate before domain review", () => {
   const workflowSpecs = [
     {
