@@ -101,3 +101,58 @@ test("spec generation AI quality gate workflow is callable and separates spec re
     assert.equal(content.includes("kiro-ai-antipattern-review.md"), false, `${path} should not reuse implementation review report name`);
   }
 });
+
+test("spec generation AI quality gate uses generation-specific fix instruction and output contract", () => {
+  const requiredInstructionTerms = [
+    "kiro-spec-ai-antipattern-review.md",
+    "kiro-spec-ai-antipattern-fix.md",
+    "current spec artifact boundary",
+    "FIXED",
+    "NO_FIX_NEEDED",
+    "NEED_REPLAN",
+    "BLOCKED",
+  ];
+  const requiredContractTerms = [
+    "STATUS",
+    "finding_decisions",
+    "changed_files",
+    "scope_guard",
+    "validation_evidence",
+    "no_fix_rationale",
+    "missing_context",
+    "kiro-spec-ai-antipattern-fix.md",
+  ];
+
+  for (const language of languages) {
+    const workflowPath = join(repoRoot, ".takt", language, "workflows", "kiro-spec-ai-quality-gate.yaml");
+    const workflowContent = readFileSync(workflowPath, "utf8");
+    assert.ok(workflowContent.includes("kiro-ai-antipattern-fix-spec-generation"));
+    assert.ok(workflowContent.includes("kiro-spec-ai-antipattern-fix-result"));
+
+    const instructionPath = join(
+      repoRoot,
+      ".takt",
+      language,
+      "facets",
+      "instructions",
+      "kiro-ai-antipattern-fix-spec-generation.md",
+    );
+    const instructionContent = readFileSync(instructionPath, "utf8");
+    for (const term of requiredInstructionTerms) {
+      assert.ok(instructionContent.includes(term), `${instructionPath} should include ${term}`);
+    }
+
+    const contractPath = join(
+      repoRoot,
+      ".takt",
+      language,
+      "facets",
+      "output-contracts",
+      "kiro-spec-ai-antipattern-fix-result.md",
+    );
+    const contractContent = readFileSync(contractPath, "utf8");
+    for (const term of requiredContractTerms) {
+      assert.ok(contractContent.includes(term), `${contractPath} should include ${term}`);
+    }
+  }
+});

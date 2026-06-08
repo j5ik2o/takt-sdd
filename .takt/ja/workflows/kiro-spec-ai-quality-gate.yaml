@@ -9,6 +9,7 @@ subworkflow:
     fix_instruction:
       type: facet_ref
       facet_kind: instruction
+      default: kiro-ai-antipattern-fix-spec-generation
     domain_knowledge:
       type: facet_ref[]
       facet_kind: knowledge
@@ -23,12 +24,15 @@ workflow_config:
 max_steps: 12
 initial_step: ai-antipattern-review-1st
 
+instructions:
+  kiro-ai-antipattern-fix-spec-generation: ../facets/instructions/kiro-ai-antipattern-fix-spec-generation.md
+
 policies:
   kiro-artifact-operations: ../facets/policies/kiro-artifact-operations.md
   kiro-spec-generation: ../facets/policies/kiro-spec-generation.md
 
 report_formats:
-  kiro-ai-antipattern-fix-result: ../facets/output-contracts/kiro-ai-antipattern-fix-result.md
+  kiro-spec-ai-antipattern-fix-result: ../facets/output-contracts/kiro-spec-ai-antipattern-fix-result.md
 
 loop_monitors:
   - cycle:
@@ -105,7 +109,7 @@ steps:
     output_contracts:
       report:
         - name: kiro-spec-ai-antipattern-fix.md
-          format: kiro-ai-antipattern-fix-result
+          format: kiro-spec-ai-antipattern-fix-result
     rules:
       - condition: STATUS FIXED
         next: ai-antipattern-review-1st
