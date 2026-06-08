@@ -75,6 +75,23 @@ test("roadmap parser separates dependency-order specs from awareness-only sectio
   assert.deepEqual(result.awarenessOnlySections, ["Existing Spec Updates", "Direct Implementation Candidates"]);
 });
 
+test("roadmap parser rejects malformed dependency-order lines", () => {
+  const roadmap = [
+    "# Roadmap",
+    "",
+    "## Specs (dependency order)",
+    "- [ ] feature-a -- Valid feature. Dependencies: none",
+    "- feature-b -- Missing checklist marker. Dependencies: feature-a",
+    "feature-c -- Missing bullet. Dependencies: feature-a",
+  ].join("\n");
+
+  const result = parseRoadmap(roadmap);
+
+  assert.equal(result.specs.length, 1);
+  assert.equal(result.errors.length, 2);
+  assert.ok(result.errors.every((error) => error.includes("invalid roadmap spec entry")));
+});
+
 test("dependency wave planner rejects missing dependencies and cycles", () => {
   const missingDependency = buildDependencyWaves([
     { featureName: "feature-a", description: "A", dependencies: ["missing"], status: "pending" },
@@ -270,6 +287,10 @@ test("kiro-spec-batch workflow uses dynamic worker dispatch without workflow reu
     }
     assert.ok(workflow.includes("dynamic subagent dispatch"));
     assert.ok(workflow.includes("loop_monitors.threshold"));
+    assert.ok(workflow.includes("verdict PASS"));
+    assert.ok(workflow.includes("verdict NEEDS_FIX"));
+    assert.ok(workflow.includes("verdict DECOMPOSITION_RETURN"));
+    assert.equal(workflow.includes("crossSpecReview PASS"), false);
     assert.equal(/\btakt\s+-w\b|\btakt\s+.*\s-w\s+/.test(workflow), false);
     assert.equal(workflow.includes("workflow_call"), false);
 

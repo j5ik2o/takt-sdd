@@ -373,13 +373,15 @@ export function parseRoadmap(content) {
     errors.push("missing ## Specs (dependency order) section");
   }
   for (const line of specsBody.split("\n")) {
-    if (!line.trim()) {
+    const trimmed = line.trim();
+    if (!trimmed) {
       continue;
     }
-    if (!line.startsWith("- [")) {
+    if (!trimmed.startsWith("- [")) {
+      errors.push(`invalid roadmap spec entry: ${line}`);
       continue;
     }
-    const entry = parseRoadmapLine(line);
+    const entry = parseRoadmapLine(trimmed);
     if (!entry) {
       errors.push(`invalid roadmap spec entry: ${line}`);
       continue;

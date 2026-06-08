@@ -99,11 +99,11 @@ steps:
         - name: kiro-cross-spec-review-result.md
           format: kiro-cross-spec-review
     rules:
-      - condition: crossSpecReview PASS and no remediation required
+      - condition: verdict PASS and no remediation required
         next: finalize-batch
-      - condition: crossSpecReview NEEDS_FIX and local remediation possible
+      - condition: verdict NEEDS_FIX and local remediation possible
         next: coordinate-remediation
-      - condition: crossSpecReview DECOMPOSITION_RETURN or blocking issue remains
+      - condition: verdict DECOMPOSITION_RETURN or blocking issue remains
         next: finalize-batch
 
   - name: coordinate-remediation
