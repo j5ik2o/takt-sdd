@@ -195,6 +195,12 @@ test("kiro-discovery workflow uses multi-step routing and skill adapter metadata
       assert.ok(workflow.includes(`name: ${step}`), `${workflowPath} should include ${step}`);
     }
     assert.ok(workflow.includes("kiro-discovery-result"), `${workflowPath} should report kiro-discovery-result`);
+    assert.ok(
+      workflow.includes(
+        "plannedFiles include brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems separated and actionPath MIXED_DECOMPOSITION",
+      ),
+      `${workflowPath} should require mixed decomposition brief and roadmap planning`,
+    );
 
     const instructionPath = `.takt/${lang}/facets/instructions/kiro-discovery.md`;
     assert.equal(existsSync(join(repoRoot, instructionPath)), true, `${instructionPath} should exist`);
@@ -337,6 +343,21 @@ test("validation rejects en/ja machine enum drift", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("MIXED_DECOMPOSITION")));
+});
+
+test("validation rejects en/ja workflow structure drift", () => {
+  const root = copyCurrentTaktFixture();
+  const path = ".takt/ja/workflows/kiro-discovery.yaml";
+  writeFixtureFile(
+    root,
+    path,
+    readFileSync(join(root, path), "utf8").replace("  - name: plan-discovery-artifacts", "  - name: plan-discovery-artifacts-ja"),
+  );
+
+  const result = validateKiroDiscoveryBatchWorkflows({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("LANGUAGE_PARITY_DRIFT")));
 });
 
 test("package exposes discovery batch validation commands", () => {

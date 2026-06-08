@@ -49,7 +49,7 @@ steps:
         next: write-discovery-artifacts
       - condition: plannedFiles include brief.md and .kiro/steering/roadmap.md and actionPath MULTI_SPEC
         next: write-discovery-artifacts
-      - condition: plannedFiles include awarenessOnlyItems and actionPath MIXED_DECOMPOSITION
+      - condition: plannedFiles include brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems separated and actionPath MIXED_DECOMPOSITION
         next: write-discovery-artifacts
       - condition: blockingReason present or brief.md roadmap contradiction found
         next: report-discovery

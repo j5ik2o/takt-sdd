@@ -150,6 +150,29 @@ function getStepNames(content) {
   return [...content.matchAll(/^  - name:\s*(.+)\s*$/gm)].map((match) => match[1]);
 }
 
+function extractMachineTokens(content) {
+  const tokens = new Set();
+  for (const match of content.matchAll(/`([^`]+)`/g)) {
+    const token = match[1];
+    if (/^[A-Za-z0-9_.:/-]+$/.test(token) || token.startsWith(".kiro/") || token.startsWith("## ")) {
+      tokens.add(token);
+    }
+  }
+  for (const match of content.matchAll(/\b[A-Z][A-Z0-9_]{2,}\b/g)) {
+    tokens.add(match[0]);
+  }
+  return [...tokens].sort();
+}
+
+function diffLists(left, right) {
+  const rightSet = new Set(right);
+  const leftSet = new Set(left);
+  return {
+    missingFromRight: left.filter((item) => !rightSet.has(item)),
+    extraInRight: right.filter((item) => !leftSet.has(item)),
+  };
+}
+
 function containsAll(content, terms, path, failures, repoRoot, code = "DISCOVERY_BATCH_DRIFT") {
   for (const term of terms) {
     if (!content.includes(term)) {
@@ -267,6 +290,51 @@ function validateNoUnusedDiscoveryBatchFacets(repoRoot, lang) {
       if (!expectedDiscoveryBatchFacets.has(key)) {
         failures.push(`UNUSED_FACET_DRIFT: ${rel(repoRoot, join(dir, file))} is in discovery/batch scope but is not connected`);
       }
+    }
+  }
+  return failures;
+}
+
+function validateLanguageParity(repoRoot) {
+  const failures = [];
+  for (const spec of workflowSpecs) {
+    const enPath = join(repoRoot, ".takt", "en", "workflows", spec.file);
+    const jaPath = join(repoRoot, ".takt", "ja", "workflows", spec.file);
+    if (!existsSync(enPath) || !existsSync(jaPath)) {
+      continue;
+    }
+    const enSteps = getStepNames(readText(enPath));
+    const jaSteps = getStepNames(readText(jaPath));
+    const stepDiff = diffLists(enSteps, jaSteps);
+    if (stepDiff.missingFromRight.length > 0 || stepDiff.extraInRight.length > 0) {
+      failures.push(
+        `LANGUAGE_PARITY_DRIFT: ${spec.file} en/ja step names differ: missing in ja [${stepDiff.missingFromRight.join(", ")}], extra in ja [${stepDiff.extraInRight.join(", ")}]`,
+      );
+    }
+
+    const enTokens = extractMachineTokens(readText(enPath));
+    const jaTokens = extractMachineTokens(readText(jaPath));
+    const tokenDiff = diffLists(enTokens, jaTokens);
+    if (tokenDiff.missingFromRight.length > 0 || tokenDiff.extraInRight.length > 0) {
+      failures.push(
+        `LANGUAGE_PARITY_DRIFT: ${spec.file} en/ja workflow machine tokens differ: missing in ja [${tokenDiff.missingFromRight.join(", ")}], extra in ja [${tokenDiff.extraInRight.join(", ")}]`,
+      );
+    }
+  }
+
+  for (const spec of facetSpecs) {
+    const enPath = join(repoRoot, ".takt", "en", "facets", spec.kind, spec.file);
+    const jaPath = join(repoRoot, ".takt", "ja", "facets", spec.kind, spec.file);
+    if (!existsSync(enPath) || !existsSync(jaPath)) {
+      continue;
+    }
+    const enTokens = extractMachineTokens(readText(enPath));
+    const jaTokens = extractMachineTokens(readText(jaPath));
+    const tokenDiff = diffLists(enTokens, jaTokens);
+    if (tokenDiff.missingFromRight.length > 0 || tokenDiff.extraInRight.length > 0) {
+      failures.push(
+        `LANGUAGE_PARITY_DRIFT: ${spec.kind}/${spec.file} en/ja machine tokens differ: missing in ja [${tokenDiff.missingFromRight.join(", ")}], extra in ja [${tokenDiff.extraInRight.join(", ")}]`,
+      );
     }
   }
   return failures;
@@ -434,6 +502,7 @@ export function validateKiroDiscoveryBatchWorkflows(options = {}) {
     failures.push(...validateNoUnusedDiscoveryBatchFacets(repoRoot, lang));
   }
   failures.push(...validateRoadmapParserFixture(repoRoot));
+  failures.push(...validateLanguageParity(repoRoot));
 
   return {
     ok: failures.length === 0,
