@@ -113,6 +113,25 @@ test("roadmap parser rejects duplicate dependency-order features", () => {
   assert.ok(wavePlan.errors.some((error) => error.includes("duplicate roadmap spec entry: feature-a")));
 });
 
+test("roadmap parser rejects empty dependency-order spec section", () => {
+  const roadmap = [
+    "# Roadmap",
+    "",
+    "## Specs (dependency order)",
+    "",
+    "## Existing Spec Updates",
+    "- [ ] old-feature -- Awareness only.",
+  ].join("\n");
+
+  const result = parseRoadmap(roadmap);
+  const wavePlan = buildDependencyWaves([]);
+
+  assert.deepEqual(result.specs, []);
+  assert.ok(result.errors.some((error) => error.includes("missing roadmap spec entries")));
+  assert.equal(wavePlan.ok, false);
+  assert.ok(wavePlan.errors.some((error) => error.includes("missing roadmap spec entries")));
+});
+
 test("dependency wave planner rejects missing dependencies and cycles", () => {
   const missingDependency = buildDependencyWaves([
     { featureName: "feature-a", description: "A", dependencies: ["missing"], status: "pending" },

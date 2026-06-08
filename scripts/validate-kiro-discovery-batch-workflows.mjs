@@ -401,6 +401,9 @@ export function parseRoadmap(content) {
     seenFeatureNames.add(entry.featureName);
     specs.push(entry);
   }
+  if (specs.length === 0) {
+    errors.push("missing roadmap spec entries");
+  }
   const names = new Set(specs.map((spec) => spec.featureName));
   for (const spec of specs) {
     for (const dependency of spec.dependencies) {
@@ -420,6 +423,9 @@ export function parseRoadmap(content) {
 
 export function buildDependencyWaves(specs) {
   const errors = [];
+  if (specs.length === 0) {
+    errors.push("missing roadmap spec entries");
+  }
   const seenFeatureNames = new Set();
   for (const spec of specs) {
     if (seenFeatureNames.has(spec.featureName)) {
