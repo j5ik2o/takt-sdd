@@ -1,9 +1,10 @@
----
-extends_skill: kiro-debug
-extends_skill_section: "## Outputs"
----
-
 {extends: fix}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-debug` or `/kiro-debug` and read the resolved `SKILL.md`.
+Apply the `## Outputs` section from `$kiro-debug` or `/kiro-debug` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro Debug Adapter
 
@@ -25,7 +26,7 @@ When the `reviewers` group routes here through `any("needs_fix")`, use the rejec
 
 ## Output mapping
 
-Return the `## Debug Report` shape from `kiro-debug`.
+Return the `## Debug Report` shape from `$kiro-debug` or `/kiro-debug`.
 
 - `ROOT_CAUSE`: concise evidence-backed cause.
 - `CATEGORY`: Kiro debug category.

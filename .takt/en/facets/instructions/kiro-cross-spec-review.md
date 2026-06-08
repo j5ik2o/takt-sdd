@@ -1,9 +1,10 @@
----
-extends_skill: kiro-spec-batch
-extends_skill_section: "## Step 4: Cross-Spec Review"
----
-
 {extends: review-arch}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-spec-batch` or `/kiro-spec-batch` and read the resolved `SKILL.md`.
+Apply the `## Step 4: Cross-Spec Review` section from `$kiro-spec-batch` or `/kiro-spec-batch` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro Cross-Spec Review Instruction
 
@@ -17,7 +18,7 @@ Review generated specs after batch worker dispatch. Focus on cross-spec consiste
 - Generated `.kiro/specs/*/design.md` as primary architecture input.
 - Generated `.kiro/specs/*/requirements.md` for scope and acceptance criteria.
 - Generated `.kiro/specs/*/tasks.md` for `_Boundary:_` annotations.
-- Worker feature results and skipped spec-ready entries from `kiro-spec-batch`.
+- Worker feature results and skipped spec-ready entries from `$kiro-spec-batch` or `/kiro-spec-batch`.
 
 ## Review Checks
 

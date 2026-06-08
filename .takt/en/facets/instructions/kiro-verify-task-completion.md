@@ -1,9 +1,10 @@
----
-extends_skill: kiro-verify-completion
-extends_skill_section: "## Outputs"
----
-
 {extends: supervise}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-verify-completion` or `/kiro-verify-completion` and read the resolved `SKILL.md`.
+Apply the `## Outputs` section from `$kiro-verify-completion` or `/kiro-verify-completion` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro Task Completion Verification Adapter
 

@@ -1,15 +1,16 @@
----
-extends_skill: kiro-spec-batch
-extends_skill_section: "## Step 2: Build Dependency Waves"
----
-
 {extends: supervise}
+
+## Kiro Skill Source
+
+この instruction を実行する前に、`$kiro-spec-batch` または `/kiro-spec-batch` を呼び出し、解決された `SKILL.md` を読む。
+`$kiro-spec-batch` または `/kiro-spec-batch` の `## Step 2: Build Dependency Waves` section をこの step の source of truth として適用する。
+この facet は TAKT workflow への adapter delta だけを定義する。
 
 # Kiro Spec Batch Instruction
 
 ## Kiro-specific delta
 
-`kiro-spec-batch` を `.kiro/steering/roadmap.md` の dependency-wave controller として実行します。この adapter は roadmap parsing、wave planning、dynamic subagent dispatch、feature result aggregation、generation workflow delegation を TAKT step output に写像します。`kiro-spec-generation-workflows` が所有する requirements/design/tasks generation rules は複製しません。
+`$kiro-spec-batch` または `/kiro-spec-batch` を `.kiro/steering/roadmap.md` の dependency-wave controller として実行します。この adapter は roadmap parsing、wave planning、dynamic subagent dispatch、feature result aggregation、generation workflow delegation を TAKT step output に写像します。`kiro-spec-generation-workflows` が所有する requirements/design/tasks generation rules は複製しません。
 
 ## Inputs
 

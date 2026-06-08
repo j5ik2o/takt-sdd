@@ -1,9 +1,10 @@
----
-extends_skill: kiro-spec-batch
-extends_skill_section: "## Step 4: Cross-Spec Review"
----
-
 {extends: review-arch}
+
+## Kiro Skill Source
+
+この instruction を実行する前に、`$kiro-spec-batch` または `/kiro-spec-batch` を呼び出し、解決された `SKILL.md` を読む。
+`$kiro-spec-batch` または `/kiro-spec-batch` の `## Step 4: Cross-Spec Review` section をこの step の source of truth として適用する。
+この facet は TAKT workflow への adapter delta だけを定義する。
 
 # Kiro Cross-Spec Review Instruction
 
@@ -17,7 +18,7 @@ batch worker dispatch 後の generated specs を review します。individual g
 - primary architecture input としての generated `.kiro/specs/*/design.md`。
 - scope と acceptance criteria 用の generated `.kiro/specs/*/requirements.md`。
 - `_Boundary:_` annotation 用の generated `.kiro/specs/*/tasks.md`。
-- `kiro-spec-batch` の worker feature results と skipped spec-ready entries。
+- `$kiro-spec-batch` または `/kiro-spec-batch` の worker feature results と skipped spec-ready entries。
 
 ## Review Checks
 

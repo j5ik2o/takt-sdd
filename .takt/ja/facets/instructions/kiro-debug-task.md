@@ -1,9 +1,10 @@
----
-extends_skill: kiro-debug
-extends_skill_section: "## Outputs"
----
-
 {extends: fix}
+
+## Kiro Skill Source
+
+この instruction を実行する前に、`$kiro-debug` または `/kiro-debug` を呼び出し、解決された `SKILL.md` を読む。
+`$kiro-debug` または `/kiro-debug` の `## Outputs` section をこの step の source of truth として適用する。
+この facet は TAKT workflow への adapter delta だけを定義する。
 
 # Kiro Debug Adapter
 
@@ -25,7 +26,7 @@ selected taskのimplementation、validation、review failureを調査し、root-
 
 ## Output mapping
 
-`kiro-debug` の `## Debug Report` 形式を返す。
+`$kiro-debug` または `/kiro-debug` の `## Debug Report` 形式を返す。
 
 - `ROOT_CAUSE`: evidence-backedな簡潔な原因。
 - `CATEGORY`: Kiro debug category。

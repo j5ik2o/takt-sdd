@@ -1,9 +1,10 @@
----
-extends_skill: kiro-spec-requirements
-extends_skill_section: "### Step 4: Review Requirements Draft"
----
-
 {extends: review-requirements}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-spec-requirements` or `/kiro-spec-requirements` and read the resolved `SKILL.md`.
+Apply the `### Step 4: Review Requirements Draft` section from `$kiro-spec-requirements` or `/kiro-spec-requirements` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro Spec Requirements Review Instruction
 

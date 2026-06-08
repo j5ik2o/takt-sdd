@@ -111,6 +111,53 @@ function containsAllContractTerms(content, terms, path, failures) {
   }
 }
 
+export function extractKiroSkillSourceInstruction(content) {
+  const skill =
+    content.match(/invoke `\$([^`]+)` or `\/\1`/)?.[1] ??
+    content.match(/`\$([^`]+)` または `\/\1`/)?.[1] ??
+    "";
+  const sections = [...content.matchAll(/`([^`]+)` section/g)].map((match) => match[1]);
+  return {
+    skill,
+    section: sections[0] ?? "",
+    additionalSections: sections.slice(1),
+  };
+}
+
+export function validateKiroSkillSourceInstruction(
+  content,
+  { skill = "", section = "", additionalSections = [], additionalSection = "", label = "facet" } = {},
+) {
+  const failures = [];
+  const source = extractKiroSkillSourceInstruction(content);
+  const expectedSkill = skill || source.skill;
+  const expectedSection = section || source.section;
+  const expectedAdditionalSections = additionalSections.length > 0 ? additionalSections : additionalSection ? [additionalSection] : source.additionalSections;
+  if (!expectedSkill || !expectedSection) {
+    failures.push(`${label} missing Kiro Skill Source skill name or section instruction`);
+    return failures;
+  }
+  const requiredTerms = [
+    `\`$${expectedSkill}\``,
+    `\`/${expectedSkill}\``,
+    "`SKILL.md`",
+    `\`${expectedSection}\` section`,
+    "source of truth",
+    "adapter delta",
+  ];
+  for (const term of requiredTerms) {
+    if (!content.includes(term)) {
+      failures.push(`${label} missing Kiro skill source instruction term: ${term}`);
+    }
+  }
+  for (const extraSection of expectedAdditionalSections) {
+    if (extraSection && !content.includes(`\`${extraSection}\` section`)) {
+      failures.push(`${label} must instruct the agent to read additional skill section ${extraSection}`);
+    }
+  }
+  return failures;
+}
+
 function stepBlocks(content) {
   const lines = content.split("\n");
   const blocks = [];
@@ -242,15 +289,13 @@ function validateKiroSkillInheritance() {
         byLanguage.set(`${lang}:${basename(path)}`, { customReason });
         continue;
       }
-      const skill = frontmatter.extends_skill;
-      const section = frontmatter.extends_skill_section;
-      const additionalSection = frontmatter.extends_skill_additional_section;
+      const { skill, section, additionalSections } = extractKiroSkillSourceInstruction(content);
       if (!skill || !section) {
-        failures.push(`${rel(path)} missing extends_skill or extends_skill_section frontmatter`);
+        failures.push(`${rel(path)} missing Kiro Skill Source skill name or section instruction`);
         continue;
       }
       if (!supportedSkills.has(skill)) {
-        failures.push(`${rel(path)} has unsupported extends_skill: ${skill}`);
+        failures.push(`${rel(path)} has unsupported Kiro Skill Source skill: ${skill}`);
         continue;
       }
       const skillPaths = [".agents/skills", ".claude/skills"]
@@ -264,11 +309,21 @@ function validateKiroSkillInheritance() {
       if (!skillContents.some((skillSource) => skillSource.content.includes(section))) {
         failures.push(`SKILL_SECTION_NOT_FOUND: ${rel(path)} references ${skill} section ${section} missing from all skill sources`);
       }
-      if (additionalSection && !skillContents.some((skillSource) => skillSource.content.includes(additionalSection))) {
-        failures.push(
-          `SKILL_SECTION_NOT_FOUND: ${rel(path)} references ${skill} additional section ${additionalSection} missing from all skill sources`,
-        );
+      for (const additionalSection of additionalSections) {
+        if (!skillContents.some((skillSource) => skillSource.content.includes(additionalSection))) {
+          failures.push(
+            `SKILL_SECTION_NOT_FOUND: ${rel(path)} references ${skill} additional section ${additionalSection} missing from all skill sources`,
+          );
+        }
       }
+      failures.push(
+        ...validateKiroSkillSourceInstruction(content, {
+          skill,
+          section,
+          additionalSections,
+          label: rel(path),
+        }),
+      );
       const suspiciousCopies = [
         "<background_information>",
         "<instructions>",
@@ -278,7 +333,7 @@ function validateKiroSkillInheritance() {
       if (suspiciousCopies.length > 0) {
         failures.push(`SKILL_BODY_COPY_DETECTED: ${rel(path)} repeats skill body markers ${suspiciousCopies.join(", ")}`);
       }
-      byLanguage.set(`${lang}:${basename(path)}`, { skill, section, additionalSection: additionalSection ?? "" });
+      byLanguage.set(`${lang}:${basename(path)}`, { skill, section, additionalSections: additionalSections.join("\n") });
     }
   }
 
@@ -296,7 +351,7 @@ function validateKiroSkillInheritance() {
       }
       continue;
     }
-    if (en.skill !== ja.skill || en.section !== ja.section || en.additionalSection !== ja.additionalSection) {
+    if (en.skill !== ja.skill || en.section !== ja.section || en.additionalSections !== ja.additionalSections) {
       failures.push(`SKILL_ADAPTER_DRIFT: ${file} en=${JSON.stringify(en)} ja=${JSON.stringify(ja)}`);
     }
   }

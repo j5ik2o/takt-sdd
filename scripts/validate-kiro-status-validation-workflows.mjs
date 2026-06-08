@@ -3,6 +3,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getKiroWorkflowNamesByCoverageCategory } from "./kiro-ai-quality-gate-contracts.mjs";
+import { extractKiroSkillSourceInstruction } from "./validate-kiro-shared-contracts.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -206,12 +207,12 @@ function validateInstructionFacets() {
         continue;
       }
       const content = readText(path);
-      const frontmatter = parseFrontmatter(content);
-      if (spec.skill && frontmatter.extends_skill !== spec.skill) {
-        failures.push(`${rel(path)} must declare extends_skill: ${spec.skill}`);
+      const skillSource = extractKiroSkillSourceInstruction(content);
+      if (spec.skill && skillSource.skill !== spec.skill) {
+        failures.push(`${rel(path)} must instruct agents to read skill ${spec.skill}`);
       }
-      if (spec.skillSection && frontmatter.extends_skill_section !== spec.skillSection) {
-        failures.push(`${rel(path)} must declare extends_skill_section: "${spec.skillSection}"`);
+      if (spec.skillSection && skillSource.section !== spec.skillSection) {
+        failures.push(`${rel(path)} must apply skill section "${spec.skillSection}"`);
       }
       const extendsPattern = new RegExp(`^\\{extends:\\s*${spec.parent}\\s*\\}$`, "m");
       if (!extendsPattern.test(content)) {
@@ -241,16 +242,16 @@ function validateInstructionFacets() {
 function validateSkillAdapterParity() {
   const failures = [];
   for (const spec of instructionSpecs.filter((instruction) => instruction.skill)) {
-    const frontmatters = languages.map((lang) => {
+    const skillSources = languages.map((lang) => {
       const path = join(repoRoot, ".takt", lang, "facets", "instructions", spec.file);
-      return { path, frontmatter: existsSync(path) ? parseFrontmatter(readText(path)) : {} };
+      return { path, skillSource: existsSync(path) ? extractKiroSkillSourceInstruction(readText(path)) : {} };
     });
-    const [first, ...rest] = frontmatters;
+    const [first, ...rest] = skillSources;
     for (const candidate of rest) {
-      for (const field of ["extends_skill", "extends_skill_section"]) {
-        if (candidate.frontmatter[field] !== first.frontmatter[field]) {
+      for (const field of ["skill", "section"]) {
+        if (candidate.skillSource[field] !== first.skillSource[field]) {
           failures.push(
-            `${rel(candidate.path)} ${field} must match ${rel(first.path)} for Kiro skill adapter parity`,
+            `${rel(candidate.path)} Kiro Skill Source ${field} must match ${rel(first.path)} for Kiro skill adapter parity`,
           );
         }
       }

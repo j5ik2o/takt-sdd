@@ -1,9 +1,10 @@
----
-extends_skill: kiro-spec-init
-extends_skill_section: "## Execution Steps"
----
-
 {extends: plan}
+
+## Kiro Skill Source
+
+この instruction を実行する前に、`$kiro-spec-init` または `/kiro-spec-init` を呼び出し、解決された `SKILL.md` を読む。
+`$kiro-spec-init` または `/kiro-spec-init` の `## Execution Steps` section をこの step の source of truth として適用する。
+この facet は TAKT workflow への adapter delta だけを定義する。
 
 # Kiro Spec Init Instruction
 

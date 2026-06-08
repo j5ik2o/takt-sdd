@@ -2,6 +2,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { extractKiroSkillSourceInstruction } from "./validate-kiro-shared-contracts.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -864,12 +865,12 @@ function validateFacetFiles(repoRoot) {
         failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, path)} must not define custom retry or loop-health source of truth`);
       }
       if (spec.kind === "instructions" && spec.skill) {
-        const frontmatter = parseFrontmatter(content);
-        if (frontmatter.extends_skill !== spec.skill) {
-          failures.push(`KIRO_SKILL_INHERITANCE_DRIFT: ${rel(repoRoot, path)} must extend skill ${spec.skill}`);
+        const skillSource = extractKiroSkillSourceInstruction(content);
+        if (skillSource.skill !== spec.skill) {
+          failures.push(`KIRO_SKILL_INHERITANCE_DRIFT: ${rel(repoRoot, path)} must instruct agents to read skill ${spec.skill}`);
         }
-        if (frontmatter.extends_skill_section !== spec.section) {
-          failures.push(`KIRO_SKILL_INHERITANCE_DRIFT: ${rel(repoRoot, path)} must extend section ${spec.section}`);
+        if (skillSource.section !== spec.section) {
+          failures.push(`KIRO_SKILL_INHERITANCE_DRIFT: ${rel(repoRoot, path)} must apply skill section ${spec.section}`);
         }
         const skillPath = join(repoRoot, ".agents", "skills", spec.skill, "SKILL.md");
         if (!existsSync(skillPath)) {

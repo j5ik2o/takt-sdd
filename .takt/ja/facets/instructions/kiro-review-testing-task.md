@@ -1,9 +1,10 @@
----
-extends_skill: kiro-review
-extends_skill_section: "## Outputs"
----
-
 {extends: review-test}
+
+## Kiro Skill Source
+
+この instruction を実行する前に、`$kiro-review` または `/kiro-review` を呼び出し、解決された `SKILL.md` を読む。
+`$kiro-review` または `/kiro-review` の `## Outputs` section をこの step の source of truth として適用する。
+この facet は TAKT workflow への adapter delta だけを定義する。
 
 # Kiro Testing Review Adapter
 

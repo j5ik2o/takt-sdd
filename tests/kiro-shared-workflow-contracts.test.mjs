@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { validateKiroSharedContracts, validateKiroWorkflowCallBoundary } from "../scripts/validate-kiro-shared-contracts.mjs";
+import {
+  validateKiroSharedContracts,
+  validateKiroSkillSourceInstruction,
+  validateKiroWorkflowCallBoundary,
+} from "../scripts/validate-kiro-shared-contracts.mjs";
 import {
   getAllowedKiroAiQualityGateCallSites,
   getKiroAiQualityGateContractTerms,
@@ -26,6 +30,35 @@ steps:
   const failures = validateKiroWorkflowCallBoundary(content, "kiro-impl.yaml", ".takt/en/workflows/kiro-impl.yaml");
 
   assert.deepEqual(failures, [".takt/en/workflows/kiro-impl.yaml must not use workflow_call for Kiro workflow reuse"]);
+});
+
+test("Kiro skill adapter facets must instruct runtime agents to read the source skill", () => {
+  const failures = validateKiroSkillSourceInstruction(
+    `{extends: review-coding}
+
+# Adapter
+
+Return VERDICT only.
+`,
+    { label: "kiro-review-task.md" },
+  );
+
+  assert.deepEqual(failures, ["kiro-review-task.md missing Kiro Skill Source skill name or section instruction"]);
+});
+
+test("Kiro skill adapter source instruction accepts explicit skill and section references", () => {
+  const failures = validateKiroSkillSourceInstruction(
+    [
+      "## Kiro Skill Source",
+      "",
+      "Before executing this instruction, invoke `$kiro-review` or `/kiro-review` and read the resolved `SKILL.md`.",
+      "Apply the `## Outputs` section from `$kiro-review` or `/kiro-review` as this step's source of truth.",
+      "This facet defines only the adapter delta for the TAKT workflow.",
+    ].join("\n"),
+    { skill: "kiro-review", section: "## Outputs", label: "kiro-review-task.md" },
+  );
+
+  assert.deepEqual(failures, []);
 });
 
 test("workflow_call boundary allows approved implementation and spec generation gate call sites", () => {

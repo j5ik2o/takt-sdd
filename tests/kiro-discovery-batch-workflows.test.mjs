@@ -365,8 +365,10 @@ test("kiro-discovery workflow uses multi-step routing and skill adapter metadata
     const instructionPath = `.takt/${lang}/facets/instructions/kiro-discovery.md`;
     assert.equal(existsSync(join(repoRoot, instructionPath)), true, `${instructionPath} should exist`);
     const instruction = readFileSync(join(repoRoot, instructionPath), "utf8");
-    assert.ok(instruction.includes("extends_skill: kiro-discovery"));
-    assert.ok(instruction.includes('extends_skill_section: "## Step 2: Determine Action Path"'));
+    assert.ok(instruction.includes("`$kiro-discovery`"));
+    assert.ok(instruction.includes("`/kiro-discovery`"));
+    assert.ok(instruction.includes("`SKILL.md`"));
+    assert.ok(instruction.includes("`## Step 2: Determine Action Path` section"));
     assert.ok(instruction.includes("{extends: plan}"));
   }
 });
@@ -487,8 +489,10 @@ test("kiro-spec-batch workflow uses dynamic worker dispatch without workflow reu
     const instructionPath = `.takt/${lang}/facets/instructions/kiro-spec-batch.md`;
     assert.equal(existsSync(join(repoRoot, instructionPath)), true, `${instructionPath} should exist`);
     const instruction = readFileSync(join(repoRoot, instructionPath), "utf8");
-    assert.ok(instruction.includes("extends_skill: kiro-spec-batch"));
-    assert.ok(instruction.includes('extends_skill_section: "## Step 2: Build Dependency Waves"'));
+    assert.ok(instruction.includes("`$kiro-spec-batch`"));
+    assert.ok(instruction.includes("`/kiro-spec-batch`"));
+    assert.ok(instruction.includes("`SKILL.md`"));
+    assert.ok(instruction.includes("`## Step 2: Build Dependency Waves` section"));
     assert.ok(instruction.includes("kiro-spec-generation-workflows"));
   }
 });

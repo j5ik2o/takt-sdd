@@ -1,9 +1,10 @@
----
-extends_skill: kiro-review
-extends_skill_section: "## Outputs"
----
-
 {extends: review-qa}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-review` or `/kiro-review` and read the resolved `SKILL.md`.
+Apply the `## Outputs` section from `$kiro-review` or `/kiro-review` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro QA Review Adapter
 

@@ -78,13 +78,13 @@ test("task 14 rejects single-step or non-report read-only workflow shape", () =>
   assertHasFailure(result, "must use read-only collect -> classify/validate -> report steps");
 });
 
-test("task 15 rejects validation facets without Kiro skill thin adapter metadata", () => {
+test("task 15 rejects validation facets without Kiro Skill Source instructions", () => {
   const root = makeValidationFixture();
   const path = ".takt/en/facets/instructions/kiro-validate-gap-readiness.md";
-  writeFile(root, path, readFixtureFile(root, path).replace(/^extends_skill: .+\n/m, ""));
+  writeFile(root, path, readFixtureFile(root, path).replace("`$kiro-validate-gap`", "`$missing`"));
 
   const result = validateKiroStatusValidationWorkflows({ repoRoot: root });
-  assertHasFailure(result, "must declare extends_skill: kiro-validate-gap");
+  assertHasFailure(result, "must instruct agents to read skill kiro-validate-gap");
 });
 
 test("task 16 rejects standalone validation workflows that route on validation.verdict instead of DECISION", () => {

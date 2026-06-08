@@ -1,9 +1,10 @@
----
-extends_skill: kiro-validate-impl
-extends_skill_section: "### 4. Generate Report"
----
-
 {extends: supervise}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-validate-impl` or `/kiro-validate-impl` and read the resolved `SKILL.md`.
+Apply the `### 4. Generate Report` section from `$kiro-validate-impl` or `/kiro-validate-impl` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro Final Implementation Validation Adapter
 
@@ -13,7 +14,7 @@ Run feature-level validation after selected task progress handling. This adapter
 
 ## Output mapping
 
-Return the `kiro-validate-impl` validation report.
+Return the validation report from `$kiro-validate-impl` or `/kiro-validate-impl`.
 
 - `DECISION`: `GO`, `NO-GO`, or `MANUAL_VERIFY_REQUIRED`.
 - `MECHANICAL_RESULTS`: test, static check, and smoke evidence when available.

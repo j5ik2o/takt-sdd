@@ -1,9 +1,10 @@
----
-extends_skill: kiro-spec-tasks
-extends_skill_section: "## Execution Steps"
----
-
 {extends: plan}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-spec-tasks` or `/kiro-spec-tasks` and read the resolved `SKILL.md`.
+Apply the `## Execution Steps` section from `$kiro-spec-tasks` or `/kiro-spec-tasks` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro Spec Tasks Instruction
 
