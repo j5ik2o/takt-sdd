@@ -266,12 +266,24 @@ test("kiro-discovery workflow uses multi-step routing and skill adapter metadata
       `${workflowPath} should require mixed decomposition awareness-only items before reporting`,
     );
     assert.ok(
-      workflow.includes("actionPath MIXED_DECOMPOSITION and every new spec brief.md present and awarenessOnlyItems non-empty"),
-      `${workflowPath} should require awareness-only items before mixed decomposition completion`,
+      workflow.includes(
+        "actionPath MIXED_DECOMPOSITION and every new spec brief.md present and .kiro/steering/roadmap.md present and awarenessOnlyItems non-empty",
+      ),
+      `${workflowPath} should require roadmap and awareness-only items before mixed decomposition completion`,
     );
     assert.ok(
-      workflow.includes("actionPath MULTI_SPEC and every new spec brief.md present"),
-      `${workflowPath} should require every new spec brief before multi-spec completion`,
+      workflow.includes("actionPath MULTI_SPEC and every new spec brief.md present and .kiro/steering/roadmap.md present"),
+      `${workflowPath} should require roadmap and every new spec brief before multi-spec completion`,
+    );
+    assert.equal(
+      workflow.includes("actionPath MULTI_SPEC and every new spec brief.md present\n"),
+      false,
+      `${workflowPath} should not allow multi-spec completion without roadmap`,
+    );
+    assert.equal(
+      workflow.includes("actionPath MIXED_DECOMPOSITION and every new spec brief.md present and awarenessOnlyItems non-empty\n"),
+      false,
+      `${workflowPath} should not allow mixed decomposition completion without roadmap`,
     );
     assert.equal(
       workflow.includes("actionPath MIXED_DECOMPOSITION and awarenessOnlyItems present"),

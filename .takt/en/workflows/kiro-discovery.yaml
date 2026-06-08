@@ -95,7 +95,7 @@ steps:
         next: COMPLETE
       - condition: actionPath SINGLE_SPEC and target brief.md present
         next: COMPLETE
-      - condition: actionPath MULTI_SPEC and every new spec brief.md present
+      - condition: actionPath MULTI_SPEC and every new spec brief.md present and .kiro/steering/roadmap.md present
         next: COMPLETE
-      - condition: actionPath MIXED_DECOMPOSITION and every new spec brief.md present and awarenessOnlyItems non-empty
+      - condition: actionPath MIXED_DECOMPOSITION and every new spec brief.md present and .kiro/steering/roadmap.md present and awarenessOnlyItems non-empty
         next: COMPLETE
