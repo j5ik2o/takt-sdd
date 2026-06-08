@@ -14,7 +14,7 @@ Verify the selected task completion claim with fresh evidence before any checkbo
 ## Verification inputs
 
 - implementation result and `STATUS`.
-- AI antipattern gate reports: `kiro-ai-antipattern-review.md`, plus `kiro-ai-antipattern-fix.md` only if it exists in the current AI quality gate subworkflow run.
+- AI antipattern gate reports: `kiro-ai-antipattern-review.md`, plus optional `kiro-ai-antipattern-fix.md` only if it exists in the current AI quality gate subworkflow run.
 - review `VERDICT`.
 - validation evidence and manual verification requirement.
 - selected task text, requirement refs, and boundary scope.

@@ -661,6 +661,7 @@ function validateFacetFiles(repoRoot) {
           [
             "kiro-ai-antipattern-review.md",
             "kiro-ai-antipattern-fix.md",
+            "optional",
             "current AI quality gate subworkflow run",
             "stale",
             "cross-run",

@@ -239,7 +239,7 @@ test("validator rejects adapters that require AI antipattern fix reports uncondi
   writeFixtureFile(root, ".takt/en/facets/instructions/kiro-review-task.md", review);
   const verifyPath = join(root, ".takt", "en", "facets", "instructions", "kiro-verify-task-completion.md");
   const verify = readFileSync(verifyPath, "utf8")
-    .replace(" plus `kiro-ai-antipattern-fix.md` only if it exists in the current AI quality gate subworkflow run", " and `kiro-ai-antipattern-fix.md`")
+    .replace(" plus optional `kiro-ai-antipattern-fix.md` only if it exists in the current AI quality gate subworkflow run", " and `kiro-ai-antipattern-fix.md`")
     .replace("stale or cross-run fix evidence, ", "");
   writeFixtureFile(root, ".takt/en/facets/instructions/kiro-verify-task-completion.md", verify);
 
