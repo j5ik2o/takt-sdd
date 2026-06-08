@@ -218,6 +218,10 @@ test("kiro-discovery workflow uses multi-step routing and skill adapter metadata
       ),
       `${workflowPath} should require mixed decomposition brief and roadmap planning`,
     );
+    assert.ok(
+      workflow.includes("blockingReason present or artifact write failed or brief.md roadmap contradiction found"),
+      `${workflowPath} should abort discovery reports on artifact failures and roadmap contradictions`,
+    );
 
     const instructionPath = `.takt/${lang}/facets/instructions/kiro-discovery.md`;
     assert.equal(existsSync(join(repoRoot, instructionPath)), true, `${instructionPath} should exist`);

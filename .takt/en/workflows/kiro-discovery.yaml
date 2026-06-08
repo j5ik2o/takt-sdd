@@ -85,7 +85,7 @@ steps:
         - name: kiro-discovery-result.md
           format: kiro-discovery-result
     rules:
-      - condition: blockingReason present
+      - condition: blockingReason present or artifact write failed or brief.md roadmap contradiction found
         next: ABORT
       - condition: actionPath EXISTING_SPEC_UPDATE or actionPath DIRECT_IMPLEMENTATION
         next: COMPLETE
