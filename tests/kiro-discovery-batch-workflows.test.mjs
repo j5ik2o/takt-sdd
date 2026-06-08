@@ -148,6 +148,28 @@ test("dependency wave planner rejects missing dependencies and cycles", () => {
   assert.ok(cycle.errors.some((error) => error.includes("circular dependency")));
 });
 
+test("validation reports roadmap missing dependencies once", () => {
+  const root = copyCurrentTaktFixture();
+  writeFixtureFile(
+    root,
+    ".kiro/steering/roadmap.md",
+    [
+      "# Roadmap",
+      "",
+      "## Specs (dependency order)",
+      "- [ ] feature-a -- Depends on a missing feature. Dependencies: missing-feature",
+    ].join("\n"),
+  );
+
+  const result = validateKiroDiscoveryBatchWorkflows({ repoRoot: root });
+  const missingDependencyFailures = result.failures.filter((failure) =>
+    failure.includes("feature-a has missing dependency missing-feature"),
+  );
+
+  assert.equal(result.ok, false);
+  assert.equal(missingDependencyFailures.length, 1);
+});
+
 test("batch plan prerequisites reject pending specs without brief", () => {
   const root = makeFixture();
   const result = validateBatchPlanPrerequisites(root, [

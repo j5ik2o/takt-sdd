@@ -256,7 +256,9 @@ function validateFacet(repoRoot, lang, spec) {
   }
   const actualParent = parseFacetParent(content);
   if (actualParent !== spec.parent) {
-    failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must extend built-in ${spec.kind}/${spec.parent}`);
+    failures.push(
+      `FACET_DRIFT: ${rel(repoRoot, path)} extends ${actualParent ?? "<none>"} but must extend built-in ${spec.kind}/${spec.parent}`,
+    );
   }
   if (!actualParent) {
     failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must declare a built-in facet parent`);
@@ -496,24 +498,24 @@ export function validateBatchPlanPrerequisites(repoRoot, specs) {
 }
 
 function validateRoadmapParserFixture(repoRoot) {
-  const failures = [];
+  const failures = new Set();
   const roadmapPath = join(repoRoot, ".kiro", "steering", "roadmap.md");
   if (!existsSync(roadmapPath)) {
-    return failures;
+    return [...failures];
   }
   const result = parseRoadmap(readText(roadmapPath));
   for (const error of result.errors) {
-    failures.push(`ROADMAP_PARSER_DRIFT: ${rel(repoRoot, roadmapPath)} ${error}`);
+    failures.add(`ROADMAP_PARSER_DRIFT: ${rel(repoRoot, roadmapPath)} ${error}`);
   }
   const plan = buildDependencyWaves(result.specs);
   for (const error of plan.errors) {
-    failures.push(`ROADMAP_PARSER_DRIFT: ${rel(repoRoot, roadmapPath)} ${error}`);
+    failures.add(`ROADMAP_PARSER_DRIFT: ${rel(repoRoot, roadmapPath)} ${error}`);
   }
   const prerequisites = validateBatchPlanPrerequisites(repoRoot, result.specs);
   for (const error of prerequisites.errors) {
-    failures.push(`ROADMAP_PARSER_DRIFT: ${rel(repoRoot, roadmapPath)} ${error}`);
+    failures.add(`ROADMAP_PARSER_DRIFT: ${rel(repoRoot, roadmapPath)} ${error}`);
   }
-  return failures;
+  return [...failures];
 }
 
 export function validateKiroDiscoveryBatchWorkflows(options = {}) {
