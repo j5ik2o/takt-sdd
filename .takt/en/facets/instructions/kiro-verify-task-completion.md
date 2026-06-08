@@ -14,7 +14,7 @@ Verify the selected task completion claim with fresh evidence before any checkbo
 ## Verification inputs
 
 - implementation result and `STATUS`.
-- AI antipattern gate reports: `kiro-ai-antipattern-review.md` and `kiro-ai-antipattern-fix.md`.
+- AI antipattern gate reports: `kiro-ai-antipattern-review.md`, plus `kiro-ai-antipattern-fix.md` only if it exists in the current AI quality gate subworkflow run.
 - review `VERDICT`.
 - validation evidence and manual verification requirement.
 - selected task text, requirement refs, and boundary scope.
@@ -25,7 +25,7 @@ Verify the selected task completion claim with fresh evidence before any checkbo
 - `CLAIM_TYPE`: `TASK`.
 - `CLAIM`: selected task completion claim.
 - `EVIDENCE`: fresh command output and review facts.
-- `GAPS`: missing evidence, unresolved AI antipattern gate evidence, or scope mismatch.
+- `GAPS`: missing evidence, unresolved AI antipattern gate evidence, stale or cross-run fix evidence, or scope mismatch.
 - `safe_to_update_progress`: true only when `STATUS` is `VERIFIED`.
 
 Workflow rules branch on `STATUS` and `safe_to_update_progress`.

@@ -230,6 +230,25 @@ test("validator rejects missing AI gate evidence hooks in review adapter", () =>
   assert.ok(result.failures.some((failure) => failure.includes("kiro-review-task.md")));
 });
 
+test("validator rejects adapters that require AI antipattern fix reports unconditionally", () => {
+  const root = makeCurrentSurfaceFixture();
+  const reviewPath = join(root, ".takt", "en", "facets", "instructions", "kiro-review-task.md");
+  const review = readFileSync(reviewPath, "utf8")
+    .replace("only if that report exists in the current AI quality gate subworkflow run; it is optional", "before forming the verdict")
+    .replace("stale or cross-run fix evidence, ", "");
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-review-task.md", review);
+  const verifyPath = join(root, ".takt", "en", "facets", "instructions", "kiro-verify-task-completion.md");
+  const verify = readFileSync(verifyPath, "utf8")
+    .replace(" plus `kiro-ai-antipattern-fix.md` only if it exists in the current AI quality gate subworkflow run", " and `kiro-ai-antipattern-fix.md`")
+    .replace("stale or cross-run fix evidence, ", "");
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-verify-task-completion.md", verify);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("optional")));
+});
+
 test("validator rejects progress adapter reading AI gate reports directly", () => {
   const root = makeCurrentSurfaceFixture();
   const progressPath = join(root, ".takt", "en", "facets", "instructions", "kiro-impl-update-progress.md");

@@ -638,7 +638,17 @@ function validateFacetFiles(repoRoot) {
       if (spec.name === "kiro-review-task") {
         containsAll(
           content,
-          ["kiro-ai-antipattern-review.md", "kiro-ai-antipattern-fix.md", "NO_FIX_NEEDED", "NEED_REPLAN", "BLOCKED"],
+          [
+            "kiro-ai-antipattern-review.md",
+            "kiro-ai-antipattern-fix.md",
+            "optional",
+            "current AI quality gate subworkflow run",
+            "stale",
+            "cross-run",
+            "NO_FIX_NEEDED",
+            "NEED_REPLAN",
+            "BLOCKED",
+          ],
           path,
           failures,
           repoRoot,
@@ -648,7 +658,13 @@ function validateFacetFiles(repoRoot) {
       if (spec.name === "kiro-verify-task-completion") {
         containsAll(
           content,
-          ["kiro-ai-antipattern-review.md", "kiro-ai-antipattern-fix.md", "AI antipattern gate"],
+          [
+            "kiro-ai-antipattern-review.md",
+            "kiro-ai-antipattern-fix.md",
+            "current AI quality gate subworkflow run",
+            "stale",
+            "cross-run",
+          ],
           path,
           failures,
           repoRoot,

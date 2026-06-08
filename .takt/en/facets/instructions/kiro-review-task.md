@@ -11,7 +11,7 @@ extends_skill_section: "## Outputs"
 
 Review only the selected task implementation against requirements, design boundary, task `_Boundary:_`, validation evidence, and the actual diff.
 
-Read `kiro-ai-antipattern-review.md` and `kiro-ai-antipattern-fix.md` before forming the verdict. Treat unresolved AI antipattern findings, missing finding-level `NO_FIX_NEEDED` evidence, or a `NEED_REPLAN` / `BLOCKED` fix result as review findings tied to the selected task.
+Read `kiro-ai-antipattern-review.md` before forming the verdict. Read `kiro-ai-antipattern-fix.md` only if that report exists in the current AI quality gate subworkflow run; it is optional because first-pass AI review approval does not produce a fix report. Treat unresolved AI antipattern findings, stale or cross-run fix evidence, missing finding-level `NO_FIX_NEEDED` evidence when a fix report exists, or a `NEED_REPLAN` / `BLOCKED` fix result as review findings tied to the selected task.
 
 ## Output mapping
 
