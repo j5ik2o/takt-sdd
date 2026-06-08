@@ -18,7 +18,7 @@
 - `EXISTING_SPEC_UPDATE` and `DIRECT_IMPLEMENTATION` normally have an empty `createdFiles` array and a concrete `nextAction`.
 - `SINGLE_SPEC` must include the target feature `brief.md` in `createdFiles` or `plannedFiles`.
 - `MULTI_SPEC` and `MIXED_DECOMPOSITION` must include `.kiro/steering/roadmap.md` plus every new spec `brief.md`.
-- `MIXED_DECOMPOSITION` must keep existing spec updates and direct implementation candidates in `awarenessOnlyItems`.
+- `MIXED_DECOMPOSITION` must keep existing spec updates and direct implementation candidates in `awarenessOnlyItems` and satisfy `awarenessOnlyItems non-empty`.
 - When `blockingReason` is present, downstream spec generation must not start.
 
 ## Brief Contract

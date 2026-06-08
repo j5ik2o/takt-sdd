@@ -19,6 +19,7 @@ Use this policy only for `kiro-discovery` action path routing. It classifies a u
 - `EXISTING_SPEC_UPDATE` and `DIRECT_IMPLEMENTATION` must not write new spec generation artifacts. Return `nextAction` that points to the existing spec update or direct implementation path.
 - `SINGLE_SPEC`, `MULTI_SPEC`, and `MIXED_DECOMPOSITION` must produce `brief.md` for every new spec candidate.
 - `MULTI_SPEC` and `MIXED_DECOMPOSITION` must create or update `.kiro/steering/roadmap.md` with `## Specs (dependency order)`.
+- `MIXED_DECOMPOSITION` completion requires `awarenessOnlyItems non-empty` for existing spec updates or direct implementation candidates.
 - `Existing Spec Updates` and `Direct Implementation Candidates` in roadmap are awareness-only sections. They are not dependency-wave inputs for `kiro-spec-batch`.
 - If action path, dependency, or boundary ownership is ambiguous, return `blockingReason` and stop without guessing.
 

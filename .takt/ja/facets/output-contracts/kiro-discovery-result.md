@@ -18,7 +18,7 @@
 - `EXISTING_SPEC_UPDATE` と `DIRECT_IMPLEMENTATION` は通常 `createdFiles` を空にし、具体的な `nextAction` を返す。
 - `SINGLE_SPEC` は対象 feature の `brief.md` を `createdFiles` または `plannedFiles` に含める。
 - `MULTI_SPEC` と `MIXED_DECOMPOSITION` は `.kiro/steering/roadmap.md` と新規 spec ごとの `brief.md` を含める。
-- `MIXED_DECOMPOSITION` は既存 spec 更新と direct implementation candidate を `awarenessOnlyItems` に分離する。
+- `MIXED_DECOMPOSITION` は既存 spec 更新と direct implementation candidate を `awarenessOnlyItems` に分離し、`awarenessOnlyItems non-empty` を満たす。
 - `blockingReason` が存在する場合、downstream spec generation を開始してはいけない。
 
 ## Brief Contract

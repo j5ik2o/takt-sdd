@@ -254,19 +254,24 @@ test("kiro-discovery workflow uses multi-step routing and skill adapter metadata
     assert.ok(workflow.includes("kiro-discovery-result"), `${workflowPath} should report kiro-discovery-result`);
     assert.ok(
       workflow.includes(
-        "plannedFiles include brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems separated and actionPath MIXED_DECOMPOSITION",
+        "plannedFiles include brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems non-empty and separated and actionPath MIXED_DECOMPOSITION",
       ),
       `${workflowPath} should require mixed decomposition brief and roadmap planning`,
     );
     assert.ok(
       workflow.includes(
-        "createdFiles include brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems present and actionPath MIXED_DECOMPOSITION",
+        "createdFiles include brief.md and .kiro/steering/roadmap.md and awarenessOnlyItems non-empty and actionPath MIXED_DECOMPOSITION",
       ),
       `${workflowPath} should require mixed decomposition awareness-only items before reporting`,
     );
     assert.ok(
-      workflow.includes("actionPath MIXED_DECOMPOSITION and awarenessOnlyItems present"),
+      workflow.includes("actionPath MIXED_DECOMPOSITION and awarenessOnlyItems non-empty"),
       `${workflowPath} should require awareness-only items before mixed decomposition completion`,
+    );
+    assert.equal(
+      workflow.includes("actionPath MIXED_DECOMPOSITION and awarenessOnlyItems present"),
+      false,
+      `${workflowPath} should not allow empty awareness-only items for mixed decomposition`,
     );
     assert.ok(
       workflow.includes("blockingReason present or artifact write failed or brief.md roadmap contradiction found"),

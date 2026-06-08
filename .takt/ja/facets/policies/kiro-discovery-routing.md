@@ -19,6 +19,7 @@
 - `EXISTING_SPEC_UPDATE` と `DIRECT_IMPLEMENTATION` は新しい spec generation artifact を書かない。既存 spec 更新または direct implementation の `nextAction` を返す。
 - `SINGLE_SPEC`、`MULTI_SPEC`、`MIXED_DECOMPOSITION` は新規 spec candidate ごとに `brief.md` を作る。
 - `MULTI_SPEC` と `MIXED_DECOMPOSITION` は `.kiro/steering/roadmap.md` に `## Specs (dependency order)` を作成または更新する。
+- `MIXED_DECOMPOSITION` の完了には、既存 spec 更新または direct implementation candidate のために `awarenessOnlyItems non-empty` が必要。
 - roadmap の `Existing Spec Updates` と `Direct Implementation Candidates` は awareness-only section として扱い、`kiro-spec-batch` の dependency-wave input にしない。
 - action path、dependency、boundary ownership が曖昧な場合は、推測せず `blockingReason` を返して停止する。
 
