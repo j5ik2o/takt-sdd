@@ -15,6 +15,7 @@ Verify the selected task completion claim with fresh evidence before any checkbo
 
 - implementation result and `STATUS`.
 - AI antipattern gate reports: `kiro-ai-antipattern-review.md`, plus optional `kiro-ai-antipattern-fix.md` only if it exists in the current AI quality gate subworkflow run.
+- If `kiro-ai-antipattern-fix.md` exists, reject `STATUS NEED_REPLAN`, `STATUS BLOCKED`, stale or cross-run fix evidence, and `STATUS NO_FIX_NEEDED` without finding-level evidence before setting `safe_to_update_progress`.
 - review `VERDICT`.
 - validation evidence and manual verification requirement.
 - selected task text, requirement refs, and boundary scope.

@@ -15,6 +15,7 @@ checkbox updateの前に、fresh evidenceでselected task completion claimを検
 
 - implementation resultと `STATUS`。
 - AI antipattern gate reports: `kiro-ai-antipattern-review.md`、および current AI quality gate subworkflow run に存在する場合だけ optional な `kiro-ai-antipattern-fix.md`。
+- `kiro-ai-antipattern-fix.md` が存在する場合、`safe_to_update_progress` を true にする前に、`STATUS NEED_REPLAN`、`STATUS BLOCKED`、stale または cross-run の fix evidence、finding-level evidence がない `STATUS NO_FIX_NEEDED` を拒否する。
 - review `VERDICT`。
 - validation evidenceとmanual verification requirement。
 - selected task text、requirement refs、boundary scope。

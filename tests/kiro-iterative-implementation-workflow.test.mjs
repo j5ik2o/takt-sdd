@@ -249,6 +249,20 @@ test("validator rejects adapters that require AI antipattern fix reports uncondi
   assert.ok(result.failures.some((failure) => failure.includes("optional")));
 });
 
+test("validator rejects verify adapters that ignore AI antipattern fix statuses", () => {
+  const root = makeCurrentSurfaceFixture();
+  const verifyPath = join(root, ".takt", "ja", "facets", "instructions", "kiro-verify-task-completion.md");
+  const verify = readFileSync(verifyPath, "utf8")
+    .replace("`STATUS NEED_REPLAN`、`STATUS BLOCKED`、", "")
+    .replace("finding-level evidence がない `STATUS NO_FIX_NEEDED`", "weak no-fix evidence");
+  writeFixtureFile(root, ".takt/ja/facets/instructions/kiro-verify-task-completion.md", verify);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("STATUS NEED_REPLAN")));
+});
+
 test("validator rejects progress adapter reading AI gate reports directly", () => {
   const root = makeCurrentSurfaceFixture();
   const progressPath = join(root, ".takt", "en", "facets", "instructions", "kiro-impl-update-progress.md");
