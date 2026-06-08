@@ -70,6 +70,19 @@ steps:
   ]);
 });
 
+test("workflow_call boundary accepts every helper-approved gate call site", () => {
+  for (const site of getAllowedKiroAiQualityGateCallSites()) {
+    const content = `name: ${site.workflowName}
+steps:
+  - name: ${site.stepName}
+    kind: workflow_call
+    call: ${site.callPath}
+`;
+
+    assert.deepEqual(validateKiroWorkflowCallBoundary(content, `${site.workflowName}.yaml`), []);
+  }
+});
+
 test("Kiro AI quality gate contract terms expose PR 90 wiring semantics", () => {
   const terms = getKiroAiQualityGateContractTerms();
 

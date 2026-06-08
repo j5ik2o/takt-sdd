@@ -78,7 +78,7 @@
   - _Boundary:_ CoverageValidator, ReadOnlyGuardValidator
   - _Depends:_ 1.1, 1.2, 3.3
 
-- [ ] 4.2 existing Kiro validators を shared contract と generation gate placement に合わせて更新する
+- [x] 4.2 existing Kiro validators を shared contract と generation gate placement に合わせて更新する
   - shared workflow call validator が helper の allowlist を使い、relative gate call 以外の nested Kiro workflow reuse を拒否する。
   - spec generation validator が standalone/quick の gate placement と quick の限定的 `workflow_call` 許可を検証する。
   - status/validation validator が coverage helper の read-only list と同期して gate/fix loop 混入を拒否する。
