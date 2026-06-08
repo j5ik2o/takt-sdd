@@ -910,7 +910,10 @@ test("task 15 adapter validation detects skill section, field, and enum drift", 
   const requirementsReview = readFileSync(join(root, requirementsReviewPath), "utf8")
     .replace('extends_skill_section: "### Step 4: Review Requirements Draft"', 'extends_skill_section: "### Step 4: Draft Review"')
     .replaceAll("validation.verdict", "validation.status");
-  const tasksReview = readFileSync(join(root, tasksReviewPath), "utf8").replace("RETURN_TO_DESIGN", "RETURN_TO_REQUIREMENTS");
+  const tasksReview = readFileSync(join(root, tasksReviewPath), "utf8").replaceAll(
+    "RETURN_TO_DESIGN",
+    "RETURN_TO_REQUIREMENTS",
+  );
   const designReadiness = [
     "---",
     "extends_skill: kiro-validate-design",

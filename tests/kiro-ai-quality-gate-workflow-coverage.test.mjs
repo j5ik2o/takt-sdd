@@ -184,3 +184,42 @@ test("downstream generation review facets consume spec AI quality gate evidence"
     }
   }
 });
+
+test("standalone spec generation workflows route drafts through spec AI quality gate before domain review", () => {
+  const workflowSpecs = [
+    {
+      workflow: "kiro-spec-requirements",
+      gate: "ai-quality-gate-requirements",
+      generate: "generate-requirements",
+      repair: "repair-requirements",
+      review: "review-requirements",
+    },
+    {
+      workflow: "kiro-spec-design",
+      gate: "ai-quality-gate-design",
+      generate: "generate-design",
+      repair: "repair-design",
+      review: "review-design",
+    },
+    {
+      workflow: "kiro-spec-tasks",
+      gate: "ai-quality-gate-tasks",
+      generate: "generate-tasks",
+      repair: "repair-tasks",
+      review: "review-tasks",
+    },
+  ];
+
+  for (const language of languages) {
+    for (const spec of workflowSpecs) {
+      const path = join(repoRoot, ".takt", language, "workflows", `${spec.workflow}.yaml`);
+      const content = readFileSync(path, "utf8");
+      assert.ok(content.includes(`- ${spec.gate}`), `${path} loop monitor should include ${spec.gate}`);
+      assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*kind: workflow_call[\\s\\S]*call: ./kiro-spec-ai-quality-gate.yaml`));
+      assert.match(content, new RegExp(`- name: ${spec.generate}[\\s\\S]*next: ${spec.gate}`));
+      assert.match(content, new RegExp(`- name: ${spec.repair}[\\s\\S]*next: ${spec.gate}`));
+      assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*condition: COMPLETE[\\s\\S]*next: ${spec.review}`));
+      assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*condition: need_replan[\\s\\S]*next: ${spec.repair}`));
+    }
+  }
+});

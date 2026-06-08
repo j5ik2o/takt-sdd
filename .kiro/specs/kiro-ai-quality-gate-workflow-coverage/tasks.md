@@ -45,7 +45,7 @@
   - _Depends:_ 2.1, 2.2
 
 - [ ] 3. Eligible generation workflows に gate を接続する
-- [ ] 3.1 standalone spec generation workflows に gate route と loop monitor を追加する
+- [x] 3.1 standalone spec generation workflows に gate route と loop monitor を追加する
   - requirements、design、tasks の generate/repair 直後に matching gate step が入り、その後に既存 domain review へ進む。
   - 各 loop monitor cycle に matching gate step が含まれ、finalize から repair へ戻る既存循環も壊れない。
   - finalize は raw gate report を再評価せず、verified review/finalize result に依存して lifecycle promotion する。
