@@ -78,6 +78,9 @@ steps:
         next: COMPLETE
       - condition: VERDICT REJECTED and actionable AI antipattern findings exist for the selected task
         next: ai-antipattern-fix
+      - when: "true"
+        next: request-replan
+        appendix: Treat ambiguous, blocked, or internally inconsistent review outcomes as requiring replanning.
 
   - name: ai-antipattern-fix
     edit: true

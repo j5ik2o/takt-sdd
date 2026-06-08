@@ -555,6 +555,13 @@ function validateGateWorkflowFiles(repoRoot) {
     if (JSON.stringify(stepNames) !== JSON.stringify(expectedGateSteps)) {
       failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} step order must be ${expectedGateSteps.join(" -> ")}`);
     }
+    if (
+      !content.includes(
+        "condition: Unproductive (loop_monitors.threshold reached for ai-antipattern-review-1st and ai-antipattern-fix)\n          next: request-replan",
+      )
+    ) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} loop exhaustion must route to request-replan`);
+    }
     const blocks = new Map(stepBlocks(content).map((block) => [stepScalar(block, "name"), block]));
     const reviewBlock = blocks.get("ai-antipattern-review-1st") ?? [];
     containsAll(
@@ -573,6 +580,9 @@ function validateGateWorkflowFiles(repoRoot) {
     }
     if (!hasRuleWithTerms(reviewBlock, ["VERDICT REJECTED", "next: ai-antipattern-fix"])) {
       failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern review must route REJECTED to fix`);
+    }
+    if (!hasRuleWithTerms(reviewBlock, ['when: "true"', "next: request-replan"])) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern review must route ambiguous outcomes to request-replan`);
     }
     const fixBlock = blocks.get("ai-antipattern-fix") ?? [];
     containsAll(
@@ -854,7 +864,11 @@ function validateTaskFixtureCoverage(repoRoot) {
       "validator rejects missing AI quality gate workflow",
       "validator rejects unapproved nested Kiro workflow call",
       "validator rejects AI quality gate loop threshold drift",
+      "validator rejects AI quality gate review routing gaps",
+      "validator rejects AI quality gate loop exhaustion that aborts instead of replanning",
       "validator rejects missing AI gate evidence hooks in review adapter",
+      "validator rejects adapters that require AI antipattern fix reports unconditionally",
+      "validator rejects verify adapters that ignore AI antipattern fix statuses",
       "validator rejects progress adapter reading AI gate reports directly",
       "validator rejects plan blockers that bypass progress blocker notes",
       "validator rejects progress updates that omit routing status outputs",

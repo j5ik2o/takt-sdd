@@ -206,10 +206,28 @@ test("validator rejects AI quality gate loop threshold drift", () => {
   assert.ok(result.failures.some((failure) => failure.includes("threshold: 3")));
 });
 
+test("validator rejects AI quality gate review routing gaps", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-ai-quality-gate.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    '      - when: "true"\n        next: request-replan\n        appendix: Treat ambiguous, blocked, or internally inconsistent review outcomes as requiring replanning.\n',
+    "",
+  );
+  writeFixtureFile(root, ".takt/en/workflows/kiro-ai-quality-gate.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("ambiguous outcomes")));
+});
+
 test("validator rejects AI quality gate loop exhaustion that aborts instead of replanning", () => {
   const root = makeCurrentSurfaceFixture();
   const workflowPath = join(root, ".takt", "en", "workflows", "kiro-ai-quality-gate.yaml");
-  const workflow = readFileSync(workflowPath, "utf8").replace("next: request-replan", "next: ABORT");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    "condition: Unproductive (loop_monitors.threshold reached for ai-antipattern-review-1st and ai-antipattern-fix)\n          next: request-replan",
+    "condition: Unproductive (loop_monitors.threshold reached for ai-antipattern-review-1st and ai-antipattern-fix)\n          next: ABORT",
+  );
   writeFixtureFile(root, ".takt/en/workflows/kiro-ai-quality-gate.yaml", workflow);
 
   const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
