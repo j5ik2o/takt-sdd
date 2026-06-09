@@ -1,180 +1,185 @@
 # Implementation Plan
 
-- [x] 1. implementation workflow の validation harness を追加する
-  - `kiro-impl` workflow と、`kiro-review`、`kiro-debug`、`kiro-verify-completion`、`kiro-validate-impl` の adapter step/facet existence と en/ja parity を検証する repository-local check を追加する。
-  - shared review/debug/completion/validation contract reference が欠けた場合に missing reference として検出できるようにする。
-  - 完了時点で未作成 workflow/facet と forbidden boundary reference が validation finding として確認できる。
-  - _Requirements: 7.1, 7.3, 7.4_
+## Validation contract notes
+
+- `kiro-implementation-result`
+- `STATUS: READY_FOR_REVIEW | BLOCKED | NEEDS_CONTEXT`
+- Kiro review/debug/verify は standalone workflow ではなく `kiro-impl` 内の adapter step として接続する。
+
+- [x] 1. 検証ハーネスの期待構造を並行 reviewer 前提に更新する
+- [x] 1.1 `kiro-impl` の gate order と reviewer group 構造を検出する検証を追加する
+  - `ai-quality-gate` が `reviewers` より前にあり、`reviewers` が `verify-task-completion` より前にあることを検証できる。
+  - `reviewers.parallel` が存在し、coding、architecture、QA、testing の child reviewer が必須であることを検出できる。
+  - `security-reviewer` または `requirements-reviewer` が mandatory child step として入った場合に validation failure になる。
+  - 現在の repository validation で reviewer group の不足や順序 drift が actionable failure として見える。
+  - _Requirements: 7.1, 7.2, 7.3, 7.4, 9.1, 9.8_
   - _Boundary:_ IterativeImplementationValidationHarness
   - _Depends:_ none
 
-- [x] 2. implementation progress policy を追加する
-  - checkbox 更新前の completion gate、selected task 限定更新、blocker notes、implementation notes、verification evidence の policy facet を en/ja に追加する。
-  - progress update 前に `tasks.md` の selected task section を再読し、他 worker の変更を上書きしない規約を明示する。
-  - 完了時点で progress update が completion STATUS と selected task にだけ紐づくことを facet から確認できる。
-  - _Requirements: 4.4, 5.4, 6.2, 6.3_
-  - _Boundary:_ KiroTaskProgressUpdater
-  - _Depends:_ 1
+- [x] 1.2 reviewer report と routing vocabulary の検証を追加する
+  - child reviewer の `approved` / `needs_fix` 条件と group-level `all("approved")` / `any("needs_fix")` routing を検証できる。
+  - coding、architecture、QA、testing の report が互いに区別できる filename と contract を持つことを検出できる。
+  - completion verifier と debug adapter が AI gate report と reviewer reports を evidence として読むことを validation failure で再現できる。
+  - 現在の repository validation で missing report、wrong routing、evidence omission が検出できる。
+  - _Requirements: 5.2, 6.1, 6.4, 7.1, 7.2, 9.6, 9.7, 9.9_
+  - _Boundary:_ IterativeImplementationValidationHarness
+  - _Depends:_ 1.1
 
-- [x] 3. readiness gate と one-task planning の instruction facet を追加する
-  - feature readiness、`spec.json`、required artifacts、task annotation、unchecked task、dependency、blocker notes を読む手順を en/ja に追加する。
-  - `spec.json.ready_for_implementation` が true でも、status/readiness signal が batch-level readiness 保留を示す場合は code edit 前に `BLOCKED` として止める。
-  - eligible な 1 task だけを selected task にし、複数 task batch を作らない decision rule を明示する。
-  - 完了時点で ready でない feature、annotation 不足、eligible task 不在が code edit 前に止まる。
-  - _Requirements: 1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 2.3, 2.4_
-  - _Boundary:_ KiroImplementationReadinessGate, KiroOneTaskPlanner
-  - _Depends:_ 1, 2
+- [x] 2. `kiro-impl` workflow routing を AI gate と parallel reviewers に接続する
+- [x] 2.1 AI quality gate から reviewer group への routing を更新する
+  - `execute-task` の successful candidate が通常 review へ直行せず、先に AI quality gate を通る。
+  - AI quality gate の `COMPLETE` が `reviewers` へ進み、`need_replan` が `debug-task`、`ABORT` が `ABORT` へ進む。
+  - workflow 上で readiness、one-task execution、AI gate、reviewers、completion verification の順序が読める。
+  - validation fixture で AI gate bypass が失敗として検出できる。
+  - _Requirements: 1.1, 1.2, 1.4, 4.1, 4.2, 5.1, 5.2, 7.2, 8.2, 8.3_
+  - _Boundary:_ KiroImplementationWorkflow, KiroAIQualityGateCall
+  - _Depends:_ 1.1
 
-- [x] 4. implementation plan 出力と boundary check を planning facet に接続する
-  - selected task の `_Boundary:_`、`_Depends:_`、numeric requirement coverage、関連 design component、変更予定範囲を implementation plan に出す。
-  - boundary が design の Boundary Commitments と矛盾する場合の `BLOCK_TASK` decision を明示する。
-  - 完了時点で implementation step が task scope、禁止する隣接 scope、validation plan を plan から読める。
-  - _Requirements: 3.1, 3.2, 3.3, 3.4_
-  - _Boundary:_ KiroOneTaskPlanner
-  - _Depends:_ 3
+- [x] 2.2 `reviewers.parallel` group を workflow に追加する
+  - `reviewers` step が `parallel:` child steps として `coding-review`、`arch-review`、`qa-review`、`testing-review` を持つ。
+  - 各 child reviewer は read-only で selected task、implementation evidence、AI gate reports、requirements/design/tasks refs を読む。
+  - `all("approved")` は `verify-task-completion` へ進み、`any("needs_fix")` は `debug-task` へ進む。
+  - workflow 実行計画上、同じ完了候補に対して 4 観点が並行 review されることが確認できる。
+  - _Requirements: 5.3, 6.4, 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9_
+  - _Boundary:_ KiroImplementationWorkflow, KiroParallelReviewersGroup
+  - _Depends:_ 1.2, 2.1
 
-- [x] 5. selected task execution の instruction facet を追加する
-  - selected task の boundary 内で code edit、test update、validation command 実行、manual verification requirement 分離を行う手順を en/ja に追加する。
-  - implementer output contract `kiro-implementation-result` を追加し、`STATUS: READY_FOR_REVIEW | BLOCKED | NEEDS_CONTEXT` を primary machine field として workflow rule に接続する。
-  - `STATUS: BLOCKED` または `STATUS: NEEDS_CONTEXT` 時に checkbox を更新せず、failure evidence、missing context、debug context を返す規約を明示する。
-  - 完了時点で implementation result、changed files、command result、missing evidence が実行報告として残る。
-  - _Requirements: 3.2, 3.4, 4.1, 4.2, 4.3, 4.4, 6.4, 8.2_
-  - _Boundary:_ KiroTaskExecutor
-  - _Depends:_ 4
-
-- [x] 6. `kiro-review` adapter step と review facet を追加する
-  - selected task の実装結果を requirement、design boundary、validation evidence に照らして review する `kiro-review` adapter step/facet を en/ja に追加する。
-  - `kiro-review` skill の `VERDICT: APPROVED | REJECTED` と actionable findings を workflow rule で参照できるようにする。
-  - adapter facet は `extends_skill` と `extends_skill_section` を持ち、Kiro skill 本文をコピーしない。
-  - 完了時点で review finding が対象 task と requirement に結びついて返る。
-  - _Requirements: 5.1, 5.2, 6.4_
-  - _Boundary:_ KiroReviewAdapterStep
-  - _Depends:_ 1, 5
-
-- [x] 7. `kiro-debug` adapter step と debug facet を追加する
-  - validation failure と review finding から root cause、再実行候補としての `RETRY_TASK`、`BLOCK_TASK`、`STOP_FOR_HUMAN` を返す workflow/facet を en/ja に追加する。
-  - retry 回数、loop threshold、loop health は debug facet で独自管理せず、`kiro-impl.yaml` の `loop_monitors` に委譲する。
-  - `STOP_FOR_HUMAN` では追加実装を継続せず、人間確認事項を blocker として残す規約を明示する。
-  - 完了時点で debug decision が machine field と human summary に分離されている。
-  - _Requirements: 2.3, 3.3, 5.3, 5.4, 6.4, 7.6_
-  - _Boundary:_ KiroDebugAdapterStep
-  - _Depends:_ 1, 5, 6
-
-- [x] 8. `loop_monitors.threshold` を main workflow に接続する
-  - `kiro-impl.yaml` に execute/debug と execute/review/debug の cycle を対象にした `loop_monitors.threshold` を定義する。
-  - threshold や retry budget は workflow YAML の `loop_monitors.threshold` だけを source of truth とし、facet、frontmatter、validator に独自の回数管理を置かない。
-  - threshold 到達時は追加実装ではなく blocker/停止分岐へ進む。
-  - 完了時点で独自 loop judge facet や独自 loop-health 管理が存在しない。
+- [x] 2.3 loop monitor cycle を reviewers group に合わせて更新する
+  - `execute-task -> debug-task` cycle と `execute-task -> ai-quality-gate -> reviewers -> debug-task` cycle が `loop_monitors.threshold` で表現される。
+  - 独自 retry counter、独自 max-attempt、独自 loop-health source of truth が workflow/facet/validator に残らない。
+  - loop exhaustion は追加実装へ戻らず blocker note または human stop へ進む。
+  - validation fixture で reviewers を含まない loop monitor が failure になる。
   - _Requirements: 5.5, 5.6, 7.6_
   - _Boundary:_ KiroLoopMonitorConfig
-  - _Depends:_ 1, 7
+  - _Depends:_ 2.2
 
-- [x] 9. `kiro-verify-completion` adapter step と completion facet を追加する
-  - implementation result、validation evidence、review verdict、remaining work、manual verification requirement を照合する adapter step/facet を en/ja に追加する。
-  - `kiro-verify-completion` / shared `kiro-completion-verification` の primary `STATUS` (`VERIFIED`、`NOT_VERIFIED`、`MANUAL_VERIFY_REQUIRED`) を progress update 前の gate として使う。
-  - 完了時点で evidence のない項目が complete 根拠に含まれない。
-  - _Requirements: 3.4, 6.1, 6.2, 6.4_
+- [x] 3. reviewer adapter facets を Kiro selected task context に合わせる
+- [x] 3.1 coding review adapter を reviewers child step として再整合する
+  - coding review が selected task boundary、actual diff、validation evidence、AI gate reports を読んで verdict を返す。
+  - report が coding review の evidence として識別でき、human summary と machine verdict が分離される。
+  - existing `kiro-review` skill mapping は維持し、Kiro skill 本文のコピーを増やさない。
+  - completion verifier と debug adapter が coding review report を参照できる。
+  - _Requirements: 6.4, 8.1, 8.2, 8.4, 9.2, 9.9_
+  - _Boundary:_ KiroParallelReviewersGroup
+  - _Depends:_ 2.2
+
+- [x] 3.2 architecture review adapter を追加する
+  - architecture review が design boundary、dependency direction、cross-task responsibility drift を確認する。
+  - built-in architecture reviewer asset を Kiro selected task context に接続し、Kiro-specific 差分だけを記述する。
+  - architecture review report が `needs_fix` の場合、対象観点と finding source が debug input として残る。
+  - validation で missing architecture reviewer child step が failure になる。
+  - _Requirements: 7.5, 9.1, 9.3, 9.7, 9.9_
+  - _Boundary:_ KiroParallelReviewersGroup
+  - _Depends:_ 2.2
+
+- [x] 3.3 QA review adapter を追加する
+  - QA review が requirements coverage、acceptance criteria、operator-visible behavior の抜け漏れを確認する。
+  - built-in QA reviewer asset を Kiro selected task context に接続し、Kiro-specific 差分だけを記述する。
+  - QA review report が `needs_fix` の場合、関連 requirement refs と actionable findings が debug input として残る。
+  - validation で missing QA reviewer child step が failure になる。
+  - _Requirements: 7.5, 9.1, 9.4, 9.7, 9.9_
+  - _Boundary:_ KiroParallelReviewersGroup
+  - _Depends:_ 2.2
+
+- [x] 3.4 testing review adapter を追加する
+  - testing review が test evidence、regression coverage、manual verification gap を確認する。
+  - built-in testing reviewer asset を Kiro selected task context に接続し、Kiro-specific 差分だけを記述する。
+  - testing review report が `needs_fix` の場合、missing test evidence と manual verification gap が debug input として残る。
+  - validation で missing testing reviewer child step が failure になる。
+  - _Requirements: 3.4, 7.5, 9.1, 9.5, 9.7, 9.9_
+  - _Boundary:_ KiroParallelReviewersGroup
+  - _Depends:_ 2.2
+
+- [x] 4. debug と completion verification を複数 reviewer evidence に対応させる
+- [x] 4.1 debug adapter が rejected child reports を読むように更新する
+  - validation failure、AI gate `need_replan`、reviewers `any("needs_fix")` の各 failure context を root cause 判定に使える。
+  - debug decision は `NEXT_ACTION: RETRY_TASK | BLOCK_TASK | STOP_FOR_HUMAN` と `retry_eligible` を primary machine fields として返す。
+  - `STOP_FOR_HUMAN` では追加実装へ戻らず、人間確認事項が selected task blocker として残る。
+  - rejected reviewer の観点、report file、finding refs、task/requirement/design refs が debug report で確認できる。
+  - _Requirements: 2.4, 3.3, 5.2, 5.3, 5.4, 6.4, 9.7_
+  - _Boundary:_ KiroDebugAdapterStep
+  - _Depends:_ 3.1, 3.2, 3.3, 3.4
+
+- [x] 4.2 completion verifier が AI gate と 4 reviewer reports を必須 evidence として扱う
+  - implementation result、validation evidence、AI gate report、coding/architecture/QA/testing reports が揃った場合だけ `VERIFIED` 候補になる。
+  - missing、stale、cross-run、manual verification gap は `NOT_VERIFIED` または `MANUAL_VERIFY_REQUIRED` として扱われる。
+  - checkbox update 前に incomplete evidence が blocker/debug path へ戻る。
+  - completion report から required evidence の有無と missing evidence が確認できる。
+  - _Requirements: 3.4, 6.1, 6.2, 6.4, 9.6, 9.9_
   - _Boundary:_ KiroCompletionVerifier
-  - _Depends:_ 1, 5, 6, 7, 8
+  - _Depends:_ 3.1, 3.2, 3.3, 3.4
 
-- [x] 10. selected task progress update の instruction facet を追加する
-  - completion `STATUS` が `VERIFIED` の場合だけ selected task checkbox を `- [x]` に更新する手順を en/ja に追加する。
-  - `BLOCK_TASK`、`STOP_FOR_HUMAN`、または `loop_monitors` の非生産的判定では checkbox を更新せず、blocker notes と必要な人間確認事項を selected task に残す。
-  - 完了時点で selected task 外の checkbox、blocker、implementation notes を変更しない規約が確認できる。
-  - _Requirements: 4.3, 4.4, 5.4, 5.6, 6.2, 6.3_
-  - _Boundary:_ KiroTaskProgressUpdater
-  - _Depends:_ 2, 7, 8, 9
+- [x] 4.3 progress update と final validation の既存境界を再確認する
+  - `VERIFIED` の場合だけ selected task checkbox と implementation notes が更新される。
+  - validation failure、AI gate failure、reviewer needs-fix、completion incomplete では selected task 外の checkbox が更新されない。
+  - all tasks complete の場合だけ final validation `DECISION: GO | NO-GO | MANUAL_VERIFY_REQUIRED` が実行される。
+  - progress update fixture で selected task 外の変更が failure として検出できる。
+  - _Requirements: 4.3, 4.4, 5.4, 5.6, 6.2, 6.3, 6.5_
+  - _Boundary:_ KiroTaskProgressUpdater, KiroFinalImplValidator
+  - _Depends:_ 4.1, 4.2
 
-- [x] 11. `kiro-impl` main workflow YAML を追加する
-  - readiness gate、one-task planning、execution、review、debug、completion verification、progress update を rule condition で接続する。
-  - validation failure と `REJECTED` review は debug へ、complete verification は progress update へ、incomplete state は checkbox 更新なしの decision へ分岐する。
-  - `loop_monitors` を定義し、`execute-task` / `debug-task` と `execute-task` / `review-task` / `debug-task` の再実行ループを runtime で監視する。
-  - workflow/facet/validator 内に独自 retry counter、独自 max-attempt、独自 loop-health source of truth を置かない。
-  - 完了時点で `kiro-impl` が 1 iteration で 1 task だけを実装対象にする。
-  - _Requirements: 1.1, 1.2, 2.1, 2.2, 4.1, 4.3, 5.1, 5.3, 5.5, 5.6, 6.1, 6.2, 6.3_
-  - _Boundary:_ KiroImplementationWorkflow
-  - _Depends:_ 3, 5, 6, 7, 8, 9, 10
+- [x] 5. readiness、planning、execution の既存 contract を regressions から守る
+- [x] 5.1 readiness と one-task planning の regression fixtures を更新する
+  - `ready_for_implementation` false、missing artifact、missing `_Boundary:_`、missing `_Depends:_` が code edit 前に止まる。
+  - `_Depends:_ none` は empty dependency set として扱われ、複数 eligible tasks では先頭の 1 task だけが selected task になる。
+  - dependency 未解決または blocker 付き task だけの場合、`BLOCK_TASK` または `STOP_FOR_HUMAN` 相当の decision が返る。
+  - validation fixture で readiness / planning drift が failure として再現できる。
+  - _Requirements: 1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 2.3, 2.4, 2.5_
+  - _Boundary:_ KiroImplementationReadinessGate, KiroOneTaskPlanner, IterativeImplementationValidationHarness
+  - _Depends:_ 1.1
 
-- [x] 12. workflow gate order、loop monitor、forbidden reference の検証を追加する
-  - validation harness に readiness before edit、one-task selection、review/debug before completion、completion before checkbox update の順序検証を追加する。
-  - `kiro-impl.yaml` が `loop_monitors.threshold`、debug/review 再実行 cycle、threshold 到達時の停止分岐を持つことを検証する。
-  - facet や validator が独自 retry counter、独自 max-attempt、独自 loop-health 判定を source of truth として持つ場合に failure にする。
-  - spec generation、batch orchestration、major-version surface、PR monitoring、OpenSpec completion を success condition として参照した場合に failure にする。
-  - 完了時点で gate 順序や責務吸収の drift が repository-local test で検出できる。
-  - _Requirements: 2.4, 5.5, 5.6, 6.2, 7.1, 7.2, 7.3, 7.4, 7.6_
+- [x] 5.2 execution result contract の regression fixtures を更新する
+  - selected task boundary 内の code edit と validation evidence collection が `STATUS READY_FOR_REVIEW` の前提として表現される。
+  - `STATUS BLOCKED` と `STATUS NEEDS_CONTEXT` は reviewers へ進まず debug path へ進む。
+  - validation command failure では checkbox update が発生しない。
+  - execution report から changed files、command results、missing evidence、manual verification requirement が確認できる。
+  - _Requirements: 3.2, 3.4, 4.1, 4.2, 4.3, 6.4, 8.2_
+  - _Boundary:_ KiroTaskExecutor, IterativeImplementationValidationHarness
+  - _Depends:_ 5.1
+
+- [x] 6. en/ja language pair と package validation surface をそろえる
+- [x] 6.1 en/ja workflow と facet basename parity を更新する
+  - 追加・変更した workflow、instruction、policy、output contract の basename が en/ja でそろう。
+  - enum、machine fields、report names、script names は翻訳せず両言語で一致する。
+  - Kiro-specific facets は Kiro skill / built-in facet の差分だけを記述し、上流 skill 本文をコピーしない。
+  - validation で片言語だけの追加や enum drift が failure になる。
+  - _Requirements: 6.4, 7.1, 7.5, 8.1, 8.4_
+  - _Boundary:_ KiroImplementationWorkflow, IterativeImplementationValidationHarness
+  - _Depends:_ 2.2, 3.1, 3.2, 3.3, 3.4
+
+- [x] 6.2 package script と通常検証経路を最新 validator に接続する
+  - `validate:kiro-iterative-implementation-workflow` と `test:kiro-iterative-implementation-workflow` が最新の reviewer group validation を実行する。
+  - public `kiro:*` command surface は変更されない。
+  - repository-local check で workflow/facet/contract drift、boundary violation、language pair drift がまとめて検出できる。
+  - package script mismatch fixture が validation failure として残る。
+  - _Requirements: 7.1, 7.2, 7.3, 7.4, 8.3, 8.5_
   - _Boundary:_ IterativeImplementationValidationHarness
-  - _Depends:_ 11
+  - _Depends:_ 6.1
 
-- [x] 13. task annotation と progress update の fixture 検証を追加する
-  - unchecked task、dependency 未解決 task、blocker 付き task、annotation 不足 task、complete candidate task の fixtures を検証する。
-  - selected task 以外を更新しないこと、completion failure では checkbox が変わらないこと、complete の場合だけ implementation notes が残ることを検出する。
-  - 完了時点で `tasks.md` の進捗更新ルールが validation failure として再現可能になる。
-  - _Requirements: 1.3, 2.1, 2.3, 4.4, 6.2, 6.3, 7.2_
-  - _Boundary:_ IterativeImplementationValidationHarness, KiroTaskProgressUpdater
-  - _Depends:_ 10, 12
-
-- [x] 14. implementation workflow の en/ja language pair をそろえる
-  - 追加した workflow、instruction、policy の en/ja basename、machine enum、shared contract name をそろえる。
-  - 日本語 facet は自然な日本語にしつつ、enum、field、path、script 名は shared contract と一致させる。
-  - 完了時点で片言語だけの追加、enum drift、contract name drift が validation failure として見える。
-  - _Requirements: 6.4, 7.1_
-  - _Boundary:_ KiroImplementationWorkflow, IterativeImplementationValidationHarness
-  - _Depends:_ 11, 12, 13
-
-- [x] 15. validation harness を test command に接続する
-  - implementation workflow validation script を repository の通常 test/check 経路から実行できるようにする。
-  - `package.json` に `validate:kiro-iterative-implementation-workflow` と `test:kiro-iterative-implementation-workflow` を追加し、既存の repository-local Kiro validation script pattern にそろえる。
-  - workflow/facet parity、shared contract reference、gate order、loop monitor config、task fixture、forbidden reference check をまとめて実行する。
-  - 完了時点で implementation workflow の drift が release 前の通常検証で検出できる。
-  - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.6_
+- [x] 7. 統合検証と deterministic smoke を追加する
+- [x] 7.1 reviewer group の integration validation を追加する
+  - fixture workflow で `all("approved")` 欠落、`any("needs_fix")` 欠落、wrong report name、mandatory security reviewer 混入が failure になる。
+  - completion verifier が reviewer evidence を無視する fixture と debug adapter が child reports を読まない fixture が failure になる。
+  - current repository が `validate:kiro-iterative-implementation-workflow` と `test:kiro-iterative-implementation-workflow` を通過する。
+  - validation output が missing step / wrong routing / boundary violation を actionable に示す。
+  - _Requirements: 5.1, 5.2, 6.1, 7.1, 7.2, 7.3, 7.4, 7.6, 9.6, 9.7, 9.8, 9.9_
   - _Boundary:_ IterativeImplementationValidationHarness
-  - _Depends:_ 14
+  - _Depends:_ 2.3, 4.1, 4.2, 6.2
 
-- [x] 16. 上流/下流 spec との境界を最終検証する
-  - `kiro-status-validation-workflows` の read-only validation、`kiro-spec-generation-workflows` の task annotation、`kiro-shared-workflow-contracts` の review/debug/completion contract だけを参照していることを確認する。
-  - discovery/batch、spec generation、major-version surface、PR monitoring の責務を implementation workflow に取り込んでいないことを design と validation scope から確認する。
-  - 完了時点で `kiro-impl` が generated `tasks.md` と readiness signal を消費する implementation workflow として閉じている。
-  - _Requirements: 1.4, 2.4, 4.4, 7.3, 7.4_
-  - _Boundary:_ KiroImplementationWorkflow, IterativeImplementationValidationHarness
-  - _Depends:_ 15
-
-- [x] 17. implementation facets の built-in 継承候補を棚卸しする
-  - `node_modules/takt/builtins/{en,ja}/facets` の coding、testing、review 系 facet を確認し、planning、execution、review/debug/verify facet の親候補を記録する。
-  - 親候補がある facet は shared `BuiltinFacetInheritancePolicy` の `extends` を使い、task boundary、checkbox 更新 gate、completion verification だけを差分として記述する。
-  - 親候補がない、または full custom が必要な facet は理由を design note または validation finding に残す。
-  - 完了時点で implementation validation harness が親 facet 不在、runtime 未対応、全文コピー前提を検出できる。
-  - _Requirements: 7.5_
+- [x] 7.2 deterministic wiring smoke を opt-in で追加する
+  - mock provider output で `execute-task -> ai-quality-gate -> reviewers -> verify-task-completion` の routing を確認できる。
+  - smoke は provider review quality を評価せず、step/report path と deterministic wiring だけを確認する。
+  - default CI や default validation で live provider を呼ばない opt-in 実行になっている。
+  - smoke artifact から reviewers group と completion path が期待どおり通ったことを確認できる。
+  - _Requirements: 4.2, 5.1, 6.1, 7.2, 9.1, 9.6_
   - _Boundary:_ IterativeImplementationValidationHarness
-  - _Depends:_ 11, 14, 15
+  - _Depends:_ 7.1
 
-- [x] 18. Kiro skill thin adapter へ implementation facets を再整合する
-  - `kiro-impl`、`kiro-review`、`kiro-debug`、`kiro-verify-completion`、`kiro-validate-impl` の instruction facet に `extends_skill` と `extends_skill_section` を持たせる。
-  - Kiro skill 本文をコピーせず、input artifacts、output fields、rule condition、artifact write boundary だけを差分として記述する。
-  - `kiro-review` / `kiro-debug` / `kiro-verify-completion` / `kiro-validate-impl` は別 workflow を起動せず、`kiro-impl.yaml` 内の adapter step として接続する。
-  - en/ja adapter facet の skill section、machine field、enum が一致することを validation に追加する。
-  - _Requirements: 8.1, 8.2, 8.3, 8.4_
+- [x] 7.3 Kiro implementation workflow の最終境界検証を実行する
+  - implementation workflow が spec generation、roadmap batch orchestration、major-version surface、PR monitoring、OpenSpec completion を成功条件に含めないことを確認する。
+  - `.agents/skills/kiro-*` 上流 skill 資産を直接修正していないことを確認する。
+  - generated `tasks.md` と readiness signal を消費する implementation workflow として閉じていることを確認する。
+  - final validation で all requirements coverage と design component coverage が確認できる。
+  - _Requirements: 1.4, 2.5, 4.4, 7.3, 7.4, 8.4, 8.5_
   - _Boundary:_ KiroImplementationWorkflow, IterativeImplementationValidationHarness
-  - _Depends:_ 17
-
-- [x] 19. Kiro skill field contract に implementation rule を合わせる
-  - implementer `STATUS: READY_FOR_REVIEW | BLOCKED | NEEDS_CONTEXT`、reviewer `VERDICT: APPROVED | REJECTED`、debugger `NEXT_ACTION: RETRY_TASK | BLOCK_TASK | STOP_FOR_HUMAN` を primary machine field として workflow rule に接続する。
-  - final feature validation は `kiro-validate-impl` の `DECISION: GO | NO-GO | MANUAL_VERIFY_REQUIRED` を primary machine field として扱う。
-  - shared review/debug/completion contract を使う場合も Kiro skill field を独自 `validation.verdict` や `review.verdict` へ翻訳しない。
-  - _Requirements: 5.1, 5.3, 6.4, 6.5, 8.2, 8.3_
-  - _Boundary:_ KiroImplementationWorkflow, IterativeImplementationValidationHarness
-  - _Depends:_ 18
-
-- [x] 20. unreleased implementation workflow/facet を削除または再作成する
-  - `.takt/{en,ja}/workflows/kiro-review.yaml`、`kiro-debug.yaml`、`kiro-verify-completion.yaml` のような独立 standalone workflow が残る場合は削除し、`kiro-impl.yaml` 内の adapter step へ移す。
-  - `.takt/{en,ja}/facets/instructions/kiro-impl-debug-loop-judge.md` のような独自 loop-health facet が残る場合は削除し、`loop_monitors.threshold` に一本化する。
-  - workflow から参照されない Kiro-specific facet を validation failure にする。
-  - _Requirements: 7.6, 8.3, 8.5_
-  - _Boundary:_ KiroImplementationWorkflow, IterativeImplementationValidationHarness
-  - _Depends:_ 18, 19
-
-## Implementation Notes
-
-- `kiro-impl.yaml` は `plan-one-task` を readiness gate 兼 one-task planner として使い、edit step の前に `ready_for_implementation` と task annotation を検査する。
-- review/debug/verify/final validation は standalone workflow ではなく `kiro-impl.yaml` 内の adapter step として接続する。
-- 再実行制御は `loop_monitors.threshold` のみを source of truth とし、facet と validation script には独自 attempt counter を置かない。
-- implementation-specific facet は Kiro skill の `extends_skill` / `extends_skill_section` と TAKT built-in `{extends: ...}` を併用し、差分だけを記述する。
+  - _Depends:_ 7.2

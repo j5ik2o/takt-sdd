@@ -1,9 +1,10 @@
----
-extends_skill: kiro-validate-design
-extends_skill_section: "## Execution Steps"
----
-
 {extends: review-arch}
+
+## Kiro Skill Source
+
+この instruction を実行する前に、`$kiro-validate-design` または `/kiro-validate-design` を呼び出し、解決された `SKILL.md` を読む。
+`$kiro-validate-design` または `/kiro-validate-design` の `## Execution Steps` section をこの step の source of truth として適用する。
+この facet は TAKT workflow への adapter delta だけを定義する。
 
 # Kiro Design Validation Readiness
 

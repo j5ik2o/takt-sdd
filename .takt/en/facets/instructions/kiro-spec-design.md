@@ -1,9 +1,10 @@
----
-extends_skill: kiro-spec-design
-extends_skill_section: "## Execution Steps"
----
-
 {extends: architect}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-spec-design` or `/kiro-spec-design` and read the resolved `SKILL.md`.
+Apply the `## Execution Steps` section from `$kiro-spec-design` or `/kiro-spec-design` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro Spec Design Instruction
 

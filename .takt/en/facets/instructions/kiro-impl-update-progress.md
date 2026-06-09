@@ -1,9 +1,10 @@
----
-extends_skill: kiro-impl
-extends_skill_section: "### Manual Mode (main context)"
----
-
 {extends: fix}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-impl` or `/kiro-impl` and read the resolved `SKILL.md`.
+Apply the `### Manual Mode (main context)` section from `$kiro-impl` or `/kiro-impl` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro Progress Update Adapter
 

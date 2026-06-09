@@ -1,15 +1,16 @@
----
-extends_skill: kiro-impl
-extends_skill_section: "## Step 2: Select Tasks & Determine Mode"
----
-
 {extends: plan}
+
+## Kiro Skill Source
+
+この instruction を実行する前に、`$kiro-impl` または `/kiro-impl` を呼び出し、解決された `SKILL.md` を読む。
+`$kiro-impl` または `/kiro-impl` の `## Step 2: Select Tasks & Determine Mode` section をこの step の source of truth として適用する。
+この facet は TAKT workflow への adapter delta だけを定義する。
 
 # Kiro One Task Planning Adapter
 
 ## Kiro 固有差分
 
-このTAKT iterationで実行する one task だけを計画する。このfacetは `kiro-impl` のtask selectionをworkflow stateへ写像するだけで、code editも `tasks.md` 更新も行わない。
+このTAKT iterationで実行する one task だけを計画する。このfacetは `$kiro-impl` または `/kiro-impl` のtask selectionをworkflow stateへ写像するだけで、code editも `tasks.md` 更新も行わない。
 
 ## Input artifacts
 

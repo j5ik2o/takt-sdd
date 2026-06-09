@@ -1,9 +1,10 @@
----
-extends_skill: kiro-spec-status
-extends_skill_section: "### Step 3: Generate Report"
----
-
 {extends: gather-review}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-spec-status` or `/kiro-spec-status` and read the resolved `SKILL.md`.
+Apply the `### Step 3: Generate Report` section from `$kiro-spec-status` or `/kiro-spec-status` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro Spec Status Reporting
 

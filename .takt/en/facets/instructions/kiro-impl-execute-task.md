@@ -1,10 +1,11 @@
----
-extends_skill: kiro-impl
-extends_skill_section: "## Step 3: Execute Implementation"
-extends_skill_additional_section: "## Feature Flag Protocol"
----
-
 {extends: implement-after-tests}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-impl` or `/kiro-impl` and read the resolved `SKILL.md`.
+Apply the `## Step 3: Execute Implementation` section from `$kiro-impl` or `/kiro-impl` as this step's source of truth.
+Also read the `## Feature Flag Protocol` section.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro Task Execution Adapter
 
@@ -19,7 +20,7 @@ Execute only the selected task boundary and return the exact `## Status Report` 
 3. Run task-relevant validation commands and separate command result, manual verification requirement, and missing evidence.
 4. Do not update the selected task checkbox or `Implementation Notes`.
 5. Return `STATUS: READY_FOR_REVIEW` only when code edit and task-local validation evidence are ready for review.
-6. Return `STATUS: BLOCKED` when a failure has enough evidence for `kiro-debug`.
+6. Return `STATUS: BLOCKED` when a failure has enough evidence for `$kiro-debug` or `/kiro-debug`.
 7. Return `STATUS: NEEDS_CONTEXT` when required task, runtime, or validation context is missing.
 
 ## Status Report

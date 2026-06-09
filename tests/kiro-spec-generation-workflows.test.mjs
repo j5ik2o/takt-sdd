@@ -915,19 +915,20 @@ test("task 15 adapter validation detects skill section, field, and enum drift", 
   const tasksReviewPath = ".takt/ja/facets/instructions/kiro-spec-tasks-review.md";
   const designReadinessPath = ".takt/ja/facets/instructions/kiro-validate-design-readiness.md";
   const requirementsReview = readFileSync(join(root, requirementsReviewPath), "utf8")
-    .replace('extends_skill_section: "### Step 4: Review Requirements Draft"', 'extends_skill_section: "### Step 4: Draft Review"')
+    .replace("`### Step 4: Review Requirements Draft` section", "`### Step 4: Draft Review` section")
     .replaceAll("validation.verdict", "validation.status");
   const tasksReview = readFileSync(join(root, tasksReviewPath), "utf8").replaceAll(
     "RETURN_TO_DESIGN",
     "RETURN_TO_REQUIREMENTS",
   );
   const designReadiness = [
-    "---",
-    "extends_skill: kiro-validate-design",
-    'extends_skill_section: "## Execution Steps"',
-    "---",
-    "",
     "{extends: review-arch}",
+    "",
+    "## Kiro Skill Source",
+    "",
+    "この instruction を実行する前に、`$kiro-validate-design` または `/kiro-validate-design` を呼び出し、解決された `SKILL.md` を読む。",
+    "`$kiro-validate-design` または `/kiro-validate-design` の `## Execution Steps` section をこの step の source of truth として適用する。",
+    "この facet は TAKT workflow への adapter delta だけを定義する。",
     "",
     "# Drifted Kiro Design Validation Readiness",
     "",
@@ -943,7 +944,7 @@ test("task 15 adapter validation detects skill section, field, and enum drift", 
     result.failures.some((failure) =>
       failure.includes("SKILL_ADAPTER_DRIFT") &&
       failure.includes("kiro-spec-requirements-review.md") &&
-      failure.includes("extends_skill_section"),
+      failure.includes("section"),
     ),
     result.failures.join("\n"),
   );
@@ -1002,7 +1003,7 @@ test("task 16 validation detects legacy kiro spec generation surfaces", () => {
     writeFixtureFile(root, `.takt/${lang}/workflows/kiro-spec-requirements.yaml`, wrapperWorkflow);
     const requirementsFacetPath = `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`;
     const requirementsFacet = readFileSync(join(root, requirementsFacetPath), "utf8").replace(
-      /^---\n[\s\S]*?\n---\n/,
+      /.*`\$kiro-spec-requirements`.*`SKILL\.md`.*\n/,
       "",
     );
     writeFixtureFile(root, requirementsFacetPath, requirementsFacet);
@@ -1010,12 +1011,13 @@ test("task 16 validation detects legacy kiro spec generation surfaces", () => {
       root,
       `.takt/${lang}/facets/instructions/kiro-spec-orphan.md`,
       [
-        "---",
-        "extends_skill: kiro-spec-requirements",
-        'extends_skill_section: "## Execution Steps"',
-        "---",
-        "",
         "{extends: plan}",
+        "",
+        "## Kiro Skill Source",
+        "",
+        "Before executing this instruction, invoke `$kiro-spec-requirements` or `/kiro-spec-requirements` and read the resolved `SKILL.md`.",
+        "Apply the `## Execution Steps` section from `$kiro-spec-requirements` or `/kiro-spec-requirements` as this step's source of truth.",
+        "This facet defines only the adapter delta for the TAKT workflow.",
         "",
         "# Orphan legacy Kiro spec facet",
       ].join("\n"),
@@ -1038,7 +1040,7 @@ test("task 16 validation detects legacy kiro spec generation surfaces", () => {
       (failure) =>
         failure.includes("LEGACY_KIRO_GENERATION_DRIFT") &&
         failure.includes("kiro-spec-requirements.md") &&
-        failure.includes("extends_skill"),
+        failure.includes("Kiro Skill Source"),
     ),
     result.failures.join("\n"),
   );

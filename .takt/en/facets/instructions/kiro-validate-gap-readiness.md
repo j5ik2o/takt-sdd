@@ -1,9 +1,10 @@
----
-extends_skill: kiro-validate-gap
-extends_skill_section: "## Core Task"
----
-
 {extends: review-qa}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-validate-gap` or `/kiro-validate-gap` and read the resolved `SKILL.md`.
+Apply the `## Core Task` section from `$kiro-validate-gap` or `/kiro-validate-gap` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro Gap Validation Readiness
 

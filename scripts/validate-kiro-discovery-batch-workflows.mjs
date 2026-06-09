@@ -4,6 +4,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAllowedKiroAiQualityGateCallSites } from "./kiro-ai-quality-gate-contracts.mjs";
+import { extractKiroSkillSourceInstruction } from "./validate-kiro-shared-contracts.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -183,24 +184,6 @@ function rel(repoRoot, path) {
   return relative(repoRoot, path);
 }
 
-function parseFrontmatter(content) {
-  if (!content.startsWith("---\n")) {
-    return {};
-  }
-  const end = content.indexOf("\n---", 4);
-  if (end === -1) {
-    return {};
-  }
-  const fields = {};
-  for (const line of content.slice(4, end).split("\n")) {
-    const match = line.match(/^([A-Za-z0-9_-]+):\s*(.+)\s*$/);
-    if (match) {
-      fields[match[1]] = match[2].replace(/^"|"$/g, "");
-    }
-  }
-  return fields;
-}
-
 function parseFacetParent(content) {
   const match = content.match(/^\{extends:\s*([A-Za-z0-9._-]+)\s*\}$/m);
   return match ? match[1] : null;
@@ -336,12 +319,12 @@ function validateFacet(repoRoot, lang, spec) {
     return [`FACET_DRIFT: ${rel(repoRoot, path)} missing`];
   }
   const content = readText(path);
-  const frontmatter = parseFrontmatter(content);
-  if (spec.skill && frontmatter.extends_skill !== spec.skill) {
-    failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must declare extends_skill: ${spec.skill}`);
+  const skillSource = extractKiroSkillSourceInstruction(content);
+  if (spec.skill && skillSource.skill !== spec.skill) {
+    failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must instruct agents to read skill ${spec.skill}`);
   }
-  if (spec.skillSection && frontmatter.extends_skill_section !== spec.skillSection) {
-    failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must declare extends_skill_section: "${spec.skillSection}"`);
+  if (spec.skillSection && skillSource.section !== spec.skillSection) {
+    failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must apply skill section "${spec.skillSection}"`);
   }
   if (spec.skill && existsSync(join(repoRoot, ".agents"))) {
     const skillPath = join(repoRoot, ".agents", "skills", spec.skill, "SKILL.md");

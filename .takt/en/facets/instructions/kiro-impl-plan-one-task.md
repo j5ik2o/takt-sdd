@@ -1,15 +1,16 @@
----
-extends_skill: kiro-impl
-extends_skill_section: "## Step 2: Select Tasks & Determine Mode"
----
-
 {extends: plan}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-impl` or `/kiro-impl` and read the resolved `SKILL.md`.
+Apply the `## Step 2: Select Tasks & Determine Mode` section from `$kiro-impl` or `/kiro-impl` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro One Task Planning Adapter
 
 ## Kiro-specific delta
 
-Plan exactly one task for this TAKT iteration. This facet maps `kiro-impl` task selection into workflow state; it does not implement code and does not update `tasks.md`.
+Plan exactly one task for this TAKT iteration. This facet maps task selection from `$kiro-impl` or `/kiro-impl` into workflow state; it does not implement code and does not update `tasks.md`.
 
 ## Input artifacts
 

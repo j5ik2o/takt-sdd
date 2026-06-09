@@ -1,9 +1,10 @@
----
-extends_skill: kiro-spec-requirements
-extends_skill_section: "### Step 4: Review Requirements Draft"
----
-
 {extends: review-requirements}
+
+## Kiro Skill Source
+
+この instruction を実行する前に、`$kiro-spec-requirements` または `/kiro-spec-requirements` を呼び出し、解決された `SKILL.md` を読む。
+`$kiro-spec-requirements` または `/kiro-spec-requirements` の `### Step 4: Review Requirements Draft` section をこの step の source of truth として適用する。
+この facet は TAKT workflow への adapter delta だけを定義する。
 
 # Kiro Spec Requirements Review Instruction
 

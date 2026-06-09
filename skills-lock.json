@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "intent-based-dedup": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": "plugins/software-design/skills/intent-based-dedup/SKILL.md",
+      "computedHash": "12e6751e487f028ccfff5ff9cabfa85204f756f97dd6197333f7f7fb2392111b"
+    },
     "skill-forge": {
       "source": "j5ik2o/ai-tools",
       "sourceType": "github",

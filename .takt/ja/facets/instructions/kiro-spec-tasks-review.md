@@ -1,10 +1,11 @@
----
-extends_skill: kiro-spec-tasks
-extends_skill_section: "### Step 3: Review Task Plan"
-extends_skill_additional_section: "### Step 3.5: Run Task-Graph Sanity Review"
----
-
 {extends: review-requirements}
+
+## Kiro Skill Source
+
+この instruction を実行する前に、`$kiro-spec-tasks` または `/kiro-spec-tasks` を呼び出し、解決された `SKILL.md` を読む。
+`$kiro-spec-tasks` または `/kiro-spec-tasks` の `### Step 3: Review Task Plan` section をこの step の source of truth として適用する。
+追加で `### Step 3.5: Run Task-Graph Sanity Review` section も読む。
+この facet は TAKT workflow への adapter delta だけを定義する。
 
 # Kiro Spec Tasks Review Instruction
 
@@ -15,8 +16,8 @@ extends_skill_additional_section: "### Step 3.5: Run Task-Graph Sanity Review"
 ## Review procedure
 
 1. `requirements.md`、`design.md`、`spec.json`、existing `tasks.md` の merge context、前 step の draft task plan、task generation rules を読み込む。
-2. `kiro-spec-tasks` Step 3 の task plan review gate を実行する。
-3. `kiro-spec-tasks` Step 3.5 の task-graph sanity review を実行する。
+2. `$kiro-spec-tasks` または `/kiro-spec-tasks` Step 3 の task plan review gate を実行する。
+3. `$kiro-spec-tasks` または `/kiro-spec-tasks` Step 3.5 の task-graph sanity review を実行する。
 4. 両方の review が通過した場合だけ `task_plan_review: "PASS"` と `task_graph_sanity_review: "PASS"` を返す。
 5. findings が task plan 内で修復可能な場合は、該当する review field に `NEEDS_FIXES` を返す。
 6. requirements/design の実ギャップまたは矛盾が見つかった場合は、該当する review field に `RETURN_TO_DESIGN` を返す。

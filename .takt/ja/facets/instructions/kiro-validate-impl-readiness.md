@@ -1,9 +1,10 @@
----
-extends_skill: kiro-validate-impl
-extends_skill_section: "## Execution Steps"
----
-
 {extends: supervise}
+
+## Kiro Skill Source
+
+この instruction を実行する前に、`$kiro-validate-impl` または `/kiro-validate-impl` を呼び出し、解決された `SKILL.md` を読む。
+`$kiro-validate-impl` または `/kiro-validate-impl` の `## Execution Steps` section をこの step の source of truth として適用する。
+この facet は TAKT workflow への adapter delta だけを定義する。
 
 # Kiro Implementation Validation Readiness
 

@@ -1,9 +1,10 @@
----
-extends_skill: kiro-review
-extends_skill_section: "## Outputs"
----
-
 {extends: review-coding}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-review` or `/kiro-review` and read the resolved `SKILL.md`.
+Apply the `## Outputs` section from `$kiro-review` or `/kiro-review` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro Task Review Adapter
 
@@ -15,11 +16,13 @@ Read `kiro-ai-antipattern-review.md` before forming the verdict. Read `kiro-ai-a
 
 ## Output mapping
 
-Return the `## Review Verdict` shape from `kiro-review`.
+Return the `## Review Verdict` shape from `$kiro-review` or `/kiro-review`.
 
 - `VERDICT`: `APPROVED` or `REJECTED`.
 - `FINDINGS`: actionable findings tied to the selected task, requirement refs, and boundary evidence.
 - `MECHANICAL_RESULTS`: validation command results, static checks, boundary audit, and RED phase status.
 - `SUMMARY`: human-readable summary only.
 
-Workflow rules branch on `VERDICT`; do not translate the result to another field.
+Do not add another output field for the verdict. `VERDICT` remains the output source of truth.
+
+For TAKT routing only, map `VERDICT APPROVED` to child condition `approved` and `VERDICT REJECTED` to child condition `needs_fix`. The parent `reviewers` group aggregates only child conditions.

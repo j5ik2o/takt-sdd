@@ -1,9 +1,10 @@
----
-extends_skill: kiro-discovery
-extends_skill_section: "## Step 2: Determine Action Path"
----
-
 {extends: plan}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-discovery` or `/kiro-discovery` and read the resolved `SKILL.md`.
+Apply the `## Step 2: Determine Action Path` section from `$kiro-discovery` or `/kiro-discovery` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro Discovery Instruction
 
@@ -33,7 +34,7 @@ Classify a user work request into one Kiro discovery `actionPath` and decide whe
 
 ## Brief Artifact Structure
 
-When discovery writes `.kiro/specs/<feature>/brief.md`, include these sections exactly so `kiro-spec-init` can use the file as source of truth:
+When discovery writes `.kiro/specs/<feature>/brief.md`, include these sections exactly so `$kiro-spec-init` or `/kiro-spec-init` can use the file as source of truth:
 
 - `## Problem`
 - `## Current State`

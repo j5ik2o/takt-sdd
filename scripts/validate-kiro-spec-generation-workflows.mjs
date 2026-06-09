@@ -2,6 +2,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { extractKiroSkillSourceInstruction } from "./validate-kiro-shared-contracts.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -604,22 +605,6 @@ function canonicalBlock(content, key) {
 function topLevelScalar(content, key) {
   const match = content.match(new RegExp(`^${key}:\\s*(.+)\\s*$`, "m"));
   return match?.[1] ?? "";
-}
-
-function frontMatterFields(content) {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n/);
-  if (!match) {
-    return {};
-  }
-
-  const fields = {};
-  for (const line of match[1].split("\n")) {
-    const fieldMatch = line.match(/^([A-Za-z0-9_-]+):\s*(.+?)\s*$/);
-    if (fieldMatch) {
-      fields[fieldMatch[1]] = fieldMatch[2].replace(/^"|"$/g, "");
-    }
-  }
-  return fields;
 }
 
 function topLevelMap(content, key) {
@@ -1398,19 +1383,19 @@ function validateTaskAnnotationContract(repoRoot) {
 }
 
 function adapterSignature(content, spec) {
-  const frontMatter = frontMatterFields(content);
+  const skillSource = extractKiroSkillSourceInstruction(content);
   return {
-    extends_skill: frontMatter.extends_skill ?? "",
-    extends_skill_section: frontMatter.extends_skill_section ?? "",
-    extends_skill_additional_section: frontMatter.extends_skill_additional_section ?? "",
+    skill: skillSource.skill,
+    section: skillSource.section,
+    additionalSections: skillSource.additionalSections,
     machineFields: spec.machineFields.filter((field) => hasExactTerm(content, field)).sort(),
     enums: spec.enums.filter((value) => hasExactTerm(content, value)).sort(),
   };
 }
 
 function compareAdapterSignatures(failures, spec, enSignature, jaSignature) {
-  for (const key of ["extends_skill", "extends_skill_section", "extends_skill_additional_section"]) {
-    if (enSignature[key] !== jaSignature[key]) {
+  for (const key of ["skill", "section", "additionalSections"]) {
+    if (JSON.stringify(enSignature[key]) !== JSON.stringify(jaSignature[key])) {
       failures.push(
         `SKILL_ADAPTER_DRIFT: .takt/{en,ja}/facets/instructions/${spec.name}.md ${key} mismatch: en=${JSON.stringify(enSignature[key])} ja=${JSON.stringify(jaSignature[key])}`,
       );
@@ -1440,21 +1425,17 @@ function validateSkillAdapterFacets(repoRoot) {
       }
 
       const content = readText(path);
-      const frontMatter = frontMatterFields(content);
-      const expectedFrontMatter = {
-        extends_skill: spec.extendsSkill,
-        extends_skill_section: spec.extendsSkillSection,
-      };
-      if (spec.extendsSkillAdditionalSection) {
-        expectedFrontMatter.extends_skill_additional_section = spec.extendsSkillAdditionalSection;
+      const skillSource = extractKiroSkillSourceInstruction(content);
+      if (skillSource.skill !== spec.extendsSkill) {
+        failures.push(`SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} skill must equal ${JSON.stringify(spec.extendsSkill)}`);
       }
-
-      for (const [field, expected] of Object.entries(expectedFrontMatter)) {
-        if (frontMatter[field] !== expected) {
-          failures.push(
-            `SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} ${field} must equal ${JSON.stringify(expected)}`,
-          );
-        }
+      if (skillSource.section !== spec.extendsSkillSection) {
+        failures.push(`SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} section must equal ${JSON.stringify(spec.extendsSkillSection)}`);
+      }
+      if (spec.extendsSkillAdditionalSection && !skillSource.additionalSections.includes(spec.extendsSkillAdditionalSection)) {
+        failures.push(
+          `SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} additionalSections must include ${JSON.stringify(spec.extendsSkillAdditionalSection)}`,
+        );
       }
 
       for (const field of spec.machineFields) {
@@ -1528,10 +1509,10 @@ function validateLegacyKiroGenerationSurface(repoRoot) {
       if (!existsSync(facetPath)) {
         continue;
       }
-      const frontMatter = frontMatterFields(readText(facetPath));
-      if (!frontMatter.extends_skill) {
+      const skillSource = extractKiroSkillSourceInstruction(readText(facetPath));
+      if (!skillSource.skill) {
         failures.push(
-          `LEGACY_KIRO_GENERATION_DRIFT: ${rel(repoRoot, facetPath)} must declare extends_skill for thin Kiro skill adapter reuse`,
+          `LEGACY_KIRO_GENERATION_DRIFT: ${rel(repoRoot, facetPath)} must include Kiro Skill Source for thin Kiro skill adapter reuse`,
         );
       }
     }

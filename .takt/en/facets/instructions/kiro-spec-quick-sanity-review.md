@@ -1,9 +1,10 @@
----
-extends_skill: kiro-spec-quick
-extends_skill_section: "#### Final Sanity Review"
----
-
 {extends: review-qa}
+
+## Kiro Skill Source
+
+Before executing this instruction, invoke `$kiro-spec-quick` or `/kiro-spec-quick` and read the resolved `SKILL.md`.
+Apply the `#### Final Sanity Review` section from `$kiro-spec-quick` or `/kiro-spec-quick` as this step's source of truth.
+This facet defines only the adapter delta for the TAKT workflow.
 
 # Kiro Spec Quick Sanity Review Instruction
 

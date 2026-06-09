@@ -268,8 +268,27 @@ function writeMockScenario(root) {
     { persona: "coding-reviewer", content: "Kiro task review smoke approved. VERDICT: APPROVED." },
     {
       persona: "coding-reviewer",
-      content: "## Review Verdict\n\nVERDICT: APPROVED\nFINDINGS: none\nMECHANICAL_RESULTS: mock smoke evidence accepted\nSUMMARY: approved",
+      content: "## Review Verdict\n\nVERDICT: APPROVED\nFINDINGS: none\nMECHANICAL_RESULTS: mock smoke evidence accepted\nSUMMARY: approved\ncondition: approved",
     },
+    { persona: "architecture-reviewer", content: "Kiro architecture review smoke approved. VERDICT: APPROVED." },
+    {
+      persona: "architecture-reviewer",
+      content:
+        "# アーキテクチャレビュー\n\n## 結果: APPROVE\n\n## サマリー\nmock smoke architecture evidence accepted.\n\nVERDICT: APPROVED\ncondition: approved",
+    },
+    { persona: "qa-reviewer", content: "Kiro QA review smoke approved. VERDICT: APPROVED." },
+    {
+      persona: "qa-reviewer",
+      content: "# QAレビュー\n\n## 結果: APPROVE\n\n## サマリー\nmock smoke QA evidence accepted.\n\nVERDICT: APPROVED\ncondition: approved",
+    },
+    { persona: "testing-reviewer", content: "Kiro testing review smoke approved. VERDICT: APPROVED." },
+    {
+      persona: "testing-reviewer",
+      content: "# テストレビュー\n\n## 結果: APPROVE\n\n## サマリー\nmock smoke testing evidence accepted.\n\nVERDICT: APPROVED\ncondition: approved",
+    },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
     { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
     { persona: "supervisor", content: "Completion verification smoke passed. STATUS: VERIFIED." },
     {
@@ -355,7 +374,7 @@ function findFile(root, fileName) {
   return undefined;
 }
 
-test("kiro impl runtime wiring calls AI quality gate subworkflow and returns to review", () => {
+test("kiro impl runtime wiring calls AI quality gate subworkflow and returns to parallel reviewers", () => {
   const root = makeRuntimeFixture();
   try {
     writeSmokeSpec(root);
@@ -375,7 +394,7 @@ test("kiro impl runtime wiring calls AI quality gate subworkflow and returns to 
     assert.match(output, /\[3\/30\] ai-quality-gate/);
     assert.match(output, /\[4\/30\] ai-antipattern-review-1st/);
     assert.match(output, /Status: COMPLETE/);
-    assert.match(output, /\[5\/30\] review-task/);
+    assert.match(output, /\[5\/30\] reviewers/);
     assert.match(output, /Result: Success/);
 
     const reportRoot = join(root, ".takt", "runs");
@@ -388,7 +407,10 @@ test("kiro impl runtime wiring calls AI quality gate subworkflow and returns to 
     const aiAntipatternReportPath = findFile(reportsDir, "kiro-ai-antipattern-review.md");
     assert.ok(aiAntipatternReportPath, "expected the AI antipattern review report to be emitted");
     assert.match(readFileSync(aiAntipatternReportPath, "utf8"), /APPROVE/);
-    assert.match(readFileSync(join(reportsDir, "kiro-task-review-verdict.md"), "utf8"), /VERDICT: APPROVED/);
+    assert.match(readFileSync(join(reportsDir, "kiro-task-coding-review.md"), "utf8"), /VERDICT: APPROVED/);
+    assert.match(readFileSync(join(reportsDir, "kiro-task-architecture-review.md"), "utf8"), /VERDICT: APPROVED/);
+    assert.match(readFileSync(join(reportsDir, "kiro-task-qa-review.md"), "utf8"), /VERDICT: APPROVED/);
+    assert.match(readFileSync(join(reportsDir, "kiro-task-testing-review.md"), "utf8"), /VERDICT: APPROVED/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
