@@ -10,11 +10,23 @@
 
 ## Kiro 固有差分
 
-この instruction は読み取り専用です。`requirements.md`、`design.md`、任意の `research.md`、`spec.json` を確認し、design artifact は変更しません。
+この instruction は読み取り専用です。standalone validation では `requirements.md`、`design.md`、任意の `research.md`、`spec.json` を確認し、design artifact は変更しません。`kiro-spec-design` または `kiro-spec-quick` の generation review 中は、まだ `design.md` が書かれていない draft review mode として扱います。
+
+## Draft review mode
+
+- active workflow が `kiro-spec-design` または `kiro-spec-quick` で、直前の generation / repair result が `phase: "design"`、`draft_status: "READY_FOR_REVIEW"`、`review_gate: "PENDING"` の場合、review 対象は `.kiro/specs/<feature>/design.md` ではなく current run の draft report です。
+- draft report は、current Report Directory または Previous Response にある `kiro-spec-design-result.md`、`kiro-spec-design-repair-result.md`、`kiro-spec-quick-design-result.md`、`kiro-spec-quick-design-repair-result.md` をこの順で探します。
+- draft report 内の `draft_artifacts.design`、`draft_artifacts.research`、または `## design.md draft` / `## research.md draft` という Markdown heading を design draft / research draft として扱います。
+- draft review mode の review target は design draft に固定します。git diff、current dirty worktree、workflow/facet/script/test の未コミット差分を design review target として扱ってはなりません。
+- `git diff` を実行する場合は、必ず `.kiro/specs/<feature>/` または current run report path に path filter を付ける。unscoped git diff、つまり path filter なしの `git diff` は draft review mode では禁止する。
+- draft 本文を取得できない場合、git diff や `.kiro/specs/<feature>/design.md` や別 phase artifact へフォールバックしてはなりません。
+- draft review mode では、`spec.json` が `phase: "requirements-generated"` のまま、`approvals.design.generated: false` のままであることは正常です。これを `ARTIFACT_MISSING` や `LIFECYCLE_INCONSISTENT` として扱ってはなりません。
+- draft 本文が見つからない場合は `DECISION: MANUAL_VERIFY_REQUIRED` または `DECISION: NO-GO` を返し、`missing_draft_artifact` として報告します。存在しない `.kiro/specs/<feature>/design.md` を要求してはいけません。
+- git diff、current dirty worktree、または unrelated workflow/facet changes を design draft の代わりにレビューした場合は `DECISION: NO-GO` とし、`review_target_scope_mismatch` として報告します。この状態を local repair possible として扱ってはいけません。
 
 ## Validation procedure
 
-1. requirements と design artifact が存在し、approval と phase が矛盾していないことを確認する。
+1. requirements と design artifact が存在し、approval と phase が矛盾していないことを確認する。draft review mode では、draft report の design draft を design artifact として扱う。
 2. design traceability table で requirements coverage を確認する。
 3. Boundary Commitments、Out of Boundary、Allowed Dependencies、Revalidation Triggers を確認する。
 4. File Structure Plan と component mapping を照合する。
@@ -30,6 +42,9 @@ shared `kiro-validation-result` contract を使う。継承元 skill の GO/NO-G
 - `DECISION: GO` を返す前に、current run の namespaced AI gate review report を確認する:
   `reports/subworkflows/iteration-*--step-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`
   または `reports/subworkflows/iteration-*--step-quick-ai-quality-gate-design--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`。
+- draft review mode では、その AI gate report が design draft を対象にしていることを確認します。report は `review_target: design_draft` または同等の明示 evidence を含まなければなりません。report が requirements draft など別 phase を対象にしている場合は `DECISION: NO-GO` とし、`ai_gate_scope_mismatch` として報告します。
+- draft review mode では、AI gate report が git diff、current dirty worktree、または unrelated workflow/facet changes を対象にしている場合も `DECISION: NO-GO` とし、`ai_gate_scope_mismatch` として報告します。この状態を local repair possible として扱ってはいけません。
+- AI gate report が `review_target: git_diff`、unscoped git diff、または path filter なしの `git diff` を evidence としている場合は `DECISION: NO-GO` とし、`ai_gate_scope_mismatch` として報告します。
 - active workflow が standalone `kiro-validate-design` で、current run に `kiro-spec-ai-antipattern-review.md` が存在しない場合は、AI quality gate evidence check をスキップし、通常の validation procedure のみで判断する。この read-only workflow は gate を実行しない。
 - `kiro-spec-design` や `kiro-spec-quick` などの generation review workflow で `kiro-spec-ai-antipattern-review.md` が存在しない場合は、design readiness を accept せず `DECISION: MANUAL_VERIFY_REQUIRED` を返す。
 - unresolved AI antipattern findings が残る場合は `DECISION: NO-GO` を返す。

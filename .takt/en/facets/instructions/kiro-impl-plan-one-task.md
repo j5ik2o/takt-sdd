@@ -18,6 +18,7 @@ Plan exactly one task for this TAKT iteration. This facet maps task selection fr
 - `.kiro/specs/<feature>/requirements.md`, `design.md`, and `tasks.md`.
 - Task annotations `_Boundary:_`, `_Depends:_`, numeric requirement coverage, blocker notes, and checkbox state.
 - Read-only readiness signal from status validation when available.
+- Pre-existing dirty files at planning time from `git status --porcelain`.
 
 ## Planning rules
 
@@ -25,9 +26,10 @@ Plan exactly one task for this TAKT iteration. This facet maps task selection fr
 2. Select the first unchecked one task whose `_Depends:_` entries are complete and whose blocker notes do not stop execution.
 3. Treat `_Depends:_ none` as an empty dependency set.
 4. Include `_Boundary:_`, `_Depends:_`, requirement numbers, selected task text, forbidden adjacent scope, and validation command hints in the implementation plan.
-5. Return `STATUS: READY_FOR_REVIEW` when exactly one selected task has a valid implementation plan.
-6. Return `STATUS: BLOCKED` with `selected_task` and `blocker_note_required: true` when an unchecked task is blocked by missing task annotation or a boundary conflict.
-7. Return `STATUS: BLOCKED` without `selected_task` when no unchecked task is eligible or feature readiness failed.
+5. Record pre-existing dirty files at planning time as `baseline_dirty_files`. They are not the selected task diff; later gates use them as the baseline for scope mismatch detection.
+6. Return `STATUS: READY_FOR_REVIEW` when exactly one selected task has a valid implementation plan.
+7. Return `STATUS: BLOCKED` with `selected_task` and `blocker_note_required: true` when an unchecked task is blocked by missing task annotation or a boundary conflict.
+8. Return `STATUS: BLOCKED` without `selected_task` when no unchecked task is eligible or feature readiness failed.
 
 ## Output mapping
 

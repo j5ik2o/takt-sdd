@@ -268,6 +268,12 @@ steps:
     rules:
       - condition: DECISION GO and design review gate passed
         next: quick-finalize-design
+      - condition: DECISION NO-GO and ai_gate_scope_mismatch
+        next: ABORT
+      - condition: DECISION NO-GO and review_target_scope_mismatch
+        next: ABORT
+      - condition: DECISION NO-GO and missing_draft_artifact
+        next: ABORT
       - condition: DECISION NO-GO and local repair possible
         next: quick-repair-design
       - condition: DECISION NO-GO and requirements/design gap remains
@@ -391,6 +397,12 @@ steps:
     rules:
       - condition: task_plan_review PASS and task_graph_sanity_review PASS
         next: quick-finalize-tasks
+      - condition: task_plan_review NEEDS_FIXES and fatal_review_issue AI_GATE_SCOPE_MISMATCH
+        next: ABORT
+      - condition: task_plan_review NEEDS_FIXES and fatal_review_issue REVIEW_TARGET_SCOPE_MISMATCH
+        next: ABORT
+      - condition: task_plan_review NEEDS_FIXES and fatal_review_issue MISSING_DRAFT_ARTIFACT
+        next: ABORT
       - condition: task_plan_review NEEDS_FIXES or task_graph_sanity_review NEEDS_FIXES
         next: quick-repair-tasks
       - condition: task_plan_review RETURN_TO_DESIGN or task_graph_sanity_review RETURN_TO_DESIGN
@@ -474,6 +486,10 @@ steps:
 # - automatic mode runs init, requirements, design, tasks, and sanity review without user prompts between successful phase finalizers.
 # - interactive mode requires phase approval between init -> requirements, requirements -> design, and design -> tasks; missing phase approval stops the quick path.
 # - quick requirements, design, and tasks use generate/repair -> quick-ai-quality-gate-* -> review -> finalize inside this YAML, with finalize repair returns inside loop_monitors cycles.
+# - quick design AI gate and review target only the design draft. They do not fall back to unscoped git diff, current dirty worktree, or unrelated workflow/facet changes.
+# - If quick design AI gate evidence targeted another phase, unscoped git diff, current dirty worktree, or unrelated workflow/facet changes, treat it as ai_gate_scope_mismatch and ABORT instead of routing to quick-repair-design.
+# - quick tasks AI gate and review target only the tasks draft. They do not fall back to unscoped git diff, current dirty worktree, or unrelated workflow/facet/script/test changes.
+# - If quick tasks AI gate evidence targeted another phase, unscoped git diff, current dirty worktree, or unrelated workflow/facet/script/test changes, treat it as ai_gate_scope_mismatch and ABORT instead of routing to quick-repair-tasks.
 # - This single YAML composes phase steps directly. It does not call external workflow orchestration or restart TAKT through a shell command.
 # - The quick path does not call discovery/batch/implementation behavior.
 # - Only a final sanity review verdict PASS can produce quick-completion and COMPLETE.

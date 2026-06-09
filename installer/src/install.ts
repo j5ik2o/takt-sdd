@@ -28,6 +28,44 @@ const LEGACY_OPSX_SCRIPT_INSTALL_PATH = "scripts/opsx-cli.sh";
 const OPENSPEC_PACKAGE = "@fission-ai/openspec";
 const OPENSPEC_VERSION = "1.3.1";
 const OPENSPEC_CONFIG_PATH = "openspec/config.yaml";
+export const CC_SDD_PACKAGE = "cc-sdd";
+export const CC_SDD_VERSION = "3.0.2";
+
+export function buildCcSddExecArgs(npmCliPath: string, lang: Lang): string[] {
+  return [
+    npmCliPath,
+    "exec",
+    "--yes",
+    `--package=${CC_SDD_PACKAGE}@${CC_SDD_VERSION}`,
+    "--",
+    "cc-sdd",
+    "--lang",
+    lang,
+  ];
+}
+
+type CommandRunner = (file: string, args: readonly string[], options: { cwd: string }) => void;
+
+export class CcSddInitError extends Error {}
+
+export const defaultCcSddRun: CommandRunner = (file, args, { cwd }) => {
+  execFileSync(file, [...args], { cwd, encoding: "utf-8", stdio: ["ignore", "pipe", "pipe"] });
+};
+
+export function initializeCcSddProject(
+  cwd: string,
+  lang: Lang,
+  msg: ReturnType<typeof getMessages>,
+  run: CommandRunner = defaultCcSddRun,
+): void {
+  info(msg.ccSddInitializing(CC_SDD_VERSION));
+  try {
+    run(process.execPath, buildCcSddExecArgs(getNpmCliPath(), lang), { cwd });
+  } catch (error) {
+    throw new CcSddInitError(formatExecError(error));
+  }
+  info(msg.ccSddInitialized());
+}
 const FACET_TYPES = [
   "personas",
   "policies",
@@ -250,7 +288,7 @@ interface SyncResult {
   readonly files: Record<string, string>;
 }
 
-function syncRelativeFiles(
+export function syncRelativeFiles(
   srcBase: string,
   destBase: string,
   relativePaths: readonly string[],
@@ -498,6 +536,7 @@ export async function install(options: InstallOptions): Promise<void> {
       } else {
         errorExit(msg.requiredFileMissing(KIRO_STAGED_SCRIPT_INSTALL_PATH));
       }
+      console.log(msg.ccSddDryRunPlan(CC_SDD_VERSION, options.lang));
       console.log("");
       info(msg.dryRunSkipped);
       return;
@@ -641,6 +680,15 @@ export async function install(options: InstallOptions): Promise<void> {
     };
     writeFileSync(manifestPath, JSON.stringify(newManifest, null, 2) + "\n", "utf-8");
     info(msg.manifestCreated);
+
+    try {
+      initializeCcSddProject(options.cwd, options.lang, msg);
+    } catch (error) {
+      if (error instanceof CcSddInitError) {
+        errorExit(msg.ccSddInitFailed(error.message));
+      }
+      throw error;
+    }
 
     info(isUpdate ? msg.updateComplete : msg.complete);
     console.log(msg.usageExamples);

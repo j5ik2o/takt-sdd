@@ -140,7 +140,7 @@ test("validator rejects custom retry or loop health source of truth in workflow"
   const workflow = readFileSync(join(repoRoot, ".takt", "ja", "workflows", "cc-sdd-impl.yaml"), "utf8")
     .replace("name: cc-sdd-impl", "name: kiro-impl")
     .replace("initial_step: plan", "initial_step: check-readiness")
-    .replace("max_steps: 50", "max_steps: 30")
+    .replace("max_steps: 50", "max_steps: 200")
     .concat("\n# maxAttempts: 3\n");
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(root, `.takt/${lang}/workflows/kiro-impl.yaml`, workflow);
@@ -210,6 +210,21 @@ test("validator rejects direct review routing that bypasses AI quality gate", ()
 
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("ai-quality-gate")));
+});
+
+test("validator rejects implementation AI quality gate without local ai-review wiring", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-ai-quality-gate.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    "  ai-antipattern-review: ../facets/instructions/ai-review.md\n",
+    "",
+  );
+  writeFixtureFile(root, ".takt/ja/workflows/kiro-ai-quality-gate.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("local ai-review instruction")));
 });
 
 test("validator rejects parent loop monitor that skips AI quality gate", () => {
@@ -604,6 +619,57 @@ test("validator rejects progress routing that drops task set status", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("update-progress")));
+});
+
+test("validator rejects progress updates that count group header checkboxes as remaining tasks", () => {
+  const root = makeCurrentSurfaceFixture();
+  const progressPath = join(root, ".takt", "en", "facets", "instructions", "kiro-impl-update-progress.md");
+  const progress = readFileSync(progressPath, "utf8")
+    .replaceAll("executable leaf task", "task")
+    .replaceAll("group header", "heading");
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-impl-update-progress.md", progress);
+
+  const contractPath = join(root, ".takt", "en", "facets", "output-contracts", "kiro-implementation-result.md");
+  const contract = readFileSync(contractPath, "utf8")
+    .replaceAll("executable leaf task", "task")
+    .replaceAll("group header", "heading");
+  writeFixtureFile(root, ".takt/en/facets/output-contracts/kiro-implementation-result.md", contract);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("executable leaf task")));
+  assert.ok(result.failures.some((failure) => failure.includes("group header")));
+});
+
+test("validator rejects single-shot completion when tasks remain", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    "task_set_status REMAINING_TASKS_EXIST\n        next: plan-one-task",
+    "task_set_status REMAINING_TASKS_EXIST\n        next: COMPLETE",
+  );
+  writeFixtureFile(root, ".takt/ja/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("must not complete while remaining tasks exist")));
+});
+
+test("validator rejects task planning re-entry that inherits stale session context", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8")
+    .replace("    session: refresh\n    knowledge:\n      - architecture\n", "    knowledge:\n      - architecture\n")
+    .replace("    pass_previous_response: false\n    instruction: kiro-impl-plan-one-task\n", "    instruction: kiro-impl-plan-one-task\n");
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("SESSION_DRIFT") && failure.includes("refresh session")));
+  assert.ok(result.failures.some((failure) => failure.includes("SESSION_DRIFT") && failure.includes("update-progress responses")));
 });
 
 test("validator rejects workflow references to missing persona resources", () => {

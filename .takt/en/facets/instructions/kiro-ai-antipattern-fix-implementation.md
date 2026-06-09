@@ -30,6 +30,7 @@ Fix or adjudicate AI antipattern findings for the currently selected Kiro implem
 ## Fix Rules
 
 - Prefer small, direct corrections that remove hallucinated behavior, unsupported claims, missing repository evidence, or task-boundary drift.
+- If a finding is `implementation_scope_mismatch`, unscoped git diff, the whole current dirty worktree, or unrelated dirty files outside `baseline_dirty_files`, do not treat it as a local selected task fix; report `STATUS: NEED_REPLAN`.
 - If a finding is valid and fixable inside the selected task, fix it and report `STATUS: FIXED`.
 - If no code change is needed, report `STATUS: NO_FIX_NEEDED` only with finding-level evidence explaining why each finding is inapplicable or already resolved.
 - If a finding requires changing the plan, requirements, design, or task decomposition, report `STATUS: NEED_REPLAN`.

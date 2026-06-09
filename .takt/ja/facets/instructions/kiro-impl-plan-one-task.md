@@ -18,6 +18,7 @@
 - `.kiro/specs/<feature>/requirements.md`、`design.md`、`tasks.md`。
 - task annotation の `_Boundary:_`、`_Depends:_`、numeric requirement coverage、blocker notes、checkbox state。
 - 利用可能な場合はstatus validationのread-only readiness signal。
+- `git status --porcelain` による planning 時点の既存未コミット files。
 
 ## Planning rules
 
@@ -25,9 +26,10 @@
 2. `_Depends:_` が完了済みで、blocker notesが実行を止めていないunchecked taskの先頭 one task を選ぶ。
 3. `_Depends:_ none` はempty dependency setとして扱う。
 4. implementation planには `_Boundary:_`、`_Depends:_`、requirement numbers、selected task text、禁止する隣接scope、validation command hintsを含める。
-5. exactly one selected task と有効なimplementation planがある場合は `STATUS: READY_FOR_REVIEW` を返す。
-6. unchecked task が task annotation不足またはboundary conflictで止まる場合は、`selected_task` と `blocker_note_required: true` を含めて `STATUS: BLOCKED` を返す。
-7. eligibleなunchecked taskがない、またはfeature readinessが失敗した場合は、`selected_task` なしで `STATUS: BLOCKED` を返す。
+5. planning 時点の既存未コミット files を `baseline_dirty_files` として記録する。これは selected task diff ではなく、後続 gate が scope mismatch を判断するための baseline として扱う。
+6. exactly one selected task と有効なimplementation planがある場合は `STATUS: READY_FOR_REVIEW` を返す。
+7. unchecked task が task annotation不足またはboundary conflictで止まる場合は、`selected_task` と `blocker_note_required: true` を含めて `STATUS: BLOCKED` を返す。
+8. eligibleなunchecked taskがない、またはfeature readinessが失敗した場合は、`selected_task` なしで `STATUS: BLOCKED` を返す。
 
 ## Output mapping
 

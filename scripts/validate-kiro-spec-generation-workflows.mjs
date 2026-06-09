@@ -18,6 +18,7 @@ const generationResultContractTerms = [
   "blockingReason",
   "draft_status",
   "review_gate",
+  "draft_artifacts",
   "READY_FOR_REVIEW",
   "NEEDS_FIX",
   "BLOCKED",
@@ -59,6 +60,9 @@ const phaseWorkflowSpecs = [
       "Boundary Commitments",
       "File Structure Plan",
       ...draftReviewRoutingTerms,
+      "unscoped git diff",
+      "ai_gate_scope_mismatch",
+      "review_target_scope_mismatch",
     ],
     instructionFacets: ["kiro-spec-design", "kiro-validate-design-readiness"],
     policyFacets: ["kiro-spec-generation"],
@@ -73,6 +77,13 @@ const phaseWorkflowSpecs = [
       "_Depends:_",
       "kiro-spec-generation-result",
       ...draftReviewRoutingTerms,
+      "draft_artifacts.tasks",
+      "tasks_draft",
+      "unscoped git diff",
+      "fatal_review_issue",
+      "AI_GATE_SCOPE_MISMATCH",
+      "REVIEW_TARGET_SCOPE_MISMATCH",
+      "MISSING_DRAFT_ARTIFACT",
     ],
     instructionFacets: ["kiro-spec-tasks", "kiro-spec-tasks-review"],
     policyFacets: ["kiro-spec-generation", "kiro-spec-task-annotations"],
@@ -98,6 +109,11 @@ const phaseWorkflowSpecs = [
       "quick-repair-tasks",
       "quick-finalize-tasks",
       "quick-sanity-review",
+      "unscoped git diff",
+      "fatal_review_issue",
+      "AI_GATE_SCOPE_MISMATCH",
+      "REVIEW_TARGET_SCOPE_MISMATCH",
+      "MISSING_DRAFT_ARTIFACT",
     ],
     instructionFacets: [
       "kiro-spec-init",
@@ -121,6 +137,20 @@ const phaseWorkflowSpecs = [
       "kiro-spec-tasks-review-result",
       "kiro-spec-sanity-review",
     ],
+  },
+];
+
+const auxiliaryWorkflowSpecs = [
+  {
+    name: "kiro-spec-ai-quality-gate",
+    requiredTerms: [
+      "ai-antipattern-review: ../facets/instructions/ai-review.md",
+      "instruction: ai-antipattern-review",
+      "kiro-ai-antipattern-fix-spec-generation",
+    ],
+    instructionFacets: [],
+    policyFacets: [],
+    outputContracts: [],
   },
 ];
 
@@ -148,17 +178,31 @@ const facetSpecs = [
   {
     kind: "instructions",
     name: "kiro-spec-tasks",
-    terms: ["tasks.md", "_Boundary:_", "_Depends:_", "tasks-generated"],
+    terms: ["tasks.md", "_Boundary:_", "_Depends:_", "tasks-generated", "draft_artifacts.tasks", "non-empty dependencies"],
   },
   {
     kind: "instructions",
     name: "kiro-spec-tasks-review",
-    terms: ["Review Task Plan", "task_plan_review", "task_graph_sanity_review", "read-only", "PASS", "NEEDS_FIXES", "RETURN_TO_DESIGN"],
+    terms: [
+      "Review Task Plan",
+      "task_plan_review",
+      "task_graph_sanity_review",
+      "fatal_review_issue",
+      "read-only",
+      "PASS",
+      "NEEDS_FIXES",
+      "RETURN_TO_DESIGN",
+      "draft_artifacts.tasks",
+      "tasks_draft",
+      "ai_gate_scope_mismatch",
+      "unscoped git diff",
+      "non-empty dependencies",
+    ],
   },
   {
     kind: "output-contracts",
     name: "kiro-spec-tasks-review-result",
-    terms: ["task_plan_review", "task_graph_sanity_review", "PASS", "NEEDS_FIXES", "RETURN_TO_DESIGN", "summary"],
+    terms: ["task_plan_review", "task_graph_sanity_review", "fatal_review_issue", "PASS", "NEEDS_FIXES", "RETURN_TO_DESIGN", "summary"],
   },
   {
     kind: "instructions",
@@ -173,7 +217,7 @@ const facetSpecs = [
   {
     kind: "policies",
     name: "kiro-spec-task-annotations",
-    terms: ["_Boundary:_", "_Depends:_", "none", "(P)"],
+    terms: ["_Boundary:_", "_Depends:_", "none", "(P)", "non-empty dependencies"],
   },
   {
     kind: "output-contracts",
@@ -364,8 +408,8 @@ const skillAdapterFacetSpecs = [
     extendsSkill: "kiro-spec-tasks",
     extendsSkillSection: "### Step 3: Review Task Plan",
     extendsSkillAdditionalSection: "### Step 3.5: Run Task-Graph Sanity Review",
-    machineFields: ["task_plan_review", "task_graph_sanity_review"],
-    enums: ["PASS", "NEEDS_FIXES", "RETURN_TO_DESIGN"],
+    machineFields: ["task_plan_review", "task_graph_sanity_review", "fatal_review_issue"],
+    enums: ["PASS", "NEEDS_FIXES", "RETURN_TO_DESIGN", "NONE", "AI_GATE_SCOPE_MISMATCH", "REVIEW_TARGET_SCOPE_MISMATCH", "MISSING_DRAFT_ARTIFACT"],
   },
   {
     name: "kiro-validate-design-readiness",
@@ -373,6 +417,22 @@ const skillAdapterFacetSpecs = [
     extendsSkillSection: "## Execution Steps",
     machineFields: ["DECISION"],
     enums: ["GO", "NO-GO", "MANUAL_VERIFY_REQUIRED"],
+    requiredTerms: [
+      "Draft review mode",
+      "kiro-spec-design-result.md",
+      "kiro-spec-quick-design-result.md",
+      "draft_artifacts",
+      "design.md draft",
+      "missing_draft_artifact",
+      "ai_gate_scope_mismatch",
+      "review_target_scope_mismatch",
+      "review_target",
+      "unscoped git diff",
+      "path filter",
+      "git diff",
+      "current dirty worktree",
+      "local repair possible",
+    ],
   },
   {
     name: "kiro-spec-quick-sanity-review",
@@ -791,7 +851,7 @@ function validateLanguageParity(repoRoot) {
 function validateWorkflowFiles(repoRoot) {
   const failures = [];
   for (const lang of languages) {
-    for (const spec of phaseWorkflowSpecs) {
+    for (const spec of [...phaseWorkflowSpecs, ...auxiliaryWorkflowSpecs]) {
       const path = join(repoRoot, ".takt", lang, "workflows", `${spec.name}.yaml`);
       if (!existsSync(path)) {
         failures.push(`WORKFLOW_MISSING: ${rel(repoRoot, path)} missing`);
@@ -1448,6 +1508,7 @@ function validateSkillAdapterFacets(repoRoot) {
           failures.push(`SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} missing enum: ${value}`);
         }
       }
+      containsAll(content, spec.requiredTerms ?? [], path, failures, repoRoot, "SKILL_ADAPTER_DRIFT");
       signatures[lang] = adapterSignature(content, spec);
     }
 

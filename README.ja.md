@@ -60,6 +60,7 @@ npx create-takt-sdd --tag 0.1.2
 - **`.takt/`** — 選択言語（`--lang`）のワークフロー（YAML ワークフロー）とファセット群
 - **`openspec/config.yaml`** — OpenSpec `1.3.1` の公式 CLI で初期化されたプロジェクト設定
 - **`package.json`** — 各フェーズの npm scripts と `takt` / `@fission-ai/openspec@1.3.1` を devDependencies に追加
+- **cc-sdd** — 固定バージョンの `cc-sdd@3.0.2` CLI で、選択した `--lang` を伝播して Kiro 互換のプロジェクト初期化を実行
 
 オプション：
 
@@ -70,7 +71,7 @@ npx create-takt-sdd --tag 0.1.2
 | `--lang <en\|ja>` | ファセット・メッセージの言語（デフォルト: `en`） |
 | `--dry-run` | ファイルを書き込まずにプレビュー |
 
-既存の `package.json` がある場合は npm scripts のみマージされる（既存のスクリプトは上書きしない）。あわせて `openspec init --tools none --force .` を実行するため、AI ツール向けの追加ファイルを増やさずに OpenSpec を利用できる状態になる。
+既存の `package.json` がある場合は npm scripts のみマージされる（既存のスクリプトは上書きしない）。あわせて `openspec init --tools none --force .` を実行するため、AI ツール向けの追加ファイルを増やさずに OpenSpec を利用できる状態になる。続けて固定バージョンの `cc-sdd@3.0.2` 初期化を同じ `--lang` で実行する。`--dry-run` では cc-sdd 初期化はプレビュー表示のみで実行されない。
 
 ### スキルの個別追加
 

@@ -30,6 +30,7 @@ Full custom reason: TAKT-side reusable AI antipattern gate instruction; no upstr
 ## Fix Rules
 
 - 幻覚された挙動、根拠のない主張、リポジトリ根拠不足、タスク境界逸脱を取り除く、小さく直接的な是正を優先する。
+- finding が `implementation_scope_mismatch`、unscoped git diff、current dirty worktree 全体、または `baseline_dirty_files` 外の unrelated dirty file を対象にしている場合は、selected task の局所修正として扱わず `STATUS: NEED_REPLAN` を報告する。
 - finding が妥当で、選択中タスク内で是正できる場合は修正し、`STATUS: FIXED` を報告する。
 - コード変更が不要な場合は、各 finding が不適用または解消済みである finding-level evidence を示したうえでのみ `STATUS: NO_FIX_NEEDED` を報告する。
 - finding の解決に plan、requirements、design、task decomposition の変更が必要な場合は `STATUS: NEED_REPLAN` を報告する。

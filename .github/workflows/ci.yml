@@ -65,11 +65,20 @@ jobs:
 
       - name: Validate Kiro AI quality gate coverage
         run: |
+          npm run validate:kiro-workflow-surface
+          npm run test:kiro-workflow-surface
+          npm run validate:kiro-discovery-batch-workflows
+          npm run test:kiro-discovery-batch-workflows
           npm run validate:kiro-ai-quality-gate-workflow-coverage
           npm run test:kiro-ai-quality-gate-workflow-coverage
           npm run validate:kiro-shared-contracts
+          npm run test:kiro-shared-contracts
           npm run validate:kiro-spec-generation-workflows
+          npm run test:kiro-spec-generation-workflows
           npm run validate:kiro-status-validation-workflows
+          npm run test:kiro-status-validation-workflows
+          npm run validate:kiro-iterative-implementation-workflow
+          npm run test:kiro-iterative-implementation-workflow
           npm run test:kiro-ai-quality-gate-runtime-smoke
           npm run test:kiro-discovery-ai-quality-gate-runtime-smoke
 

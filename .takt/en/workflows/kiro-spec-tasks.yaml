@@ -106,6 +106,12 @@ steps:
     rules:
       - condition: task_plan_review PASS and task_graph_sanity_review PASS
         next: finalize-tasks
+      - condition: task_plan_review NEEDS_FIXES and fatal_review_issue AI_GATE_SCOPE_MISMATCH
+        next: ABORT
+      - condition: task_plan_review NEEDS_FIXES and fatal_review_issue REVIEW_TARGET_SCOPE_MISMATCH
+        next: ABORT
+      - condition: task_plan_review NEEDS_FIXES and fatal_review_issue MISSING_DRAFT_ARTIFACT
+        next: ABORT
       - condition: task_plan_review NEEDS_FIXES or task_graph_sanity_review NEEDS_FIXES
         next: repair-tasks
       - condition: task_plan_review RETURN_TO_DESIGN or task_graph_sanity_review RETURN_TO_DESIGN
@@ -167,6 +173,8 @@ steps:
 # - The requirements/design approval gate checks requirements.md, design.md, and spec.json before task generation.
 # - In normal mode, unapproved requirements or design stop the workflow. With -y or auto-approve, explicitly set approvals.requirements.approved: true and approvals.design.approved: true before continuing.
 # - Task generation reads requirements.md, design.md, existing tasks.md, spec.json, and .kiro/settings/templates/specs/tasks.md.
+# - Tasks AI gate and review target only the `draft_artifacts.tasks` tasks_draft. They do not fall back to unscoped git diff, current dirty worktree, or unrelated workflow/facet/script/test changes.
+# - If tasks AI gate evidence targeted another phase, unscoped git diff, current dirty worktree, or unrelated workflow/facet/script/test changes, treat it as ai_gate_scope_mismatch and ABORT instead of routing to repair-tasks.
 # - Every executable task in tasks.md must include observable completion detail, numeric requirements, _Boundary:_, and _Depends:_.
 # - Use _Depends:_ none when a task has no dependency.
 # - Run task plan review and task graph sanity review before success metadata.

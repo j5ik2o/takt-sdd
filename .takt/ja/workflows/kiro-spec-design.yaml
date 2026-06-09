@@ -105,6 +105,12 @@ steps:
     rules:
       - condition: DECISION GO and design review gate passed
         next: finalize-design
+      - condition: DECISION NO-GO and ai_gate_scope_mismatch
+        next: ABORT
+      - condition: DECISION NO-GO and review_target_scope_mismatch
+        next: ABORT
+      - condition: DECISION NO-GO and missing_draft_artifact
+        next: ABORT
       - condition: DECISION NO-GO and local repair possible
         next: repair-design
       - condition: DECISION NO-GO and requirements/design gap remains
@@ -163,8 +169,11 @@ steps:
 # - 通常 mode では未承認 requirements で停止する。-y または auto-approve の場合は、続行前に approvals.requirements.approved: true を明示的に設定する。
 # - discovery/research と discovery/research validation は design synthesis 前に requirements.md、existing design.md、optional research.md、steering context、関連する code patterns を読む。
 # - research.md は design phase の補助 artifact として書き、最終的な実装判断は design.md にも残す。
-# - design.md は required sections として Boundary Commitments、File Structure Plan、Requirements Traceability を含める。
-# - design review gate は requirement coverage、architecture readiness、boundary readiness、File Structure Plan の具体性、Requirements Traceability を確認する。
+# - generate/repair の draft report は draft_artifacts.design/research または design.md draft / research.md draft section に full draft を含める。review-design は finalize 前の design.md 不在を ARTIFACT_MISSING としない。
+# - design draft は required sections として Boundary Commitments、File Structure Plan、Requirements Traceability を含める。
+# - design review gate は draft report を読み、requirement coverage、architecture readiness、boundary readiness、File Structure Plan の具体性、Requirements Traceability を確認する。
+# - ai-quality-gate-design と review-design は design draft だけを対象にする。unscoped git diff/current dirty worktree/unrelated workflow changes へフォールバックしない。
+# - requirements draft など別 phase、unscoped git diff、current dirty worktree、unrelated workflow/facet changes を対象にした AI gate evidence は ai_gate_scope_mismatch として ABORT し、repair-design に流さない。
 # - workflow は generate/repair -> ai-quality-gate-design -> review -> finalize を使い、finalize からの repair 戻りも監視対象に含め、repeat bound は loop_monitors.threshold だけに置く。
 # - real requirements/design gap が残る場合は BLOCKED または NEEDS_FIX を返し、design-generated へ進めない。
 # - 成功時は spec.json を phase: "design-generated"、approvals.requirements.approved: true、approvals.design.generated: true に更新する。

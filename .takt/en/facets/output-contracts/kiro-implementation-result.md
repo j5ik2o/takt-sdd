@@ -11,7 +11,8 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 - `selected_task`: the single task selected for this iteration, or `N/A` when no task can be selected.
 - `blocker_note_required`: boolean indicating whether `update-progress` must write a selected-task blocker note.
 - `implementation_plan`: selected task boundary, dependencies, requirement coverage, file scope, and validation commands.
-- `task_set_status`: one of `ALL_TASKS_COMPLETE`, `REMAINING_TASKS_EXIST`, or `N/A`.
+- `baseline_dirty_files`: pre-existing dirty files captured during planning; these are not part of the selected task diff.
+- `task_set_status`: one of `ALL_TASKS_COMPLETE`, `REMAINING_TASKS_EXIST`, or `N/A`; derived from executable leaf task checkboxes only, not group header checkboxes.
 - `changed_files`: files edited for the selected task.
 - `validation_evidence`: commands, exit codes, and fresh outputs.
 - `RED_PHASE_OUTPUT`: failing test evidence for behavioral tasks, or `N/A`.

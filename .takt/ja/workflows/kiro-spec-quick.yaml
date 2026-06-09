@@ -268,6 +268,12 @@ steps:
     rules:
       - condition: DECISION GO and design review gate passed
         next: quick-finalize-design
+      - condition: DECISION NO-GO and ai_gate_scope_mismatch
+        next: ABORT
+      - condition: DECISION NO-GO and review_target_scope_mismatch
+        next: ABORT
+      - condition: DECISION NO-GO and missing_draft_artifact
+        next: ABORT
       - condition: DECISION NO-GO and local repair possible
         next: quick-repair-design
       - condition: DECISION NO-GO and requirements/design gap remains
@@ -391,6 +397,12 @@ steps:
     rules:
       - condition: task_plan_review PASS and task_graph_sanity_review PASS
         next: quick-finalize-tasks
+      - condition: task_plan_review NEEDS_FIXES and fatal_review_issue AI_GATE_SCOPE_MISMATCH
+        next: ABORT
+      - condition: task_plan_review NEEDS_FIXES and fatal_review_issue REVIEW_TARGET_SCOPE_MISMATCH
+        next: ABORT
+      - condition: task_plan_review NEEDS_FIXES and fatal_review_issue MISSING_DRAFT_ARTIFACT
+        next: ABORT
       - condition: task_plan_review NEEDS_FIXES or task_graph_sanity_review NEEDS_FIXES
         next: quick-repair-tasks
       - condition: task_plan_review RETURN_TO_DESIGN or task_graph_sanity_review RETURN_TO_DESIGN
@@ -474,6 +486,10 @@ steps:
 # - automatic mode は phase finalizer 成功の間に user prompt を挟まず、init、requirements、design、tasks、sanity review を連続実行する。
 # - interactive mode は init -> requirements、requirements -> design、design -> tasks の間で phase approval を要求し、phase approval がなければ quick path を停止する。
 # - quick requirements、design、tasks は、この YAML 内で generate/repair -> quick-ai-quality-gate-* -> review -> finalize を使い、finalize からの repair 戻りも loop_monitors cycle に含める。
+# - quick design の AI gate と review は design draft だけを対象にする。unscoped git diff、current dirty worktree、unrelated workflow/facet changes へフォールバックしない。
+# - quick design で AI gate evidence が別 phase、unscoped git diff、current dirty worktree、unrelated workflow/facet changes を対象にした場合は ai_gate_scope_mismatch として ABORT し、quick-repair-design に流さない。
+# - quick tasks の AI gate と review は tasks draft だけを対象にする。unscoped git diff、current dirty worktree、unrelated workflow/facet/script/test changes へフォールバックしない。
+# - quick tasks で AI gate evidence が別 phase、unscoped git diff、current dirty worktree、unrelated workflow/facet/script/test changes を対象にした場合は ai_gate_scope_mismatch として ABORT し、quick-repair-tasks に流さない。
 # - この single YAML は phase steps を直接 compose する。外部 workflow orchestration や shell command による TAKT 再起動は使わない。
 # - quick path は discovery/batch/implementation behavior を呼ばない。
 # - final sanity review の verdict PASS だけが quick-completion と COMPLETE を許可する。

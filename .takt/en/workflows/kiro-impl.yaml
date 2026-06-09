@@ -1,12 +1,12 @@
 name: kiro-impl
-description: Kiro - Implement exactly one eligible task from an approved spec, then review, debug, verify, and update progress
+description: Kiro - Implement eligible tasks from an approved spec one at a time, repeating review, debug, verify, and progress updates until all tasks complete
 workflow_config:
   provider_options:
     codex:
       network_access: true
     opencode:
       network_access: true
-max_steps: 30
+max_steps: 200
 initial_step: plan-one-task
 
 instructions:
@@ -73,6 +73,7 @@ steps:
       - kiro-spec-lifecycle
       - kiro-spec-task-annotations
       - kiro-impl-task-progress
+    session: refresh
     knowledge:
       - architecture
     provider_options:
@@ -83,6 +84,7 @@ steps:
           - Grep
           - Bash
     required_permission_mode: readonly
+    pass_previous_response: false
     instruction: kiro-impl-plan-one-task
     output_contracts:
       report:
@@ -353,7 +355,7 @@ steps:
       - condition: STATUS READY_FOR_REVIEW and selected task checkbox updated and task_set_status ALL_TASKS_COMPLETE
         next: validate-impl-final
       - condition: STATUS READY_FOR_REVIEW and selected task checkbox updated and task_set_status REMAINING_TASKS_EXIST
-        next: COMPLETE
+        next: plan-one-task
       - condition: STATUS BLOCKED and selected task blocker note written
         next: ABORT
       - condition: STATUS BLOCKED and progress update could not be written safely
@@ -395,7 +397,7 @@ steps:
         next: ABORT
 
 # Contract notes:
-# - This workflow executes at most one selected task per run.
+# - This workflow handles one selected task at a time and returns to plan-one-task while REMAINING_TASKS_EXIST.
 # - kiro-review, kiro-debug, kiro-verify-completion, and kiro-validate-impl are adapter steps here, not standalone workflows.
 # - Review runs as a parallel reviewer group, and parent rules aggregate child conditions approved / needs_fix.
 # - Workflow rules branch on STATUS, VERDICT, NEXT_ACTION, DECISION, and reviewer child conditions.

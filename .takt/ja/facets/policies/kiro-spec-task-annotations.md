@@ -23,6 +23,7 @@ annotation labels `_Boundary:_` と `_Depends:_` は必須 label として扱う
 - `_Depends:_ ...` edge として表現されていない、または同一 task に統合されていない hidden prerequisite work は reject する。
 - Boundary annotation が他 task と重なり、file または workflow ownership が曖昧になる task は reject する。
 - `(P)` は non-overlapping boundary と dependency graph が prerequisite、file、workflow、shared artifact の conflict がないことを示す場合だけ使う。
+- `(P)` は `_Depends:_ none` と同時にだけ使える。non-empty dependencies を持つ task は prerequisite を持つため、boundary overlap がなくても `(P)` を付けてはならない。
 - dependency graph、boundary、observable completion が未完了 task に依存する場合、その task から `(P)` を外す。
 
 ## Review gates

@@ -25,6 +25,7 @@ max_steps: 12
 initial_step: ai-antipattern-review-1st
 
 instructions:
+  ai-antipattern-review: ../facets/instructions/ai-review.md
   kiro-ai-antipattern-fix-implementation: ../facets/instructions/kiro-ai-antipattern-fix-implementation.md
 
 policies:
