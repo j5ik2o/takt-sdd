@@ -81,6 +81,7 @@ jobs:
           npm run test:kiro-iterative-implementation-workflow
           npm run test:kiro-ai-quality-gate-runtime-smoke
           npm run test:kiro-discovery-ai-quality-gate-runtime-smoke
+          npm run test:kiro-real-provider-smoke
 
       - name: Validate workflows (ja)
         run: |

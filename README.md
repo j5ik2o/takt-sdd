@@ -142,6 +142,17 @@ npm run kiro:impl -- "feature={feature}"
 npm run kiro:validate:impl -- "feature={feature}"
 ```
 
+### Smoke Tests
+
+Mock-provider smoke tests run in CI. To run the full Kiro lifecycle against the real Claude provider, opt in explicitly:
+
+```bash
+KIRO_REAL_PROVIDER_SMOKE=1 npm run test:kiro-real-provider-smoke
+```
+
+The default timeout is 15 minutes per workflow, with 30 minutes for `kiro:impl`.
+Use `KIRO_REAL_PROVIDER_TIMEOUT_MS` or `KIRO_REAL_PROVIDER_IMPL_TIMEOUT_MS` to tune slow real-provider runs.
+
 ### Migration from legacy `cc-sdd:*` scripts
 
 Legacy scripts are compatibility entrypoints. They continue to call the existing `cc-sdd-*` workflows and are not aliases for `kiro:*`.

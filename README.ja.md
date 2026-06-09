@@ -142,6 +142,17 @@ npm run kiro:impl -- "feature={feature}"
 npm run kiro:validate:impl -- "feature={feature}"
 ```
 
+### Smoke Tests
+
+mock provider の smoke tests は CI で実行される。実 Claude provider で Kiro full lifecycle を流す場合は、明示的に opt-in する：
+
+```bash
+KIRO_REAL_PROVIDER_SMOKE=1 npm run test:kiro-real-provider-smoke
+```
+
+timeout のデフォルトは workflow ごとに 15 分、`kiro:impl` は 30 分。
+実 provider 実行が遅い場合は `KIRO_REAL_PROVIDER_TIMEOUT_MS` または `KIRO_REAL_PROVIDER_IMPL_TIMEOUT_MS` で調整できる。
+
 ### 旧 `cc-sdd:*` scripts からの移行
 
 旧 scripts は互換入口として残る。既存の `cc-sdd-*` workflow を呼び続け、`kiro:*` の alias ではない。
