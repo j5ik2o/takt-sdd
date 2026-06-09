@@ -11,6 +11,22 @@ function writeFixtureFile(root, path, content) {
   writeFileSync(fullPath, content);
 }
 
+function stripAnsi(value) {
+  return value.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "");
+}
+
+function mockWorkflowEnv(scenarioPath) {
+  const env = { ...process.env, TAKT_MOCK_SCENARIO: scenarioPath };
+  delete env.FORCE_COLOR;
+  delete env.CLICOLOR_FORCE;
+  delete env.NO_COLOR;
+  return env;
+}
+
+function workflowOutput(result) {
+  return stripAnsi(`${result.stdout}\n${result.stderr}`);
+}
+
 function makeRuntimeFixture() {
   const root = mkdtempSync(join(tmpdir(), "kiro-ai-quality-gate-runtime-"));
   const repoRoot = join(import.meta.dirname, "..");
@@ -700,15 +716,12 @@ function findFile(root, fileName) {
 function runMockWorkflow(root, scriptName, args, scenarioPath) {
   const result = spawnSync("npm", ["run", scriptName, "--", ...args], {
     cwd: root,
-    env: {
-      ...process.env,
-      TAKT_MOCK_SCENARIO: scenarioPath,
-    },
+    env: mockWorkflowEnv(scenarioPath),
     encoding: "utf8",
   });
   return {
     status: result.status,
-    output: `${result.stdout}\n${result.stderr}`,
+    output: workflowOutput(result),
   };
 }
 
@@ -794,13 +807,10 @@ test("kiro impl runtime wiring calls AI quality gate subworkflow and returns to 
 
     const result = spawnSync("npm", ["run", "kiro:impl", "--", "feature=kiro-ai-quality-gate-smoke"], {
       cwd: root,
-      env: {
-        ...process.env,
-        TAKT_MOCK_SCENARIO: scenarioPath,
-      },
+      env: mockWorkflowEnv(scenarioPath),
       encoding: "utf8",
     });
-    const output = `${result.stdout}\n${result.stderr}`;
+    const output = workflowOutput(result);
 
     assert.equal(result.status, 0, output);
     assert.match(output, /\[3\/200\] ai-quality-gate/);
@@ -841,14 +851,11 @@ test("kiro spec generation runtime wiring calls spec AI gate before requirements
       ["run", "kiro:spec:requirements", "--", "feature=kiro-spec-ai-quality-gate-smoke"],
       {
         cwd: root,
-        env: {
-          ...process.env,
-          TAKT_MOCK_SCENARIO: scenarioPath,
-        },
+        env: mockWorkflowEnv(scenarioPath),
         encoding: "utf8",
       },
     );
-    const output = `${result.stdout}\n${result.stderr}`;
+    const output = workflowOutput(result);
 
     assert.equal(result.status, 0, output);
     assert.match(output, /\[2\/14\] ai-quality-gate-requirements/);
@@ -886,14 +893,11 @@ test("kiro discovery runtime wiring calls discovery AI gate before report", () =
       ["run", "kiro:discovery", "--", "Create a smoke feature brief for kiro-discovery-ai-quality-gate-smoke"],
       {
         cwd: root,
-        env: {
-          ...process.env,
-          TAKT_MOCK_SCENARIO: scenarioPath,
-        },
+        env: mockWorkflowEnv(scenarioPath),
         encoding: "utf8",
       },
     );
-    const output = `${result.stdout}\n${result.stderr}`;
+    const output = workflowOutput(result);
 
     assert.equal(result.status, 0, output);
     assert.match(output, /\[3\/12\] write-discovery-artifacts/);
