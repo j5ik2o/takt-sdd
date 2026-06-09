@@ -103,6 +103,7 @@ const instructionSpecs = [
       "retry_eligible",
       "ROOT_CAUSE",
       "FIX_PLAN",
+      "kiro-task-implementation-result.md",
       "kiro-task-coding-review.md",
       "kiro-task-architecture-review.md",
       "kiro-task-qa-review.md",

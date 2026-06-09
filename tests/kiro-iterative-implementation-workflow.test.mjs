@@ -478,6 +478,21 @@ test("validator rejects debug adapters that ignore reviewer child reports", () =
   assert.ok(result.failures.some((failure) => failure.includes("kiro-task-coding-review.md")));
 });
 
+test("validator rejects debug adapters that ignore implementation result report", () => {
+  const root = makeCurrentSurfaceFixture();
+  const debugPath = join(root, ".takt", "ja", "facets", "instructions", "kiro-debug-task.md");
+  const debug = readFileSync(debugPath, "utf8").replaceAll(
+    "kiro-task-implementation-result.md",
+    "missing-implementation-result.md",
+  );
+  writeFixtureFile(root, ".takt/ja/facets/instructions/kiro-debug-task.md", debug);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("kiro-task-implementation-result.md")));
+});
+
 test("validator rejects completion verification that ignores reviewer evidence", () => {
   const root = makeCurrentSurfaceFixture();
   const verifyPath = join(root, ".takt", "ja", "facets", "instructions", "kiro-verify-task-completion.md");
