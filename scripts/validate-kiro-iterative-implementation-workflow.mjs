@@ -67,7 +67,7 @@ const instructionSpecs = [
     skill: "kiro-review",
     section: "## Outputs",
     parent: "review-coding",
-    terms: ["VERDICT", "APPROVED", "REJECTED", "approved", "needs_fix", "Review Verdict", "selected task", "boundary"],
+    terms: ["VERDICT", "APPROVED", "REJECTED", "approved", "needs_fix", "Review Verdict", "selected task", "boundary", "output source of truth", "TAKT routing"],
   },
   {
     name: "kiro-review-architecture-task",
@@ -815,6 +815,13 @@ function validateFacetFiles(repoRoot) {
           repoRoot,
           "AI_QUALITY_GATE_DRIFT",
         );
+      }
+      if (spec.name === "kiro-review-task") {
+        for (const stalePhrase of ["Workflow rules branch on `VERDICT`", "workflow rulesは `VERDICT` で分岐"]) {
+          if (content.includes(stalePhrase)) {
+            failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, path)} must separate VERDICT output source from approved/needs_fix TAKT routing`);
+          }
+        }
       }
       if (spec.name === "kiro-verify-task-completion") {
         containsAll(

@@ -429,6 +429,21 @@ test("validator rejects missing AI gate evidence hooks in review adapter", () =>
   assert.ok(result.failures.some((failure) => failure.includes("kiro-review-task.md")));
 });
 
+test("validator rejects contradictory review verdict routing wording", () => {
+  const root = makeCurrentSurfaceFixture();
+  const reviewPath = join(root, ".takt", "en", "facets", "instructions", "kiro-review-task.md");
+  const review = readFileSync(reviewPath, "utf8").replace(
+    "Do not add another output field for the verdict. `VERDICT` remains the output source of truth.",
+    "Workflow rules branch on `VERDICT`; do not translate the result to another field.",
+  );
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-review-task.md", review);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("VERDICT output source")));
+});
+
 test("validator rejects adapters that require AI antipattern fix reports unconditionally", () => {
   const root = makeCurrentSurfaceFixture();
   const reviewPath = join(root, ".takt", "en", "facets", "instructions", "kiro-review-task.md");

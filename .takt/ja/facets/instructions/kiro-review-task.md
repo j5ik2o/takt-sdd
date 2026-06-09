@@ -23,6 +23,6 @@ verdict を作る前に `kiro-ai-antipattern-review.md` を読む。`kiro-ai-ant
 - `MECHANICAL_RESULTS`: validation command results、static checks、boundary audit、RED phase status。
 - `SUMMARY`: human-readable summaryのみ。
 
-workflow rulesは `VERDICT` で分岐し、別fieldへ翻訳しない。
+verdict 用の別 output field は追加しない。`VERDICT` を output source of truth として維持する。
 
-reviewer child step は `VERDICT APPROVED` を condition `approved`、`VERDICT REJECTED` を condition `needs_fix` として返す。親 `reviewers` group は child condition だけを集約する。
+TAKT routing に限り、`VERDICT APPROVED` を child condition `approved`、`VERDICT REJECTED` を child condition `needs_fix` に mapping する。親 `reviewers` group は child condition だけを集約する。
