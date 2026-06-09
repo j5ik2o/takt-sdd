@@ -16,7 +16,7 @@ This instruction is read-only. In standalone validation, inspect `requirements.m
 
 - When the active workflow is `kiro-spec-design` or `kiro-spec-quick` and the previous generation / repair result has `phase: "design"`, `draft_status: "READY_FOR_REVIEW"`, and `review_gate: "PENDING"`, the review target is the current run's draft report, not `.kiro/specs/<feature>/design.md`.
 - Find the draft report in the current Report Directory or Previous Response in this order: `kiro-spec-design-result.md`, `kiro-spec-design-repair-result.md`, `kiro-spec-quick-design-result.md`, `kiro-spec-quick-design-repair-result.md`.
-- Treat `draft_artifacts.design`, `draft_artifacts.research`, or explicit `## design.md draft` / `## research.md draft` sections as the design draft / research draft.
+- Treat `draft_artifacts.design`, `draft_artifacts.research`, or Markdown headings named `## design.md draft` / `## research.md draft` as the design draft / research draft.
 - In draft review mode, the review target is fixed to the design draft. Do not treat the git diff, current dirty worktree, or uncommitted workflow/facet/script/test changes as the design review target.
 - If you run `git diff`, always add a path filter for `.kiro/specs/<feature>/` or the current run report path. Unscoped git diff, meaning `git diff` without a path filter, is forbidden in draft review mode.
 - If the draft body cannot be loaded, do not fall back to git diff, `.kiro/specs/<feature>/design.md`, or another phase artifact.

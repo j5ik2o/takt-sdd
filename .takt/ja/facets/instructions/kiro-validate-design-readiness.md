@@ -16,7 +16,7 @@
 
 - active workflow が `kiro-spec-design` または `kiro-spec-quick` で、直前の generation / repair result が `phase: "design"`、`draft_status: "READY_FOR_REVIEW"`、`review_gate: "PENDING"` の場合、review 対象は `.kiro/specs/<feature>/design.md` ではなく current run の draft report です。
 - draft report は、current Report Directory または Previous Response にある `kiro-spec-design-result.md`、`kiro-spec-design-repair-result.md`、`kiro-spec-quick-design-result.md`、`kiro-spec-quick-design-repair-result.md` をこの順で探します。
-- draft report 内の `draft_artifacts.design`、`draft_artifacts.research`、または `## design.md draft` / `## research.md draft` section を design draft / research draft として扱います。
+- draft report 内の `draft_artifacts.design`、`draft_artifacts.research`、または `## design.md draft` / `## research.md draft` という Markdown heading を design draft / research draft として扱います。
 - draft review mode の review target は design draft に固定します。git diff、current dirty worktree、workflow/facet/script/test の未コミット差分を design review target として扱ってはなりません。
 - `git diff` を実行する場合は、必ず `.kiro/specs/<feature>/` または current run report path に path filter を付ける。unscoped git diff、つまり path filter なしの `git diff` は draft review mode では禁止する。
 - draft 本文を取得できない場合、git diff や `.kiro/specs/<feature>/design.md` や別 phase artifact へフォールバックしてはなりません。
