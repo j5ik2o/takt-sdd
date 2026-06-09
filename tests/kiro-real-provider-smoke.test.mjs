@@ -288,6 +288,7 @@ test("real provider smoke runner cleans up detached fixture processes on fail-fa
       "package.json",
       `${JSON.stringify(
         {
+          type: "module",
           scripts: {
             orphan: "node orphan-parent.js",
           },
