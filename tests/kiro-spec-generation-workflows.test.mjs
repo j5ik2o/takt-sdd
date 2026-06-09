@@ -871,6 +871,7 @@ test("task 6.1 tasks workflow requires canonical task annotations and ready stat
       "Review Task Plan",
       "task_plan_review",
       "task_graph_sanity_review",
+      "fatal_review_issue",
       "read-only",
       "tasks.md",
       "spec.json",
@@ -882,6 +883,7 @@ test("task 6.1 tasks workflow requires canonical task annotations and ready stat
     assertFacetTerms(repoRoot, `.takt/${lang}/facets/output-contracts/kiro-spec-tasks-review-result.md`, [
       "task_plan_review",
       "task_graph_sanity_review",
+      "fatal_review_issue",
       "PASS",
       "NEEDS_FIXES",
       "RETURN_TO_DESIGN",
@@ -1059,9 +1061,9 @@ test("design generation review adapters preserve draft-before-finalize handoff",
     "unscoped git diff",
   ];
   const tasksWorkflowTerms = [
-    "task_plan_review NEEDS_FIXES and ai_gate_scope_mismatch",
-    "task_plan_review NEEDS_FIXES and review_target_scope_mismatch",
-    "task_plan_review NEEDS_FIXES and missing_draft_artifact",
+    "task_plan_review NEEDS_FIXES and fatal_review_issue AI_GATE_SCOPE_MISMATCH",
+    "task_plan_review NEEDS_FIXES and fatal_review_issue REVIEW_TARGET_SCOPE_MISMATCH",
+    "task_plan_review NEEDS_FIXES and fatal_review_issue MISSING_DRAFT_ARTIFACT",
     "unscoped git diff",
   ];
   const aiQualityGateWorkflowTerms = [

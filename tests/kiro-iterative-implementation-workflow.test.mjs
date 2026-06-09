@@ -621,6 +621,27 @@ test("validator rejects progress routing that drops task set status", () => {
   assert.ok(result.failures.some((failure) => failure.includes("update-progress")));
 });
 
+test("validator rejects progress updates that count group header checkboxes as remaining tasks", () => {
+  const root = makeCurrentSurfaceFixture();
+  const progressPath = join(root, ".takt", "en", "facets", "instructions", "kiro-impl-update-progress.md");
+  const progress = readFileSync(progressPath, "utf8")
+    .replaceAll("executable leaf task", "task")
+    .replaceAll("group header", "heading");
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-impl-update-progress.md", progress);
+
+  const contractPath = join(root, ".takt", "en", "facets", "output-contracts", "kiro-implementation-result.md");
+  const contract = readFileSync(contractPath, "utf8")
+    .replaceAll("executable leaf task", "task")
+    .replaceAll("group header", "heading");
+  writeFixtureFile(root, ".takt/en/facets/output-contracts/kiro-implementation-result.md", contract);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("executable leaf task")));
+  assert.ok(result.failures.some((failure) => failure.includes("group header")));
+});
+
 test("validator rejects single-shot completion when tasks remain", () => {
   const root = makeCurrentSurfaceFixture();
   const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");

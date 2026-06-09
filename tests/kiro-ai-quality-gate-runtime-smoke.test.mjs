@@ -304,11 +304,6 @@ function writeMockScenario(root) {
     {
       persona: "coder",
       content:
-        "## Status Report\n\nSTATUS: READY_FOR_REVIEW\nselected_task: 1.1 Create mock-only smoke evidence\ntask_set_status: REMAINING_TASKS_EXIST\nsummary: smoke progress update simulated",
-    },
-    {
-      persona: "coder",
-      content:
         "## Status Report\n\nSTATUS: READY_FOR_REVIEW\nselected_task: 1.1 Create mock-only smoke evidence\ntask_set_status: ALL_TASKS_COMPLETE\nsummary: smoke progress update simulated",
     },
     { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },

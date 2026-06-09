@@ -397,11 +397,11 @@ steps:
     rules:
       - condition: task_plan_review PASS and task_graph_sanity_review PASS
         next: quick-finalize-tasks
-      - condition: task_plan_review NEEDS_FIXES and ai_gate_scope_mismatch
+      - condition: task_plan_review NEEDS_FIXES and fatal_review_issue AI_GATE_SCOPE_MISMATCH
         next: ABORT
-      - condition: task_plan_review NEEDS_FIXES and review_target_scope_mismatch
+      - condition: task_plan_review NEEDS_FIXES and fatal_review_issue REVIEW_TARGET_SCOPE_MISMATCH
         next: ABORT
-      - condition: task_plan_review NEEDS_FIXES and missing_draft_artifact
+      - condition: task_plan_review NEEDS_FIXES and fatal_review_issue MISSING_DRAFT_ARTIFACT
         next: ABORT
       - condition: task_plan_review NEEDS_FIXES or task_graph_sanity_review NEEDS_FIXES
         next: quick-repair-tasks
