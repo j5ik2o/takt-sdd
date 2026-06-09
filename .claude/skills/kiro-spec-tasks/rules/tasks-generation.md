@@ -2,7 +2,28 @@
 
 ## Core Principles
 
-### 1. Natural Language Descriptions
+### 1. Language Compliance
+
+Generated `tasks.md` must use the language specified by `.kiro/specs/<feature>/spec.json`.
+
+**Must translate into the spec language**:
+- Document title and section headings
+- Major task titles
+- Sub-task titles
+- Detail bullets
+- Observable completion bullets
+- User-facing summaries and final responses
+
+**Keep unchanged when appropriate**:
+- Machine-readable labels: `_Requirements:_`, `_Boundary:_`, `_Depends:_`
+- Checkbox syntax, task numbers, `(P)`, and requirement IDs
+- Code identifiers, package names, API names, command names, and established domain terms
+
+**Template caveat**:
+- English text in templates and examples is structural guidance only.
+- Do not copy English phrases such as `Implementation Plan`, `Foundation`, `Build`, `Validate`, `Task Format Template`, or example task wording into generated `tasks.md` unless `spec.json.language` is English.
+
+### 2. Natural Language Descriptions
 Focus on capabilities and outcomes, not code structure.
 
 **Describe**:
@@ -21,58 +42,61 @@ Focus on capabilities and outcomes, not code structure.
 
 **Rationale**: Implementation details (files, methods, types) are defined in design.md. Tasks describe the functional work to be done.
 
-### 2. Task Ordering Principle
+### 3. Task Ordering Principle
 
 **Order implies dependency**: Task N implicitly depends on all tasks before it. This is the primary dependency mechanism.
 
-**Tasks must follow this phase order**:
-1. **Foundation**: Environment setup, test infrastructure, shared utilities, database schema, configuration
-2. **Core**: Primary feature implementation (parallel-capable tasks grouped here)
-3. **Integration**: Wiring components together, cross-boundary connections
-4. **Validation**: E2E tests, edge cases, regression checks
+**Tasks must follow this conceptual phase order**:
+1. Setup/foundation category: Environment setup, test infrastructure, shared utilities, database schema, configuration
+2. Primary feature category: Primary feature implementation (parallel-capable tasks grouped here)
+3. Integration category: Wiring components together, cross-boundary connections
+4. Validation category: E2E tests, edge cases, regression checks
 
-**Rationale**: Foundation work unblocks everything else. Placing setup tasks early prevents downstream blocking. Core tasks can often run in parallel because foundation is already complete.
+Localize visible major-task titles to the spec language. For example, Japanese specs should use Japanese titles such as `基盤`, `コア`, `統合`, and `検証`; English specs may use `Foundation`, `Core`, `Integration`, and `Validation`.
 
-### 3. Task Integration & Progression
+**Rationale**: Setup work unblocks everything else. Placing setup tasks early prevents downstream blocking. Primary feature tasks can often run in parallel because setup is already complete.
+
+### 4. Task Integration & Progression
 
 **Every task must**:
 - Build on previous outputs (no orphaned code)
 - Connect to the overall system (no hanging features)
 - Progress incrementally (no big jumps in complexity)
-- Respect architecture boundaries defined in design.md (Architecture Pattern & Boundary Map)
+- Respect architecture boundaries defined in design.md using the localized architecture boundary map subsection from `localized-spec-terminology.md`
 - Honor interface contracts documented in design.md
 - Use major task summaries sparingly—omit detail bullets if the work is fully captured by child tasks.
 
 **End with integration tasks** to wire everything together.
 
-### 4. Dependency Declaration
+### 5. Dependency Declaration
 
-**Default**: Sequential ordering handles most dependencies (task N depends on tasks before it).
+**Default**: Sequential ordering still handles most dependencies (task N depends on tasks before it), but every executable task must state the dependency field explicitly.
+Use `_Depends:_ none` when the task has no specific dependency beyond normal ordering.
 
 **Explicit declaration required when**:
 - A task depends on a specific task in a different major-task group (cross-boundary)
 - The dependency is non-obvious from ordering alone
 - A task can skip ahead of its position (declared via `(P)`) but still needs specific prior work
 
-**Format**: `_Depends: 1.2, 2.3_` — placed alongside `_Requirements:_` in task detail sections.
+**Format**: `_Depends:_ 1.2, 2.3` — placed alongside `_Requirements:_` in task detail sections.
 
-**Do not over-annotate**: If a task simply depends on the task directly before it, ordering alone is sufficient.
+**Do not over-annotate with IDs**: If a task simply depends on the task directly before it, use `_Depends:_ none`.
 
-### 5. Boundary Scope
+### 6. Boundary Scope
 
-**Each task should declare its component boundary** using design.md component/module names:
-- `_Boundary: AuthService_` or `_Boundary: API Layer, UserRepository_`
+**Each executable task must declare its component boundary** using design.md component/module names:
+- `_Boundary:_ AuthService` or `_Boundary:_ API Layer, UserRepository`
 - Helps validate parallel safety: tasks with non-overlapping boundaries are parallel candidates
 - Helps agents understand scope: what to touch and what not to touch
 
-**When to use**: Required for tasks marked `(P)` to validate parallel safety. Omit for sequential tasks where scope is obvious from the description.
+**When to use**: Required for every executable task. Keep it narrow for normal tasks and use an explicit integration boundary for cross-boundary integration tasks.
 
 **Boundary rule**:
 - Each executable task should stay within a single responsibility boundary
 - If work must cross boundaries, make it an explicit integration task rather than a normal implementation task
 - Do not hide cross-boundary coordination inside a task that appears local
 
-### 6. Flexible Task Sizing
+### 7. Flexible Task Sizing
 
 **Guidelines**:
 - **Major tasks**: As many sub-tasks as logically needed (group by cohesion)
@@ -81,14 +105,16 @@ Focus on capabilities and outcomes, not code structure.
 
 **Don't force arbitrary numbers** - let logical grouping determine structure.
 
-### 7. Requirements Mapping
+### 8. Requirements Mapping
 
 **End each task detail section with**:
-- `_Requirements: X.X, Y.Y_` listing **only numeric requirement IDs** (comma-separated). Never append descriptive text, parentheses, translations, or free-form labels.
+- `_Requirements:_ X.X, Y.Y` listing **only numeric requirement IDs** (comma-separated). Never append descriptive text, parentheses, translations, or free-form labels.
+- `_Boundary:_ ComponentName` using the narrowest design.md component/module boundary that owns the work.
+- `_Depends:_ none` when no specific dependency ID is needed, or `_Depends:_ X.Y, Z.W` when a specific dependency is required.
 - For cross-cutting requirements, list every relevant requirement ID. All requirements MUST have numeric IDs in requirements.md. If an ID is missing, stop and correct requirements.md before generating tasks.
 - Reference components/interfaces from design.md when helpful (e.g., `_Contracts: AuthService API`)
 
-### 7.5 Observable Completion
+### 8.5 Observable Completion
 
 **Each executable task must include at least one detail bullet that describes the observable completed state**:
 - Phrase it as a deliverable, runtime behavior, persisted state, UI state, endpoint behavior, test result, or integration outcome
@@ -96,7 +122,7 @@ Focus on capabilities and outcomes, not code structure.
 - Prefer making one detail bullet clearly answer: "What will be true when this task is done?"
 - Keep this within the existing task body; do not add extra bookkeeping fields
 
-### 8. Code-Only Focus
+### 9. Code-Only Focus
 
 **Include ONLY**:
 - Coding tasks (implementation)
@@ -125,12 +151,20 @@ Before writing `tasks.md`, review the draft task plan and repair local issues un
 - Every sub-task must be executable as written, usually within 1-3 hours.
 - Every sub-task must produce a verifiable deliverable (behavior, artifact, endpoint, UI state, config, migration, test, or integration result).
 - Every executable sub-task must include at least one detail bullet that states the observable completion condition.
+- Every executable sub-task must include `_Requirements:_`, `_Boundary:_`, and `_Depends:_` annotations. Use `_Depends:_ none` when the task has no explicit prerequisite.
 - Split tasks that combine multiple independently verifiable outcomes.
 - Split tasks that combine multiple responsibility boundaries unless they are explicit integration tasks.
 - If many tasks require broad `_Boundary:_` scopes or repeated cross-boundary coordination, stop and return to design or roadmap decomposition instead of forcing the spec through task generation.
 - Merge or collapse tasks that are too small, bookkeeping-only, or not meaningful execution units.
 - Make implicit prerequisites explicit as preceding tasks.
 - Re-check `_Depends:_`, `_Boundary:_`, and `(P)` markers after edits so concurrency claims still match the design boundaries and dependency graph.
+
+### Language Review
+
+- Verify generated natural-language content uses `spec.json.language`.
+- If the target language is not English, search for copied English template phrases and translate them before writing.
+- Do not translate machine-readable labels (`_Requirements:_`, `_Boundary:_`, `_Depends:_`), requirement IDs, task numbers, package names, code identifiers, or API names.
+- If a term is intentionally English because it is a code/API/domain identifier, leave it unchanged.
 
 ### Review Loop
 
@@ -167,11 +201,11 @@ Before writing `tasks.md`, review the draft task plan and repair local issues un
   - No shared file or resource contention
   - No prerequisite review/approval from another task
   - `_Boundary:_` annotations confirm non-overlapping component scopes
-- Foundation-phase tasks (see Task Ordering Principle) are rarely `(P)` — they establish shared prerequisites.
-- Core-phase tasks are the primary candidates for `(P)` since foundation is already complete.
-- Validate that identified parallel tasks operate within separate boundaries defined in the Architecture Pattern & Boundary Map.
+- Setup-category tasks (see Task Ordering Principle) are rarely `(P)` — they establish shared prerequisites.
+- Primary feature tasks are the main candidates for `(P)` since setup is already complete.
+- Validate that identified parallel tasks operate within separate boundaries defined in the localized architecture boundary map subsection.
 - Confirm API/event contracts from design.md do not overlap in ways that cause conflicts.
-- `(P)` tasks with cross-boundary dependencies must declare `_Depends: X.X_` explicitly.
+- `(P)` tasks with cross-boundary dependencies must declare `_Depends:_ X.X` explicitly.
 - Append `(P)` immediately after the task number for each parallel-capable task:
   - Example: `- [ ] 2.1 (P) Build background worker`
   - Apply to both major tasks and sub-tasks when appropriate.
@@ -181,32 +215,37 @@ Before writing `tasks.md`, review the draft task plan and repair local issues un
 
 ### Checkbox Format
 ```markdown
-- [ ] 1. Foundation: environment and test infrastructure setup
-- [ ] 1.1 Sub-task description
-  - Detail item 1
-  - Detail item 2
-  - Observable completion condition
-  - _Requirements: X.X_
+- [ ] 1. {{LOCALIZED_SETUP_PHASE_TITLE}}
+- [ ] 1.1 {{LOCALIZED_SUB_TASK_DESCRIPTION}}
+  - {{LOCALIZED_DETAIL_ITEM_1}}
+  - {{LOCALIZED_DETAIL_ITEM_2}}
+  - {{LOCALIZED_OBSERVABLE_COMPLETION_CONDITION}}
+  - _Requirements:_ X.X
+  - _Boundary:_ SharedSetup
+  - _Depends:_ none
 
-- [ ] 2. Core feature A
-- [ ] 2.1 (P) Sub-task description
-  - Detail items...
-  - Observable completion condition
-  - _Requirements: Y.Y_
-  - _Boundary: AuthService_
+- [ ] 2. {{LOCALIZED_PRIMARY_FEATURE_PHASE_TITLE}}
+- [ ] 2.1 (P) {{LOCALIZED_SUB_TASK_DESCRIPTION}}
+  - {{LOCALIZED_DETAIL_ITEMS}}
+  - {{LOCALIZED_OBSERVABLE_COMPLETION_CONDITION}}
+  - _Requirements:_ Y.Y
+  - _Boundary:_ AuthService
+  - _Depends:_ none
 
-- [ ] 2.2 (P) Sub-task description
-  - Detail items...
-  - Observable completion condition
-  - _Requirements: Z.Z_
-  - _Boundary: UserRepository_
+- [ ] 2.2 (P) {{LOCALIZED_SUB_TASK_DESCRIPTION}}
+  - {{LOCALIZED_DETAIL_ITEMS}}
+  - {{LOCALIZED_OBSERVABLE_COMPLETION_CONDITION}}
+  - _Requirements:_ Z.Z
+  - _Boundary:_ UserRepository
+  - _Depends:_ none
 
-- [ ] 3. Integration and wiring
-- [ ] 3.1 Sub-task description
-  - Detail items...
-  - Observable completion condition
-  - _Depends: 2.1, 2.2_
-  - _Requirements: W.W_
+- [ ] 3. {{LOCALIZED_INTEGRATION_PHASE_TITLE}}
+- [ ] 3.1 {{LOCALIZED_SUB_TASK_DESCRIPTION}}
+  - {{LOCALIZED_DETAIL_ITEMS}}
+  - {{LOCALIZED_OBSERVABLE_COMPLETION_CONDITION}}
+  - _Requirements:_ W.W
+  - _Boundary:_ {{INTEGRATION_BOUNDARY}}
+  - _Depends:_ 2.1, 2.2
 ```
 
 ## Requirements Coverage
@@ -217,6 +256,6 @@ Before writing `tasks.md`, review the draft task plan and repair local issues un
 - If gaps found: Return to requirements or design phase
 - No requirement should be left without corresponding tasks
 
-Use `N.M`-style numeric requirement IDs where `N` is the top-level requirement number from requirements.md (for example, Requirement 1 → 1.1, 1.2; Requirement 2 → 2.1, 2.2), and `M` is a local index within that requirement group.
+Use `N.M`-style numeric requirement IDs where `N` is the top-level requirement number from requirements.md, regardless of which requirement heading term from `.kiro/settings/templates/specs/localized-spec-terminology.md` the artifact uses.
 
 Document any intentionally deferred requirements with rationale.

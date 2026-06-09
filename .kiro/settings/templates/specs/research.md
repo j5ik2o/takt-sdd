@@ -11,7 +11,7 @@
 
 ## 要約
 - **機能**: `<feature-name>`
-- **ディスカバリー範囲**: New Feature / Extension / Simple Addition / Complex Integration（新規機能／拡張／単純な追加／複雑な統合）
+- **ディスカバリー範囲**: 新規機能 / 拡張 / 単純な追加 / 複雑な統合
 - **主要な発見**:
   - 発見 1
   - 発見 2

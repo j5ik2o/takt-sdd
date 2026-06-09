@@ -10,7 +10,7 @@ This skill performs task-local adversarial review. It verifies that the implemen
 
 Boundary terminology continuity:
 - discovery identifies `Boundary Candidates`
-- design fixes `Boundary Commitments`
+- design fixes the design boundary section named by `.kiro/settings/templates/specs/localized-spec-terminology.md`
 - tasks constrain execution with `_Boundary:_`
 - review rejects concrete `Boundary Violations`
 </background_information>
@@ -31,7 +31,8 @@ Provide:
 - Task ID and exact task text from `tasks.md`
 - Relevant requirement section numbers
 - Relevant design section numbers
-- Spec file paths (`requirements.md`, `design.md`, optionally `tasks.md`)
+- Spec file paths (`spec.json`, `requirements.md`, `design.md`, optionally `tasks.md`)
+- `.kiro/settings/templates/specs/localized-spec-terminology.md` for language-specific boundary terms
 - The implementer's status report
 - The task `_Boundary:_` scope constraints
 - Validation commands discovered by the controller
@@ -111,7 +112,7 @@ Run these checks and use the result as primary signal.
 - Reject silent substitutions for design-mandated choices.
 
 ### 10.5 Boundary Audit
-- Compare the implementation against the design's boundary commitments and out-of-boundary statements.
+- Compare the implementation against the design boundary and out-of-boundary terms named by `.kiro/settings/templates/specs/localized-spec-terminology.md`, using `spec.json.language` to select the artifact language.
 - Reject if downstream-specific behavior is pushed into an upstream boundary for convenience.
 - Reject if the implementation creates new hidden dependencies, shared ownership, or undeclared coupling across adjacent boundaries.
 - Reject if a task that is not an explicit integration task now behaves like one.

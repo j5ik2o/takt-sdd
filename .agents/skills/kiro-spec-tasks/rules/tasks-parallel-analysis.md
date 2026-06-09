@@ -36,6 +36,6 @@ Before marking a task with `(P)`, ensure you have:
 - Confirmed `_Boundary:_` annotations show non-overlapping component scopes.
 - Captured any shared state expectations in the detail bullets.
 - Confirmed that the implementation can be tested independently.
-- Added `_Depends: X.X_` if this `(P)` task still requires specific prior work from a different major-task group.
+- Added `_Depends:_ X.X` if this `(P)` task still requires specific prior work from a different major-task group.
 
 If any check fails, **do not** mark the task with `(P)` and explain the dependency in the task details.

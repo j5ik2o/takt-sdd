@@ -36,11 +36,12 @@ Before writing `design.md`, review the draft design and repair local issues unti
 ## Mechanical Checks
 
 Before applying judgment, verify these mechanically:
-- **Requirements traceability**: Extract all numeric requirement IDs from `requirements.md`. Scan the design draft for each ID. Report any IDs not found in the design.
-- **Boundary section populated**: `Boundary Commitments`, `Out of Boundary`, `Allowed Dependencies`, and `Revalidation Triggers` must not be empty or placeholder-only.
-- **File Structure Plan populated**: The File Structure Plan section must contain concrete file paths (not just "TBD" or empty). Scan for placeholder text in that section.
-- **Boundary ↔ file structure alignment**: The File Structure Plan must reflect the stated responsibility boundary. If files imply broader ownership than the boundary section claims, report a mismatch.
-- **No orphan components**: Every component mentioned in the design must appear in the File Structure Plan with a file path. Scan for component names that have no corresponding file entry.
+- **Artifact language selected**: Read `spec.json.language` before section-name checks. Use the matching Japanese or English terms from `.kiro/settings/templates/specs/localized-spec-terminology.md`. If the language is missing or unsupported, or the localized terminology file is missing, stop and clarify the target language or repository setup before applying this gate.
+- **Requirements traceability**: Extract all numeric requirement IDs from `requirements.md` using the requirement heading form for `spec.json.language` from `.kiro/settings/templates/specs/localized-spec-terminology.md`; also accept existing hybrid headings that use the alternate Japanese/English heading term and existing numeric requirement list items. Scan the design draft for each ID. Report any IDs not found in the design.
+- **Boundary section populated**: The design boundary section and boundary subsections named by `.kiro/settings/templates/specs/localized-spec-terminology.md` must not be empty or placeholder-only. Also accept existing hybrid headings that use the alternate Japanese/English heading terms from the same terminology row.
+- **File structure section populated**: The file structure section named by `.kiro/settings/templates/specs/localized-spec-terminology.md` must contain concrete file paths (not just "TBD" or empty). Also accept the alternate Japanese/English file structure heading from the same terminology row. Scan for placeholder text in that section.
+- **Boundary ↔ file structure alignment**: The file structure section must reflect the stated responsibility boundary. If files imply broader ownership than the boundary section claims, report a mismatch.
+- **No orphan components**: Every component mentioned in the design must appear in the file structure section with a file path. Scan for component names that have no corresponding file entry.
 
 ## Review Loop
 

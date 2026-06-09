@@ -7,7 +7,7 @@
 ### 実行作業を含むメインタスク
 - [ ] {{NUMBER}}. {{TASK_DESCRIPTION}}{{PARALLEL_MARK}}
   - {{OBSERVABLE_COMPLETION_ITEM}} *(このタスクの、観測可能な完了シグナルを具体的に記述する)*
-  - _Requirements: {{REQUIREMENT_IDS}}_ *(IDのみ。説明や括弧を付けない)*
+  - _Requirements:_ {{REQUIREMENT_IDS}} *(IDのみ。説明や括弧を付けない)*
   - _Boundary:_ {{COMPONENT_NAMES}}
   - _Depends:_ {{TASK_IDS_OR_NONE}}
 
@@ -16,13 +16,13 @@
 - [ ] {{MAJOR_NUMBER}}.{{SUB_NUMBER}} {{SUB_TASK_DESCRIPTION}}{{SUB_PARALLEL_MARK}}
   - {{DETAIL_ITEM_1}}
   - {{OBSERVABLE_COMPLETION_ITEM}} *(このタスクの、観測可能な完了シグナルを具体的に記述する)*
-  - _Requirements: {{REQUIREMENT_IDS}}_ *(IDのみ。説明や括弧を付けない)*
+  - _Requirements:_ {{REQUIREMENT_IDS}} *(IDのみ。説明や括弧を付けない)*
   - _Boundary:_ {{COMPONENT_NAMES}}
   - _Depends:_ {{TASK_IDS_OR_NONE}}
 
 ## 注釈ルール
 
-- `_Requirements: {{REQUIREMENT_IDS}}_` には数値の要件IDを用いる。
+- `_Requirements:_ {{REQUIREMENT_IDS}}` には数値の要件IDを用いる。
 - `_Boundary:_ {{COMPONENT_NAMES}}` は、所有するコンポーネントまたはワークフローの境界を示す。
 - `_Depends:_ {{TASK_IDS_OR_NONE}}` は、依存がある場合にタスクIDを用いる。
 - 依存がない場合は `_Depends:_ none` が正規の文法。

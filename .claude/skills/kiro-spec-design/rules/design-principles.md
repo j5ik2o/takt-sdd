@@ -30,7 +30,7 @@
 ### 4. Component Design Rules
 - **Single Responsibility**: One clear purpose per component
 - **Clear Boundaries**: Explicit domain ownership
-- **Boundary Commitments First**: Before detailing components, state the responsibility boundary this design commits to
+- **Boundary Commitments First**: Before detailing components, state the responsibility boundary this design commits to using the design boundary section named by `.kiro/settings/templates/specs/localized-spec-terminology.md`
 - **Dependency Direction**: Follow architectural layers
 - **Interface Segregation**: Minimal, focused interfaces
 - **Team-safe Interfaces**: Design boundaries that allow parallel implementation without merge conflicts
@@ -60,7 +60,7 @@
 - **Define and enforce the dependency direction** in the architecture section of design.md (e.g., Types → Config → Repository → Service → Runtime → UI)
 - Each layer imports only from layers to its left — never upward
 - This constraint is not a suggestion; implementation and review should treat violations as errors
-- When the File Structure Plan maps files to components, the dependency direction determines which imports are allowed
+- When the file structure section named by `.kiro/settings/templates/specs/localized-spec-terminology.md` maps files to components, the dependency direction determines which imports are allowed
 
 ## Documentation Standards
 
@@ -80,14 +80,14 @@
 ## Section Authoring Guidance
 
 ### Global Ordering
-- Default flow: Overview → Goals/Non-Goals → Boundary Commitments → Architecture → File Structure Plan → Components & Interfaces → Optional sections.
+- Follow the selected language-specific design template from `spec.json.language` (`design.md` for `ja`, `design.en.md` for `en`) and keep section headings intact for the artifact language.
 - Teams may swap Traceability earlier or place Data Models nearer Architecture when it improves clarity, but keep section headings intact.
 - Within each section, follow **Summary → Scope → Decisions → Impacts/Risks** so reviewers can scan consistently.
 
 ### Requirement IDs
 - Reference requirements as `2.1, 2.3` without prefixes (no “Requirement 2.1”).
 - All requirements MUST have numeric IDs. If a requirement lacks a numeric ID, stop and fix `requirements.md` before continuing.
-- Use `N.M`-style numeric IDs where `N` is the top-level requirement number from requirements.md (for example, Requirement 1 → 1.1, 1.2; Requirement 2 → 2.1, 2.2).
+- Use `N.M`-style numeric IDs where `N` is the top-level requirement number from requirements.md, regardless of whether the requirement heading uses the Japanese or English term from `.kiro/settings/templates/specs/localized-spec-terminology.md`.
 - Every component, task, and traceability row must reference the same canonical numeric ID.
 
 ### Technology Stack
@@ -96,20 +96,20 @@
 - When extending an existing system, highlight deviations from the current stack and list new dependencies.
 
 ### System Flows
-- Add diagrams only when they clarify behavior:
-  - **Sequence** for multi-step interactions
-  - **Process/State** for branching rules or lifecycle
+- Add diagrams only when they clarify behavior:  
+  - **Sequence** for multi-step interactions  
+  - **Process/State** for branching rules or lifecycle  
   - **Data/Event** for pipelines or async patterns
 - Always use pure Mermaid. If no complex flow exists, omit the entire section.
 
-### Requirements Traceability
-- Use the standard table (`Requirement | Summary | Components | Interfaces | Flows`) to prove coverage.
+### Traceability Section
+- Use the table language that matches the artifact language to prove coverage.
 - Collapse to bullet form only when a single requirement maps 1:1 to a component.
 - Prefer the component summary table for simple mappings; reserve the full traceability table for complex or compliance-sensitive requirements.
 - Re-run this mapping whenever requirements or components change to avoid drift.
 
 ### Components & Interfaces Authoring
-- Boundary Commitments should already make the ownership seam explicit before this section begins.
+- The design boundary section named by `.kiro/settings/templates/specs/localized-spec-terminology.md` should already make the ownership boundary explicit before this section begins.
 - Group components by domain/layer and provide one block per component.
 - Begin with a summary table listing Component, Domain, Intent, Requirement coverage, key dependencies, and selected contracts.
 - Table fields: Intent (one line), Requirements (`2.1, 2.3`), Owner/Reviewers (optional).

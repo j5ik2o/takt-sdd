@@ -8,7 +8,7 @@ Use boundary terminology consistently across phases without turning requirements
 
 - **Discovery** identifies `Boundary Candidates`
 - **Requirements** make inclusion, exclusion, and adjacent expectations explicit when scope could be misread
-- **Design** turns those into `Boundary Commitments`
+- **Design** turns those into the design boundary section named by `.kiro/settings/templates/specs/localized-spec-terminology.md`
 - **Tasks** use `_Boundary:_` to constrain executable work
 
 Requirements should clarify the feature boundary in user- or operator-observable terms, not in architecture ownership or implementation detail.
@@ -26,7 +26,7 @@ Requirements should clarify the feature boundary in user- or operator-observable
 - Every acceptance criterion must follow the EARS rules defined in `ears-format.md`.
 - Every requirement must be testable, observable, and specific enough that later design and validation can verify it.
 - Remove implementation details that belong in `design.md` rather than `requirements.md`.
-- Requirement headings must use numeric IDs only; do not mix numeric and alphabetic labels.
+- Requirement headings must use numeric IDs only. Prefer the heading form for `spec.json.language` from `.kiro/settings/templates/specs/localized-spec-terminology.md`; also accept existing hybrid headings that use the alternate Japanese/English heading term with a numeric ID. Do not mix numeric and alphabetic labels.
 
 ## Structure and Quality Review
 
@@ -40,7 +40,7 @@ Requirements should clarify the feature boundary in user- or operator-observable
 
 Before applying judgment, verify these mechanically:
 - **Numeric IDs present**: Every requirement heading has a numeric ID (1, 1.1, 2, etc.). Scan the draft for headings without IDs.
-- **Acceptance criteria exist**: Every requirement has at least one EARS-format acceptance criterion. Scan for requirements with no "When/If/While/Where" acceptance statements.
+- **Acceptance criteria exist**: Every requirement has at least one EARS-format acceptance criterion. Read `spec.json.language` first and choose the matching scan. For `language: "en"`, scan for conditional EARS trigger words such as "When", "If", "While", or "Where", and verify ubiquitous criteria by mandatory `shall` wording so named subjects such as service names are accepted. For `language: "ja"`, prefer localized EARS fixed phrases such as "が起きたとき", "の場合", "の間", "を含む場合", or "は常に", and verify the criterion also uses mandatory wording such as "しなければならない" or state-continuation wording such as "し続けなければならない"; also accept existing hybrid criteria that use English EARS trigger words and mandatory `shall` wording. If the language is missing or unsupported, stop and clarify the target language before applying this gate.
 - **No implementation language**: Scan for technology-specific terms (database names, framework names, API patterns) that belong in design, not requirements. Flag any found.
 
 ## Review Loop

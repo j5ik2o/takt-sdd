@@ -51,8 +51,7 @@ After all parallel research completes, synthesize implementation brief before st
 - Keep the full command set in the parent context, and pass only the task-relevant subset to implementer and reviewer sub-agents
 
 **Establish repo baseline**:
-- Run `git status --porcelain` and note any pre-existing uncommitted changes as `baseline_dirty_files`
-- Review and quality gates must distinguish `baseline_dirty_files` from the selected task's `changed_files`; pre-existing dirty files are context, not part of the selected task diff
+- Run `git status --porcelain` and note any pre-existing uncommitted changes
 
 ## Step 2: Select Tasks & Determine Mode
 
@@ -105,9 +104,8 @@ If multi-agent capability is available, for each task (one at a time):
   - Paths to spec files (requirements.md, design.md) so the reviewer can read them directly
   - The implementer's status report (for reference only — reviewer must verify independently)
 - The reviewer must apply the `kiro-review` protocol to this task-local review.
-- Preserve the existing task-specific context: task text, spec refs, `_Boundary:_` scope, validation commands, implementer report, `baseline_dirty_files`, and the selected task `changed_files`.
-- The reviewer sub-agent will run `git diff -- <changed_files>` itself to read the selected task code changes and verify against the spec. Unscoped `git diff` is not the primary source of truth when the worktree has baseline dirty files.
-- If the worktree contains dirty files outside `baseline_dirty_files` plus selected task `changed_files`, stop the review path and report a scope mismatch instead of continuing.
+- Preserve the existing task-specific context: task text, spec refs, `_Boundary:_` scope, validation commands, implementer report, and the actual `git diff` as the primary source of truth.
+- The reviewer sub-agent will run `git diff` itself to read the actual code changes and verify against the spec
 - Spawn a fresh sub-agent with this prompt
 
 **d) Handle reviewer verdict**:

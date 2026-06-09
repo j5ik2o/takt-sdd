@@ -4,6 +4,7 @@ description: Generate comprehensive technical design translating requirements (W
 allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, WebFetch, Agent
 argument-hint: <feature-name> [-y]
 metadata:
+  cross-skill-rules: ".kiro/settings/templates/specs/localized-spec-terminology.md"
   shared-rules: "design-principles.md, design-discovery-full.md, design-discovery-light.md, design-synthesis.md, design-review-gate.md"
 ---
 
@@ -27,9 +28,10 @@ Otherwise, load all necessary context:
 - `.kiro/specs/{feature}/research.md` (if exists, contains gap analysis from `/kiro-validate-gap`)
 - Core steering context: `product.md`, `tech.md`, `structure.md`
 - Additional steering files only when directly relevant to requirement coverage, architecture boundaries, integrations, runtime prerequisites, security/performance constraints, or team conventions that affect implementation readiness
-- `.kiro/settings/templates/specs/design.md` for document structure
+- Select the matching design template from `spec.json.language`: `.kiro/settings/templates/specs/design.md` for `ja`, or `.kiro/settings/templates/specs/design.en.md` for `en`. Stop for missing or unsupported languages.
+- Read `.kiro/settings/templates/specs/localized-spec-terminology.md` for localized spec terms
 - Read `rules/design-principles.md` from this skill's directory for design principles
-- `.kiro/settings/templates/specs/research.md` for discovery log structure
+- Select the matching research template from `spec.json.language`: `.kiro/settings/templates/specs/research.md` for `ja`, or `.kiro/settings/templates/specs/research.en.md` for `en`. Stop for unsupported languages.
 
 **Validate requirements approval**:
 - If auto-approve flag is true: Auto-approve requirements in spec.json
@@ -85,7 +87,7 @@ After all findings return, synthesize in main context before proceeding.
    - Boundary candidates, out-of-boundary decisions, and likely revalidation triggers
 
 4. **Persist Findings to Research Log**:
-   - Create or update `.kiro/specs/{feature}/research.md` using the shared template
+   - Create or update `.kiro/specs/{feature}/research.md` using the selected research template
    - Summarize discovery scope and key findings
    - Record investigations with sources and implications
    - Document architecture pattern evaluation, design decisions, and risks
@@ -102,10 +104,11 @@ After all findings return, synthesize in main context before proceeding.
 ### Step 4: Generate Design Draft
 
 1. **Generate Design Draft**:
-   - **Follow specs/design.md template structure and generation instructions strictly**
+   - Select the matching design template from `spec.json.language`: `.kiro/settings/templates/specs/design.md` for `ja`, or `.kiro/settings/templates/specs/design.en.md` for `en`. Stop for unsupported languages.
+   - **Follow the selected design template structure and generation instructions strictly**
    - **Boundary-first requirement**: Before expanding supporting sections, make the boundary explicit. The draft must clearly define what this spec owns, what it does not own, which dependencies are allowed, and what changes would require downstream revalidation.
    - **Integrate all discovery findings and synthesis outcomes**: Use researched information (APIs, patterns, technologies) and synthesis decisions (generalizations, build-vs-adopt, simplifications) throughout component definitions, architecture decisions, and integration points
-   - **File Structure Plan** (required): Populate the File Structure Plan section with concrete file paths and responsibilities. Analyze the codebase to determine which files need to be created vs. modified. Each file must have one clear responsibility. This section directly drives task `_Boundary:_` annotations and implementation Task Briefs — vague file structures produce vague implementations.
+   - **File structure plan** (required): Populate the file structure section named by `.kiro/settings/templates/specs/localized-spec-terminology.md` with concrete file paths and responsibilities. Analyze the codebase to determine which files need to be created vs. modified. Each file must have one clear responsibility. This section directly drives task `_Boundary:_` annotations and implementation Task Briefs — vague file structures produce vague implementations.
    - **Testing Strategy**: Derive test items from requirements' acceptance criteria, not generic patterns. Each test item should reference specific components and behaviors from this design. E2E paths must map to the critical user flows identified in requirements. Avoid vague entries like "test login works" -- instead specify what is being verified and why it matters.
    - If existing design.md found in Step 1, use it as reference context (merge mode)
    - Apply design rules: Type Safety, Visual Communication, Formal Tone
@@ -157,7 +160,7 @@ Provide brief summary in the language specified in spec.json:
 
 **Format**: Concise Markdown (under 200 words) - this is the command output, NOT the design document itself
 
-**Note**: The actual design document follows `.kiro/settings/templates/specs/design.md` structure.
+**Note**: The actual design document follows the selected design template structure for `spec.json.language`.
 
 ## Safety & Fallback
 
@@ -174,9 +177,9 @@ Provide brief summary in the language specified in spec.json:
 - **Suggested Action**: "Run `/kiro-spec-requirements {feature}` to generate requirements first"
 
 **Template Missing**:
-- **User Message**: "Template file missing at `.kiro/settings/templates/specs/design.md`"
+- **Stop Execution**: The selected language-specific design template, research template, and localized terminology file must exist
+- **User Message**: "Template file missing for selected spec language"
 - **Suggested Action**: "Check repository setup or restore template file"
-- **Fallback**: Use inline basic structure with warning
 
 **Steering Context Missing**:
 - **Warning**: "Steering directory empty or missing - design may not align with project standards"

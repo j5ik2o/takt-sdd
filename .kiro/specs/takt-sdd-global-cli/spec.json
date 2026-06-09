@@ -1,12 +1,12 @@
 {
-  "feature_name": "{{FEATURE_NAME}}",
-  "created_at": "{{TIMESTAMP}}",
-  "updated_at": "{{TIMESTAMP}}",
-  "language": "{{LANGUAGE}}",
-  "phase": "initialized",
+  "feature_name": "takt-sdd-global-cli",
+  "created_at": "2026-06-09T14:21:20Z",
+  "updated_at": "2026-06-09T15:03:31Z",
+  "language": "ja",
+  "phase": "requirements-generated",
   "approvals": {
     "requirements": {
-      "generated": false,
+      "generated": true,
       "approved": false
     },
     "design": {

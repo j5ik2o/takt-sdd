@@ -31,7 +31,8 @@ metadata:
 2. **Read Guidelines**:
    - Read `rules/ears-format.md` from this skill's directory for EARS syntax rules
    - Read `rules/requirements-review-gate.md` from this skill's directory for pre-write review criteria
-   - Read `.kiro/settings/templates/specs/requirements.md` for document structure
+   - Read `.kiro/settings/templates/specs/localized-spec-terminology.md` for localized spec terms
+   - Select the matching requirements template from `spec.json.language`: `.kiro/settings/templates/specs/requirements.md` for `ja`, or `.kiro/settings/templates/specs/requirements.en.md` for `en`. Stop for unsupported languages.
 
 #### Parallel Research (sub-agent dispatch)
 
@@ -59,7 +60,7 @@ After all research completes, synthesize findings in main context before generat
    - Preserve terminology continuity across phases:
      - discovery = `Boundary Candidates`
      - requirements = explicit inclusion/exclusion and adjacent expectations when needed
-     - design = `Boundary Commitments`
+     - design = design boundary section from `.kiro/settings/templates/specs/localized-spec-terminology.md`
      - tasks = `_Boundary:_`
    - If scope could be misread, add lightweight boundary context without introducing implementation or architecture ownership detail
    - Keep this as a draft until the review gate passes; do not write `requirements.md` yet
@@ -101,7 +102,7 @@ Requirements describe user-observable behavior, not implementation. Use this to 
 ### Other Constraints
 - Each requirement must be testable and unambiguous. If the project description leaves room for multiple interpretations on scope, behavior, or boundary conditions, ask the user to clarify before generating that requirement. Ask as many questions as needed; do not generate requirements that contain your own assumptions.
 - Choose appropriate subject for EARS statements (system/service name for software)
-- Requirement headings in requirements.md MUST include a leading numeric ID only (for example: "Requirement 1", "1.", "2 Feature ..."); do not use alphabetic IDs like "Requirement A".
+- Requirement headings in requirements.md MUST include a leading numeric ID only. New or rewritten headings should use the form for `spec.json.language` from `.kiro/settings/templates/specs/localized-spec-terminology.md`; existing hybrid headings using the alternate Japanese/English term remain valid if the numeric ID is present. Do not use alphabetic IDs like "要件 A" or "Requirement A".
 </instructions>
 
 ## Output Description
@@ -121,11 +122,11 @@ Provide output in the language specified in spec.json with:
 
 ### Error Scenarios
 - **Missing Project Description**: If requirements.md lacks project description, ask user for feature details
-- **Template Missing**: If template files don't exist, use inline fallback structure with warning
-- **Language Undefined**: Default to English (`en`) if spec.json doesn't specify language
+- **Template Missing**: Stop if the selected language-specific requirements template or localized terminology file is missing
+- **Language Undefined**: Stop and clarify the target language if `spec.json` doesn't specify language
 - **Incomplete Requirements**: After generation, explicitly ask user if requirements cover all expected functionality
 - **Steering Directory Empty**: Warn user that project context is missing and may affect requirement quality
-- **Non-numeric Requirement Headings**: If existing headings do not include a leading numeric ID (for example, they use "Requirement A"), normalize them to numeric IDs and keep that mapping consistent (never mix numeric and alphabetic labels).
+- **Non-numeric Requirement Headings**: If existing headings do not include a leading numeric ID (for example, they use "要件 A" or "Requirement A"), normalize them to numeric IDs and keep that mapping consistent (never mix numeric and alphabetic labels).
 - **Scope Ambiguity Found During Requirements Review**: Stop execution, do not write a guessed `requirements.md`, and ask the user to clarify the missing or conflicting scope before re-running `$kiro-spec-requirements $1`
 
 ### Next Phase: Design Generation
