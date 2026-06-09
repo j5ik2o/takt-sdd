@@ -29,13 +29,13 @@ approved Kiro requirements から `.kiro/specs/<feature>/design.md` と `.kiro/s
 5. discovery findings、synthesis decisions、検討した alternatives、design に影響した risks を `research.md` に書く、または更新する。
 6. discovery/research 後に design synthesis を適用する。build-vs-adopt、simplification、boundary decisions を `research.md` に記録し、実装判断の結論を `design.md` にも反映する。
 7. `design.md` draft には required sections として以下を含める。
-   - `Boundary Commitments`
-   - `File Structure Plan`
-   - `Requirements Traceability`
-8. `Boundary Commitments` には owned behavior、out-of-boundary behavior、allowed dependencies、revalidation triggers を書く。
-9. `File Structure Plan` には具体的な repository paths と各 path の責務を書く。未決定 placeholder、placeholder-only entries、曖昧な ownership を残さない。
-10. `Requirements Traceability` では `requirements.md` のすべての numeric requirement IDs を具体的な components、files、interfaces、workflow decisions に対応づける。
-11. generate/repair step では final design review gate を実行しない。draft を review 可能にして dedicated read-only review step へ進める。その review step が coverage、architecture readiness、boundary readiness、File Structure Plan の具体性、Requirements Traceability を確認する。
+   - `境界コミットメント`
+   - `ファイル構造計画`
+   - `要件トレーサビリティ`
+8. `境界コミットメント` には owned behavior、out-of-boundary behavior、allowed dependencies、revalidation triggers を書く。
+9. `ファイル構造計画` には具体的な repository paths と各 path の責務を書く。未決定 placeholder、placeholder-only entries、曖昧な ownership を残さない。
+10. `要件トレーサビリティ` では `requirements.md` のすべての numeric requirement IDs を具体的な components、files、interfaces、workflow decisions に対応づける。
+11. generate/repair step では final design review gate を実行しない。draft を review 可能にして dedicated read-only review step へ進める。その review step が coverage、architecture readiness、boundary readiness、ファイル構造計画の具体性、要件トレーサビリティを確認する。
     - `design.md` / `research.md` をまだ書かない場合でも、step report には review step が自己完結して読める full draft を含める。
     - report には `draft_artifacts.design` と `draft_artifacts.research`、または `## design.md draft` / `## research.md draft` の明示 section で draft 本文を残す。
 12. real requirements/design gap が残る場合は findings を添えて `validation.verdict: "BLOCKED"` または `validation.verdict: "NEEDS_FIX"` を返し、`design-generated` success state を書かない。

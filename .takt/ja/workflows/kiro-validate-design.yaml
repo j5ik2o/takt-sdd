@@ -1,6 +1,6 @@
 name: kiro-validate-design
 description: Kiro - design readiness を読み取り専用で検証する
-# Boundary Commitments と File Structure Plan を design artifact 変更なしで確認する。
+# 境界コミットメントとファイル構造計画を design artifact 変更なしで確認する。
 workflow_config:
   provider_options:
     codex:

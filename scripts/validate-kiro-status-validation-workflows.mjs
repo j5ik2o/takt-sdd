@@ -10,6 +10,10 @@ const __dirname = dirname(__filename);
 const defaultRepoRoot = join(__dirname, "..");
 let repoRoot = defaultRepoRoot;
 const languages = ["en", "ja"];
+const designHeadingTerms = {
+  en: ["Boundary Commitments", "File Structure Plan"],
+  ja: ["境界コミットメント", "ファイル構造計画"],
+};
 
 const workflowSpecs = [
   {
@@ -33,7 +37,8 @@ const workflowSpecs = [
     reports: ["kiro-validation-result"],
     expectedSteps: ["collect-design-evidence", "validate-design", "report-design"],
     primaryField: "DECISION",
-    requiredTerms: ["kiro-validation-result", "Boundary Commitments", "File Structure Plan", "DECISION", "NO-GO"],
+    requiredTerms: ["kiro-validation-result", "DECISION", "NO-GO"],
+    requiredTermsByLang: designHeadingTerms,
   },
   {
     file: "kiro-validate-impl.yaml",
@@ -72,7 +77,8 @@ const instructionSpecs = [
     skillSection: "## Execution Steps",
     primaryField: "DECISION",
     primaryEnums: ["GO", "NO-GO", "MANUAL_VERIFY_REQUIRED"],
-    terms: ["requirements coverage", "Boundary Commitments", "File Structure Plan", "validation hooks", "boundary violation", "DECISION", "DECISION:", "machine field", "GO/NO-GO", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "kiro-validation-result"],
+    terms: ["requirements coverage", "validation hooks", "boundary violation", "DECISION", "DECISION:", "machine field", "GO/NO-GO", "GO", "NO-GO", "MANUAL_VERIFY_REQUIRED", "kiro-validation-result"],
+    termsByLang: designHeadingTerms,
   },
   {
     file: "kiro-validate-impl-readiness.md",
@@ -126,6 +132,10 @@ function containsAll(content, terms, path, failures) {
       failures.push(`${rel(path)} missing required term: ${term}`);
     }
   }
+}
+
+function termsForLanguage(spec, lang, commonKey, localizedKey) {
+  return [...(spec[commonKey] ?? []), ...(spec[localizedKey]?.[lang] ?? [])];
 }
 
 function getStepNames(content) {
@@ -209,7 +219,7 @@ function validateInstructionFacets() {
       if (!existsSync(parentPath)) {
         failures.push(`${rel(path)} extends missing built-in parent ${rel(parentPath)}`);
       }
-      containsAll(content, spec.terms, path, failures);
+      containsAll(content, termsForLanguage(spec, lang, "terms", "termsByLang"), path, failures);
       if (spec.primaryField && !content.includes(`primary field`) && !content.includes(`primary workflow-routing field`)) {
         failures.push(`${rel(path)} must describe ${spec.primaryField} as the primary machine field`);
       }
@@ -309,7 +319,7 @@ function validateWorkflowFiles() {
         continue;
       }
       const content = readText(path);
-      containsAll(content, spec.requiredTerms, path, failures);
+      containsAll(content, termsForLanguage(spec, lang, "requiredTerms", "requiredTermsByLang"), path, failures);
       for (const instruction of spec.instructions) {
         if (!content.includes(`${instruction}: ../facets/instructions/${instruction}.md`)) {
           failures.push(`${rel(path)} missing instruction reference ${instruction}`);

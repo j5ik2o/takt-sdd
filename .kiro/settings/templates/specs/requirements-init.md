@@ -1,7 +1,7 @@
-# Requirements Document
+# 要件定義
 
-## Project Description (Input)
+## プロジェクト説明（入力）
 {{PROJECT_DESCRIPTION}}
 
-## Requirements
+## 要件
 <!-- /kiro-spec-requirements フェーズで生成されます -->
