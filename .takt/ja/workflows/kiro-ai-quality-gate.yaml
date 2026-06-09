@@ -14,7 +14,6 @@ subworkflow:
       type: facet_ref[]
       facet_kind: knowledge
       default:
-        - backend
         - architecture
 workflow_config:
   provider_options:

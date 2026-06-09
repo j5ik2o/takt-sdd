@@ -496,7 +496,7 @@ function validateWorkflowFiles(repoRoot) {
     }
     containsAll(
       gateBlock.join("\n"),
-      ["fix_instruction: kiro-ai-antipattern-fix-implementation", "domain_knowledge:", "backend", "architecture"],
+      ["fix_instruction: kiro-ai-antipattern-fix-implementation", "domain_knowledge:", "architecture"],
       workflowPath,
       failures,
       repoRoot,
