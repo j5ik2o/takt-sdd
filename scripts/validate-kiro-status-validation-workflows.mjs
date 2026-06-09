@@ -128,19 +128,6 @@ function containsAll(content, terms, path, failures) {
   }
 }
 
-function parseFrontmatter(content) {
-  if (!content.startsWith("---\n")) return {};
-  const end = content.indexOf("\n---", 4);
-  if (end === -1) return {};
-  const fields = {};
-  for (const line of content.slice(4, end).split("\n")) {
-    const match = line.match(/^([A-Za-z0-9_-]+):\s*(.+)\s*$/);
-    if (!match) continue;
-    fields[match[1]] = match[2].replace(/^"|"$/g, "");
-  }
-  return fields;
-}
-
 function getStepNames(content) {
   return [...content.matchAll(/^  - name:\s*(.+)\s*$/gm)].map((match) => match[1]);
 }

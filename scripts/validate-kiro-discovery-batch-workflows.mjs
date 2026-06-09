@@ -184,24 +184,6 @@ function rel(repoRoot, path) {
   return relative(repoRoot, path);
 }
 
-function parseFrontmatter(content) {
-  if (!content.startsWith("---\n")) {
-    return {};
-  }
-  const end = content.indexOf("\n---", 4);
-  if (end === -1) {
-    return {};
-  }
-  const fields = {};
-  for (const line of content.slice(4, end).split("\n")) {
-    const match = line.match(/^([A-Za-z0-9_-]+):\s*(.+)\s*$/);
-    if (match) {
-      fields[match[1]] = match[2].replace(/^"|"$/g, "");
-    }
-  }
-  return fields;
-}
-
 function parseFacetParent(content) {
   const match = content.match(/^\{extends:\s*([A-Za-z0-9._-]+)\s*\}$/m);
   return match ? match[1] : null;
