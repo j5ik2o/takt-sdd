@@ -28,8 +28,8 @@
 
 1. requirements と design artifact が存在し、approval と phase が矛盾していないことを確認する。draft review mode では、draft report の design draft を design artifact として扱う。
 2. design traceability table で requirements coverage を確認する。
-3. Boundary Commitments、Out of Boundary、Allowed Dependencies、Revalidation Triggers を確認する。
-4. File Structure Plan と component mapping を照合する。
+3. 境界コミットメント、境界外、許可する依存、再検証トリガーを確認する。
+4. ファイル構造計画と component mapping を照合する。
 5. validation hooks と repository-local test strategy を確認する。
 6. 下流責務をこの設計が吸収している場合は、boundary violation finding とともに `DECISION: NO-GO` を返す。
 

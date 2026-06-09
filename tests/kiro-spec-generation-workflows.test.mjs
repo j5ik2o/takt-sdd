@@ -117,6 +117,26 @@ function validArtifactContent(artifact) {
   }
 }
 
+function validJapaneseDesignArtifactContent() {
+  return [
+    "# 設計ドキュメント",
+    "",
+    "## 境界コミットメント",
+    "",
+    "Fixture boundary.",
+    "",
+    "## ファイル構造計画",
+    "",
+    "Fixture files.",
+    "",
+    "## 要件トレーサビリティ",
+    "",
+    "| 要件 | コンポーネント |",
+    "|------|----------------|",
+    "| 1.1 | Fixture |",
+  ].join("\n");
+}
+
 function specState(featureName, phase, overrides = {}) {
   const approvals = {
     requirements: { generated: false, approved: false },
@@ -1288,9 +1308,6 @@ test("task 5.1 design workflow connects research, required sections, review gate
     "design synthesis",
     "design review gate",
     "requirements/design gap",
-    "Boundary Commitments",
-    "File Structure Plan",
-    "Requirements Traceability",
     "approvals.requirements.approved",
     "approvals.design.generated",
     "kiro-spec-generation: ../facets/policies/kiro-spec-generation.md",
@@ -1307,16 +1324,23 @@ test("task 5.1 design workflow connects research, required sections, review gate
     "design synthesis",
     "design review gate",
     "requirements/design gap",
-    "Boundary Commitments",
-    "File Structure Plan",
-    "Requirements Traceability",
     "approvals.requirements.approved",
     "approvals.design.generated",
   ];
+  const designHeadingTermsByLang = {
+    en: ["Boundary Commitments", "File Structure Plan", "Requirements Traceability"],
+    ja: ["境界コミットメント", "ファイル構造計画", "要件トレーサビリティ"],
+  };
 
   for (const lang of ["en", "ja"]) {
-    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-design.yaml`, workflowTerms);
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-design.md`, instructionTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-design.yaml`, [
+      ...workflowTerms,
+      ...designHeadingTermsByLang[lang],
+    ]);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-design.md`, [
+      ...instructionTerms,
+      ...designHeadingTermsByLang[lang],
+    ]);
   }
 });
 
@@ -1412,6 +1436,28 @@ test("task 10.1 validation accepts lifecycle and artifact contract fixtures", ()
     }),
     ["requirements.md", "design.md", "tasks.md"],
   );
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.equal(result.ok, true, result.failures.join("\n"));
+});
+
+test("task 10.1 validation accepts localized Japanese design artifact sections", () => {
+  const root = makeValidationFixture();
+  const featureName = "localized-japanese-design";
+  writeSpecArtifactFixture(
+    root,
+    featureName,
+    specState(featureName, "design-generated", {
+      approvals: {
+        requirements: { generated: true, approved: true },
+        design: { generated: true, approved: false },
+        tasks: { generated: false, approved: false },
+      },
+    }),
+    ["requirements.md", "design.md", "research.md"],
+  );
+  writeFixtureFile(root, `.kiro/specs/${featureName}/design.md`, validJapaneseDesignArtifactContent());
 
   const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
 

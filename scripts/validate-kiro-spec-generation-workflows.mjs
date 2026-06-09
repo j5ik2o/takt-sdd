@@ -9,6 +9,10 @@ const __dirname = dirname(__filename);
 const defaultRepoRoot = join(__dirname, "..");
 const languages = ["en", "ja"];
 const draftReviewRoutingTerms = ["draft_status", "review_gate", "READY_FOR_REVIEW", "PENDING"];
+const designSectionHeadings = {
+  en: ["Boundary Commitments", "File Structure Plan", "Requirements Traceability"],
+  ja: ["境界コミットメント", "ファイル構造計画", "要件トレーサビリティ"],
+};
 const generationResultContractTerms = [
   "phase",
   "validation",
@@ -57,13 +61,15 @@ const phaseWorkflowSpecs = [
       "design.md",
       "research.md",
       "design-generated",
-      "Boundary Commitments",
-      "File Structure Plan",
       ...draftReviewRoutingTerms,
       "unscoped git diff",
       "ai_gate_scope_mismatch",
       "review_target_scope_mismatch",
     ],
+    requiredTermsByLang: {
+      en: designSectionHeadings.en,
+      ja: designSectionHeadings.ja,
+    },
     instructionFacets: ["kiro-spec-design", "kiro-validate-design-readiness"],
     policyFacets: ["kiro-spec-generation"],
     outputContracts: ["kiro-spec-generation-result", "kiro-validation-result"],
@@ -173,7 +179,11 @@ const facetSpecs = [
   {
     kind: "instructions",
     name: "kiro-spec-design",
-    terms: ["design.md", "research.md", "Boundary Commitments", "File Structure Plan"],
+    terms: ["design.md", "research.md"],
+    termsByLang: {
+      en: designSectionHeadings.en,
+      ja: designSectionHeadings.ja,
+    },
   },
   {
     kind: "instructions",
@@ -389,7 +399,7 @@ const phaseArtifactContracts = {
   "design-generated": ["requirements.md", "design.md", "research.md"],
   "tasks-generated": ["requirements.md", "design.md", "tasks.md"],
 };
-const requiredDesignSections = ["Boundary Commitments", "File Structure Plan", "Requirements Traceability"];
+const requiredDesignSectionSets = [designSectionHeadings.en, designSectionHeadings.ja];
 const taskAnnotationContractPaths = [
   ".kiro/settings/templates/specs/tasks.md",
   ".takt/en/facets/policies/kiro-spec-task-annotations.md",
@@ -617,6 +627,10 @@ function containsAll(content, terms, path, failures, repoRoot, code) {
       failures.push(`${code}: ${rel(repoRoot, path)} missing required term: ${term}`);
     }
   }
+}
+
+function termsForLanguage(spec, lang, commonKey, localizedKey) {
+  return [...(spec[commonKey] ?? []), ...(spec[localizedKey]?.[lang] ?? [])];
 }
 
 function listBasenames(repoRoot, relativeDir, extension) {
@@ -859,7 +873,7 @@ function validateWorkflowFiles(repoRoot) {
       }
 
       const content = readText(path);
-      containsAll(content, spec.requiredTerms, path, failures, repoRoot, "WORKFLOW_DRIFT");
+      containsAll(content, termsForLanguage(spec, lang, "requiredTerms", "requiredTermsByLang"), path, failures, repoRoot, "WORKFLOW_DRIFT");
       for (const block of stepBlocks(content)) {
         const stepName = stepScalar(block, "name") || "(unknown step)";
         const permissionMode = stepScalar(block, "required_permission_mode");
@@ -900,7 +914,7 @@ function validateFacetFiles(repoRoot) {
         continue;
       }
       const content = readText(path);
-      containsAll(content, spec.terms, path, failures, repoRoot, "FACET_DRIFT");
+      containsAll(content, termsForLanguage(spec, lang, "terms", "termsByLang"), path, failures, repoRoot, "FACET_DRIFT");
       if (!/^\s*\{extends:\s*[^}]+}\s*$/m.test(content) && !content.includes("Full custom reason:")) {
         failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must use {extends: parent} or state Full custom reason`);
       }
@@ -1266,7 +1280,11 @@ function validateRequirementsArtifact(failures, artifactPath, repoRoot, content)
 }
 
 function validateDesignArtifact(failures, artifactPath, repoRoot, content) {
-  for (const section of requiredDesignSections) {
+  if (requiredDesignSectionSets.some((sections) => sections.every((section) => hasHeading(content, 2, section)))) {
+    return;
+  }
+
+  for (const section of designSectionHeadings.ja) {
     if (!hasHeading(content, 2, section)) {
       failures.push(`ARTIFACT_SECTION_DRIFT: ${rel(repoRoot, artifactPath)} missing required section: ${section}`);
     }
