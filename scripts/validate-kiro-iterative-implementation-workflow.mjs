@@ -26,6 +26,7 @@ const instructionSpecs = [
       "BLOCKED",
       "selected_task",
       "blocker_note_required",
+      "baseline_dirty_files",
     ],
   },
   {
@@ -41,6 +42,8 @@ const instructionSpecs = [
       "NEEDS_CONTEXT",
       "RED_PHASE_OUTPUT",
       "kiro-implementation-result",
+      "baseline_dirty_files",
+      "changed_files",
     ],
   },
   {
@@ -67,28 +70,85 @@ const instructionSpecs = [
     skill: "kiro-review",
     section: "## Outputs",
     parent: "review-coding",
-    terms: ["VERDICT", "APPROVED", "REJECTED", "approved", "needs_fix", "Review Verdict", "selected task", "boundary", "output source of truth", "TAKT routing"],
+    terms: [
+      "VERDICT",
+      "APPROVED",
+      "REJECTED",
+      "approved",
+      "needs_fix",
+      "Review Verdict",
+      "selected task",
+      "boundary",
+      "output source of truth",
+      "TAKT routing",
+      "baseline_dirty_files",
+      "changed_files",
+      "git diff -- <changed_files>",
+      "implementation_scope_mismatch",
+    ],
   },
   {
     name: "kiro-review-architecture-task",
     skill: "kiro-review",
     section: "## Outputs",
     parent: "review-arch",
-    terms: ["VERDICT", "APPROVED", "REJECTED", "approved", "needs_fix", "Review Verdict", "selected task", "boundary", "kiro-ai-antipattern-review.md"],
+    terms: [
+      "VERDICT",
+      "APPROVED",
+      "REJECTED",
+      "approved",
+      "needs_fix",
+      "Review Verdict",
+      "selected task",
+      "boundary",
+      "kiro-ai-antipattern-review.md",
+      "baseline_dirty_files",
+      "changed_files",
+      "git diff -- <changed_files>",
+      "implementation_scope_mismatch",
+    ],
   },
   {
     name: "kiro-review-qa-task",
     skill: "kiro-review",
     section: "## Outputs",
     parent: "review-qa",
-    terms: ["VERDICT", "APPROVED", "REJECTED", "approved", "needs_fix", "Review Verdict", "selected task", "validation evidence", "kiro-ai-antipattern-review.md"],
+    terms: [
+      "VERDICT",
+      "APPROVED",
+      "REJECTED",
+      "approved",
+      "needs_fix",
+      "Review Verdict",
+      "selected task",
+      "validation evidence",
+      "kiro-ai-antipattern-review.md",
+      "baseline_dirty_files",
+      "changed_files",
+      "git diff -- <changed_files>",
+      "implementation_scope_mismatch",
+    ],
   },
   {
     name: "kiro-review-testing-task",
     skill: "kiro-review",
     section: "## Outputs",
     parent: "review-test",
-    terms: ["VERDICT", "APPROVED", "REJECTED", "approved", "needs_fix", "Review Verdict", "selected task", "RED_PHASE_OUTPUT", "kiro-ai-antipattern-review.md"],
+    terms: [
+      "VERDICT",
+      "APPROVED",
+      "REJECTED",
+      "approved",
+      "needs_fix",
+      "Review Verdict",
+      "selected task",
+      "RED_PHASE_OUTPUT",
+      "kiro-ai-antipattern-review.md",
+      "baseline_dirty_files",
+      "changed_files",
+      "git diff -- <changed_files>",
+      "implementation_scope_mismatch",
+    ],
   },
   {
     name: "kiro-debug-task",
@@ -142,6 +202,19 @@ const instructionSpecs = [
 
 const gateInstructionSpecs = [
   {
+    name: "ai-review",
+    terms: [
+      "Kiro implementation selected-task mode",
+      "selected_task",
+      "baseline_dirty_files",
+      "changed_files",
+      "git diff -- <changed_files>",
+      "selected_task_diff",
+      "implementation_scope_mismatch",
+      "review_target: git_diff",
+    ],
+  },
+  {
     name: "kiro-ai-antipattern-fix-implementation",
     terms: [
       "kiro-task-implementation-result.md",
@@ -157,6 +230,9 @@ const gateInstructionSpecs = [
       "finding-level evidence",
       "WebSearch",
       "WebFetch",
+      "implementation_scope_mismatch",
+      "baseline_dirty_files",
+      "NEED_REPLAN",
     ],
   },
 ];
@@ -175,6 +251,7 @@ const outputContractSpecs = [
       "blocker_note_required",
       "implementation_plan",
       "task_set_status",
+      "baseline_dirty_files",
       "changed_files",
       "validation_evidence",
       "missing_context",
@@ -452,7 +529,17 @@ function validateWorkflowFiles(repoRoot) {
     const content = readText(workflowPath);
     containsAll(
       content,
-      ["name: kiro-impl", "initial_step: plan-one-task", "loop_monitors:", "threshold:", "STATUS", "VERDICT", "NEXT_ACTION", "DECISION"],
+      [
+        "name: kiro-impl",
+        "initial_step: plan-one-task",
+        "max_steps: 200",
+        "loop_monitors:",
+        "threshold:",
+        "STATUS",
+        "VERDICT",
+        "NEXT_ACTION",
+        "DECISION",
+      ],
       workflowPath,
       failures,
       repoRoot,
@@ -612,8 +699,11 @@ function validateWorkflowFiles(repoRoot) {
     if (!hasRuleWithTerms(updateBlock, ["STATUS READY_FOR_REVIEW", "selected task checkbox updated", "task_set_status ALL_TASKS_COMPLETE", "next: validate-impl-final"])) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must route successful final checkbox updates to validate-impl-final`);
     }
-    if (!hasRuleWithTerms(updateBlock, ["STATUS READY_FOR_REVIEW", "selected task checkbox updated", "task_set_status REMAINING_TASKS_EXIST", "next: COMPLETE"])) {
-      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must complete non-final checkbox updates without feature validation`);
+    if (!hasRuleWithTerms(updateBlock, ["STATUS READY_FOR_REVIEW", "selected task checkbox updated", "task_set_status REMAINING_TASKS_EXIST", "next: plan-one-task"])) {
+      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must route non-final checkbox updates back to plan-one-task`);
+    }
+    if (hasRuleWithTerms(updateBlock, ["task_set_status REMAINING_TASKS_EXIST", "next: COMPLETE"])) {
+      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must not complete while remaining tasks exist`);
     }
     if (!hasRuleWithTerms(updateBlock, ["STATUS BLOCKED", "selected task blocker note written", "next: ABORT"])) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must route written blocker notes to ABORT`);
@@ -688,6 +778,7 @@ function validateGateWorkflowFiles(repoRoot) {
         "kiro-ai-antipattern-review.md",
         "kiro-ai-antipattern-fix.md",
         "kiro-ai-antipattern-fix-result",
+        "ai-antipattern-review: ../facets/instructions/ai-review.md",
       ],
       workflowPath,
       failures,
@@ -716,6 +807,9 @@ function validateGateWorkflowFiles(repoRoot) {
       repoRoot,
       "GATE_WORKFLOW_DRIFT",
     );
+    if (!content.includes("ai-antipattern-review: ../facets/instructions/ai-review.md")) {
+      failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} must wire ai-antipattern-review to the local ai-review instruction`);
+    }
     if (reviewBlock.join("\n").includes("WebSearch") || reviewBlock.join("\n").includes("WebFetch")) {
       failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern review step must not use web tools`);
     }

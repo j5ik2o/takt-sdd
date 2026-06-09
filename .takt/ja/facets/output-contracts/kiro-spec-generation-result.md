@@ -11,13 +11,14 @@
 - `review_gate`: `PENDING`、`PASSED`、`FAILED`、`NOT_APPLICABLE` のいずれか。
 - `featureName`: `.kiro/specs/<feature>` 配下の canonical feature directory name。
 - `updatedFiles`: 現在の step が書いた repository-relative path の配列。
+- `draft_artifacts`: review gate が読む draft 本文。必要な場合は `requirements`、`design`、`research`、`tasks` の key を持つ object。
 - `nextAction`: 次に必要な approval、correction、または phase command。不要な場合は optional。
 - `blockingReason`: `validation.verdict` が `BLOCKED` の場合は必須。`PASS` では省略または空にする。
 
 ## Result Rules
 
 - `PASS` は、報告された `phase` に対する現在の generation、repair、review、または finalize step が成功したことを表す。lifecycle promotion は `draft_status` と `review_gate` で判断する。
-- `READY_FOR_REVIEW` と `review_gate: PENDING` の組み合わせは、dedicated read-only review step が読む draft artifacts が存在し、`spec.json` lifecycle promotion はまだ行われていないことを表す。
+- `READY_FOR_REVIEW` と `review_gate: PENDING` の組み合わせは、dedicated read-only review step が読む draft artifacts が `draft_artifacts` または step report の draft section に存在し、`spec.json` lifecycle promotion はまだ行われていないことを表す。
 - `WRITTEN` と `review_gate: PASSED` の組み合わせは、review gate 通過後に finalize step が phase artifacts と lifecycle metadata を書いたことを表す。
 - `validation.verdict: NEEDS_FIX` は、review 可能な output はあるが、finding を修正するまで lifecycle metadata を進めてはいけないことを表す。
 - `validation.verdict: BLOCKED` は、workflow が artifact を安全に書けない、または lifecycle metadata を進められないことを表す。

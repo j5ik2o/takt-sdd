@@ -106,6 +106,12 @@ steps:
     rules:
       - condition: task_plan_review PASS and task_graph_sanity_review PASS
         next: finalize-tasks
+      - condition: task_plan_review NEEDS_FIXES and ai_gate_scope_mismatch
+        next: ABORT
+      - condition: task_plan_review NEEDS_FIXES and review_target_scope_mismatch
+        next: ABORT
+      - condition: task_plan_review NEEDS_FIXES and missing_draft_artifact
+        next: ABORT
       - condition: task_plan_review NEEDS_FIXES or task_graph_sanity_review NEEDS_FIXES
         next: repair-tasks
       - condition: task_plan_review RETURN_TO_DESIGN or task_graph_sanity_review RETURN_TO_DESIGN
@@ -167,6 +173,8 @@ steps:
 # - requirements/design approval gate は task generation 前に requirements.md、design.md、spec.json を確認する。
 # - 通常 mode では未承認 requirements または design で停止する。-y または auto-approve の場合は、続行前に approvals.requirements.approved: true と approvals.design.approved: true を明示的に設定する。
 # - task generation は requirements.md、design.md、existing tasks.md、spec.json、.kiro/settings/templates/specs/tasks.md を読む。
+# - tasks の AI gate と review は `draft_artifacts.tasks` の tasks_draft だけを対象にする。unscoped git diff、current dirty worktree、unrelated workflow/facet/script/test changes へフォールバックしない。
+# - tasks で AI gate evidence が別 phase、unscoped git diff、current dirty worktree、unrelated workflow/facet/script/test changes を対象にした場合は ai_gate_scope_mismatch として ABORT し、repair-tasks に流さない。
 # - tasks.md のすべての executable task は observable completion detail、numeric requirements、_Boundary:_、_Depends:_ を含める。
 # - dependency がない task は _Depends:_ none を使う。
 # - success metadata の前に task plan review と task graph sanity review を実行する。

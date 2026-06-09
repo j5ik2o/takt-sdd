@@ -36,6 +36,8 @@ Generate `.kiro/specs/<feature>/design.md` and `.kiro/specs/<feature>/research.m
 9. In `File Structure Plan`, list concrete repository paths and the responsibility of each path. Do not leave undecided placeholders, placeholder-only entries, or vague ownership.
 10. In `Requirements Traceability`, map every numeric requirement ID from `requirements.md` to concrete components, files, interfaces, or workflow decisions.
 11. In generate/repair steps, do not run the final design review gate; make the drafts reviewable and route to the dedicated read-only review step. That review step checks coverage, architecture readiness, boundary readiness, File Structure Plan concreteness, and Requirements Traceability.
+    - Even when `design.md` / `research.md` are not written yet, the step report must include the full draft body so the review step can read it self-contained.
+    - Preserve the draft body as `draft_artifacts.design` and `draft_artifacts.research`, or as explicit `## design.md draft` / `## research.md draft` report sections.
 12. If a real requirements/design gap remains, return `validation.verdict: "BLOCKED"` or `validation.verdict: "NEEDS_FIX"` with findings and do not write the `design-generated` success state.
 13. In the finalize step only, after the design review gate passes, keep `.kiro/specs/<feature>/design.md` and `.kiro/specs/<feature>/research.md` as accepted design artifacts.
 14. In the finalize step only, update `.kiro/specs/<feature>/spec.json` in the same successful result:
@@ -47,7 +49,8 @@ Generate `.kiro/specs/<feature>/design.md` and `.kiro/specs/<feature>/research.m
 
 ## Result mapping
 
-- In draft generation or repair steps, return draft design and research content in the step report for the read-only review step; do not write `design.md` or `research.md`, and do not promote `spec.json` to `design-generated`. When the drafts are ready for review, return `phase: "design"`, `validation.verdict: "PASS"`, `draft_status: "READY_FOR_REVIEW"`, `review_gate: "PENDING"`, `featureName`, and an empty `updatedFiles` array.
+- In draft generation or repair steps, return draft design and research content in the step report for the read-only review step; do not write `design.md` or `research.md`, and do not promote `spec.json` to `design-generated`. When the drafts are ready for review, return `phase: "design"`, `validation.verdict: "PASS"`, `draft_status: "READY_FOR_REVIEW"`, `review_gate: "PENDING"`, `featureName`, an empty `updatedFiles` array, `draft_artifacts.design`, and `draft_artifacts.research`.
+- In repair steps, if the review finding is `missing_draft_artifact`, `ai_gate_scope_mismatch`, `review_target_scope_mismatch`, or a finding against unrelated git diff / current dirty worktree, do not treat it as a local design draft repair. Return `validation.verdict: "BLOCKED"` and report the wrong review target so the workflow stops.
 - In finalize steps after the design review gate passed, return `phase: "design"`, `validation.verdict: "PASS"`, `draft_status: "WRITTEN"`, `review_gate: "PASSED"`, `featureName`, and `updatedFiles` containing `design.md`, `research.md`, and `spec.json`.
 - On missing requirements, lifecycle inconsistency, failed requirements approval gate, failed design review gate, or requirements/design gap, return `BLOCKED` or `NEEDS_FIX` and keep `spec.json` out of the `design-generated` success state.
 - `evidence` must mention requirements approval gate handling, `-y` or auto-approve handling, discovery/research sources, design synthesis, design review gate result, required sections, and whether `spec.json` was updated to `design-generated`.

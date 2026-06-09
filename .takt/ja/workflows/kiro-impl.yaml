@@ -1,12 +1,12 @@
 name: kiro-impl
-description: Kiro - approved spec から eligible な 1 task だけを実装し、review、debug、verify、progress update まで行う
+description: Kiro - approved spec から eligible な task を 1 つずつ実装し、全 task 完了まで review、debug、verify、progress update を反復する
 workflow_config:
   provider_options:
     codex:
       network_access: true
     opencode:
       network_access: true
-max_steps: 30
+max_steps: 200
 initial_step: plan-one-task
 
 instructions:
@@ -353,7 +353,7 @@ steps:
       - condition: STATUS READY_FOR_REVIEW and selected task checkbox updated and task_set_status ALL_TASKS_COMPLETE
         next: validate-impl-final
       - condition: STATUS READY_FOR_REVIEW and selected task checkbox updated and task_set_status REMAINING_TASKS_EXIST
-        next: COMPLETE
+        next: plan-one-task
       - condition: STATUS BLOCKED and selected task blocker note written
         next: ABORT
       - condition: STATUS BLOCKED and progress update could not be written safely
@@ -395,7 +395,7 @@ steps:
         next: ABORT
 
 # Contract notes:
-# - この workflow は 1 回の実行で selected task を最大 1 つだけ扱う。
+# - この workflow は selected task を 1 つずつ扱い、REMAINING_TASKS_EXIST の間は plan-one-task に戻って次の task を選ぶ。
 # - kiro-review、kiro-debug、kiro-verify-completion、kiro-validate-impl は standalone workflow ではなく、この workflow 内の adapter step として接続する。
 # - review は parallel reviewer group で実行し、child condition の approved / needs_fix を親 rule で集約する。
 # - workflow rule は primary machine field の STATUS、VERDICT、NEXT_ACTION、DECISION と reviewer child condition で分岐する。

@@ -19,13 +19,15 @@ Execute only the selected task boundary and return the exact `## Status Report` 
 2. For behavioral work, include `RED_PHASE_OUTPUT` evidence before the implementation evidence.
 3. Run task-relevant validation commands and separate command result, manual verification requirement, and missing evidence.
 4. Do not update the selected task checkbox or `Implementation Notes`.
-5. Return `STATUS: READY_FOR_REVIEW` only when code edit and task-local validation evidence are ready for review.
-6. Return `STATUS: BLOCKED` when a failure has enough evidence for `$kiro-debug` or `/kiro-debug`.
-7. Return `STATUS: NEEDS_CONTEXT` when required task, runtime, or validation context is missing.
+5. Preserve the planning report's `baseline_dirty_files`, and list only files edited for the selected task in `changed_files`.
+6. Return `STATUS: READY_FOR_REVIEW` only when code edit and task-local validation evidence are ready for review.
+7. Return `STATUS: BLOCKED` when a failure has enough evidence for `$kiro-debug` or `/kiro-debug`.
+8. Return `STATUS: NEEDS_CONTEXT` when required task, runtime, or validation context is missing.
 
 ## Status Report
 
 - `STATUS`: `READY_FOR_REVIEW`, `BLOCKED`, or `NEEDS_CONTEXT`.
+- `baseline_dirty_files`: pre-existing dirty files captured during planning.
 - `changed_files`: files changed inside the selected task boundary.
 - `validation_evidence`: commands, exit codes, and fresh results.
 - `RED_PHASE_OUTPUT`: required for behavioral tasks, otherwise `N/A`.

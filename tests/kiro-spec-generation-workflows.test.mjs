@@ -849,12 +849,14 @@ test("task 6.1 tasks workflow requires canonical task annotations and ready stat
     "numeric requirements",
     "ready_for_implementation",
     "auto-approve",
+    "non-empty dependencies",
   ];
   const policyTerms = [
     "_Boundary:_",
     "_Depends:_",
     "none",
     "(P)",
+    "non-empty dependencies",
     "executable task",
     "observable completion",
     "numeric requirements",
@@ -875,6 +877,7 @@ test("task 6.1 tasks workflow requires canonical task annotations and ready stat
       "PASS",
       "NEEDS_FIXES",
       "RETURN_TO_DESIGN",
+      "non-empty dependencies",
     ]);
     assertFacetTerms(repoRoot, `.takt/${lang}/facets/output-contracts/kiro-spec-tasks-review-result.md`, [
       "task_plan_review",
@@ -972,6 +975,121 @@ test("task 15 adapter validation detects skill section, field, and enum drift", 
     ),
     result.failures.join("\n"),
   );
+  assert.ok(
+    result.failures.some((failure) =>
+      failure.includes("SKILL_ADAPTER_DRIFT") &&
+      failure.includes("kiro-validate-design-readiness.md") &&
+      failure.includes("missing required term: Draft review mode"),
+    ),
+    result.failures.join("\n"),
+  );
+});
+
+test("design generation review adapters preserve draft-before-finalize handoff", () => {
+  const repoRoot = join(import.meta.dirname, "..");
+  const designResultTerms = [
+    "draft_artifacts",
+    "draft_artifacts.design",
+    "draft_artifacts.research",
+    "design.md draft",
+    "research.md draft",
+  ];
+  const readinessTerms = [
+    "Draft review mode",
+    "kiro-spec-design-result.md",
+    "kiro-spec-design-repair-result.md",
+    "kiro-spec-quick-design-result.md",
+    "kiro-spec-quick-design-repair-result.md",
+    "missing_draft_artifact",
+    "ai_gate_scope_mismatch",
+    "review_target_scope_mismatch",
+    "review_target",
+    "unscoped git diff",
+    "path filter",
+    "git diff",
+    "current dirty worktree",
+    "local repair possible",
+  ];
+  const aiReviewTerms = [
+    "Kiro spec generation draft mode",
+    "kiro-spec-ai-quality-gate",
+    "ai-quality-gate-design",
+    "quick-ai-quality-gate-design",
+    "ai-quality-gate-tasks",
+    "quick-ai-quality-gate-tasks",
+    "draft_artifacts.tasks",
+    "spec.json.phase",
+    "caller step",
+    "missing_draft_artifact",
+    "ai_gate_scope_mismatch",
+    "review_target",
+    "tasks_draft",
+    "unscoped git diff",
+    "git diff",
+    "current dirty worktree",
+  ];
+  const fixTerms = [
+    "draft_artifacts.tasks",
+    "missing_draft_artifact",
+    "ai_gate_scope_mismatch",
+    "review_target_scope_mismatch",
+    "current dirty worktree",
+    "STATUS: NEED_REPLAN",
+  ];
+  const tasksTerms = [
+    "draft_artifacts.tasks",
+    "missing_draft_artifact",
+    "ai_gate_scope_mismatch",
+    "review_target_scope_mismatch",
+    "unscoped git diff",
+    "current dirty worktree",
+  ];
+  const tasksReviewTerms = [
+    "draft_artifacts.tasks",
+    "tasks_draft",
+    "missing_draft_artifact",
+    "ai_gate_scope_mismatch",
+    "unscoped git diff",
+    "task_plan_review",
+  ];
+  const workflowTerms = [
+    "DECISION NO-GO and ai_gate_scope_mismatch",
+    "DECISION NO-GO and review_target_scope_mismatch",
+    "DECISION NO-GO and missing_draft_artifact",
+    "unscoped git diff",
+  ];
+  const tasksWorkflowTerms = [
+    "task_plan_review NEEDS_FIXES and ai_gate_scope_mismatch",
+    "task_plan_review NEEDS_FIXES and review_target_scope_mismatch",
+    "task_plan_review NEEDS_FIXES and missing_draft_artifact",
+    "unscoped git diff",
+  ];
+  const aiQualityGateWorkflowTerms = [
+    "ai-antipattern-review: ../facets/instructions/ai-review.md",
+    "instruction: ai-antipattern-review",
+    "kiro-ai-antipattern-fix-spec-generation",
+  ];
+
+  for (const lang of ["en", "ja"]) {
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/output-contracts/kiro-spec-generation-result.md`, [
+      "draft_artifacts",
+    ]);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-design.md`, designResultTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-tasks.md`, tasksTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-tasks-review.md`, tasksReviewTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-validate-design-readiness.md`, readinessTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/ai-review.md`, aiReviewTerms);
+    assertFacetTerms(
+      repoRoot,
+      `.takt/${lang}/facets/instructions/kiro-ai-antipattern-fix-spec-generation.md`,
+      fixTerms,
+    );
+    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-design.yaml`, workflowTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-quick.yaml`, workflowTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-tasks.yaml`, tasksWorkflowTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-quick.yaml`, tasksWorkflowTerms);
+    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-ai-quality-gate.yaml`, aiQualityGateWorkflowTerms);
+  }
 });
 
 test("task 16 validation detects legacy kiro spec generation surfaces", () => {

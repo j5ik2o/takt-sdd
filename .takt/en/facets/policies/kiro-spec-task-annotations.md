@@ -23,6 +23,7 @@ The annotation labels `_Boundary:_` and `_Depends:_` are required labels. Depend
 - Reject hidden prerequisite work that is not represented by a `_Depends:_ ...` edge or by being merged into the same task.
 - Reject a task when its Boundary annotation overlaps another task in a way that would make file or workflow ownership ambiguous.
 - Use `(P)` only when the non-overlapping boundary and dependency graph show no prerequisite, file, workflow, or shared artifact conflict.
+- `(P)` is valid only together with `_Depends:_ none`. A task with non-empty dependencies has prerequisites and must not use `(P)`, even when its boundary does not overlap other tasks.
 - Remove `(P)` from any task whose dependency graph, boundary, or observable completion depends on another incomplete task.
 
 ## Review gates

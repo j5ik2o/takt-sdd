@@ -33,6 +33,7 @@ Generate `.kiro/specs/<feature>/tasks.md` from approved requirements and design.
    - the canonical boundary annotation label `_Boundary:_`.
    - the canonical dependency annotation label `_Depends:_`.
 6. Use `_Depends:_ none` when an executable task has no dependency. Use task IDs when dependencies exist.
+   - Use the `(P)` marker only on executable tasks with `_Depends:_ none`. A task with non-empty dependencies must not use `(P)`, even when its boundary does not overlap other tasks.
 7. In generate/repair steps, do not run the final task plan review; make the draft task graph reviewable and route to the dedicated read-only review step. That review step checks executable task size, observable completion, numeric requirements, hidden prerequisites, and requirement coverage.
 8. The dedicated read-only review step also runs task graph sanity review for Boundary annotation coverage, Depends annotation coverage, dependency graph validity, boundary overlap, and `(P)` marker validity.
 9. Use `(P)` only when non-overlapping boundary and explicit dependency graph evidence show the task can run independently.
@@ -48,7 +49,8 @@ Generate `.kiro/specs/<feature>/tasks.md` from approved requirements and design.
 
 ## Result mapping
 
-- In draft generation or repair steps, return draft task plan content in the step report for the read-only review step; do not write `tasks.md` or promote `spec.json` to `tasks-generated`. When the draft task graph is ready for review, return `phase: "tasks"`, `validation.verdict: "PASS"`, `draft_status: "READY_FOR_REVIEW"`, `review_gate: "PENDING"`, `featureName`, and an empty `updatedFiles` array.
+- In draft generation or repair steps, return draft task plan content in the step report for the read-only review step; do not write `tasks.md` or promote `spec.json` to `tasks-generated`. When the draft task graph is ready for review, return `phase: "tasks"`, `validation.verdict: "PASS"`, `draft_status: "READY_FOR_REVIEW"`, `review_gate: "PENDING"`, `featureName`, an empty `updatedFiles` array, and `draft_artifacts.tasks` or a `## draft_artifacts.tasks` / `## Draft tasks.md` section.
+- In repair steps, findings for `missing_draft_artifact`, `ai_gate_scope_mismatch`, `review_target_scope_mismatch`, unscoped git diff, or unrelated git diff / current dirty worktree must not be treated as local tasks draft repairs. Return `validation.verdict: "BLOCKED"` and report the wrong review target so the workflow stops.
 - In finalize steps after task plan review and task graph sanity review pass, return `phase: "tasks"`, `validation.verdict: "PASS"`, `draft_status: "WRITTEN"`, `review_gate: "PASSED"`, `featureName`, and `updatedFiles` containing `tasks.md` and `spec.json`.
 - In normal mode, a generated `tasks.md` may be reviewable while `ready_for_implementation` remains false until tasks approval exists.
 - In auto-approve mode, the same successful result sets tasks approved true and `ready_for_implementation` true.

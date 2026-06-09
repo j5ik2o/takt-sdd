@@ -16,6 +16,9 @@
 ## Review procedure
 
 1. `requirements.md`、`design.md`、`spec.json`、existing `tasks.md` の merge context、前 step の draft task plan、task generation rules を読み込む。
+   - 前 step の draft task plan は Previous Response または current run report の `draft_artifacts.tasks`、`## draft_artifacts.tasks`、`## Draft tasks.md`、`kiro-spec-tasks-result.md`、`kiro-spec-tasks-repair-result.md`、`kiro-spec-quick-tasks-result.md`、`kiro-spec-quick-tasks-repair-result.md` から取得する。
+   - draft review mode の review target は tasks draft に固定する。git diff、current dirty worktree、workflow/facet/script/test の未コミット差分を task plan review target として扱ってはならない。
+   - draft 本文が見つからない場合は `task_plan_review: "NEEDS_FIXES"` とし、`missing_draft_artifact` を報告する。既存 `tasks.md`、git diff、別 phase artifact へフォールバックしてはならない。
 2. `$kiro-spec-tasks` または `/kiro-spec-tasks` Step 3 の task plan review gate を実行する。
 3. `$kiro-spec-tasks` または `/kiro-spec-tasks` Step 3.5 の task-graph sanity review を実行する。
 4. 両方の review が通過した場合だけ `task_plan_review: "PASS"` と `task_graph_sanity_review: "PASS"` を返す。
@@ -25,6 +28,7 @@
 ## Result mapping
 
 - pass 時は coverage、executability、dependency graph、boundary ownership、`(P)` marker evidence を報告し、artifact は変更しない。
+- `(P)` marker evidence では、各 `(P)` task が `_Depends:_ none` であることを必ず確認する。non-empty dependencies を持つ `(P)` task は invalid `(P)` marker として `task_graph_sanity_review: "NEEDS_FIXES"` または `"BLOCKED"` を返す。
 - needs-fix または blocked 時は具体的な findings を含め、`tasks.md` と `spec.json` を変更しない。
 
 ## AI quality gate evidence
@@ -32,6 +36,9 @@
 - task plan review pass を返す前に、current run の namespaced AI gate review report を確認する:
   `reports/subworkflows/iteration-*--step-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`
   または `reports/subworkflows/iteration-*--step-quick-ai-quality-gate-tasks--workflow-kiro-spec-ai-quality-gate/kiro-spec-ai-antipattern-review.md`。
+- AI gate report が `review_target: tasks_draft` または同等の明示 evidence を含むことを確認する。
+- AI gate report が git diff、current dirty worktree、unrelated workflow/facet/script/test changes、または別 phase artifact を対象にしている場合は `task_plan_review: "NEEDS_FIXES"` とし、`ai_gate_scope_mismatch` を報告する。この状態を task draft の local repair possible として扱ってはならない。
+- AI gate report が `review_target: git_diff`、unscoped git diff、または path filter なしの `git diff` を evidence としている場合も `ai_gate_scope_mismatch` として扱う。
 - unresolved AI antipattern findings が残る場合は draft task plan を reject する。
 - 対応する namespaced `kiro-spec-ai-antipattern-fix.md` が存在する場合、stale、cross-run、blocked、evidence-free no-fix outcomes を reject する。
 - first review が blocking issue を見つけなかった場合だけ、`kiro-spec-ai-antipattern-fix.md` が存在しなくても valid と扱う。これは optional fix report であり、required success artifact ではない。

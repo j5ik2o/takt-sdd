@@ -105,6 +105,12 @@ steps:
     rules:
       - condition: DECISION GO and design review gate passed
         next: finalize-design
+      - condition: DECISION NO-GO and ai_gate_scope_mismatch
+        next: ABORT
+      - condition: DECISION NO-GO and review_target_scope_mismatch
+        next: ABORT
+      - condition: DECISION NO-GO and missing_draft_artifact
+        next: ABORT
       - condition: DECISION NO-GO and local repair possible
         next: repair-design
       - condition: DECISION NO-GO and requirements/design gap remains
@@ -163,8 +169,11 @@ steps:
 # - In normal mode, unapproved requirements stop the workflow. With -y or auto-approve, explicitly set approvals.requirements.approved: true before continuing.
 # - Discovery/research and discovery/research validation read requirements.md, existing design.md, optional research.md, steering context, and relevant code patterns before design synthesis.
 # - Write research.md as the design phase supplemental artifact and write final implementation decisions to design.md.
-# - design.md must include required sections: Boundary Commitments, File Structure Plan, and Requirements Traceability.
-# - The design review gate checks requirement coverage, architecture readiness, boundary readiness, File Structure Plan concreteness, and Requirements Traceability.
+# - generate/repair draft reports must include the full draft in draft_artifacts.design/research or design.md draft / research.md draft sections. review-design must not treat missing design.md before finalize as ARTIFACT_MISSING.
+# - The design draft must include required sections: Boundary Commitments, File Structure Plan, and Requirements Traceability.
+# - The design review gate reads the draft report and checks requirement coverage, architecture readiness, boundary readiness, File Structure Plan concreteness, and Requirements Traceability.
+# - ai-quality-gate-design and review-design target only the design draft. They do not fall back to unscoped git diff/current dirty worktree/unrelated workflow changes.
+# - AI gate evidence that targeted another phase, unscoped git diff, current dirty worktree, or unrelated workflow/facet changes is ai_gate_scope_mismatch and ABORTs instead of routing to repair-design.
 # - The workflow uses generate/repair -> ai-quality-gate-design -> review -> finalize, and finalize repair returns stay inside the monitored loop; the repeat bound is only loop_monitors.threshold.
 # - If a real requirements/design gap remains, return BLOCKED or NEEDS_FIX and do not advance to design-generated.
 # - On success, update spec.json to phase: "design-generated", approvals.requirements.approved: true, and approvals.design.generated: true.
