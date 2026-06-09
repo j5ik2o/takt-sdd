@@ -1,22 +1,22 @@
-# Requirements Document
+# 要件定義
 
-## Introduction
+## はじめに
 {{INTRODUCTION}}
 
 <!-- スコープが誤読されうる場合、または隣接するシステム／スペックに影響する場合は任意で記載 -->
-## Boundary Context (Optional)
+## 境界コンテキスト（任意）
 - **In scope（対象範囲）**: {{IN_SCOPE_BEHAVIORS}}
 - **Out of scope（対象外）**: {{OUT_OF_SCOPE_BEHAVIORS}}
 - **Adjacent expectations（隣接システム／スペックへの期待）**: {{ADJACENT_SYSTEM_OR_SPEC_EXPECTATIONS}}
 
-## Requirements
+## 要件
 
-### Requirement 1: {{REQUIREMENT_AREA_1}}
+### 要件 1: {{REQUIREMENT_AREA_1}}
 <!-- 要件見出しには先頭に数値IDのみを含めること（例: "Requirement 1: ...", "1. Overview", "2 Feature: ..."）。"Requirement A" のようなアルファベットIDは不可。 -->
-**Objective:** As a {{ROLE}}, I want {{CAPABILITY}}, so that {{BENEFIT}}
+**目的:** {{ROLE}}として、{{BENEFIT}}のために、{{CAPABILITY}}が欲しい
 <!-- 上記は「[役割]として、[利益]のために、[能力]が欲しい」という形式です。 -->
 
-#### Acceptance Criteria
+#### 受け入れ基準
 <!-- EARS形式。検証では「場合」「は」または shall/must などの固定句を必須とします。 -->
 1. [イベント]した場合、[システム]は[応答／動作]するものとする
 2. [トリガー]の場合、[システム]は[応答／動作]するものとする
@@ -24,10 +24,10 @@
 4. [機能が含まれる]場合、[システム]は[応答／動作]するものとする
 5. [システム]は[応答／動作]するものとする
 
-### Requirement 2: {{REQUIREMENT_AREA_2}}
-**Objective:** As a {{ROLE}}, I want {{CAPABILITY}}, so that {{BENEFIT}}
+### 要件 2: {{REQUIREMENT_AREA_2}}
+**目的:** {{ROLE}}として、{{BENEFIT}}のために、{{CAPABILITY}}が欲しい
 
-#### Acceptance Criteria
+#### 受け入れ基準
 1. [イベント]した場合、[システム]は[応答／動作]するものとする
 2. [イベント]かつ[条件]の場合、[システム]は[応答／動作]するものとする
 
