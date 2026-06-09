@@ -301,7 +301,7 @@ test("real provider smoke runner cleans up detached fixture processes on fail-fa
       root,
       "orphan-parent.js",
       `import { spawn } from "node:child_process";
-const child = spawn(process.execPath, ["${join(root, "orphan-child.js")}"], {
+const child = spawn(process.execPath, [${JSON.stringify(join(root, "orphan-child.js"))}], {
   detached: true,
   stdio: "ignore",
 });
