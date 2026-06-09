@@ -60,6 +60,7 @@ The installer sets up the following:
 - **`.takt/`** — Workflows (YAML workflows) and facets in the selected language (`--lang`)
 - **`openspec/config.yaml`** — OpenSpec project config initialized via the official OpenSpec `1.3.1` CLI
 - **`package.json`** — npm scripts for each phase + `takt` and `@fission-ai/openspec@1.3.1` as devDependencies
+- **cc-sdd** — Kiro-compatible project initialization run via the pinned `cc-sdd@3.0.2` CLI, propagating the selected `--lang`
 
 Options:
 
@@ -70,7 +71,7 @@ Options:
 | `--lang <en\|ja>` | Facet and message language (default: `en`) |
 | `--dry-run` | Preview files without writing |
 
-When `package.json` already exists, only npm scripts are merged (existing scripts are not overwritten). The installer also runs `openspec init --tools none --force .`, so OpenSpec is ready without generating extra AI-tool-specific files.
+When `package.json` already exists, only npm scripts are merged (existing scripts are not overwritten). The installer also runs `openspec init --tools none --force .`, so OpenSpec is ready without generating extra AI-tool-specific files. It then runs the pinned `cc-sdd@3.0.2` initialization with the same `--lang`. In `--dry-run` mode the cc-sdd initialization is previewed only and not executed.
 
 ### Adding Individual Skills
 

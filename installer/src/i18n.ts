@@ -31,6 +31,10 @@ interface Messages {
   openspecInitializing: (version: string) => string;
   openspecInitialized: (path: string) => string;
   openspecInitFailed: (details: string) => string;
+  ccSddInitializing: (version: string) => string;
+  ccSddInitialized: () => string;
+  ccSddInitFailed: (details: string) => string;
+  ccSddDryRunPlan: (version: string, lang: Lang) => string;
 }
 
 const en: Messages = {
@@ -65,6 +69,10 @@ const en: Messages = {
   openspecInitializing: (version) => `Initializing OpenSpec ${version}...`,
   openspecInitialized: (path) => `OpenSpec initialized: ${path}`,
   openspecInitFailed: (details) => `Error: failed to initialize OpenSpec.\n${details}`,
+  ccSddInitializing: (version) => `Initializing cc-sdd ${version}...`,
+  ccSddInitialized: () => "cc-sdd initialized.",
+  ccSddInitFailed: (details) => `Error: failed to initialize cc-sdd.\n${details}`,
+  ccSddDryRunPlan: (version, lang) => `[dry-run] Would initialize cc-sdd ${version} (--lang ${lang}).`,
   helpText: `Usage: npx create-takt-sdd [options]
 
 Options:
@@ -134,6 +142,10 @@ const ja: Messages = {
   openspecInitializing: (version) => `OpenSpec ${version} を初期化中...`,
   openspecInitialized: (path) => `OpenSpec を初期化しました: ${path}`,
   openspecInitFailed: (details) => `エラー: OpenSpec の初期化に失敗しました。\n${details}`,
+  ccSddInitializing: (version) => `cc-sdd ${version} を初期化中...`,
+  ccSddInitialized: () => "cc-sdd を初期化しました。",
+  ccSddInitFailed: (details) => `エラー: cc-sdd の初期化に失敗しました。\n${details}`,
+  ccSddDryRunPlan: (version, lang) => `[dry-run] cc-sdd ${version} を初期化します (--lang ${lang})。`,
   helpText: `使い方: npx create-takt-sdd [オプション]
 
 オプション:
