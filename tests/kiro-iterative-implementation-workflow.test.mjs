@@ -88,6 +88,21 @@ test("validator accepts body Kiro Skill Source instructions", () => {
   assert.equal(result.ok, true, result.failures.join("\n"));
 });
 
+test("validator rejects reviewer adapters without Kiro Skill Source instructions", () => {
+  const root = makeCurrentSurfaceFixture();
+  const facetPath = join(root, ".takt", "en", "facets", "instructions", "kiro-review-architecture-task.md");
+  const facet = readFileSync(facetPath, "utf8").replace(
+    /\n## Kiro Skill Source\n\nBefore executing this instruction, invoke `\$kiro-review` or `\/kiro-review` and read the resolved `SKILL\.md`\.\nApply the `## Outputs` section from `\$kiro-review` or `\/kiro-review` as this step's source of truth\.\nThis facet defines only the adapter delta for the TAKT workflow\.\n/,
+    "\n",
+  );
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-review-architecture-task.md", facet);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("kiro-review-architecture-task.md") && failure.includes("kiro-review")));
+});
+
 test("validator reports missing kiro-impl workflow and package wiring", () => {
   const root = makeRepoFixture({});
   mkdirSync(join(root, ".takt", "en", "workflows"), { recursive: true });
@@ -212,6 +227,21 @@ test("validator rejects parent loop monitor that skips AI quality gate", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("loop monitor must include ai-quality-gate")));
+});
+
+test("validator rejects review loop monitor with stale single-review verdict wording", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    'reviewer child conditions are converging toward all("approved") and needs_fix findings are shrinking',
+    "review findings are converging toward VERDICT APPROVED",
+  );
+  writeFixtureFile(root, ".takt/ja/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("parallel reviewer condition vocabulary")));
 });
 
 test("validator rejects missing parallel reviewer group", () => {

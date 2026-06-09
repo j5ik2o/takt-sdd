@@ -59,7 +59,7 @@ loop_monitors:
       persona: supervisor
       instruction: kiro-debug-task
       rules:
-        - condition: Healthy (review findings are converging toward VERDICT APPROVED)
+        - condition: Healthy (reviewer child conditions are converging toward all("approved") and needs_fix findings are shrinking)
           next: execute-task
         - condition: Unproductive (loop_monitors.threshold reached for execute-task, ai-quality-gate, reviewers, and debug-task)
           next: update-progress

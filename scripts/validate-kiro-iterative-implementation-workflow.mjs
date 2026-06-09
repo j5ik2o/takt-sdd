@@ -71,16 +71,22 @@ const instructionSpecs = [
   },
   {
     name: "kiro-review-architecture-task",
+    skill: "kiro-review",
+    section: "## Outputs",
     parent: "review-arch",
     terms: ["VERDICT", "APPROVED", "REJECTED", "approved", "needs_fix", "selected task", "boundary", "kiro-ai-antipattern-review.md"],
   },
   {
     name: "kiro-review-qa-task",
+    skill: "kiro-review",
+    section: "## Outputs",
     parent: "review-qa",
     terms: ["VERDICT", "APPROVED", "REJECTED", "approved", "needs_fix", "selected task", "validation evidence", "kiro-ai-antipattern-review.md"],
   },
   {
     name: "kiro-review-testing-task",
+    skill: "kiro-review",
+    section: "## Outputs",
     parent: "review-test",
     terms: ["VERDICT", "APPROVED", "REJECTED", "approved", "needs_fix", "selected task", "RED_PHASE_OUTPUT", "kiro-ai-antipattern-review.md"],
   },
@@ -623,6 +629,12 @@ function validateWorkflowFiles(repoRoot) {
       )
     ) {
       failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, workflowPath)} review/debug loop monitor must include ai-quality-gate between execute-task and reviewers`);
+    }
+    if (!content.includes('reviewer child conditions are converging toward all("approved") and needs_fix findings are shrinking')) {
+      failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, workflowPath)} review/debug loop monitor must use parallel reviewer condition vocabulary`);
+    }
+    if (content.includes("review findings are converging toward VERDICT APPROVED")) {
+      failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, workflowPath)} review/debug loop monitor must not use stale single-review VERDICT APPROVED wording`);
     }
     const workflowCallBlocks = stepBlocks(content).filter((block) => block.join("\n").includes("kind: workflow_call"));
     for (const block of workflowCallBlocks) {
