@@ -142,9 +142,10 @@ function runWorkflow(root, scriptName, target, options = {}) {
   delete env.TAKT_MOCK_SCENARIO;
   const timeoutMs = options.timeoutMs ?? workflowTimeoutMs(scriptName);
   const patterns = options.fatalPatterns ?? fatalWorkflowPatterns;
+  const targetArgs = Array.isArray(target) ? target : [target];
 
   return new Promise((resolve) => {
-    const child = spawn("npm", ["run", scriptName, "--", target], {
+    const child = spawn("npm", ["run", scriptName, "--", ...targetArgs], {
       cwd: root,
       env,
       detached: true,
@@ -332,13 +333,13 @@ test(
       assertRealProviderWorkflowSuccess(await runWorkflow(root, "kiro:spec:init", featureName), "kiro:spec:init");
       assertRealProviderPhase(root, "initialized", ["requirements.md", "spec.json"]);
 
-      assertRealProviderWorkflowSuccess(await runWorkflow(root, "kiro:spec:requirements", `feature=${featureName} -y`), "kiro:spec:requirements");
+      assertRealProviderWorkflowSuccess(await runWorkflow(root, "kiro:spec:requirements", [`feature=${featureName}`, "-y"]), "kiro:spec:requirements");
       assertRealProviderPhase(root, "requirements-generated", ["requirements.md"]);
 
-      assertRealProviderWorkflowSuccess(await runWorkflow(root, "kiro:spec:design", `feature=${featureName} -y`), "kiro:spec:design");
+      assertRealProviderWorkflowSuccess(await runWorkflow(root, "kiro:spec:design", [`feature=${featureName}`, "-y"]), "kiro:spec:design");
       assertRealProviderPhase(root, "design-generated", ["requirements.md", "design.md"]);
 
-      assertRealProviderWorkflowSuccess(await runWorkflow(root, "kiro:spec:tasks", `feature=${featureName} -y`), "kiro:spec:tasks");
+      assertRealProviderWorkflowSuccess(await runWorkflow(root, "kiro:spec:tasks", [`feature=${featureName}`, "-y"]), "kiro:spec:tasks");
       assertRealProviderPhase(root, "tasks-generated", ["requirements.md", "design.md", "tasks.md"]);
       const tasksSpec = readSpec(root);
       assert.equal(tasksSpec.ready_for_implementation, true);
