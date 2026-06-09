@@ -657,6 +657,21 @@ test("validator rejects single-shot completion when tasks remain", () => {
   assert.ok(result.failures.some((failure) => failure.includes("must not complete while remaining tasks exist")));
 });
 
+test("validator rejects task planning re-entry that inherits stale session context", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8")
+    .replace("    session: refresh\n    knowledge:\n      - architecture\n", "    knowledge:\n      - architecture\n")
+    .replace("    pass_previous_response: false\n    instruction: kiro-impl-plan-one-task\n", "    instruction: kiro-impl-plan-one-task\n");
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("SESSION_DRIFT") && failure.includes("refresh session")));
+  assert.ok(result.failures.some((failure) => failure.includes("SESSION_DRIFT") && failure.includes("update-progress responses")));
+});
+
 test("validator rejects workflow references to missing persona resources", () => {
   const root = makeCurrentSurfaceFixture();
   const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");

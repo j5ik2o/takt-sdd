@@ -569,6 +569,12 @@ function validateWorkflowFiles(repoRoot) {
       }
     }
     const planBlock = blocks.get("plan-one-task") ?? [];
+    if (stepScalar(planBlock, "session") !== "refresh") {
+      failures.push(`SESSION_DRIFT: ${rel(repoRoot, workflowPath)} plan-one-task must refresh session on each task-selection pass`);
+    }
+    if (stepScalar(planBlock, "pass_previous_response") !== "false") {
+      failures.push(`SESSION_DRIFT: ${rel(repoRoot, workflowPath)} plan-one-task must not inherit update-progress responses when selecting the next task`);
+    }
     if (!hasRuleWithTerms(planBlock, ["ready_for_implementation", "next: execute-task"])) {
       failures.push(`GATE_ORDER_DRIFT: ${rel(repoRoot, workflowPath)} plan-one-task must check readiness before edit`);
     }

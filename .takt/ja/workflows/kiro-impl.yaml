@@ -73,6 +73,7 @@ steps:
       - kiro-spec-lifecycle
       - kiro-spec-task-annotations
       - kiro-impl-task-progress
+    session: refresh
     knowledge:
       - architecture
     provider_options:
@@ -83,6 +84,7 @@ steps:
           - Grep
           - Bash
     required_permission_mode: readonly
+    pass_previous_response: false
     instruction: kiro-impl-plan-one-task
     output_contracts:
       report:
