@@ -40,7 +40,7 @@ create-takt-sdd installer が、内部で固定バージョンの cc-sdd CLI（K
 
 1. install が dry-run でない通常モードで実行されたとき、システムは `npx cc-sdd@<CC_SDD_VERSION> --lang <lang>` 相当の cc-sdd CLI を内部起動しなければならない。
 2. システムは常に cc-sdd CLI を `process.execPath` と npm CLI 経由（既存 OpenSpec 初期化と同じ installer-local 起動パターン）で起動しなければならない。
-3. システムは cc-sdd CLI 起動を既存 OpenSpec 初期化と同じ install completion path（manifest 書き込み前の install 完了フェーズ）に配置しなければならない。
+3. システムは cc-sdd CLI 起動を既存 OpenSpec 初期化と同じ install completion path に配置しなければならない。
 4. システムは cc-sdd CLI 起動が TAKT asset 同期および package.json 更新の結果を破壊しないように、それらの完了後に cc-sdd CLI を起動しなければならない。
 
 ### Requirement 3: `--lang` 値の伝播
@@ -71,7 +71,8 @@ create-takt-sdd installer が、内部で固定バージョンの cc-sdd CLI（K
 
 1. cc-sdd CLI の内部起動が失敗した場合、システムは OpenSpec 初期化失敗と同等の明示的な installer error として install を停止しなければならない。
 2. cc-sdd CLI の内部起動が失敗した場合、システムは `formatExecError()` を用いて stderr/stdout/message を整形したエラー詳細を提示しなければならない。
-3. cc-sdd CLI の内部起動が失敗した場合、システムは非ゼロ終了で停止し、後続の manifest 書き込みおよび完了表示へ進んではならない。
+3. cc-sdd CLI の内部起動が失敗した場合、システムは非ゼロ終了で停止し、完了表示へ進んではならない。
+4. cc-sdd CLI の内部起動が失敗した場合でも、システムは cc-sdd 起動前に確定した TAKT asset manifest を保持し、次回実行が update/retry path に進める状態を維持しなければならない。
 
 ### Requirement 6: en/ja の cc-sdd 初期化メッセージ
 

@@ -17,7 +17,7 @@
 - **Findings**:
   - OpenSpec init は 2 経路を持つ: 同梱バージョン一致時は `getOpenSpecCliPath()`（`require.resolve`）、不一致時は `npm exec --yes --package=...@<ver> -- openspec init ...`。いずれも `execFileSync(process.execPath, args, { cwd, encoding, stdio:["ignore","pipe","pipe"] })`。
   - 失敗時は `errorExit(msg.openspecInitFailed(formatExecError(error)))` で stderr/stdout/message を整形し非ゼロ終了。
-  - 呼び出しは completion path、package.json 更新後・manifest 書き込み（L636-642）前（L629-634）。
+  - 呼び出しは completion path、package.json 更新後・manifest 書き込み付近に配置できる。OpenSpec と同じ外部 CLI 起動パターンを踏襲しつつ、TAKT asset manifest は cc-sdd 前に確定させる。
   - dry-run は早期 return（L503）前の preview block（L474-504）で `console.log(msg.dryRunItem(OPENSPEC_CONFIG_PATH))` を 1 行表示し、実プロセスは起動しない。
 - **Implications**:
   - cc-sdd は同梱依存ではない（`installer/package.json` の dependencies は `@fission-ai/openspec` のみ）ため、cc-sdd 起動は OpenSpec の「npm exec 経路」のみを採用すればよく、二経路分岐は不要。
@@ -77,12 +77,12 @@
 - **Follow-up**: `installer/package.json` の `files` に test 成果物の除外（`"!dist/**/*.test.js"`）を追加。
 
 ### Decision: 失敗時は init 関数が `CcSddInitError` を throw し、install() が errorExit へマップする
-- **Context**: Req 5 は OpenSpec 初期化失敗と同等の明示停止（formatExecError 整形・非ゼロ終了・manifest へ進まない）を要求。同時に Req 8.3 で失敗パスを deterministic にテストしたい。
+- **Context**: Req 5 は OpenSpec 初期化失敗と同等の明示停止（formatExecError 整形・非ゼロ終了・完了表示へ進まない）を要求。同時に Req 8.3 で失敗パスを deterministic にテストしたい。
 - **Alternatives Considered**:
   1. OpenSpec と同じく init 内で直接 `errorExit`（process.exit）。
   2. init は `formatExecError()` で整形したメッセージを持つ `CcSddInitError` を throw、install() が `errorExit(msg.ccSddInitFailed(err.message))`。
 - **Selected Approach**: 案 2。
-- **Rationale**: ユーザー観測挙動（整形メッセージ・非ゼロ終了・manifest 未到達）は案 1 と同一でありながら、失敗パスを `process.exit` 無しに unit test できる。
+- **Rationale**: ユーザー観測挙動（整形メッセージ・非ゼロ終了・完了表示未到達）は案 1 と同一でありながら、失敗パスを `process.exit` 無しに unit test できる。TAKT asset manifest は外部 cc-sdd 起動前に確定し、失敗後の retry が update path に進める状態を維持する。
 - **Trade-offs**: OpenSpec init と微妙に構造が異なる（errorExit の位置が呼び出し側）。設計上の差分として明記。
 - **Follow-up**: install() の wrapper が `CcSddInitError` のみ握り、それ以外は再 throw することをレビューで確認。
 

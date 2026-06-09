@@ -672,15 +672,6 @@ export async function install(options: InstallOptions): Promise<void> {
       removeLegacyOpsxScript(options.cwd, manifest, msg);
     }
 
-    try {
-      initializeCcSddProject(options.cwd, options.lang, msg);
-    } catch (error) {
-      if (error instanceof CcSddInitError) {
-        errorExit(msg.ccSddInitFailed(error.message));
-      }
-      throw error;
-    }
-
     const newManifest: Manifest = {
       version: version,
       installedAt: new Date().toISOString(),
@@ -689,6 +680,15 @@ export async function install(options: InstallOptions): Promise<void> {
     };
     writeFileSync(manifestPath, JSON.stringify(newManifest, null, 2) + "\n", "utf-8");
     info(msg.manifestCreated);
+
+    try {
+      initializeCcSddProject(options.cwd, options.lang, msg);
+    } catch (error) {
+      if (error instanceof CcSddInitError) {
+        errorExit(msg.ccSddInitFailed(error.message));
+      }
+      throw error;
+    }
 
     info(isUpdate ? msg.updateComplete : msg.complete);
     console.log(msg.usageExamples);

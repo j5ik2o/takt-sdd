@@ -80,6 +80,21 @@ test("ccSddDryRunPlan is pure and the success path invokes the runner exactly on
   assert.equal(calls.length, 1);
 });
 
+// Req 7.1 / 7.4: `.takt/.manifest.json` は TAKT asset 同期の記録であり、
+// 外部 cc-sdd CLI の失敗で失われると retry が update path に乗れない。
+test("install writes the TAKT asset manifest before invoking cc-sdd", () => {
+  const source = readFileSync(new URL("../src/install.ts", import.meta.url), "utf-8");
+  const manifestWriteIndex = source.indexOf("writeFileSync(manifestPath");
+  const ccSddInitIndex = source.indexOf("initializeCcSddProject(options.cwd, options.lang, msg)");
+
+  assert.notEqual(manifestWriteIndex, -1, "manifest write must exist");
+  assert.notEqual(ccSddInitIndex, -1, "cc-sdd init wiring must exist");
+  assert.ok(
+    manifestWriteIndex < ccSddInitIndex,
+    "TAKT asset manifest must be persisted before external cc-sdd initialization",
+  );
+});
+
 // Req 8.5 / 7.1 / 7.2 / 7.3: syncRelativeFiles の manifest・update 非回帰。
 test("syncRelativeFiles handles add, overwrite, and skip cases", () => {
   const root = mkdtempSync(join(tmpdir(), "takt-sdd-sync-"));

@@ -36,11 +36,11 @@
 
 - [ ] 3. install() への cc-sdd 起動配線
 - [x] 3.1 completion path への配置・dry-run preview・失敗マッピング・非回帰用 export
-  - `install()` の completion path（OpenSpec init / `removeLegacyOpsxScript` の後、manifest 書き込みの前）で `initializeCcSddProject(options.cwd, options.lang, msg)` を呼び出し、`CcSddInitError` を catch して `errorExit(msg.ccSddInitFailed(error.message))` にマップ、それ以外の例外は再 throw する
+  - `install()` の completion path（OpenSpec init / `removeLegacyOpsxScript` の後、manifest 書き込みの後）で `initializeCcSddProject(options.cwd, options.lang, msg)` を呼び出し、`CcSddInitError` を catch して `errorExit(msg.ccSddInitFailed(error.message))` にマップ、それ以外の例外は再 throw する
   - dry-run preview block に cc-sdd 実行予定行（`msg.ccSddDryRunPlan(...)`）を 1 行追加し、early return により起動経路へ到達しない構造を維持する（OpenSpec 起動条件・既存順序・`OPENSPEC_PACKAGE/VERSION` は変更しない）
   - 非回帰テスト参照のため既存 `syncRelativeFiles` を挙動変更なしで export する
-  - 観測可能な完了: 通常モードで manifest 書き込み前に cc-sdd 起動が呼ばれ、起動失敗時は非ゼロ終了して manifest 書き込み・完了表示へ進まず、dry-run では起動されず予定行のみ表示される
-  - _Requirements: 2.1, 2.3, 2.4, 4.1, 4.2, 4.3, 5.1, 5.3, 7.4_
+  - 観測可能な完了: 通常モードで manifest 書き込み後に cc-sdd 起動が呼ばれ、起動失敗時は非ゼロ終了して完了表示へ進まず、次回実行が update/retry path に進める manifest は保持され、dry-run では起動されず予定行のみ表示される
+  - _Requirements: 2.1, 2.3, 2.4, 4.1, 4.2, 4.3, 5.1, 5.3, 5.4, 7.4_
   - _Boundary:_ install.ts (install() 統合)
   - _Depends:_ 1.1, 2.1
 
