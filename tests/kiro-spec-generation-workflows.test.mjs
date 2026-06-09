@@ -137,6 +137,20 @@ function validJapaneseDesignArtifactContent() {
   ].join("\n");
 }
 
+function validJapaneseRequirementsArtifactContent() {
+  return [
+    "# 要件定義",
+    "",
+    "## 要件",
+    "",
+    "### 要件 1: 検証 fixture",
+    "",
+    "#### 受け入れ基準",
+    "",
+    "1. validation が実行される場合、fixture は EARS と numeric ID を保持する。",
+  ].join("\n");
+}
+
 function specState(featureName, phase, overrides = {}) {
   const approvals = {
     requirements: { generated: false, approved: false },
@@ -1464,6 +1478,28 @@ test("task 10.1 validation accepts localized Japanese design artifact sections",
   assert.equal(result.ok, true, result.failures.join("\n"));
 });
 
+test("task 10.1 validation accepts localized Japanese requirement headings", () => {
+  const root = makeValidationFixture();
+  const featureName = "localized-japanese-requirements";
+  writeSpecArtifactFixture(
+    root,
+    featureName,
+    specState(featureName, "requirements-generated", {
+      approvals: {
+        requirements: { generated: true, approved: false },
+        design: { generated: false, approved: false },
+        tasks: { generated: false, approved: false },
+      },
+    }),
+    ["requirements.md"],
+  );
+  writeFixtureFile(root, `.kiro/specs/${featureName}/requirements.md`, validJapaneseRequirementsArtifactContent());
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.equal(result.ok, true, result.failures.join("\n"));
+});
+
 test("initialized draft requirements are not validated as generated EARS artifacts", () => {
   const root = makeValidationFixture();
   const featureName = "initialized-draft-requirements";
@@ -1617,6 +1653,50 @@ test("task 11.1 validation detects generated artifact section drift", () => {
 
   assert.ok(
     result.failures.some((failure) => failure.includes("ARTIFACT_SECTION_DRIFT")),
+    result.failures.join("\n"),
+  );
+});
+
+test("task 11.1 design artifact drift reports missing headings for the matching language", () => {
+  const root = makeValidationFixture();
+  const featureName = "english-design-section-drift";
+  writeSpecArtifactFixture(
+    root,
+    featureName,
+    specState(featureName, "design-generated", {
+      approvals: {
+        requirements: { generated: true, approved: true },
+        design: { generated: true, approved: false },
+        tasks: { generated: false, approved: false },
+      },
+    }),
+    ["requirements.md", "design.md", "research.md"],
+  );
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/design.md`,
+    [
+      "# Design Document",
+      "",
+      "## Boundary Commitments",
+      "",
+      "Boundary details.",
+      "",
+      "## File Structure Plan",
+      "",
+      "File details.",
+    ].join("\n"),
+  );
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some((failure) => failure.includes("missing required section: Requirements Traceability")),
+    result.failures.join("\n"),
+  );
+  assert.equal(
+    result.failures.some((failure) => failure.includes("missing required section: 要件トレーサビリティ")),
+    false,
     result.failures.join("\n"),
   );
 });

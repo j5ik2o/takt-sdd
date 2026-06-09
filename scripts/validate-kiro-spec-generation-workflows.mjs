@@ -1242,7 +1242,7 @@ function hasHeading(content, level, title) {
 }
 
 function numberedRequirementSections(content) {
-  const matches = [...content.matchAll(/^### Requirement\s+(\d+):\s+.+$/gm)];
+  const matches = [...content.matchAll(/^###\s+(?:Requirement|要件)\s+(\d+):\s+.+$/gm)];
   return matches.map((match, index) => {
     const next = matches[index + 1];
     return {
@@ -1256,7 +1256,7 @@ function validateRequirementsArtifact(failures, artifactPath, repoRoot, content)
   const sections = numberedRequirementSections(content);
   if (sections.length === 0) {
     failures.push(
-      `ARTIFACT_SECTION_DRIFT: ${rel(repoRoot, artifactPath)} must use numeric headings like "### Requirement 1:"`,
+      `ARTIFACT_SECTION_DRIFT: ${rel(repoRoot, artifactPath)} must use numeric headings like "### Requirement 1:" or "### 要件 1:"`,
     );
     return;
   }
@@ -1284,7 +1284,14 @@ function validateDesignArtifact(failures, artifactPath, repoRoot, content) {
     return;
   }
 
-  for (const section of designSectionHeadings.ja) {
+  const bestMatchingSections = requiredDesignSectionSets
+    .map((sections) => ({
+      sections,
+      presentCount: sections.filter((section) => hasHeading(content, 2, section)).length,
+    }))
+    .sort((left, right) => right.presentCount - left.presentCount)[0].sections;
+
+  for (const section of bestMatchingSections) {
     if (!hasHeading(content, 2, section)) {
       failures.push(`ARTIFACT_SECTION_DRIFT: ${rel(repoRoot, artifactPath)} missing required section: ${section}`);
     }
