@@ -396,25 +396,6 @@ function childScalar(block, key) {
   return match?.[1] ?? "";
 }
 
-function parseFrontmatter(content) {
-  if (!content.startsWith("---\n")) {
-    return {};
-  }
-  const end = content.indexOf("\n---", 4);
-  if (end === -1) {
-    return {};
-  }
-  const result = {};
-  for (const line of content.slice(4, end).trim().split(/\r?\n/)) {
-    const match = line.match(/^([^:#][^:]*):\s*(.*)$/);
-    if (!match) {
-      continue;
-    }
-    result[match[1].trim()] = match[2].trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1");
-  }
-  return result;
-}
-
 function builtInFacetPath(repoRoot, lang, kind, name) {
   return join(repoRoot, "node_modules", "takt", "builtins", lang, "facets", kind, `${name}.md`);
 }
