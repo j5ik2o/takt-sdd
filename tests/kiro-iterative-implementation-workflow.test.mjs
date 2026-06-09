@@ -306,6 +306,21 @@ test("validator rejects wrong reviewer report filenames", () => {
   assert.ok(result.failures.some((failure) => failure.includes("kiro-task-qa-review.md")));
 });
 
+test("validator rejects builtin reviewer output contracts in Kiro reviewer group", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    "name: kiro-task-architecture-review.md\n              format: kiro-review-verdict",
+    "name: kiro-task-architecture-review.md\n              format: architecture-review",
+  );
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("kiro-review-verdict")));
+});
+
 test("validator rejects mandatory security reviewer mixed into Kiro implementation reviewers", () => {
   const root = makeCurrentSurfaceFixture();
   const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");

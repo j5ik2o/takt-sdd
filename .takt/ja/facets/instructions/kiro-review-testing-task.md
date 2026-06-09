@@ -16,7 +16,7 @@ verdict を作る前に `kiro-ai-antipattern-review.md` を読む。`kiro-ai-ant
 
 ## Output mapping
 
-`testing-review` 形式を返す。
+`$kiro-review` または `/kiro-review` の `## Review Verdict` 形式を返し、testing concerns に特化して判定する。
 
 - `VERDICT`: `APPROVED` または `REJECTED`。
 - `APPROVED`: RED phase evidence、test independence、deterministic fixtures、validation evidence、AI gate evidence がすべて問題ない場合だけ使う。
@@ -25,4 +25,4 @@ verdict を作る前に `kiro-ai-antipattern-review.md` を読む。`kiro-ai-ant
 - `MECHANICAL_RESULTS`: validation command results、static checks、test execution notes。
 - `SUMMARY`: human-readable summaryのみ。
 
-reviewer child step は `VERDICT APPROVED` を condition `approved`、`VERDICT REJECTED` を condition `needs_fix` として返す。親 `reviewers` group は child condition だけを集約する。
+TAKT routing に限り、`VERDICT APPROVED` を child condition `approved`、`VERDICT REJECTED` を child condition `needs_fix` に mapping する。親 `reviewers` group は child condition だけを集約する。

@@ -197,7 +197,7 @@ steps:
         output_contracts:
           report:
             - name: kiro-task-architecture-review.md
-              format: architecture-review
+              format: kiro-review-verdict
         rules:
           - condition: approved
           - condition: needs_fix
@@ -222,7 +222,7 @@ steps:
         output_contracts:
           report:
             - name: kiro-task-qa-review.md
-              format: qa-review
+              format: kiro-review-verdict
         rules:
           - condition: approved
           - condition: needs_fix
@@ -250,7 +250,7 @@ steps:
         output_contracts:
           report:
             - name: kiro-task-testing-review.md
-              format: testing-review
+              format: kiro-review-verdict
         rules:
           - condition: approved
           - condition: needs_fix

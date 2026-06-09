@@ -16,7 +16,7 @@ Before forming the verdict, read `kiro-ai-antipattern-review.md`. Read `kiro-ai-
 
 ## Output mapping
 
-Return the `architecture-review` format.
+Return the `## Review Verdict` shape from `$kiro-review` or `/kiro-review`, specialized for architecture concerns.
 
 - `VERDICT`: `APPROVED` or `REJECTED`.
 - `APPROVED`: Use only when the Kiro selected task boundary, design boundary, dependency direction, scope guard, and AI gate evidence are all acceptable.
@@ -25,4 +25,4 @@ Return the `architecture-review` format.
 - `MECHANICAL_RESULTS`: Validation command results, static checks, and boundary audit.
 - `SUMMARY`: Human-readable summary only.
 
-The reviewer child step returns `VERDICT APPROVED` as condition `approved` and `VERDICT REJECTED` as condition `needs_fix`. The parent `reviewers` group aggregates only child conditions.
+For TAKT routing only, map `VERDICT APPROVED` to child condition `approved` and `VERDICT REJECTED` to child condition `needs_fix`. The parent `reviewers` group aggregates only child conditions.
