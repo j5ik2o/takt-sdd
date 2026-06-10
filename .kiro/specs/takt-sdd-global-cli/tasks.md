@@ -32,7 +32,7 @@
   - _Depends:_ none
 
 - [ ] 3. CLI command surface の実装
-- [ ] 3.1 (P) 公開 command catalog と除外分類を定義する
+- [x] 3.1 (P) 公開 command catalog と除外分類を定義する
   - supported workflow（kiro 12 + opsx 5）の静的 catalog と、legacy / internal の除外分類を単一 module に定義する
   - help text 生成（init・kiro-*・opsx-*・run・global options の列挙）を catalog から導出する
   - 双方向 drift test を作成: catalog 全 entry に en/ja 両資産が存在し、同梱 workflow 資産の全数が catalog または除外分類に属し、未分類資産があれば fail する
