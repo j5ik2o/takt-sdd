@@ -77,7 +77,7 @@
   - _Depends:_ 3.1, 3.2, 3.3
 
 - [ ] 5. deterministic validation と CI 統合
-- [ ] 5.1 (P) package artifact validator を実装する
+- [x] 5.1 (P) package artifact validator を実装する
   - npm pack の dry-run JSON 出力を必須 file set（bin / cli / 言語別 workflow・facet 資産 / kiro-staged script / compiled install core / docs / license）と照合する
   - forbidden patterns（repo config・runs・session state・persona sessions・logs・credentials 系・開発専用物・test 混入）を検出する
   - version 定数と root package.json の整合（OpenSpec 1.4.1 / cc-sdd 3.0.2 / takt exact pin）を検証に含める
@@ -115,3 +115,5 @@
 - 3.2: 非 dry-run の installFromSource は cc-sdd init（`npm exec --package=cc-sdd@3.0.2`）を必ず実行する。network-free テストでは fixture の `node_modules/cc-sdd` を repo root からコピーし `.bin/cc-sdd` symlink を張ると npm exec が local 解決する（registry 不要）。OpenSpec init は `openspec/config.yaml` の事前配置で skip 可能
 - 3.2: installer の `--force` は「manifest なしで workflows が既存」の fresh install ガード解除のみ。update 時の customized skip（manifest hash 比較）は force と無関係（要件 3.3 の「同じ意味」はこの実ポリシーを指す）
 - 3.2: `runInit(options, ctx, deps)` の第 3 引数は test seam（既定は installer/dist の実 core）。WorkflowRunner の spawnImpl 注入パターンに準拠
+- 5.1: npm は LICENSE-MIT / LICENSE-APACHE 形式の名前を自動同梱しない（exact 名 LICENSE のみ）。files allowlist に明示追加で解決（コミット 4c6901a）。validator は両ファイルを hard-require 済み
+- 5.1: `npm pack --dry-run --json` は prepack hook 出力で stdout が汚れる。validator は `--ignore-scripts` + installer/dist 事前存在チェックで回避（5.2 smoke でも同様の考慮が必要）
