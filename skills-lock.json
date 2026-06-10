@@ -118,19 +118,19 @@
       "source": "j5ik2o/ai-tools",
       "sourceType": "github",
       "skillPath": "plugins/takt/skills/takt-analyzer/SKILL.md",
-      "computedHash": "fdae2a01e07174a1767e0411cca0ecd9139ea47615f6a55a5f29a263f22cc2eb"
+      "computedHash": "469c604e9da46a347ba1dc5f74b0c08ab9bcda6ab982da67c876f3dd3f46474d"
     },
     "takt-facet-builder": {
       "source": "j5ik2o/ai-tools",
       "sourceType": "github",
       "skillPath": "plugins/takt/skills/takt-facet-builder/SKILL.md",
-      "computedHash": "c43764c379c73095699faad8198969c77ba19faa0783ac7164cb4f87d70d6640"
+      "computedHash": "b4cc1b0b9621b370fb51fcbc7a91ba17d6a078ec7ec457c2a296bf6113f5e35f"
     },
     "takt-optimizer": {
       "source": "j5ik2o/ai-tools",
       "sourceType": "github",
       "skillPath": "plugins/takt/skills/takt-optimizer/SKILL.md",
-      "computedHash": "f3fa248fe315929468511f661b7bd5c26e5647263be0c8dd601ba9a6c0c7f338"
+      "computedHash": "17dfe968ab000c98b53044bddb8785d2e54a1fc5c7ecb9457fb5204e2ff21f17"
     },
     "takt-piece-builder": {
       "source": "j5ik2o/ai-tools",
@@ -141,19 +141,19 @@
       "source": "j5ik2o/ai-tools",
       "sourceType": "github",
       "skillPath": "plugins/takt/skills/takt-skill-updater/SKILL.md",
-      "computedHash": "6865487fae9c1931aef28750db7a66d70e9a43812ce6695d75b9e08770197d44"
+      "computedHash": "2320d96b983a095fac8f046066ccb15e2712417fe262db2b54c56deaddb03372"
     },
     "takt-task-builder": {
       "source": "j5ik2o/ai-tools",
       "sourceType": "github",
       "skillPath": "plugins/takt/skills/takt-task-builder/SKILL.md",
-      "computedHash": "4e3269005f984c812900a476c4a830f148f85b16bc2eaa5d35cce37c821f4879"
+      "computedHash": "7196a94668d5fab446e48c3a5e345b4569396c221aa46465b46eff1a673055bc"
     },
     "takt-workflow-builder": {
       "source": "j5ik2o/ai-tools",
       "sourceType": "github",
       "skillPath": "plugins/takt/skills/takt-workflow-builder/SKILL.md",
-      "computedHash": "1d6281864ddfb292f91afc79196f4a4b20fc8327b892013728e6a17ef1ac4630"
+      "computedHash": "22aaf550d9a09af308d4004d2838628b87424f82d9c4146b2f2cfed7255abc33"
     }
   }
 }
