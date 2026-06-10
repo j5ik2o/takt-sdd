@@ -20,7 +20,7 @@
   - _Boundary:_ VersionPolicy
   - _Depends:_ 1.1
 
-- [ ] 2. (P) 公開 package 境界と build chain の確立
+- [x] 2. (P) 公開 package 境界と build chain の確立
   - root package を公開可能にする（private 解除、command 入口の宣言、license / engines / repository の整備）
   - 配布物の allowlist を定義し、workflow/facet 資産・CLI 実行物・compiled install core を含め、runtime state・credentials・開発専用物を構造的に除外する
   - runtime 依存（takt / OpenSpec）を exact pin で dependencies に再編し、cc-sdd 3.0.2 を devDependencies に追加する

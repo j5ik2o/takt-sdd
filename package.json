@@ -1,13 +1,45 @@
 {
   "name": "takt-sdd",
   "version": "1.1.0",
-  "private": true,
   "description": "Kiro-compatible TAKT workflow surface for SDD; OpenSpec opsx workflows remain separate entrypoints",
-  "devDependencies": {
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/j5ik2o/takt-sdd"
+  },
+  "license": "(MIT OR Apache-2.0)",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "bin": {
+    "takt-sdd": "bin/takt-sdd.mjs"
+  },
+  "files": [
+    "bin/",
+    "cli/",
+    ".takt/en/",
+    ".takt/ja/",
+    "scripts/kiro-staged.mjs",
+    "installer/dist/",
+    "!installer/dist/**/*.test.js",
+    "installer/package.json",
+    "README.ja.md",
+    "COMMON.md"
+  ],
+  "dependencies": {
     "@fission-ai/openspec": "1.4.1",
-    "takt": "^0.43.0"
+    "takt": "0.43.0"
+  },
+  "devDependencies": {
+    "cc-sdd": "3.0.2"
   },
   "scripts": {
+    "build:installer": "npm --prefix installer ci && npm --prefix installer run build",
+    "prepack": "npm run build:installer",
+    "test:takt-sdd-cli": "npm run build:installer && node --test tests/takt-sdd-cli.test.mjs",
+    "test:takt-sdd-init-policy": "npm run build:installer && node --test tests/takt-sdd-init-policy.test.mjs",
+    "test:takt-sdd-package-artifact": "npm run build:installer && node --test tests/takt-sdd-package-artifact.test.mjs",
+    "test:takt-sdd-global-install-smoke": "npm run build:installer && node --test tests/takt-sdd-global-install-smoke.test.mjs",
+    "validate:package-artifact": "node scripts/validate-package-artifact.mjs",
     "kiro:discovery": "node scripts/kiro-staged.mjs kiro-discovery --pipeline --skip-git -t",
     "kiro:spec:init": "node scripts/kiro-staged.mjs kiro-spec-init --pipeline --skip-git -t",
     "kiro:spec:requirements": "node scripts/kiro-staged.mjs kiro-spec-requirements --pipeline --skip-git -t",
