@@ -103,7 +103,7 @@
   - _Boundary:_ CiIntegration
   - _Depends:_ 5.1, 5.2
 
-- [ ] 6. (P) global CLI documentation の更新
+- [x] 6. (P) global CLI documentation の更新
   - 導入手順（global install → init → npm install）、supported command 一覧、run 形式、--cwd / --lang / --force / --dry-run、legacy cc-sdd の global CLI 拒否、opsx-explore の実行モード差、config.yaml がユーザー所有（global または project）であり CLI が書き込まないことを日英で意味的に揃えて記述する
   - 観測可能な完了: README / README.ja / COMMON に global CLI 節が存在し、上記項目がすべて記載されている
   - _Requirements:_ 8.7
