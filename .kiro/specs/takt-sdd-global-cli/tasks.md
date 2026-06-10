@@ -52,7 +52,7 @@
   - _Boundary:_ InitAdapter
   - _Depends:_ 1.1, 1.2
 
-- [ ] 3.3 (P) workflow 実行の preflight と spawn を実装する
+- [x] 3.3 (P) workflow 実行の preflight と spawn を実装する
   - preflight を spawn 前に完結させる: workflow 資産の strict 解決不能（未初期化含む）は init 案内、opsx での project-local openspec binary 不足は npm install 案内、宣言済み SDD 依存の binary 不足一覧の明示
   - language は config の preference（存在時のみ read-only 参照）> manifest の lang > en で確定し、config 不在は error にしない
   - workflow 解決は言語間 fallback なしの strict 2 候補方式とする
