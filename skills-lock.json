@@ -7,6 +7,108 @@
       "skillPath": "plugins/software-design/skills/intent-based-dedup/SKILL.md",
       "computedHash": "12e6751e487f028ccfff5ff9cabfa85204f756f97dd6197333f7f7fb2392111b"
     },
+    "kiro-debug": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-debug/SKILL.md",
+      "computedHash": "f3bb09b361e9a8a5f9fca47945fb9f0ae0d844b081b26a17488b69321b29aaf0"
+    },
+    "kiro-discovery": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-discovery/SKILL.md",
+      "computedHash": "e63503559dbb0dcdaf08295c5efae853d4e320b1410b9261100201d029aaaa5c"
+    },
+    "kiro-impl": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-impl/SKILL.md",
+      "computedHash": "4360f1a691f31de24bf129e13229c6b99a5b19fbc0a39d516d6bf6953a04fcfd"
+    },
+    "kiro-review": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-review/SKILL.md",
+      "computedHash": "839e53913e2daa42de4f3a821ac2907f5ac1077853985ca2467c0bd81865af4e"
+    },
+    "kiro-spec-batch": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-spec-batch/SKILL.md",
+      "computedHash": "a6d94da810563dc038ed509bf33a223372d927b9eacc3280fed3431764ea24e8"
+    },
+    "kiro-spec-design": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-spec-design/SKILL.md",
+      "computedHash": "2d2201afb98da06e07d6c21c23233869d1f0f2027c4b2ac36ce7620bd51f0ef2"
+    },
+    "kiro-spec-init": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-spec-init/SKILL.md",
+      "computedHash": "a05f1e6662e489e475c1d0f5d43bcdd11ead2b65f1a475400737d8392fd14b99"
+    },
+    "kiro-spec-quick": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-spec-quick/SKILL.md",
+      "computedHash": "e03a5286c607a2fac79a9fdb7834c8998c01b597cc1857867e6a2067167bc9e5"
+    },
+    "kiro-spec-requirements": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-spec-requirements/SKILL.md",
+      "computedHash": "e71cdf81975724b6ce88be22f6c90302860b39bac6cce64ffeb132d5707b4f07"
+    },
+    "kiro-spec-status": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-spec-status/SKILL.md",
+      "computedHash": "fc0f8344c32e6171945a6659c512b2868b3c3b1885c935f3b4d92eb599621399"
+    },
+    "kiro-spec-tasks": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-spec-tasks/SKILL.md",
+      "computedHash": "11e028510c8d05710908c963e6cf1edbf21d87f08b98cc47f62d91bbffce4604"
+    },
+    "kiro-steering": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-steering/SKILL.md",
+      "computedHash": "4a03d6f902f47324b6f167bf42d9b69a48102b5491e02238ea73521a4873c43e"
+    },
+    "kiro-steering-custom": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-steering-custom/SKILL.md",
+      "computedHash": "b797987ea3dd0e6feafb1701f9260288c3402fdaed2f8e28ec82e4c490ae5131"
+    },
+    "kiro-validate-design": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-validate-design/SKILL.md",
+      "computedHash": "76da5445d56903a4dff3b2abf617c0e91fe1a08e552fc56826461db6c0230a09"
+    },
+    "kiro-validate-gap": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-validate-gap/SKILL.md",
+      "computedHash": "418cd0143c44ee3c76d7dfe2a284632e584f06fd928356233ab23045cd51e3b8"
+    },
+    "kiro-validate-impl": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-validate-impl/SKILL.md",
+      "computedHash": "74946ac743a2331df5bff5bb67d2f6e7f8b2696b410f08f2a971cfb88c48644a"
+    },
+    "kiro-verify-completion": {
+      "source": "j5ik2o/ai-tools",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/kiro-verify-completion/SKILL.md",
+      "computedHash": "4b83fc4cd833390fd37f1900584e9b0aa53167dbc7362eff42fe80f79e727be5"
+    },
     "skill-forge": {
       "source": "j5ik2o/ai-tools",
       "sourceType": "github",
