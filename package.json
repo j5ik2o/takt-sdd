@@ -23,7 +23,9 @@
     "!installer/dist/**/*.test.js",
     "installer/package.json",
     "README.ja.md",
-    "COMMON.md"
+    "COMMON.md",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
   ],
   "dependencies": {
     "@fission-ai/openspec": "1.4.1",
