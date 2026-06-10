@@ -95,7 +95,7 @@
   - _Boundary:_ GlobalInstallSmoke
   - _Depends:_ 2, 4
 
-- [ ] 5.3 CI に global-cli job を追加する
+- [x] 5.3 CI に global-cli job を追加する
   - installer build → CLI unit/統合 test → artifact validator → install smoke の順で実行する job を既存 CI に追加する（skip 変数は設定しない）
   - real provider credential を要求する step を含めない
   - 観測可能な完了: job 相当の step 列がローカルで成功し、workflow YAML が構文検証を通る
