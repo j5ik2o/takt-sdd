@@ -19,6 +19,10 @@ const fatalWorkflowPatterns = [
   /^Status:.*\b(?:ABORT|BLOCKED|NEEDS_FIX|NO-GO)\b/im,
 ];
 
+function stripAnsi(value) {
+  return value.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "");
+}
+
 function writeFixtureFile(root, path, content) {
   const fullPath = join(root, path);
   mkdirSync(dirname(fullPath), { recursive: true });
@@ -140,6 +144,9 @@ function workflowTimeoutMs(scriptName) {
 function runWorkflow(root, scriptName, target, options = {}) {
   const env = { ...process.env };
   delete env.TAKT_MOCK_SCENARIO;
+  delete env.FORCE_COLOR;
+  delete env.CLICOLOR_FORCE;
+  delete env.NO_COLOR;
   const timeoutMs = options.timeoutMs ?? workflowTimeoutMs(scriptName);
   const patterns = options.fatalPatterns ?? fatalWorkflowPatterns;
   const targetArgs = Array.isArray(target) ? target : [target];
@@ -206,10 +213,11 @@ function runWorkflow(root, scriptName, target, options = {}) {
 }
 
 function assertWorkflowSuccess(result, name) {
-  assert.equal(result.earlyAbortReason, "", `${name} stopped early: ${result.earlyAbortReason}\n${result.output}`);
-  assert.equal(result.signal, null, `${name} was terminated by ${result.signal}\n${result.output}`);
-  assert.equal(result.status, 0, `${name} failed\n${result.output}`);
-  assert.match(result.output, /Result: Success/, `${name} did not report success\n${result.output}`);
+  const output = stripAnsi(result.output);
+  assert.equal(result.earlyAbortReason, "", `${name} stopped early: ${result.earlyAbortReason}\n${output}`);
+  assert.equal(result.signal, null, `${name} was terminated by ${result.signal}\n${output}`);
+  assert.equal(result.status, 0, `${name} failed\n${output}`);
+  assert.match(output, /Result: Success/, `${name} did not report success\n${output}`);
 }
 
 function assertRealProviderWorkflowSuccess(result, name) {
