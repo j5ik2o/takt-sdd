@@ -1,7 +1,7 @@
 # 実装計画
 
 - [ ] 1. shared install core の切り出しと version policy の確立
-- [ ] 1.1 install policy を asset source 非依存の共有経路として切り出す
+- [x] 1.1 install policy を asset source 非依存の共有経路として切り出す
   - 既存の manifest 管理・customized file skip・update 時 overwrite 判定・fresh install の force ガード・dry-run plan・scripts と devDependencies の merge・OpenSpec / cc-sdd init ordering の意味を変えずに、staged root と version を受け取る共有関数へ分離する
   - remote 固有処理（tar 検査・tag 解決・download・extract）を create-takt-sdd 側の staging に閉じ、staging 後は共有関数へ委譲する形に再編する
   - 委譲が行われること（policy の二重実装が存在しないこと）を installer の unit test で固定する

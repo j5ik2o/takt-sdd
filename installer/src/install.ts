@@ -150,6 +150,13 @@ export interface InstallOptions {
   cwd: string;
 }
 
+export interface InstallSource {
+  readonly rootDir: string;  // `.takt/`・`scripts/kiro-staged.mjs`・`package.json` を含む staged root
+  readonly version: string;  // manifest に記録する asset version
+}
+
+export type CoreInstallOptions = Omit<InstallOptions, "tag">;
+
 function info(msg: string): void {
   console.log(`\x1b[1;34m==>\x1b[0m ${msg}`);
 }
@@ -431,17 +438,24 @@ function removeLegacyOpsxScript(
   info(msg.fileRemoved(manifestKey));
 }
 
-export async function install(options: InstallOptions): Promise<void> {
+export async function installFromSource(options: CoreInstallOptions, source: InstallSource): Promise<void> {
   const msg = getMessages(options.lang);
   const targetPath = join(options.cwd, TARGET_DIR);
   const manifestPath = join(targetPath, MANIFEST_FILE);
   const openspecConfigPath = join(options.cwd, OPENSPEC_CONFIG_PATH);
 
-  try {
-    execSync("which tar", { stdio: "ignore" });
-  } catch {
-    errorExit(msg.tarNotFound);
+  const taktDir = join(source.rootDir, TARGET_DIR);
+  const legacyOpsxPath = join(source.rootDir, LEGACY_OPSX_SCRIPT_INSTALL_PATH);
+  const kiroStagedPath = join(source.rootDir, KIRO_STAGED_SCRIPT_INSTALL_PATH);
+  const packagedAssetBase = join(__dirname, "assets");
+  const packagedKiroStagedPath = join(packagedAssetBase, KIRO_STAGED_SCRIPT_INSTALL_PATH);
+
+  if (!existsSync(taktDir)) {
+    errorExit(msg.archiveError);
   }
+
+  const hasLegacyOpsxScript = existsSync(legacyOpsxPath);
+  const hasKiroStagedScript = existsSync(kiroStagedPath) || existsSync(packagedKiroStagedPath);
 
   const manifest = loadManifest(manifestPath);
   const isUpdate = manifest !== null;
@@ -455,99 +469,63 @@ export async function install(options: InstallOptions): Promise<void> {
     warn(msg.recoveringPartialInstall);
   }
 
-  info(msg.downloading);
+  const resolvedLayout = options.layout === "auto" ? detectLayout() : options.layout;
+  info(msg.layoutDetected(resolvedLayout));
 
-  const tmpDir = mkdtempSync(join(tmpdir(), "takt-sdd-"));
-  const archivePath = join(tmpDir, "archive.tar.gz");
+  const sddPkgPath = join(source.rootDir, "package.json");
+  const sddDevDependencies: Record<string, string> = {};
+  if (existsSync(sddPkgPath)) {
+    const sddPkg = JSON.parse(readFileSync(sddPkgPath, "utf-8"));
+    const deps = sddPkg.devDependencies ?? {};
+    for (const [key, value] of Object.entries(deps)) {
+      sddDevDependencies[key] = value as string;
+    }
+  }
+  const openspecVersionSpec = sddDevDependencies[OPENSPEC_PACKAGE];
+  const usesOfficialOpenSpec = openspecVersionSpec !== undefined;
 
+  if (options.dryRun) {
+    info(msg.dryRunHeader);
+    const piecesSrcDry = join(taktDir, options.lang, PIECE_DIR);
+    if (existsSync(piecesSrcDry)) {
+      for (const file of collectFiles(piecesSrcDry, piecesSrcDry)) {
+        console.log(msg.dryRunItem(join(TARGET_DIR, PIECE_DIR, file)));
+      }
+    }
+    for (const facetType of FACET_TYPES) {
+      const srcDir = join(taktDir, options.lang, srcFacetPath(facetType));
+      if (existsSync(srcDir)) {
+        const destPrefix = destFacetPath(facetType, resolvedLayout);
+        for (const file of collectFiles(srcDir, srcDir)) {
+          console.log(msg.dryRunItem(join(TARGET_DIR, destPrefix, file)));
+        }
+      }
+    }
+    if (usesOfficialOpenSpec) {
+      console.log(msg.dryRunItem(OPENSPEC_CONFIG_PATH));
+    } else if (hasLegacyOpsxScript) {
+      console.log(msg.dryRunItem(LEGACY_OPSX_SCRIPT_INSTALL_PATH));
+    }
+    if (hasKiroStagedScript) {
+      console.log(msg.dryRunItem(KIRO_STAGED_SCRIPT_INSTALL_PATH));
+    } else {
+      errorExit(msg.requiredFileMissing(KIRO_STAGED_SCRIPT_INSTALL_PATH));
+    }
+    console.log(msg.ccSddDryRunPlan(CC_SDD_VERSION, options.lang));
+    console.log("");
+    info(msg.dryRunSkipped);
+    return;
+  }
+
+  info(isUpdate ? msg.updating : msg.installing);
+  mkdirSync(targetPath, { recursive: true });
+
+  const allFiles: Record<string, string> = {};
+
+  // Need a tmp dir for legacy pieces rewriting (temporary copy only)
+  const legacyTmpDir = mkdtempSync(join(tmpdir(), "takt-sdd-legacy-"));
   try {
-    const installerVersion = getInstallerVersion();
-    let tag = await resolveTag(options.tag, installerVersion);
-    let version = tag.startsWith("v") ? tag.slice(1) : tag;
-    info(msg.downloadingVersion(tag));
-    try {
-      const tarballUrl = `https://github.com/${REPO}/archive/refs/tags/${tag}.tar.gz`;
-      await download(tarballUrl, archivePath);
-    } catch (error) {
-      if (options.tag !== undefined || !isDefaultTagDownloadFallback(error)) {
-        throw error;
-      }
-      tag = await fetchLatestTag();
-      version = tag.startsWith("v") ? tag.slice(1) : tag;
-      info(msg.downloadingVersion(tag));
-      const tarballUrl = `https://github.com/${REPO}/archive/refs/tags/${tag}.tar.gz`;
-      await download(tarballUrl, archivePath);
-    }
-
-    execSync(`tar -xzf "${archivePath}" -C "${tmpDir}"`, { stdio: "ignore" });
-
-    const extractedDir = join(tmpDir, `takt-sdd-${version}`);
-    const extractedTakt = join(extractedDir, ".takt");
-    const extractedLegacyOpsxPath = join(extractedDir, LEGACY_OPSX_SCRIPT_INSTALL_PATH);
-    const extractedKiroStagedPath = join(extractedDir, KIRO_STAGED_SCRIPT_INSTALL_PATH);
-    const packagedAssetBase = join(__dirname, "assets");
-    const packagedKiroStagedPath = join(packagedAssetBase, KIRO_STAGED_SCRIPT_INSTALL_PATH);
-    const hasLegacyOpsxScript = existsSync(extractedLegacyOpsxPath);
-    const hasKiroStagedScript = existsSync(extractedKiroStagedPath) || existsSync(packagedKiroStagedPath);
-
-    if (!existsSync(extractedTakt)) {
-      errorExit(msg.archiveError);
-    }
-
-    const resolvedLayout = options.layout === "auto" ? detectLayout() : options.layout;
-    info(msg.layoutDetected(resolvedLayout));
-
-    const sddPkgPath = join(extractedDir, "package.json");
-    const sddDevDependencies: Record<string, string> = {};
-    if (existsSync(sddPkgPath)) {
-      const sddPkg = JSON.parse(readFileSync(sddPkgPath, "utf-8"));
-      const deps = sddPkg.devDependencies ?? {};
-      for (const [key, value] of Object.entries(deps)) {
-        sddDevDependencies[key] = value as string;
-      }
-    }
-    const openspecVersionSpec = sddDevDependencies[OPENSPEC_PACKAGE];
-    const usesOfficialOpenSpec = openspecVersionSpec !== undefined;
-
-    if (options.dryRun) {
-      info(msg.dryRunHeader);
-      const piecesSrcDry = join(extractedTakt, options.lang, PIECE_DIR);
-      if (existsSync(piecesSrcDry)) {
-        for (const file of collectFiles(piecesSrcDry, piecesSrcDry)) {
-          console.log(msg.dryRunItem(join(TARGET_DIR, PIECE_DIR, file)));
-        }
-      }
-      for (const facetType of FACET_TYPES) {
-        const srcDir = join(extractedTakt, options.lang, srcFacetPath(facetType));
-        if (existsSync(srcDir)) {
-          const destPrefix = destFacetPath(facetType, resolvedLayout);
-          for (const file of collectFiles(srcDir, srcDir)) {
-            console.log(msg.dryRunItem(join(TARGET_DIR, destPrefix, file)));
-          }
-        }
-      }
-      if (usesOfficialOpenSpec) {
-        console.log(msg.dryRunItem(OPENSPEC_CONFIG_PATH));
-      } else if (hasLegacyOpsxScript) {
-        console.log(msg.dryRunItem(LEGACY_OPSX_SCRIPT_INSTALL_PATH));
-      }
-      if (hasKiroStagedScript) {
-        console.log(msg.dryRunItem(KIRO_STAGED_SCRIPT_INSTALL_PATH));
-      } else {
-        errorExit(msg.requiredFileMissing(KIRO_STAGED_SCRIPT_INSTALL_PATH));
-      }
-      console.log(msg.ccSddDryRunPlan(CC_SDD_VERSION, options.lang));
-      console.log("");
-      info(msg.dryRunSkipped);
-      return;
-    }
-
-    info(isUpdate ? msg.updating : msg.installing);
-    mkdirSync(targetPath, { recursive: true });
-
-    const allFiles: Record<string, string> = {};
-
-    const piecesSrc = join(extractedTakt, options.lang, PIECE_DIR);
+    const piecesSrc = join(taktDir, options.lang, PIECE_DIR);
     if (existsSync(piecesSrc)) {
       const piecesDest = join(targetPath, PIECE_DIR);
       if (!isUpdate && existsSync(piecesDest)) {
@@ -555,10 +533,10 @@ export async function install(options: InstallOptions): Promise<void> {
       }
       let effectiveSrc = piecesSrc;
       if (resolvedLayout === "legacy") {
-        const legacyTmp = join(tmpDir, "legacy-pieces");
-        cpSync(piecesSrc, legacyTmp, { recursive: true });
-        rewritePiecePathsForLegacy(legacyTmp);
-        effectiveSrc = legacyTmp;
+        const legacyPiecesTmp = join(legacyTmpDir, "legacy-pieces");
+        cpSync(piecesSrc, legacyPiecesTmp, { recursive: true });
+        rewritePiecePathsForLegacy(legacyPiecesTmp);
+        effectiveSrc = legacyPiecesTmp;
       }
       const result = syncDirectory(
         effectiveSrc, piecesDest,
@@ -569,7 +547,7 @@ export async function install(options: InstallOptions): Promise<void> {
     }
 
     for (const facetType of FACET_TYPES) {
-      const srcDir = join(extractedTakt, options.lang, srcFacetPath(facetType));
+      const srcDir = join(taktDir, options.lang, srcFacetPath(facetType));
       if (existsSync(srcDir)) {
         const destDir = join(targetPath, destFacetPath(facetType, resolvedLayout));
         if (!isUpdate && existsSync(destDir)) {
@@ -586,7 +564,7 @@ export async function install(options: InstallOptions): Promise<void> {
 
     if (!usesOfficialOpenSpec && hasLegacyOpsxScript) {
       const scriptFilesResult = syncRelativeFiles(
-        extractedDir,
+        source.rootDir,
         options.cwd,
         [LEGACY_OPSX_SCRIPT_INSTALL_PATH],
         isUpdate ? manifest : null,
@@ -605,7 +583,7 @@ export async function install(options: InstallOptions): Promise<void> {
     }
 
     const kiroStagedScriptResult = syncRelativeFiles(
-      existsSync(extractedKiroStagedPath) ? extractedDir : packagedAssetBase,
+      existsSync(kiroStagedPath) ? source.rootDir : packagedAssetBase,
       options.cwd,
       [KIRO_STAGED_SCRIPT_INSTALL_PATH],
       isUpdate ? manifest : null,
@@ -673,7 +651,7 @@ export async function install(options: InstallOptions): Promise<void> {
     }
 
     const newManifest: Manifest = {
-      version: version,
+      version: source.version,
       installedAt: new Date().toISOString(),
       lang: options.lang,
       files: allFiles,
@@ -693,6 +671,50 @@ export async function install(options: InstallOptions): Promise<void> {
     info(isUpdate ? msg.updateComplete : msg.complete);
     console.log(msg.usageExamples);
     console.log("");
+  } finally {
+    rmSync(legacyTmpDir, { recursive: true, force: true });
+  }
+}
+
+export async function install(options: InstallOptions): Promise<void> {
+  const msg = getMessages(options.lang);
+
+  try {
+    execSync("which tar", { stdio: "ignore" });
+  } catch {
+    errorExit(msg.tarNotFound);
+  }
+
+  info(msg.downloading);
+
+  const tmpDir = mkdtempSync(join(tmpdir(), "takt-sdd-"));
+  const archivePath = join(tmpDir, "archive.tar.gz");
+
+  try {
+    const installerVersion = getInstallerVersion();
+    let tag = await resolveTag(options.tag, installerVersion);
+    let version = tag.startsWith("v") ? tag.slice(1) : tag;
+    info(msg.downloadingVersion(tag));
+    try {
+      const tarballUrl = `https://github.com/${REPO}/archive/refs/tags/${tag}.tar.gz`;
+      await download(tarballUrl, archivePath);
+    } catch (error) {
+      if (options.tag !== undefined || !isDefaultTagDownloadFallback(error)) {
+        throw error;
+      }
+      tag = await fetchLatestTag();
+      version = tag.startsWith("v") ? tag.slice(1) : tag;
+      info(msg.downloadingVersion(tag));
+      const tarballUrl = `https://github.com/${REPO}/archive/refs/tags/${tag}.tar.gz`;
+      await download(tarballUrl, archivePath);
+    }
+
+    execSync(`tar -xzf "${archivePath}" -C "${tmpDir}"`, { stdio: "ignore" });
+
+    const extractedDir = join(tmpDir, `takt-sdd-${version}`);
+
+    const { tag: _tag, ...coreOptions } = options;
+    await installFromSource(coreOptions, { rootDir: extractedDir, version });
   } finally {
     rmSync(tmpDir, { recursive: true, force: true });
   }

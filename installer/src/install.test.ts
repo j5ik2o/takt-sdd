@@ -12,6 +12,7 @@ import {
   buildCcSddExecArgs,
   initializeCcSddProject,
   syncRelativeFiles,
+  installFromSource,
 } from "./install.js";
 import { getMessages } from "./i18n.js";
 
@@ -153,4 +154,28 @@ test("syncRelativeFiles handles add, overwrite, and skip cases", () => {
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+// Req 3.5: install() は installFromSource() へ委譲すること。
+// installFromSource が export されていること（import で型チェック済み）、かつ
+// install() のソーステキストが installFromSource への委譲呼び出しを含むことを
+// source-text scan で構造的に固定する。このテストは installFromSource が存在しない場合に
+// コンパイルエラー（RED）となり、install() から委譲が削除された場合にランタイム失敗となる。
+test("install() delegates to installFromSource (delegation structure fixed)", () => {
+  // installFromSource が export されていること
+  assert.equal(typeof installFromSource, "function", "installFromSource must be an exported function");
+
+  // install() のソーステキストが installFromSource を呼び出していること
+  const source = readFileSync(new URL("../src/install.ts", import.meta.url), "utf-8");
+
+  // install 関数の本体だけを取り出す（export async function install から始まり、
+  // installFromSource の呼び出しが含まれる必要がある）
+  const installFnMatch = source.match(/export async function install\s*\([^)]*\)[^{]*\{([\s\S]*)/);
+  assert.ok(installFnMatch !== null, "export async function install must be present in source");
+
+  const installBody = installFnMatch[1];
+  assert.ok(
+    installBody.includes("installFromSource("),
+    "install() must delegate to installFromSource() — policy duplication is forbidden",
+  );
 });
