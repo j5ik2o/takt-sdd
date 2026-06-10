@@ -97,7 +97,7 @@ steps:
           report:
             - name: terraform-review.md
               format: terraform-review
-      - name: ai_review
+      - name: ai-antipattern-review-2nd
         edit: false
         persona: ai-antipattern-reviewer
         policy:
@@ -111,18 +111,39 @@ steps:
               - Grep
               - WebSearch
               - WebFetch
-        instruction: review-ai
+        instruction: ai-antipattern-review
         rules:
           - condition: AI特有の問題なし
           - condition: AI特有の問題あり
         output_contracts:
           report:
-            - name: ai-review.md
-              format: ai-review
+            - name: ai-antipattern-review.md
+              format: ai-antipattern-review
+      - name: coding-review
+        edit: false
+        persona: coding-reviewer
+        policy: review
+        provider_options:
+          claude:
+            allowed_tools:
+              - Read
+              - Glob
+              - Grep
+              - Bash
+              - WebSearch
+              - WebFetch
+        instruction: review-coding
+        output_contracts:
+          report:
+            - name: coding-review.md
+              format: coding-review
+        rules:
+          - condition: approved
+          - condition: needs_fix
     rules:
-      - condition: all("Terraform規約に準拠", "AI特有の問題なし")
+      - condition: all("Terraform規約に準拠", "AI特有の問題なし", "approved")
         next: supervise
-      - condition: any("規約違反あり", "AI特有の問題あり")
+      - condition: any("規約違反あり", "AI特有の問題あり", "needs_fix")
         next: supervise
   - name: supervise
     edit: false
@@ -143,7 +164,7 @@ steps:
       - condition: レビュアー全員承認かつタスク要件充足
         next: COMPLETE
       - condition: AI特有の問題のみ要修正
-        next: ai_fix
+        next: ai-antipattern-fix
       - condition: 規約違反または要件未達のみ要修正
         next: supervise_fix
       - condition: 複数種別の問題あり
@@ -159,7 +180,7 @@ steps:
           use_judge: false
   - name: fix_both
     parallel:
-      - name: ai_fix_parallel
+      - name: ai-antipattern-fix-parallel
         edit: true
         persona: terraform-coder
         policy:
@@ -179,7 +200,7 @@ steps:
           - condition: AI問題の修正完了
           - condition: 修正不要（指摘対象ファイル/仕様の確認済み）
           - condition: 判断できない、情報不足
-        instruction: ai-fix
+        instruction: ai-antipattern-fix
       - name: supervise_fix_parallel
         edit: true
         persona: terraform-coder
@@ -205,7 +226,7 @@ steps:
         next: reviewers
       - condition: any("修正不要（指摘対象ファイル/仕様の確認済み）", "判断できない、情報不足", "修正を進行できない")
         next: implement
-  - name: ai_fix
+  - name: ai-antipattern-fix
     edit: true
     persona: terraform-coder
     policy:
@@ -230,7 +251,7 @@ steps:
         next: implement
       - condition: 判断できない、情報不足
         next: implement
-    instruction: ai-fix
+    instruction: ai-antipattern-fix
   - name: supervise_fix
     edit: true
     persona: terraform-coder
@@ -273,7 +294,7 @@ loop_monitors:
           next: fix_both
         - condition: 非生産的（振動または要件矛盾）
           next: ABORT
-  - cycle: [ai_fix, reviewers]
+  - cycle: [ai-antipattern-fix, reviewers]
     threshold: 3
     judge:
       persona: supervisor
@@ -287,7 +308,7 @@ loop_monitors:
         - レビュアーの指摘とタスク要件が矛盾しており解消不能
       rules:
         - condition: 健全（新しい問題が減少傾向）
-          next: ai_fix
+          next: ai-antipattern-fix
         - condition: 非生産的（振動または要件矛盾）
           next: ABORT
   - cycle: [supervise_fix, reviewers]

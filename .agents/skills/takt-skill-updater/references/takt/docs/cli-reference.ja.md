@@ -19,7 +19,7 @@
 | `--skip-git` | ブランチ作成、コミット、プッシュをスキップ（pipeline モード、workflow のみ実行） |
 | `--repo <owner/repo>` | リポジトリを指定（PR 作成用） |
 | `-q, --quiet` | 最小出力モード: AI 出力を抑制（CI 向け） |
-| `--provider <name>` | エージェント provider を上書き（claude-sdk\|claude\|codex\|opencode\|cursor\|copilot\|mock） |
+| `--provider <name>` | エージェント provider を上書き（claude\|claude-sdk\|claude-terminal\|codex\|opencode\|cursor\|copilot\|kiro\|mock） |
 | `--model <name>` | エージェントモデルを上書き |
 | `--config <path>` | グローバル設定ファイルのパス（デフォルト: `~/.takt/config.yaml`） |
 
@@ -145,7 +145,12 @@ takt add #28
 ```bash
 # .takt/tasks.yaml の pending タスクをすべて実行
 takt run
+
+# workflow の max_steps を無視して別の停止条件まで継続
+takt run --ignore-exceed
 ```
+
+`--ignore-exceed` を付けない場合、workflow の `max_steps` に到達したタスクは `exceeded` として停止し、再実行用メタデータが `.takt/tasks.yaml` に保存されます。`--ignore-exceed` を付けた `takt run` は iteration limit だけを無視して継続し、exceeded 用の再実行メタデータを保存しません。
 
 ### takt watch
 
@@ -154,7 +159,12 @@ takt run
 ```bash
 # .takt/tasks.yaml を監視してタスクを自動実行（常駐プロセス）
 takt watch
+
+# workflow の max_steps を無視して、exceeded 扱いにせず継続実行する
+takt watch --ignore-exceed
 ```
+
+`takt watch --ignore-exceed` の意味は `takt run --ignore-exceed` と同じです。workflow の `max_steps` を無視し、`.takt/tasks.yaml` に exceeded 用の再実行メタデータを書きません。
 
 ### takt list
 
@@ -253,6 +263,14 @@ takt workflow init review-flow --template faceted --global
 # workflow 名または YAML パスを検証
 takt workflow doctor sample-flow
 takt workflow doctor .takt/workflows/sample-flow.yaml
+```
+
+### takt resume
+
+直近の失敗・中断したダイレクト（ワンショット）run を再開します。完了しなかった最新のダイレクト run を探し、最初からやり直すのではなく既存の run ディレクトリを再利用して止まったところから続行します。
+
+```bash
+takt resume
 ```
 
 ### takt clear

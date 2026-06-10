@@ -17,7 +17,7 @@ description: >
 
 既存のTAKTワークフローとファセットを分析し、問題点の検出と改善提案を行う。
 
-> **前提 takt バージョン**: v0.42.0
+> **前提 takt バージョン**: v0.44.0
 
 ## 参照資料
 
@@ -31,6 +31,7 @@ description: >
 | ログ型定義 | `references/takt/src/shared/utils/types.ts` | NDJSONレコード型の参照 |
 | プロバイダイベント | `references/takt/src/core/logging/providerEventLogger.ts` | `*-provider-events.jsonl` の構造 |
 | 利用イベント | `references/takt/src/core/logging/usageEventLogger.ts` | 利用量イベントの構造 |
+| span→NDJSONマッパー | `references/takt/src/core/logging/span-to-ndjson-mapper.ts` | OTel span 由来 shadow session log の構造（v0.44.0〜） |
 | ルール評価 | `references/takt/src/core/workflow/evaluation/RuleEvaluator.ts` | matchedRuleMethod の仕組み（`when:` 決定論的条件含む） |
 
 ## takt-optimize との違い
@@ -63,6 +64,7 @@ description: >
 | edit=false + ビルド操作 | `edit: false` のステップのインストラクションがビルドコマンド（`cargo check` 等）の禁止を明示しているか。読み取り専用サンドボックスでビルドは `Operation not permitted` で失敗する | Warning |
 | supervise失敗の遷移先 | `supervise` の失敗ルールが `plan` に遷移していないか。修正可能な問題は `fix` へ遷移すべきで、`supervise → plan` は根本設計変更が必要な場合のみ | Warning |
 | CI実行の責任配置 | `supervise`/`ai_review` 等の `edit: false` ステップのインストラクションがCIの直接実行を禁止し、`fix`/`implement` のレポート証跡確認のみを求めているか | Warning |
+| command quality gate | `quality_gates` の `type: command` が agent step にだけ置かれ、config 側で `workflow_command_gates.custom_scripts: true` が有効化されているか | Warning |
 | provider_options構造 | `allowed_tools` がトップレベルではなく `provider_options.claude.allowed_tools` に配置されているか（v0.30.0〜） | Warning |
 | edit権限 | `edit: true`のステップに適切な`required_permission_mode`があるか | Info |
 | session設定 | 実装系ステップに`session: refresh`があるか | Info |
@@ -143,6 +145,12 @@ description: >
 - `.takt/logs/{sessionId}/trace.md`（トレースレポート、Markdown形式）
 - `.takt/logs/latest.json` で最新セッションIDを参照
 
+**observability opt-in 出力（v0.44.0〜、`observability.enabled: true` が前提）:**
+
+- `.takt/runs/<run>/monitor.json`: run 単位のワークフローメトリクス（`observability.monitor: true` で出力）
+- OTel span 由来の shadow session log（`observability.session_log_exporter: true` で出力）。正規の NDJSON セッションログと同等の redaction が適用される
+- span はフェーズ実行と status-judgment（judge）フェーズもカバーする。`observability.usage_events_phase` は予約フラグ（no-op）
+
 **NDJSONレコード型一覧:**
 
 | type | 内容 |
@@ -152,6 +160,7 @@ description: >
 | `step_complete` | ステップ完了（`matchedRuleIndex`, `matchedRuleMethod` を含む） |
 | `phase_start` | フェーズの開始 |
 | `phase_complete` | フェーズ完了（`error` フィールドあり） |
+| `phase_judge_stage` | ルール判定フェーズの段階記録（`stage`, `method`, `status` を含む） |
 | `workflow_complete` | ワークフロー実行の正常完了（`iterations` を含む） |
 | `workflow_abort` | ワークフロー実行の中断（`reason` を含む） |
 | `interactive_start` / `interactive_end` | インタラクティブモードの開始・終了 |

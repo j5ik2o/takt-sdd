@@ -86,3 +86,4 @@ Manage test cases as a list to guarantee E2E test completeness.
 | Classify by entry point | Group by command/page/endpoint |
 | Prioritize | Determine priority by user impact × untested risk |
 | Cross-reference with existing tests | Check existing test coverage before adding new tests |
+

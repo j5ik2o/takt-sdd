@@ -109,13 +109,51 @@ const loadMore = async () => {
 ## custom hook の責務
 
 React custom hook は「React の state/effect/ref を使う状態遷移」に限定する。純粋計算だけなら custom hook ではなく関数モジュールでよい。
+custom hook 内の `useState` は呼び出し元ごとに別インスタンスになる。同じ hook を複数コンポーネントから呼んでも状態は共有されない。
+共有状態が必要な場合は、最小共通親で hook を1回だけ呼んで props で渡すか、Context/外部 store に移す。
 
 | 基準 | 判定 |
 |------|------|
 | React の state/effect を使わないのに `use*` と命名する | 警告 |
 | 純関数群を custom hook として扱う | 警告 |
 | stateful な UI 制御は custom hook に、純粋計算は function module に分ける | OK |
+| 共有状態が必要な複数コンポーネントで同じ stateful hook を個別に呼ぶ | REJECT |
 | hook が JSX を返す | REJECT |
+
+### Props 型の配置と hook の境界
+
+コンポーネント専用の Props 型は、基本的にそのコンポーネントと同じファイルへ置く。別ファイルの型定義は、複数コンポーネントで共有する契約、外部公開 API、またはドメインモデルとして独立した意味を持つ場合に使う。
+
+| 基準 | 判定 |
+|------|------|
+| 1つのコンポーネント専用 Props を、理由なく `types` ファイルへ切り出す | 警告 |
+| hook から component の Props 型を import するためだけに Props を別ファイルへ移す | REJECT |
+| 複数コンポーネントや公開 API が共有する Props/データ契約を別ファイルへ置く | OK |
+| hook は状態・イベント・派生値を返し、container が component props へ束ねる | OK |
+| hook が component props を返す場合でも、component への型依存を hook に持ち込まない | OK |
+
+```tsx
+// REJECT - hook が特定 component の Props 契約に依存している
+import type { DialogProps } from './Dialog'
+
+export function useDialog(): { dialogProps: DialogProps } {
+  return { dialogProps: { open, onOpenChange } }
+}
+
+// OK - component 専用 Props は component 側に閉じる
+interface DialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+export function Dialog(props: DialogProps) {
+  return <Modal {...props} />
+}
+
+// OK - hook は UI 状態と操作を返し、呼び出し側で component に渡す
+const dialog = useDialog()
+return <Dialog open={dialog.open} onOpenChange={dialog.setOpen} />
+```
 
 ## exhaustive-deps の扱い
 
