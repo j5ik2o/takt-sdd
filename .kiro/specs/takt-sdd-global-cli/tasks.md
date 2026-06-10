@@ -65,7 +65,7 @@
   - _Boundary:_ WorkflowRunner
   - _Depends:_ 3.1
 
-- [ ] 4. CLI dispatch と bin entry の統合
+- [x] 4. CLI dispatch と bin entry の統合
   - global options（--cwd / --help / --version）の解析と projectRoot / packageRoot context の構築
   - command 分類（init → run 正規化 → catalog 照合 → legacy 拒否 → unknown 案内）と各 adapter への dispatch
   - run 形式を直接 command と同一経路に正規化し、catalog 外と legacy を実行前に拒否する

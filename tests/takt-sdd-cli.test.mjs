@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readdirSync, mkdirSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { execFileSync } from "node:child_process";
 import os from "node:os";
 import { EventEmitter } from "node:events";
 import {
@@ -622,4 +623,271 @@ test("resolveWorkflowPathStrict: ja lang does not return en asset (no language f
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Task 4: CliMain (cli/main.mjs) dispatch tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { main } from "../cli/main.mjs";
+
+// Helper: capture stdout writes during a main() invocation.
+// main() uses process.stdout.write / console.log; we intercept temporarily.
+async function captureStdout(fn) {
+  const chunks = [];
+  const orig = process.stdout.write.bind(process.stdout);
+  process.stdout.write = (chunk, ...rest) => {
+    chunks.push(typeof chunk === "string" ? chunk : chunk.toString());
+    return true;
+  };
+  try {
+    await fn();
+  } finally {
+    process.stdout.write = orig;
+  }
+  return chunks.join("");
+}
+
+// Helper: capture stderr writes during a main() invocation.
+async function captureStderr(fn) {
+  const chunks = [];
+  const origWrite = process.stderr.write.bind(process.stderr);
+  process.stderr.write = (chunk, ...rest) => {
+    chunks.push(typeof chunk === "string" ? chunk : chunk.toString());
+    return true;
+  };
+  try {
+    await fn();
+  } finally {
+    process.stderr.write = origWrite;
+  }
+  return chunks.join("");
+}
+
+// ─── --help: exit 0, output contains init, kiro-*, opsx-*, run ───
+
+test("main(['--help']): returns exit code 0", async () => {
+  const code = await captureStdout(async () => {
+    const c = await main(["--help"]);
+    assert.equal(c, 0, `Expected exit code 0, got ${c}`);
+  });
+});
+
+test("main(['-h']): returns exit code 0", async () => {
+  const code = await captureStdout(async () => {
+    const c = await main(["-h"]);
+    assert.equal(c, 0, `Expected exit code 0, got ${c}`);
+  });
+});
+
+test("main(['--help']): output contains 'init'", async () => {
+  let output = "";
+  output = await captureStdout(async () => { await main(["--help"]); });
+  assert.ok(output.includes("init"), `--help output should contain 'init', got: ${output}`);
+});
+
+test("main(['--help']): output contains kiro-* and opsx-* workflow names", async () => {
+  const output = await captureStdout(async () => { await main(["--help"]); });
+  const kiroMissing = SUPPORTED_WORKFLOWS.filter((n) => n.startsWith("kiro-") && !output.includes(n));
+  const opsxMissing = SUPPORTED_WORKFLOWS.filter((n) => n.startsWith("opsx-") && !output.includes(n));
+  assert.deepEqual(kiroMissing, [], `--help output missing kiro-* names: ${kiroMissing.join(", ")}`);
+  assert.deepEqual(opsxMissing, [], `--help output missing opsx-* names: ${opsxMissing.join(", ")}`);
+});
+
+test("main(['--help']): output contains 'run'", async () => {
+  const output = await captureStdout(async () => { await main(["--help"]); });
+  assert.ok(output.includes("run"), `--help output should contain 'run', got: ${output}`);
+});
+
+// ─── --version: exit 0, output matches package.json version ───
+
+test("main(['--version']): returns exit code 0", async () => {
+  await captureStdout(async () => {
+    const c = await main(["--version"]);
+    assert.equal(c, 0, `Expected exit code 0, got ${c}`);
+  });
+});
+
+test("main(['-v']): returns exit code 0", async () => {
+  await captureStdout(async () => {
+    const c = await main(["-v"]);
+    assert.equal(c, 0);
+  });
+});
+
+test("main(['--version']): output contains package.json version", async () => {
+  const { readFileSync: rfs } = await import("node:fs");
+  const { join: pjoin } = await import("node:path");
+  const pkgVersion = JSON.parse(rfs(pjoin(repoRoot, "package.json"), "utf-8")).version;
+  const output = await captureStdout(async () => { await main(["--version"]); });
+  assert.ok(output.includes(pkgVersion), `--version output should contain '${pkgVersion}', got: ${output}`);
+});
+
+// ─── legacy command rejection ───
+
+test("main(['cc-sdd-full']): returns exit code 1", async () => {
+  const errOut = await captureStderr(async () => {
+    const c = await main(["cc-sdd-full"]);
+    assert.equal(c, 1, `Expected exit code 1, got ${c}`);
+  });
+});
+
+test("main(['cc-sdd-full']): stderr contains unsupported message", async () => {
+  const errOut = await captureStderr(async () => { await main(["cc-sdd-full"]); });
+  assert.ok(
+    errOut.toLowerCase().includes("legacy") || errOut.toLowerCase().includes("unsupported") || errOut.toLowerCase().includes("not supported"),
+    `Expected unsupported message in stderr, got: ${errOut}`,
+  );
+});
+
+test("main(['run', 'cc-sdd-full']): returns exit code 1", async () => {
+  const errOut = await captureStderr(async () => {
+    const c = await main(["run", "cc-sdd-full"]);
+    assert.equal(c, 1, `Expected exit code 1 for 'run cc-sdd-full', got ${c}`);
+  });
+});
+
+test("main(['run', 'cc-sdd-full']): stderr contains unsupported message", async () => {
+  const errOut = await captureStderr(async () => { await main(["run", "cc-sdd-full"]); });
+  assert.ok(
+    errOut.toLowerCase().includes("legacy") || errOut.toLowerCase().includes("unsupported") || errOut.toLowerCase().includes("not supported"),
+    `Expected unsupported message for 'run cc-sdd-full' in stderr, got: ${errOut}`,
+  );
+});
+
+// ─── unknown command: exit 1, help guidance in stderr ───
+
+test("main(['kiro-bogus']): returns exit code 1", async () => {
+  const errOut = await captureStderr(async () => {
+    const c = await main(["kiro-bogus"]);
+    assert.equal(c, 1, `Expected exit code 1 for unknown command, got ${c}`);
+  });
+});
+
+test("main(['kiro-bogus']): stderr contains help guidance", async () => {
+  const errOut = await captureStderr(async () => { await main(["kiro-bogus"]); });
+  assert.ok(
+    errOut.includes("--help") || errOut.toLowerCase().includes("unknown") || errOut.toLowerCase().includes("help"),
+    `Expected help guidance for unknown command, got: ${errOut}`,
+  );
+});
+
+// ─── 'run' with no workflow name: usage error ───
+
+test("main(['run']): returns exit code 1 (missing workflow name)", async () => {
+  const errOut = await captureStderr(async () => {
+    const c = await main(["run"]);
+    assert.equal(c, 1, `Expected exit code 1 for 'run' with no workflow, got ${c}`);
+  });
+});
+
+// ─── 'run kiro-impl' normalizes to same path as direct 'kiro-impl' ───
+// Both should go through workflow-runner and hit preflight. Using an uninitialized
+// tmp dir, both should throw a PreflightError with an identical 'takt-sdd init' message.
+
+test("main(['run', 'kiro-impl', '--cwd', <uninit>]): same PreflightError message as direct kiro-impl", async () => {
+  const dir = makeTmpDir();
+  try {
+    const errDirect = await captureStderr(async () => {
+      await main(["--cwd", dir, "kiro-impl"]);
+    });
+
+    const errRun = await captureStderr(async () => {
+      await main(["--cwd", dir, "run", "kiro-impl"]);
+    });
+
+    // Both should produce output with 'takt-sdd init' guidance
+    assert.ok(
+      errDirect.includes("takt-sdd init"),
+      `Direct kiro-impl should mention 'takt-sdd init', got: ${errDirect}`,
+    );
+    assert.ok(
+      errRun.includes("takt-sdd init"),
+      `'run kiro-impl' should mention 'takt-sdd init', got: ${errRun}`,
+    );
+    // Messages should be identical (same code path)
+    assert.equal(errDirect, errRun, "Direct and 'run' forms should produce identical error messages");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ─── --cwd <fixture>: sets projectRoot (uninitialized → preflight error proves --cwd honored) ───
+
+test("main(['--cwd', <uninit-dir>, 'kiro-impl']): preflight error shows takt-sdd init (--cwd honored)", async () => {
+  const dir = makeTmpDir();
+  try {
+    let captured = "";
+    captured = await captureStderr(async () => {
+      const c = await main(["--cwd", dir, "kiro-impl"]);
+      assert.equal(c, 1, `Expected exit code 1 from preflight, got ${c}`);
+    });
+    assert.ok(
+      captured.includes("takt-sdd init"),
+      `Expected 'takt-sdd init' in error for uninitialized --cwd project, got: ${captured}`,
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ─── bin entry E2E (child_process): --help, --version, cc-sdd-full, run cc-sdd-full ───
+
+const binPath = join(repoRoot, "bin", "takt-sdd.mjs");
+
+test("bin entry: 'node bin/takt-sdd.mjs --help' exits 0 and outputs init/workflow names", () => {
+  let stdout = "";
+  try {
+    stdout = execFileSync(process.execPath, [binPath, "--help"], { encoding: "utf-8" });
+  } catch (err) {
+    assert.fail(`Expected exit 0 for --help, got exit ${err.status}: ${err.stderr}`);
+  }
+  assert.ok(stdout.includes("init"), `--help should contain 'init'`);
+  const kiroMissing = SUPPORTED_WORKFLOWS.filter((n) => n.startsWith("kiro-") && !stdout.includes(n));
+  assert.deepEqual(kiroMissing, [], `--help missing kiro-* names: ${kiroMissing.join(", ")}`);
+});
+
+test("bin entry: 'node bin/takt-sdd.mjs --version' exits 0 and outputs package version", () => {
+  let stdout = "";
+  try {
+    stdout = execFileSync(process.execPath, [binPath, "--version"], { encoding: "utf-8" });
+  } catch (err) {
+    assert.fail(`Expected exit 0 for --version, got exit ${err.status}: ${err.stderr}`);
+  }
+  // Output should be non-empty and contain a version-like string
+  assert.ok(stdout.trim().length > 0, `--version output should be non-empty`);
+});
+
+test("bin entry: 'node bin/takt-sdd.mjs cc-sdd-full' exits non-0 with unsupported message", () => {
+  let exitCode = 0;
+  let stderr = "";
+  try {
+    execFileSync(process.execPath, [binPath, "cc-sdd-full"], { encoding: "utf-8" });
+    exitCode = 0;
+  } catch (err) {
+    exitCode = err.status;
+    stderr = err.stderr || "";
+  }
+  assert.ok(exitCode !== 0, `Expected non-zero exit for 'cc-sdd-full', got ${exitCode}`);
+  assert.ok(
+    stderr.toLowerCase().includes("legacy") || stderr.toLowerCase().includes("unsupported") || stderr.toLowerCase().includes("not supported"),
+    `Expected unsupported message in stderr for 'cc-sdd-full', got: ${stderr}`,
+  );
+});
+
+test("bin entry: 'node bin/takt-sdd.mjs run cc-sdd-full' exits non-0 with unsupported message", () => {
+  let exitCode = 0;
+  let stderr = "";
+  try {
+    execFileSync(process.execPath, [binPath, "run", "cc-sdd-full"], { encoding: "utf-8" });
+    exitCode = 0;
+  } catch (err) {
+    exitCode = err.status;
+    stderr = err.stderr || "";
+  }
+  assert.ok(exitCode !== 0, `Expected non-zero exit for 'run cc-sdd-full', got ${exitCode}`);
+  assert.ok(
+    stderr.toLowerCase().includes("legacy") || stderr.toLowerCase().includes("unsupported") || stderr.toLowerCase().includes("not supported"),
+    `Expected unsupported message for 'run cc-sdd-full', got: ${stderr}`,
+  );
 });
