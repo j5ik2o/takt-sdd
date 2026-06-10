@@ -428,6 +428,7 @@ test("config.yaml absent: manifest lang (ja) is used for workflow resolution", a
     const code = await runWorkflow("kiro-impl", [], ctx, captureSpawn);
     assert.equal(code, 0);
     assert.ok(spawnCalledWith !== null, "spawnImpl should have been called");
+    assert.equal(spawnCalledWith.opts.cwd, dir, "spawn cwd must be projectRoot");
     // args should contain a path inside .takt/ja/workflows/
     const wArg = spawnCalledWith.args.find((a) => a.includes("kiro-impl.yaml"));
     assert.ok(wArg && wArg.includes("ja"), `Expected ja workflow path, got: ${wArg}`);
