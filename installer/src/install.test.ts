@@ -8,11 +8,13 @@ import { test } from "node:test";
 import {
   CC_SDD_PACKAGE,
   CC_SDD_VERSION,
+  OPENSPEC_VERSION,
   CcSddInitError,
   buildCcSddExecArgs,
   initializeCcSddProject,
   syncRelativeFiles,
   installFromSource,
+  resolveSddDependencySet,
 } from "./install.js";
 import { getMessages } from "./i18n.js";
 
@@ -178,4 +180,124 @@ test("install() delegates to installFromSource (delegation structure fixed)", ()
     installBody.includes("installFromSource("),
     "install() must delegate to installFromSource() — policy duplication is forbidden",
   );
+});
+
+// Req 4.1 / 4.2 / 4.3: OPENSPEC_VERSION 定数は 1.4.1 に整合していること（VersionPolicy）。
+// 定数と root package.json の整合検証は task 5.1 が所有するため、ここでは定数値のみを固定する。
+test("OPENSPEC_VERSION constant is aligned to 1.4.1", () => {
+  assert.equal(OPENSPEC_VERSION, "1.4.1", "OPENSPEC_VERSION must be pinned to 1.4.1");
+});
+
+// Req 4.1 / 4.2 / 4.3: resolveSddDependencySet — allowlist 抽出の正常系。
+// takt / @fission-ai/openspec / cc-sdd のみが返り、dev-only 依存は含まれない。
+test("resolveSddDependencySet extracts only allowlisted SDD deps from dependencies ∪ devDependencies", () => {
+  const pkg = {
+    dependencies: {
+      takt: "0.43.0",
+      "@fission-ai/openspec": "1.4.1",
+    },
+    devDependencies: {
+      "cc-sdd": "3.0.2",
+      typescript: "5.0.0",
+      "@types/node": "20.0.0",
+    },
+  };
+  const result = resolveSddDependencySet(pkg);
+
+  // allowlist の 3 つのみが抽出される
+  assert.deepEqual(Object.keys(result).sort(), ["@fission-ai/openspec", "cc-sdd", "takt"].sort());
+
+  // version 文字列は package.json の値をそのまま返す（floating 解決なし）
+  assert.equal(result["takt"], "0.43.0");
+  assert.equal(result["@fission-ai/openspec"], "1.4.1");
+  assert.equal(result["cc-sdd"], "3.0.2");
+
+  // dev-only 依存は含まれない
+  assert.equal(result["typescript"], undefined);
+  assert.equal(result["@types/node"], undefined);
+});
+
+// Req 4.3: 値は package.json に書かれた version 文字列そのもの（"latest" 等の floating 解決なし）。
+test("resolveSddDependencySet returns verbatim version strings without resolution", () => {
+  const pkg = {
+    devDependencies: {
+      takt: "^0.43.0",
+      "@fission-ai/openspec": "~1.4.0",
+      "cc-sdd": "latest",
+    },
+  };
+  const result = resolveSddDependencySet(pkg);
+  // 値はそのまま返す（^, ~, latest 等を解決しない）
+  assert.equal(result["takt"], "^0.43.0");
+  assert.equal(result["@fission-ai/openspec"], "~1.4.0");
+  assert.equal(result["cc-sdd"], "latest");
+});
+
+// Req 4.1: dependencies と devDependencies の両方から抽出できること。
+// devDependencies 側の値が dependencies 側を上書きしないことも確認する。
+test("resolveSddDependencySet merges dependencies ∪ devDependencies (deps take precedence)", () => {
+  // takt が dependencies にのみある場合
+  const pkgDepsOnly = {
+    dependencies: { takt: "0.43.0" },
+  };
+  const r1 = resolveSddDependencySet(pkgDepsOnly);
+  assert.equal(r1["takt"], "0.43.0");
+
+  // takt が devDependencies にのみある場合
+  const pkgDevOnly = {
+    devDependencies: { takt: "0.44.0" },
+  };
+  const r2 = resolveSddDependencySet(pkgDevOnly);
+  assert.equal(r2["takt"], "0.44.0");
+
+  // takt が両方にある場合 — dependencies が優先
+  const pkgBoth = {
+    dependencies: { takt: "0.43.0" },
+    devDependencies: { takt: "0.44.0" },
+  };
+  const r3 = resolveSddDependencySet(pkgBoth);
+  assert.equal(r3["takt"], "0.43.0");
+});
+
+// Req 4.1: フィールド欠落（undefined）でも例外なく空または部分的な結果を返す。
+test("resolveSddDependencySet handles missing fields gracefully", () => {
+  // 両フィールドとも undefined
+  const r1 = resolveSddDependencySet({});
+  assert.deepEqual(r1, {});
+
+  // dependencies のみ undefined
+  const r2 = resolveSddDependencySet({ devDependencies: { takt: "0.43.0" } });
+  assert.equal(r2["takt"], "0.43.0");
+
+  // devDependencies のみ undefined
+  const r3 = resolveSddDependencySet({ dependencies: { "cc-sdd": "3.0.2" } });
+  assert.equal(r3["cc-sdd"], "3.0.2");
+});
+
+// Req 4.1: allowlist 外の全パッケージは抽出結果に含まれないこと（dev-only 依存の非伝播）。
+test("resolveSddDependencySet does not propagate dev-only dependencies to target project", () => {
+  const pkg = {
+    dependencies: {
+      takt: "0.43.0",
+    },
+    devDependencies: {
+      "cc-sdd": "3.0.2",
+      typescript: "5.0.0",
+      "@types/node": "20.0.0",
+      jest: "29.0.0",
+      eslint: "8.0.0",
+      prettier: "3.0.0",
+      "ts-node": "10.0.0",
+    },
+  };
+  const result = resolveSddDependencySet(pkg);
+
+  // dev-only 依存はすべて含まれない
+  for (const devOnly of ["typescript", "@types/node", "jest", "eslint", "prettier", "ts-node"]) {
+    assert.equal(result[devOnly], undefined, `${devOnly} must not propagate to target project`);
+  }
+
+  // allowlist に含まれるものは抽出される
+  assert.equal(result["takt"], "0.43.0");
+  assert.equal(result["cc-sdd"], "3.0.2");
 });

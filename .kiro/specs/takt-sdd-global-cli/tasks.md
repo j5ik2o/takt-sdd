@@ -10,7 +10,7 @@
   - _Boundary:_ InstallCore
   - _Depends:_ none
 
-- [ ] 1.2 対象 project へ伝播する SDD dependency set を allowlist 方式へ置き換える
+- [x] 1.2 対象 project へ伝播する SDD dependency set を allowlist 方式へ置き換える
   - devDependencies 全件 merge を廃止し、takt / OpenSpec / cc-sdd の 3 つに限定した allowlist 抽出（dependencies ∪ devDependencies）に置き換える
   - OpenSpec の内部起動用定数を 1.4.1 に整合させ、cc-sdd は既存の pinned npm exec 経路を維持する
   - 実行時に latest 等の floating 解決を行わないことを fixture ベースの unit test で固定する（root package.json への依存はこのタスクでは持たない。定数と root package.json の整合検証は 5.1 が所有する）

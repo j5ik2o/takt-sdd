@@ -26,10 +26,26 @@ const PIECE_DIR = "workflows";
 const KIRO_STAGED_SCRIPT_INSTALL_PATH = "scripts/kiro-staged.mjs";
 const LEGACY_OPSX_SCRIPT_INSTALL_PATH = "scripts/opsx-cli.sh";
 const OPENSPEC_PACKAGE = "@fission-ai/openspec";
-const OPENSPEC_VERSION = "1.3.1";
+export const OPENSPEC_VERSION = "1.4.1";
 const OPENSPEC_CONFIG_PATH = "openspec/config.yaml";
 export const CC_SDD_PACKAGE = "cc-sdd";
 export const CC_SDD_VERSION = "3.0.2";
+
+const SDD_DEPENDENCY_ALLOWLIST = ["takt", OPENSPEC_PACKAGE, CC_SDD_PACKAGE] as const;
+
+export function resolveSddDependencySet(pkg: {
+  readonly dependencies?: Readonly<Record<string, string>>;
+  readonly devDependencies?: Readonly<Record<string, string>>;
+}): Record<string, string> {
+  const merged = { ...(pkg.devDependencies ?? {}), ...(pkg.dependencies ?? {}) };
+  const result: Record<string, string> = {};
+  for (const name of SDD_DEPENDENCY_ALLOWLIST) {
+    if (merged[name] !== undefined) {
+      result[name] = merged[name];
+    }
+  }
+  return result;
+}
 
 export function buildCcSddExecArgs(npmCliPath: string, lang: Lang): string[] {
   return [
@@ -476,10 +492,7 @@ export async function installFromSource(options: CoreInstallOptions, source: Ins
   const sddDevDependencies: Record<string, string> = {};
   if (existsSync(sddPkgPath)) {
     const sddPkg = JSON.parse(readFileSync(sddPkgPath, "utf-8"));
-    const deps = sddPkg.devDependencies ?? {};
-    for (const [key, value] of Object.entries(deps)) {
-      sddDevDependencies[key] = value as string;
-    }
+    Object.assign(sddDevDependencies, resolveSddDependencySet(sddPkg));
   }
   const openspecVersionSpec = sddDevDependencies[OPENSPEC_PACKAGE];
   const usesOfficialOpenSpec = openspecVersionSpec !== undefined;
