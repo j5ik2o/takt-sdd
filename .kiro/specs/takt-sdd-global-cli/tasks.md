@@ -41,7 +41,7 @@
   - _Boundary:_ CommandCatalog
   - _Depends:_ none
 
-- [ ] 3.2 (P) packaged asset source による init command を実装する
+- [x] 3.2 (P) packaged asset source による init command を実装する
   - --tag を明示 error で拒否し、対象 directory positional・--lang・--force・--dry-run を解析する
   - language 解決の優先順位（明示 flag > 既存 config の preference の read-only 参照 > manifest の lang > en）を実装する
   - packageRoot を asset root として共有 install core を呼び出し（layout は modern 固定）、GitHub download への code path を持たない
@@ -109,3 +109,9 @@
   - _Requirements:_ 8.7
   - _Boundary:_ Documentation
   - _Depends:_ 4
+
+## Implementation Notes
+
+- 3.2: 非 dry-run の installFromSource は cc-sdd init（`npm exec --package=cc-sdd@3.0.2`）を必ず実行する。network-free テストでは fixture の `node_modules/cc-sdd` を repo root からコピーし `.bin/cc-sdd` symlink を張ると npm exec が local 解決する（registry 不要）。OpenSpec init は `openspec/config.yaml` の事前配置で skip 可能
+- 3.2: installer の `--force` は「manifest なしで workflows が既存」の fresh install ガード解除のみ。update 時の customized skip（manifest hash 比較）は force と無関係（要件 3.3 の「同じ意味」はこの実ポリシーを指す）
+- 3.2: `runInit(options, ctx, deps)` の第 3 引数は test seam（既定は installer/dist の実 core）。WorkflowRunner の spawnImpl 注入パターンに準拠
