@@ -78,6 +78,14 @@ test("staged Kiro wrapper resolves configured language workflow path", () => {
     "-w",
     "/tmp/kiro-impl.yaml",
   ]);
+  assert.deepEqual(buildTaktArgs("/tmp/kiro-spec-requirements.yaml", ["--pipeline", "--skip-git", "-t", "feature=demo", "-y"]), [
+    "--pipeline",
+    "--skip-git",
+    "-w",
+    "/tmp/kiro-spec-requirements.yaml",
+    "-t",
+    "feature=demo -y",
+  ]);
 });
 
 test("validator accepts body Kiro Skill Source instructions", () => {

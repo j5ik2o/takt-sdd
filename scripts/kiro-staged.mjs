@@ -34,11 +34,21 @@ function stripTaskFlagForHelp(args) {
 }
 
 export function buildTaktArgs(workflowPath, forwardedArgs) {
-  const argsForTakt = stripTaskFlagForHelp(forwardedArgs);
+  const argsForTakt = collapseTaskPayload(stripTaskFlagForHelp(forwardedArgs));
   const taskArgIndex = argsForTakt.findIndex((arg) => arg === "-t" || arg === "--task");
   return taskArgIndex === -1
     ? [...argsForTakt, "-w", workflowPath]
     : [...argsForTakt.slice(0, taskArgIndex), "-w", workflowPath, ...argsForTakt.slice(taskArgIndex)];
+}
+
+function collapseTaskPayload(args) {
+  const taskArgIndex = args.findIndex((arg) => arg === "-t" || arg === "--task");
+  if (taskArgIndex === -1 || taskArgIndex === args.length - 1) {
+    return args;
+  }
+
+  const taskPayload = args.slice(taskArgIndex + 1).join(" ");
+  return [...args.slice(0, taskArgIndex + 1), taskPayload];
 }
 
 export function main(argv = process.argv.slice(2)) {
