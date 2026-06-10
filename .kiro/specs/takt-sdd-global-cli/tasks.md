@@ -86,7 +86,7 @@
   - _Boundary:_ PackageArtifactValidator
   - _Depends:_ 2, 4
 
-- [ ] 5.2 (P) isolated global install smoke を実装する
+- [x] 5.2 (P) isolated global install smoke を実装する
   - tarball を temp npm prefix へ global install し、PATH 経由で command surface を検証する（--help / --version / init dry-run / 未初期化 preflight error / cc-sdd 拒否・run cc-sdd 拒否）
   - tarball contents の forbidden file 二重確認を含める
   - registry 依存をこの test file 1 つに隔離し、skip 環境変数による明示 skip（理由出力付き）を実装する
