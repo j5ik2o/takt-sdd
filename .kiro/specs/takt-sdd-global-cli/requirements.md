@@ -88,7 +88,7 @@
 2. 利用者が global `--cwd <dir>` を指定した場合、takt-sdd CLI は `<dir>` を対象 project root として扱うものとする。
 3. workflow command が実行される場合、takt-sdd CLI は global package の実行資産と対象 project の artifacts を混線させないものとする。
 4. workflow command が実行される場合、takt-sdd CLI は repo-local 開発用 wrapper や開発 checkout の存在を利用者に要求しないものとする。
-5. 対象 project root に `.takt/config.yaml`、language-specific workflow/facet assets、または必要 dependency が不足している場合、takt-sdd CLI は自動修復せず `takt-sdd init .` または `npm install` を促して停止するものとする。
+5. 対象 project root に language-specific workflow/facet assets または必要 dependency が不足している場合、takt-sdd CLI は自動修復せず `takt-sdd init .` または `npm install` を促して停止するものとする。
 6. 対象 project root に `.takt/config.yaml` の language preference が存在する間、takt-sdd CLI は workflow resolution でその language preference を尊重するものとする。
 
 ### Requirement 7: package artifact boundary
