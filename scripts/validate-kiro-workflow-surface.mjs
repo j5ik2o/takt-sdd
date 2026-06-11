@@ -24,32 +24,6 @@ const canonicalKiroScripts = new Map([
   ["kiro:steering-custom", "kiro-steering-custom"],
 ]);
 
-const legacyScripts = new Map([
-  ["cc-sdd:full", "cc-sdd-full"],
-  ["cc-sdd:requirements", "cc-sdd-requirements"],
-  ["cc-sdd:validate-gap", "cc-sdd-validate-gap"],
-  ["cc-sdd:design", "cc-sdd-design"],
-  ["cc-sdd:validate-design", "cc-sdd-validate-design"],
-  ["cc-sdd:tasks", "cc-sdd-tasks"],
-  ["cc-sdd:impl", "cc-sdd-impl"],
-  ["cc-sdd:validate-impl", "cc-sdd-validate-impl"],
-  ["cc-sdd:steering", "cc-sdd-steering"],
-  ["cc-sdd:steering-custom", "cc-sdd-steering-custom"],
-]);
-
-const migrationPairs = new Map([
-  ["cc-sdd:full", "kiro:spec:quick"],
-  ["cc-sdd:requirements", "kiro:spec:requirements"],
-  ["cc-sdd:validate-gap", "kiro:validate:gap"],
-  ["cc-sdd:design", "kiro:spec:design"],
-  ["cc-sdd:validate-design", "kiro:validate:design"],
-  ["cc-sdd:tasks", "kiro:spec:tasks"],
-  ["cc-sdd:impl", "kiro:impl"],
-  ["cc-sdd:validate-impl", "kiro:validate:impl"],
-  ["cc-sdd:steering", "kiro:steering"],
-  ["cc-sdd:steering-custom", "kiro:steering-custom"],
-]);
-
 function readText(path) {
   return readFileSync(path, "utf8");
 }
@@ -140,95 +114,8 @@ function hasWorkflow(repoRoot, workflowName) {
     || existsSync(join(repoRoot, ".takt", "workflows", `${workflowName}.yaml`));
 }
 
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function invokesWorkflow(value, workflowName) {
-  return new RegExp(`(?:^|\\s)-w\\s+${escapeRegExp(workflowName)}(?:\\s|$)`).test(value);
-}
-
-function validateLegacyScriptSet(repoRoot, label, scripts) {
-  const failures = [];
-  for (const [scriptName, workflowName] of legacyScripts) {
-    const value = scripts[scriptName];
-    if (!value) {
-      failures.push(`LEGACY_SCRIPT_POLICY_DRIFT: ${label} missing ${scriptName}`);
-      continue;
-    }
-    if (value.includes("kiro") || value.includes("kiro-staged") || !invokesWorkflow(value, workflowName)) {
-      failures.push(
-        `LEGACY_SCRIPT_POLICY_DRIFT: ${label} ${scriptName} must keep existing ${workflowName} workflow and must not alias Kiro actual=${JSON.stringify(value)}`,
-      );
-    }
-    if (/missing|not installed|exit 1|throw new Error/.test(value)) {
-      failures.push(`LEGACY_SCRIPT_POLICY_DRIFT: ${label} ${scriptName} must not be a fail-fast migration shim`);
-    }
-    if (!hasWorkflow(repoRoot, workflowName)) {
-      failures.push(`LEGACY_SCRIPT_POLICY_DRIFT: ${label} ${scriptName} references missing workflow ${workflowName}`);
-    }
-  }
-  return failures;
-}
-
-function validateLegacyDeprecationPolicy(repoRoot) {
-  const rootScripts = readPackageScripts(repoRoot);
-  const installerScripts = extractInstallerScripts(repoRoot) ?? {};
-  const failures = [
-    ...validateLegacyScriptSet(repoRoot, "package.json", rootScripts),
-    ...validateLegacyScriptSet(repoRoot, "installer/src/install.ts", installerScripts),
-  ];
-  return { ok: failures.length === 0, failures };
-}
-
-function includesAll(content, terms) {
-  return terms.every((term) => content.includes(term));
-}
-
-function includesMigrationTableRow(content, legacy, canonical) {
-  const rowPattern = new RegExp(`\\|\\s*\`${escapeRegExp(legacy)}\`\\s*\\|\\s*\`${escapeRegExp(canonical)}\`\\s*\\|`);
-  return rowPattern.test(content);
-}
-
-function validateMigrationDoc(repoRoot, path, oldCanonicalPattern, requiredTerms) {
-  const failures = [];
-  const fullPath = join(repoRoot, path);
-  const content = readText(fullPath);
-  if (!includesAll(content, requiredTerms)) {
-    failures.push(`GUIDANCE_DRIFT: ${path} missing required Kiro migration terms`);
-  }
-  for (const [legacy, canonical] of migrationPairs) {
-    if (!includesMigrationTableRow(content, legacy, canonical)) {
-      failures.push(`GUIDANCE_DRIFT: ${path} missing migration mapping ${legacy} -> ${canonical}`);
-    }
-  }
-  if (oldCanonicalPattern.test(content)) {
-    failures.push(`GUIDANCE_DRIFT: ${path} still presents cc-sdd as the canonical Kiro workflow surface`);
-  }
-  if (content.includes("`sdd:design`") || content.includes("`sdd:validate-design`")) {
-    failures.push(`GUIDANCE_DRIFT: ${path} must not reference nonexistent sdd:* design scripts`);
-  }
-  return failures;
-}
-
 function validateGuidanceText(repoRoot) {
   const failures = [];
-  failures.push(
-    ...validateMigrationDoc(repoRoot, "README.md", /Use the full-auto workflow `cc-sdd-full`|SDD executes the following phases in order:/, [
-      "Use `kiro:*` scripts for new SDD workflow usage.",
-      "Migration from legacy `cc-sdd:*` scripts",
-      "npm run kiro:spec:quick",
-      "npm run opsx:full",
-    ]),
-  );
-  failures.push(
-    ...validateMigrationDoc(repoRoot, "README.ja.md", /フルオートワークフロー `cc-sdd-full`|SDD は以下のフェーズを順に実行する/, [
-      "新規の SDD ワークフローでは `kiro:*` scripts を使う。",
-      "旧 `cc-sdd:*` scripts からの移行",
-      "npm run kiro:spec:quick",
-      "npm run opsx:full",
-    ]),
-  );
 
   for (const path of ["CC-SDD-CODEX.md", "CC-SDD-CLAUDE.md", "COMMON.md"]) {
     const fullPath = join(repoRoot, path);
@@ -247,21 +134,6 @@ function validateGuidanceText(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
-function validateInstalledLegacyScripts(repoRoot) {
-  const installerScripts = extractInstallerScripts(repoRoot) ?? {};
-  const failures = [];
-  for (const [scriptName, workflowName] of legacyScripts) {
-    const value = installerScripts[scriptName];
-    if (!value) {
-      failures.push(`INSTALLED_LEGACY_SCRIPT_DRIFT: installer missing ${scriptName}`);
-      continue;
-    }
-    if (!invokesWorkflow(value, workflowName)) {
-      failures.push(`INSTALLED_LEGACY_SCRIPT_DRIFT: installer ${scriptName} must invoke ${workflowName}`);
-    }
-  }
-  return { ok: failures.length === 0, failures };
-}
 
 function validateCrossSpecReleaseGate(repoRoot) {
   const failures = [];
@@ -286,9 +158,7 @@ function validateCrossSpecReleaseGate(repoRoot) {
 export function validateKiroWorkflowSurface({ repoRoot = defaultRepoRoot } = {}) {
   const checks = [
     validateCanonicalScripts(repoRoot),
-    validateLegacyDeprecationPolicy(repoRoot),
     validateGuidanceText(repoRoot),
-    validateInstalledLegacyScripts(repoRoot),
     validateCrossSpecReleaseGate(repoRoot),
   ];
   const failures = checks.flatMap((check) => check.failures);

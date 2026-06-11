@@ -8,7 +8,7 @@
   - _Boundary:_ SurfaceValidatorAlignment
   - _Depends:_ none
 
-- [ ] 1.2 互換検証の存在強制を撤去する
+- [x] 1.2 互換検証の存在強制を撤去する
   - kiro workflow surface 検証から legacy 存在強制（cc-sdd:* scripts の存在・installer 伝播 scripts 内の cc-sdd:* 存在・README 移行表と opsx:full 記述の強制）を撤去する
   - kiro 純度検証（kiro scripts 集合の drift 検出・kiro workflow 内 cc-sdd- 文字列禁止・opsx:apply の非 kiro 判定）は無変更で維持する
   - CC-SDD-CLAUDE.md / CC-SDD-CODEX.md に対する既存の kiro 案内検証（kiro 記述の存在確認）は無変更で維持する（両ファイルは本スペックの境界外）
