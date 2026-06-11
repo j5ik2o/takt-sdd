@@ -68,7 +68,7 @@
   - _Boundary:_ RootPackageMetadata
   - _Depends:_ 4
 
-- [ ] 7. 退役後検証を不在強制へ反転する（統合タスク）
+- [x] 7. 退役後検証を不在強制へ反転する（統合タスク）
   - surface 検証へ不在強制を追加する: root package.json / installer 伝播 scripts に cc-sdd:*・opsx:* が存在したら fail、配布資産に退役 workflow が存在したら fail（注入 negative case で固定）
   - artifact validator へ退役 workflow / 専用 facet の forbidden patterns と依存宣言不在の検証を追加し、catalog の RETIRED 集合 ↔ installer の cleanup パターンのクロスチェックを実装する
   - 観測可能な完了: 退役物を fixture 注入すると各検証が fail する negative case を含め、validate:all と validate:package-artifact と全テスト suite が green である
@@ -99,3 +99,4 @@
 - 4: `isRecoverablePartialInstall` も削除（レビュー裁定 KEEP_REMOVAL）。緩和条件は `!existsSync(openspecConfigPath)` 専用で v2 では構造的に到達不能、plain force ガード（`!isUpdate && workflowsExist && !force`）は維持。`removeLegacyOpsxScript` は update 時に無条件呼び出しへ変更（manifest null ガードで fresh は no-op）— タスク 5 が `RETIRED_MANIFEST_KEY_PATTERNS` へ一般化する際の吸収対象
 - 5: `RETIRED_MANIFEST_KEY_PATTERNS` は 3 正規表現（workflow / 新旧 facet レイアウト / scripts/opsx-cli.sh）。パターン 2 は `.takt/workflows/cc-sdd-*.yaml` にも重複マッチするが冪等で無害（kiro・共有 facet・openspec/ への過剰マッチなしを機械検証済み）。`removeLegacyOpsxScript` は吸収済みで installer の cleanup 入口はタスク 7 のクロスチェック対象が `RETIRED_MANIFEST_KEY_PATTERNS` になった
 - 6: devDependencies は cc-sdd が唯一の entry だったため block ごと削除。lockfile は 917 行削除で完全同期・npm install 冪等。`installer/node_modules/@fission-ai/openspec/` は installer 配下の vendored subtree（untracked）で root lockfile と無関係 — レビューで一度この path との混同による誤 REJECT があり、diff 方向の反証提示で撤回された
+- 7: クロスチェックは `INSTALLER_RETIRED_PATTERNS` の局所複製方式（設計が認めた二重定義 + 検証層整合固定）。初回レビューで「export のみで main() 未配線」の REJECT → main() で `allErrors` へ集約 + source-grep の wiring assertion テストで是正（installer テストの source 検査方式と整合）。新規検証関数は配線テストまで含めて初めて完了

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -109,6 +109,60 @@ function validateCanonicalScripts(repoRoot) {
   return { ok: failures.length === 0, failures };
 }
 
+/**
+ * Validate that retired cc-sdd:* and opsx:* scripts are NOT present in
+ * package.json and installer SDD_SCRIPTS (req 3.1, 8.2 — absence enforcement).
+ */
+function validateRetiredScriptsAbsent(repoRoot) {
+  const failures = [];
+  const rootScripts = readPackageScripts(repoRoot);
+  const installerScripts = extractInstallerScripts(repoRoot);
+
+  for (const [label, scripts] of [
+    ["package.json", rootScripts],
+    ...(installerScripts ? [["installer/src/install.ts", installerScripts]] : []),
+  ]) {
+    for (const key of Object.keys(scripts)) {
+      if (key.startsWith("cc-sdd:") || key.startsWith("opsx:")) {
+        failures.push(
+          `RETIRED_SCRIPT: ${label} must not contain retired script "${key}" (cc-sdd:* and opsx:* were retired in v2.0.0)`,
+        );
+      }
+    }
+  }
+
+  return { ok: failures.length === 0, failures };
+}
+
+/**
+ * Validate that retired cc-sdd-* and opsx-* workflow yaml files are NOT
+ * present in .takt/{en,ja}/workflows/ (req 1.1, 1.2, 8.2 — absence enforcement).
+ */
+function validateRetiredWorkflowAssetsAbsent(repoRoot) {
+  const failures = [];
+
+  for (const lang of languages) {
+    const workflowDir = join(repoRoot, ".takt", lang, "workflows");
+    if (!existsSync(workflowDir)) continue;
+    let entries;
+    try {
+      entries = readdirSync(workflowDir);
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      if (entry.startsWith("cc-sdd-") || entry.startsWith("opsx-")) {
+        const workflowName = entry.replace(/\.yaml$/, "");
+        failures.push(
+          `RETIRED_WORKFLOW_ASSET: .takt/${lang}/workflows/${entry} must not be present — ${workflowName} was retired in v2.0.0`,
+        );
+      }
+    }
+  }
+
+  return { ok: failures.length === 0, failures };
+}
+
 function hasWorkflow(repoRoot, workflowName) {
   return languages.some((language) => existsSync(join(repoRoot, ".takt", language, "workflows", `${workflowName}.yaml`)))
     || existsSync(join(repoRoot, ".takt", "workflows", `${workflowName}.yaml`));
@@ -158,6 +212,8 @@ function validateCrossSpecReleaseGate(repoRoot) {
 export function validateKiroWorkflowSurface({ repoRoot = defaultRepoRoot } = {}) {
   const checks = [
     validateCanonicalScripts(repoRoot),
+    validateRetiredScriptsAbsent(repoRoot),
+    validateRetiredWorkflowAssetsAbsent(repoRoot),
     validateGuidanceText(repoRoot),
     validateCrossSpecReleaseGate(repoRoot),
   ];

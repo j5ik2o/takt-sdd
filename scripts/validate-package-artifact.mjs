@@ -26,7 +26,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
-import { SUPPORTED_WORKFLOWS, EXCLUDED_WORKFLOWS } from "../cli/command-catalog.mjs";
+import { SUPPORTED_WORKFLOWS, EXCLUDED_WORKFLOWS, RETIRED_WORKFLOWS } from "../cli/command-catalog.mjs";
 
 const defaultRepoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -77,6 +77,16 @@ const REQUIRED_PRESENT = [
     test: (/** @type {string} */ f) => f.startsWith(".takt/ja/facets/"),
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Retired-exclusive facet basenames (prefix-external names from commit 55abeea).
+// These facets were exclusively used by cc-sdd-* / opsx-* workflows and must
+// not appear in the published artifact.
+// ---------------------------------------------------------------------------
+const RETIRED_EXCLUSIVE_FACETS = new Set([
+  "ai-review-fix-loop-judge.md",
+  "batch-plan-implement-loop-judge.md",
+]);
 
 // ---------------------------------------------------------------------------
 // Forbidden patterns
@@ -164,6 +174,34 @@ const FORBIDDEN_PATTERNS = [
     test: (/** @type {string} */ f) =>
       f.startsWith("scripts/") && f !== "scripts/kiro-staged.mjs",
   },
+  // Retired workflow yaml files must not appear in the artifact (req 6.3).
+  // Covers .takt/en/workflows/(cc-sdd-|opsx-)*.yaml and .takt/ja/workflows/(cc-sdd-|opsx-)*.yaml
+  {
+    label: ".takt/{en,ja}/workflows/(cc-sdd-|opsx-)*.yaml (retired workflow assets)",
+    test: (/** @type {string} */ f) => {
+      const m = f.match(/^\.takt\/(en|ja)\/workflows\/(.+)\.yaml$/);
+      if (!m) return false;
+      return m[2].startsWith("cc-sdd-") || m[2].startsWith("opsx-");
+    },
+  },
+  // Retired cc-sdd-*/opsx-* facets must not appear in the artifact (req 6.3).
+  {
+    label: ".takt/{en,ja}/facets/**/(cc-sdd-|opsx-)* (retired cc-sdd/opsx facets)",
+    test: (/** @type {string} */ f) => {
+      if (!f.startsWith(".takt/en/facets/") && !f.startsWith(".takt/ja/facets/")) return false;
+      const base = f.split("/").pop() ?? "";
+      return base.startsWith("cc-sdd-") || base.startsWith("opsx-");
+    },
+  },
+  // Retired exclusive facets (prefix-external names) must not appear in the artifact (req 6.3).
+  {
+    label: "retired-exclusive facets (ai-review-fix-loop-judge.md, batch-plan-implement-loop-judge.md)",
+    test: (/** @type {string} */ f) => {
+      if (!f.startsWith(".takt/")) return false;
+      const base = f.split("/").pop() ?? "";
+      return RETIRED_EXCLUSIVE_FACETS.has(base);
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -223,15 +261,20 @@ export function validateFileList(files) {
  * Validate version consistency between compiled installer constants and
  * root package.json.
  *
+ * Also enforces that banned dependencies (@fission-ai/openspec, cc-sdd) are
+ * absent from both dependencies and devDependencies (req 6.2).
+ *
  * @param {Record<string, string>} constants
  *   Version constants exported from installer/dist/install.js (unused post-v2).
- * @param {{ dependencies?: Record<string, string> }} pkg
+ * @param {{ dependencies?: Record<string, string>, devDependencies?: Record<string, string> }} pkg
  *   Parsed root package.json object.
  * @returns {string[]} Array of error messages; empty means all checks passed.
  */
 export function validateVersionConsistency(constants, pkg) {
   const errors = [];
   const deps = pkg.dependencies ?? {};
+  const devDeps = pkg.devDependencies ?? {};
+  const allDeps = { ...devDeps, ...deps };
 
   // dependencies["takt"] must be an exact version pin (no ^, ~, >=, *, latest, etc.)
   const taktVersion = deps["takt"];
@@ -241,6 +284,78 @@ export function validateVersionConsistency(constants, pkg) {
     errors.push(
       `VERSION_MISMATCH: takt version "${taktVersion}" is not an exact pin (must match \\d+\\.\\d+\\.\\d+, no ^/~/latest)`,
     );
+  }
+
+  // Banned dependencies: @fission-ai/openspec and cc-sdd must not be declared (req 6.2).
+  const BANNED_DEPS = ["@fission-ai/openspec", "cc-sdd"];
+  for (const banned of BANNED_DEPS) {
+    if (allDeps[banned] !== undefined) {
+      errors.push(
+        `BANNED_DEPENDENCY: "${banned}" must not be in package.json dependencies or devDependencies (retired in v2.0.0)`,
+      );
+    }
+  }
+
+  return errors;
+}
+
+// ---------------------------------------------------------------------------
+// Retired cross-check: catalog RETIRED_WORKFLOWS ↔ installer RETIRED_MANIFEST_KEY_PATTERNS
+// ---------------------------------------------------------------------------
+
+// Mirrors installer/src/install.ts RETIRED_MANIFEST_KEY_PATTERNS for cross-check.
+// Kept in sync manually; drift is caught by the cross-check test.
+const INSTALLER_RETIRED_PATTERNS = [
+  /^\.takt\/workflows\/(cc-sdd-|opsx-).*\.yaml$/,
+  /^\.takt\/(?:facets\/)?[a-z-]+\/(cc-sdd-|opsx-).*/,
+  /^scripts\/opsx-cli\.sh$/,
+];
+
+/**
+ * Validate that the catalog's RETIRED_WORKFLOWS entries and the installer's
+ * RETIRED_MANIFEST_KEY_PATTERNS cover the same retired asset set.
+ *
+ * Rules:
+ * 1. Every RETIRED name (cc-sdd-* and opsx-*) must match at least one installer
+ *    pattern when used as a workflow key (.takt/workflows/<name>.yaml) — i.e.
+ *    the installer will clean it up.
+ * 2. No SUPPORTED or EXCLUDED.internal name must accidentally match any installer
+ *    pattern — i.e. the installer won't delete kiro/internal assets.
+ *
+ * @returns {string[]} Array of error messages; empty means cross-check passed.
+ */
+export function validateRetiredCrossCheck() {
+  const errors = [];
+
+  // Check 1: every retired workflow name → synthetic manifest key must match
+  const allRetired = [
+    ...RETIRED_WORKFLOWS.legacy,
+    ...RETIRED_WORKFLOWS.opsx,
+  ];
+  for (const name of allRetired) {
+    // Synthetic key for en language (pattern is language-agnostic — both use same prefix)
+    const syntheticKey = `.takt/workflows/${name}.yaml`;
+    const covered = INSTALLER_RETIRED_PATTERNS.some((p) => p.test(syntheticKey));
+    if (!covered) {
+      errors.push(
+        `RETIRED_CROSSCHECK NOT_COVERED: catalog RETIRED workflow "${name}" does not match any RETIRED_MANIFEST_KEY_PATTERNS (installer will not clean it up)`,
+      );
+    }
+  }
+
+  // Check 2: no supported/internal workflow name must match any retired pattern
+  const allActive = [
+    ...SUPPORTED_WORKFLOWS,
+    ...EXCLUDED_WORKFLOWS.internal,
+  ];
+  for (const name of allActive) {
+    const syntheticKey = `.takt/workflows/${name}.yaml`;
+    const accidentalMatch = INSTALLER_RETIRED_PATTERNS.some((p) => p.test(syntheticKey));
+    if (accidentalMatch) {
+      errors.push(
+        `RETIRED_CROSSCHECK FALSE_POSITIVE: active workflow "${name}" accidentally matches RETIRED_MANIFEST_KEY_PATTERNS (installer would incorrectly delete it)`,
+      );
+    }
   }
 
   return errors;
@@ -303,6 +418,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const rootPkg = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"));
   const versionErrors = validateVersionConsistency(constants, rootPkg);
   allErrors.push(...versionErrors);
+
+  // --- Retired cross-check: catalog RETIRED_WORKFLOWS ↔ installer RETIRED_MANIFEST_KEY_PATTERNS ---
+  // Detects drift between the two retired-list definitions (req 6.3, design cross-check).
+  const crossCheckErrors = validateRetiredCrossCheck();
+  allErrors.push(...crossCheckErrors);
 
   // --- Report ---
   if (allErrors.length > 0) {

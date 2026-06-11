@@ -15,6 +15,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 
@@ -401,6 +402,145 @@ test("validateVersionConsistency: missing takt is reported", () => {
   );
   assert.ok(errors.length > 0, "Expected error for missing takt");
   assert.ok(errors.some((e) => e.includes("takt")), `Errors: ${errors.join("; ")}`);
+});
+
+// ---------------------------------------------------------------------------
+// Negative cases: retired workflow files must be forbidden (req 6.3)
+// ---------------------------------------------------------------------------
+
+test("validateFileList: cc-sdd-full.yaml in .takt/en/workflows is forbidden (retired workflow)", () => {
+  const files = [...MINIMAL_VALID_FILES, ".takt/en/workflows/cc-sdd-full.yaml"];
+  const errors = validateFileList(files);
+  assert.ok(errors.length > 0, "Expected forbidden file error for retired cc-sdd workflow");
+  assert.ok(
+    errors.some((e) => e.includes("cc-sdd-full.yaml") && e.includes("FORBIDDEN")),
+    `Errors: ${errors.join("; ")}`,
+  );
+});
+
+test("validateFileList: opsx-full.yaml in .takt/ja/workflows is forbidden (retired workflow)", () => {
+  const files = [...MINIMAL_VALID_FILES, ".takt/ja/workflows/opsx-full.yaml"];
+  const errors = validateFileList(files);
+  assert.ok(errors.length > 0, "Expected forbidden file error for retired opsx workflow");
+  assert.ok(
+    errors.some((e) => e.includes("opsx-full.yaml") && e.includes("FORBIDDEN")),
+    `Errors: ${errors.join("; ")}`,
+  );
+});
+
+test("validateFileList: retired cc-sdd-* facet is forbidden", () => {
+  const files = [...MINIMAL_VALID_FILES, ".takt/en/facets/instructions/cc-sdd-impl.md"];
+  const errors = validateFileList(files);
+  assert.ok(errors.length > 0, "Expected forbidden file error for cc-sdd facet");
+  assert.ok(
+    errors.some((e) => e.includes("cc-sdd-impl.md") && e.includes("FORBIDDEN")),
+    `Errors: ${errors.join("; ")}`,
+  );
+});
+
+test("validateFileList: retired opsx-* facet is forbidden", () => {
+  const files = [...MINIMAL_VALID_FILES, ".takt/en/facets/personas/opsx-implementer.md"];
+  const errors = validateFileList(files);
+  assert.ok(errors.length > 0, "Expected forbidden file error for opsx facet");
+  assert.ok(
+    errors.some((e) => e.includes("opsx-implementer.md") && e.includes("FORBIDDEN")),
+    `Errors: ${errors.join("; ")}`,
+  );
+});
+
+test("validateFileList: retired exclusive facet (ai-review-fix-loop-judge.md) is forbidden", () => {
+  // This facet had no cc-sdd/opsx prefix but was exclusively used by retired workflows
+  const files = [...MINIMAL_VALID_FILES, ".takt/en/facets/instructions/ai-review-fix-loop-judge.md"];
+  const errors = validateFileList(files);
+  assert.ok(errors.length > 0, "Expected forbidden file error for retired-exclusive facet");
+  assert.ok(
+    errors.some((e) => e.includes("ai-review-fix-loop-judge.md") && e.includes("FORBIDDEN")),
+    `Errors: ${errors.join("; ")}`,
+  );
+});
+
+test("validateFileList: retired exclusive facet (batch-plan-implement-loop-judge.md) is forbidden", () => {
+  const files = [...MINIMAL_VALID_FILES, ".takt/en/facets/instructions/batch-plan-implement-loop-judge.md"];
+  const errors = validateFileList(files);
+  assert.ok(errors.length > 0, "Expected forbidden file error for retired-exclusive facet");
+  assert.ok(
+    errors.some((e) => e.includes("batch-plan-implement-loop-judge.md") && e.includes("FORBIDDEN")),
+    `Errors: ${errors.join("; ")}`,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Negative cases: banned dependency declarations (req 6.2)
+// ---------------------------------------------------------------------------
+
+test("validateVersionConsistency: @fission-ai/openspec in dependencies is rejected", () => {
+  const errors = validateVersionConsistency(
+    {},
+    { dependencies: { takt: "0.43.0", "@fission-ai/openspec": "1.0.0" } },
+  );
+  assert.ok(errors.length > 0, "Expected error for @fission-ai/openspec in deps");
+  assert.ok(
+    errors.some((e) => e.includes("@fission-ai/openspec")),
+    `Errors: ${errors.join("; ")}`,
+  );
+});
+
+test("validateVersionConsistency: cc-sdd in dependencies is rejected", () => {
+  const errors = validateVersionConsistency(
+    {},
+    { dependencies: { takt: "0.43.0", "cc-sdd": "1.0.0" } },
+  );
+  assert.ok(errors.length > 0, "Expected error for cc-sdd in deps");
+  assert.ok(
+    errors.some((e) => e.includes("cc-sdd")),
+    `Errors: ${errors.join("; ")}`,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Cross-check: RETIRED_WORKFLOWS catalog ↔ RETIRED_MANIFEST_KEY_PATTERNS (req 6.3 design cross-check)
+// ---------------------------------------------------------------------------
+
+const { validateRetiredCrossCheck } = await import(
+  "../scripts/validate-package-artifact.mjs"
+);
+
+test("validateRetiredCrossCheck: all RETIRED catalog names match at least one installer pattern", () => {
+  const errors = validateRetiredCrossCheck();
+  // All retired workflow names should be covered by installer patterns
+  const coverageErrors = errors.filter((e) => e.includes("RETIRED_CROSSCHECK") && e.includes("NOT_COVERED"));
+  assert.deepEqual(coverageErrors, [], `Cross-check coverage errors: ${coverageErrors.join("; ")}`);
+});
+
+test("validateRetiredCrossCheck: kiro and internal workflow names do NOT match installer patterns", () => {
+  const errors = validateRetiredCrossCheck();
+  // No kiro/internal name should accidentally match retired patterns
+  const falsePositiveErrors = errors.filter((e) => e.includes("RETIRED_CROSSCHECK") && e.includes("FALSE_POSITIVE"));
+  assert.deepEqual(falsePositiveErrors, [], `Cross-check false positives: ${falsePositiveErrors.join("; ")}`);
+});
+
+// ---------------------------------------------------------------------------
+// Wiring test: validateRetiredCrossCheck() must be called in main() guard
+// ---------------------------------------------------------------------------
+// Rationale: validateRetiredCrossCheck() is an exported function that could
+// silently become a test-only utility if its call is dropped from the main()
+// execution block.  This source-level assertion catches that regression without
+// requiring a complex fixture that manipulates module-internal constants.
+// This matches the existing suite pattern (integration via spawnSync for the
+// clean path; source assertion for structural wiring).
+test("main() guard calls validateRetiredCrossCheck (wiring assertion)", () => {
+  const validatorSrc = readFileSync(
+    join(repoRoot, "scripts", "validate-package-artifact.mjs"),
+    "utf8",
+  );
+  // Find the main guard block (after `if (process.argv[1] === fileURLToPath(...))`).
+  const mainGuardStart = validatorSrc.indexOf("if (process.argv[1] === fileURLToPath(import.meta.url))");
+  assert.ok(mainGuardStart !== -1, "Could not locate main() guard in validator source");
+  const mainGuardBody = validatorSrc.slice(mainGuardStart);
+  assert.ok(
+    mainGuardBody.includes("validateRetiredCrossCheck()"),
+    "main() guard must call validateRetiredCrossCheck() — it was found as export-only (not called at runtime)",
+  );
 });
 
 // ---------------------------------------------------------------------------
