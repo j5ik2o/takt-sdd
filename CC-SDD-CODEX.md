@@ -8,7 +8,7 @@ Kiro-style Spec-Driven Development on an agentic SDLC
 - Steering: `.kiro/steering/`
 - Specs: `.kiro/specs/`
 
-Use `$kiro-*` skills for agent workflows. When invoking npm scripts directly, use the canonical `kiro:*` surface from `package.json`; legacy `cc-sdd:*` scripts are compatibility entrypoints only.
+Use `$kiro-*` skills for agent workflows. When invoking npm scripts directly, use the canonical `kiro:*` surface from `package.json`; legacy `cc-sdd:*` / `opsx:*` scripts were retired in v2.0.0 and no longer exist.
 
 ### Steering vs Specification
 

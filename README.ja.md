@@ -235,23 +235,6 @@ KIRO_REAL_PROVIDER_SMOKE=1 npm run test:kiro-real-provider-smoke
 timeout のデフォルトは workflow ごとに 15 分、`kiro:impl` は 30 分。
 実 provider 実行が遅い場合は `KIRO_REAL_PROVIDER_TIMEOUT_MS` または `KIRO_REAL_PROVIDER_IMPL_TIMEOUT_MS` で調整できる。
 
-### 旧 `cc-sdd:*` scripts からの移行
-
-`cc-sdd:*` npm scripts の互換サーフェスは v2.0.0 で終了した。プロジェクトの `package.json` に v1.x 時代の `cc-sdd:*` scripts が残っている場合は手動で削除すること。これらは存在しなくなったワークフローファイルを参照しているため、実行すると takt の解決エラーになる。
-
-| 旧 script（手動削除対象） | 対応する Kiro script |
-|--------------------------|----------------------|
-| `cc-sdd:full` | `kiro:spec:quick` |
-| `cc-sdd:requirements` | `kiro:spec:requirements` |
-| `cc-sdd:validate-gap` | `kiro:validate:gap` |
-| `cc-sdd:design` | `kiro:spec:design` |
-| `cc-sdd:validate-design` | `kiro:validate:design` |
-| `cc-sdd:tasks` | `kiro:spec:tasks` |
-| `cc-sdd:impl` | `kiro:impl` |
-| `cc-sdd:validate-impl` | `kiro:validate:impl` |
-| `cc-sdd:steering` | `kiro:steering` |
-| `cc-sdd:steering-custom` | `kiro:steering-custom` |
-
 ### 出力ファイル
 
 各フェーズの成果物は `.kiro/specs/{feature}/` に出力される。Kiro の仕様フォーマットと互換性がある。
