@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -9,6 +9,8 @@ import {
   syncRelativeFiles,
   installFromSource,
   resolveSddDependencySet,
+  planRetiredRemovals,
+  removeRetiredFiles,
 } from "./install.js";
 import { getMessages } from "./i18n.js";
 
@@ -243,5 +245,158 @@ test("installFromSource source has NO cc-sdd or openspec initialization calls", 
   assert.ok(
     !source.includes("OPENSPEC_PACKAGE"),
     "OPENSPEC_PACKAGE constant must be physically deleted from install.ts",
+  );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Req 5.1–5.5: RetiredAssetCleanup — planRetiredRemovals / removeRetiredFiles
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Req 5.1: hash 一致の退役ファイルは削除候補に含まれること
+test("planRetiredRemovals returns retired manifest keys that match RETIRED_MANIFEST_KEY_PATTERNS", () => {
+  const manifest = {
+    version: "1.0.0",
+    installedAt: "2026-01-01T00:00:00.000Z",
+    lang: "en" as const,
+    files: {
+      ".takt/workflows/cc-sdd-full.yaml": "abc",
+      ".takt/workflows/opsx-apply.yaml": "def",
+      ".takt/workflows/kiro-impl.yaml": "ghi",          // should NOT match
+      ".takt/facets/instructions/cc-sdd-bootstrap-steering.md": "jkl",
+      ".takt/facets/personas/opsx-implementer.md": "mno",
+      "scripts/opsx-cli.sh": "pqr",
+      "scripts/kiro-staged.mjs": "stu",                  // should NOT match
+    },
+  };
+  const result = planRetiredRemovals(manifest, "/tmp/irrelevant");
+  assert.ok(result.includes(".takt/workflows/cc-sdd-full.yaml"), "cc-sdd workflow must be planned");
+  assert.ok(result.includes(".takt/workflows/opsx-apply.yaml"), "opsx workflow must be planned");
+  assert.ok(result.includes(".takt/facets/instructions/cc-sdd-bootstrap-steering.md"), "cc-sdd facet must be planned");
+  assert.ok(result.includes(".takt/facets/personas/opsx-implementer.md"), "opsx facet must be planned");
+  assert.ok(result.includes("scripts/opsx-cli.sh"), "opsx-cli.sh must be planned");
+  assert.ok(!result.includes(".takt/workflows/kiro-impl.yaml"), "kiro-impl must NOT be planned");
+  assert.ok(!result.includes("scripts/kiro-staged.mjs"), "kiro-staged must NOT be planned");
+});
+
+// Req 5.5 (Invariant): パターン外のパス（openspec/、ユーザー追加物）は走査対象外
+test("planRetiredRemovals does NOT match openspec/ or user-owned paths", () => {
+  const manifest = {
+    version: "1.0.0",
+    installedAt: "2026-01-01T00:00:00.000Z",
+    lang: "en" as const,
+    files: {
+      "openspec/some-change.md": "abc",           // user-owned
+      "my-custom-script.sh": "def",               // user-owned
+      ".takt/my-custom.yaml": "ghi",              // user-owned (no cc-sdd/opsx prefix)
+      "openspec/cc-sdd-like.md": "jkl",          // must NOT match even if name looks retired
+    },
+  };
+  const result = planRetiredRemovals(manifest, "/tmp/irrelevant");
+  assert.deepEqual(result, [], "planRetiredRemovals must return [] for non-retired patterns");
+});
+
+// Req 5.3: fresh install（manifest null）では cleanup 候補はゼロ
+test("planRetiredRemovals returns [] when manifest is null (fresh install)", () => {
+  const result = planRetiredRemovals(null, "/tmp/irrelevant");
+  assert.deepEqual(result, [], "fresh install must produce no retired removal candidates");
+});
+
+// Req 5.1: removeRetiredFiles — hash 一致ファイルを削除し、空親ディレクトリを掃除すること
+test("removeRetiredFiles deletes hash-matching retired file and removes empty parent dir", () => {
+  const root = mkdtempSync(join(tmpdir(), "takt-cleanup-del-"));
+  try {
+    // セットアップ: 退役ファイルを配置
+    const retiredDir = join(root, ".takt", "workflows");
+    mkdirSync(retiredDir, { recursive: true });
+    const retiredFile = join(retiredDir, "cc-sdd-full.yaml");
+    const content = "retired-workflow-content";
+    writeFileSync(retiredFile, content, "utf-8");
+
+    const manifestKey = ".takt/workflows/cc-sdd-full.yaml";
+    const manifest = {
+      version: "1.0.0",
+      installedAt: "2026-01-01T00:00:00.000Z",
+      lang: "en" as const,
+      files: { [manifestKey]: sha256(content) },
+    };
+
+    removeRetiredFiles(root, manifest, msg);
+
+    // ファイルが削除されている
+    assert.ok(!existsSync(retiredFile), "retired file must be deleted when hash matches");
+    // 空になった親ディレクトリも削除されている
+    assert.ok(!existsSync(retiredDir), "empty parent dir must be removed");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Req 5.2: hash 不一致（カスタマイズ済み）は削除せず警告で残置すること
+test("removeRetiredFiles skips and warns customized files (hash mismatch)", () => {
+  const root = mkdtempSync(join(tmpdir(), "takt-cleanup-skip-"));
+  try {
+    const retiredDir = join(root, ".takt", "workflows");
+    mkdirSync(retiredDir, { recursive: true });
+    const retiredFile = join(retiredDir, "cc-sdd-full.yaml");
+    const originalContent = "original-retired-content";
+    const customizedContent = "user-modified-content";
+    writeFileSync(retiredFile, customizedContent, "utf-8"); // on-disk = customized
+
+    const manifestKey = ".takt/workflows/cc-sdd-full.yaml";
+    const manifest = {
+      version: "1.0.0",
+      installedAt: "2026-01-01T00:00:00.000Z",
+      lang: "en" as const,
+      files: { [manifestKey]: sha256(originalContent) }, // manifest records original hash
+    };
+
+    removeRetiredFiles(root, manifest, msg);
+
+    // カスタマイズ済みファイルは残置される
+    assert.ok(existsSync(retiredFile), "customized retired file must NOT be deleted");
+    assert.equal(readFileSync(retiredFile, "utf-8"), customizedContent, "file content must be unchanged");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Req 5.5 (Invariant): removeRetiredFiles は RETIRED パターン外のファイルに触れない
+test("removeRetiredFiles does NOT touch non-retired files even when manifest key differs", () => {
+  const root = mkdtempSync(join(tmpdir(), "takt-cleanup-notouch-"));
+  try {
+    const openspecDir = join(root, "openspec");
+    mkdirSync(openspecDir, { recursive: true });
+    const userFile = join(openspecDir, "my-change.md");
+    const kiroFile = join(root, ".takt", "workflows", "kiro-impl.yaml");
+    mkdirSync(join(root, ".takt", "workflows"), { recursive: true });
+    writeFileSync(userFile, "user-content", "utf-8");
+    writeFileSync(kiroFile, "kiro-content", "utf-8");
+
+    // manifest には kiro-impl と openspec のみ（退役パターンに一致しない）
+    const manifest = {
+      version: "1.0.0",
+      installedAt: "2026-01-01T00:00:00.000Z",
+      lang: "en" as const,
+      files: {
+        "openspec/my-change.md": sha256("user-content"),
+        ".takt/workflows/kiro-impl.yaml": sha256("kiro-content"),
+      },
+    };
+
+    removeRetiredFiles(root, manifest, msg);
+
+    assert.ok(existsSync(userFile), "openspec/ user file must NOT be touched");
+    assert.ok(existsSync(kiroFile), "kiro workflow must NOT be touched");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Req 5.5 (Invariant): removeLegacyOpsxScript が install.ts から削除されていること（一般化の確認）
+test("install.ts source does NOT contain removeLegacyOpsxScript (replaced by removeRetiredFiles)", () => {
+  const source = readFileSync(new URL("../src/install.ts", import.meta.url), "utf-8");
+  assert.ok(
+    !source.includes("removeLegacyOpsxScript"),
+    "removeLegacyOpsxScript must be removed and replaced by removeRetiredFiles",
   );
 });

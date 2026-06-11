@@ -22,9 +22,71 @@ const REPO = "j5ik2o/takt-sdd";
 const TARGET_DIR = ".takt";
 const PIECE_DIR = "workflows";
 const KIRO_STAGED_SCRIPT_INSTALL_PATH = "scripts/kiro-staged.mjs";
-const LEGACY_OPSX_SCRIPT_INSTALL_PATH = "scripts/opsx-cli.sh";
 
 const SDD_DEPENDENCY_ALLOWLIST = ["takt"] as const;
+
+/**
+ * Manifest key patterns for retired assets.
+ * Covers:
+ *   - .takt/workflows/(cc-sdd-|opsx-)*.yaml  (workflow yamls, both languages)
+ *   - .takt/facets/{type}/(cc-sdd-|opsx-)*   (modern layout facets, including nested subdirs)
+ *   - .takt/{type}/(cc-sdd-|opsx-)*          (legacy layout facets, including nested subdirs)
+ *   - scripts/opsx-cli.sh                     (legacy opsx helper script)
+ * Does NOT match: kiro-* workflows, openspec/, user-owned files.
+ */
+export const RETIRED_MANIFEST_KEY_PATTERNS: readonly RegExp[] = [
+  /^\.takt\/workflows\/(cc-sdd-|opsx-).*\.yaml$/,
+  /^\.takt\/(?:facets\/)?[a-z-]+\/(cc-sdd-|opsx-).*/,
+  /^scripts\/opsx-cli\.sh$/,
+] as const;
+
+/**
+ * Return the list of manifest keys that are candidates for retired-asset cleanup.
+ * Returns [] when manifest is null (fresh install — cleanup must not fire).
+ */
+export function planRetiredRemovals(manifest: Manifest | null, _cwd: string): readonly string[] {
+  if (manifest === null) return [];
+  return Object.keys(manifest.files).filter((key) =>
+    RETIRED_MANIFEST_KEY_PATTERNS.some((pattern) => pattern.test(key)),
+  );
+}
+
+/**
+ * Remove retired assets from disk.
+ * Generalizes the former bespoke legacy script removal to cover all RETIRED_MANIFEST_KEY_PATTERNS.
+ *
+ * For each candidate key:
+ *   - If the on-disk file hash matches the manifest record → delete + empty-parent cleanup + log.
+ *   - If hash differs (customized) → warn and leave in place (req 5.2).
+ *   - If the key is not in the manifest → skip (no record, nothing to clean).
+ */
+export function removeRetiredFiles(
+  cwd: string,
+  manifest: Manifest,
+  msg: ReturnType<typeof getMessages>,
+): void {
+  const candidates = planRetiredRemovals(manifest, cwd);
+  for (const key of candidates) {
+    const filePath = join(cwd, key);
+    if (!existsSync(filePath)) continue;
+
+    const recordedHash = manifest.files[key];
+    if (recordedHash === undefined) continue;
+
+    const currentHash = computeFileHash(filePath);
+    if (currentHash !== recordedHash) {
+      warn(msg.fileSkippedCustomized(key));
+      continue;
+    }
+
+    rmSync(filePath, { force: true });
+    const parentDir = dirname(filePath);
+    if (existsSync(parentDir) && readdirSync(parentDir).length === 0) {
+      rmSync(parentDir, { recursive: true, force: true });
+    }
+    info(msg.fileRemoved(key));
+  }
+}
 
 export function resolveSddDependencySet(pkg: {
   readonly dependencies?: Readonly<Record<string, string>>;
@@ -311,33 +373,6 @@ function syncDirectory(
   return syncRelativeFiles(srcBase, destBase, collectFiles(srcDir, srcBase), manifest, msg, cwd);
 }
 
-function removeLegacyOpsxScript(
-  cwd: string,
-  manifest: Manifest | null,
-  msg: ReturnType<typeof getMessages>,
-): void {
-  if (manifest === null) return;
-
-  const legacyScriptPath = join(cwd, LEGACY_OPSX_SCRIPT_INSTALL_PATH);
-  if (!existsSync(legacyScriptPath)) return;
-
-  const manifestKey = LEGACY_OPSX_SCRIPT_INSTALL_PATH;
-  const recordedHash = manifest.files[manifestKey];
-  if (recordedHash === undefined) return;
-
-  const currentHash = computeFileHash(legacyScriptPath);
-  if (currentHash !== recordedHash) {
-    warn(msg.fileSkippedCustomized(manifestKey));
-    return;
-  }
-
-  rmSync(legacyScriptPath, { force: true });
-  const legacyScriptDir = dirname(legacyScriptPath);
-  if (existsSync(legacyScriptDir) && readdirSync(legacyScriptDir).length === 0) {
-    rmSync(legacyScriptDir, { recursive: true, force: true });
-  }
-  info(msg.fileRemoved(manifestKey));
-}
 
 export async function installFromSource(options: CoreInstallOptions, source: InstallSource): Promise<void> {
   const msg = getMessages(options.lang);
@@ -394,6 +429,15 @@ export async function installFromSource(options: CoreInstallOptions, source: Ins
       console.log(msg.dryRunItem(KIRO_STAGED_SCRIPT_INSTALL_PATH));
     } else {
       errorExit(msg.requiredFileMissing(KIRO_STAGED_SCRIPT_INSTALL_PATH));
+    }
+    // Show retired-asset removal plan (update only; fresh install has no candidates)
+    const retiredPlan = planRetiredRemovals(manifest, options.cwd);
+    if (retiredPlan.length > 0) {
+      console.log("");
+      info("[dry-run] The following retired files would be removed:");
+      for (const key of retiredPlan) {
+        console.log(msg.dryRunItem(key));
+      }
     }
     console.log("");
     info(msg.dryRunSkipped);
@@ -510,7 +554,9 @@ export async function installFromSource(options: CoreInstallOptions, source: Ins
       info(msg.scriptsCreated);
     }
 
-    removeLegacyOpsxScript(options.cwd, manifest, msg);
+    if (isUpdate) {
+      removeRetiredFiles(options.cwd, manifest!, msg);
+    }
 
     const newManifest: Manifest = {
       version: source.version,

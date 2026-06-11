@@ -49,7 +49,7 @@
   - _Boundary:_ InstallCore
   - _Depends:_ 1.2
 
-- [ ] 5. update 時の退役資産 cleanup を一般化する
+- [x] 5. update 時の退役資産 cleanup を一般化する
   - 退役 manifest key パターンの静的定義と、hash 一致時のみ削除・不一致は警告 skip・空親ディレクトリ掃除の cleanup を、既存の opsx-cli.sh 個別削除前例を吸収する形で実装する
   - dry-run では削除予定一覧の表示のみ行い、削除・manifest 更新を行わない。fresh install（manifest なし）では発火しない
   - パターン外（openspec/ ディレクトリ・ユーザー追加物）に触れないことをテストで固定する
@@ -97,3 +97,4 @@
 - 2: 退役専用 facet の実数は en 70（workflow 68 + cc-sdd∧opsx のみ共有 2）/ ja 74（en ミラー + ja 固有 4 + 共有 2）。research.md の見積 59 は instructions 中心の概算だった。「未参照になった共有 facet」も要件 1.3 の削除対象（レビュー指摘で是正）
 - 2: installer の SDD_SCRIPTS / OPENSPEC_* / CC_SDD_* はタスク 4 まで残存（中間状態として正。タスク 1.2 の緩和により検証は green を維持）
 - 4: `isRecoverablePartialInstall` も削除（レビュー裁定 KEEP_REMOVAL）。緩和条件は `!existsSync(openspecConfigPath)` 専用で v2 では構造的に到達不能、plain force ガード（`!isUpdate && workflowsExist && !force`）は維持。`removeLegacyOpsxScript` は update 時に無条件呼び出しへ変更（manifest null ガードで fresh は no-op）— タスク 5 が `RETIRED_MANIFEST_KEY_PATTERNS` へ一般化する際の吸収対象
+- 5: `RETIRED_MANIFEST_KEY_PATTERNS` は 3 正規表現（workflow / 新旧 facet レイアウト / scripts/opsx-cli.sh）。パターン 2 は `.takt/workflows/cc-sdd-*.yaml` にも重複マッチするが冪等で無害（kiro・共有 facet・openspec/ への過剰マッチなしを機械検証済み）。`removeLegacyOpsxScript` は吸収済みで installer の cleanup 入口はタスク 7 のクロスチェック対象が `RETIRED_MANIFEST_KEY_PATTERNS` になった
