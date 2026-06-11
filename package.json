@@ -28,11 +28,7 @@
     "LICENSE-APACHE"
   ],
   "dependencies": {
-    "@fission-ai/openspec": "1.4.1",
     "takt": "0.43.0"
-  },
-  "devDependencies": {
-    "cc-sdd": "3.0.2"
   },
   "scripts": {
     "build:installer": "npm --prefix installer ci && npm --prefix installer run build",
@@ -74,21 +70,6 @@
     "test:kiro-iterative-implementation-workflow": "node --test tests/kiro-iterative-implementation-workflow.test.mjs",
     "test:kiro-ai-quality-gate-runtime-smoke": "node --test tests/kiro-ai-quality-gate-runtime-smoke.test.mjs",
     "test:kiro-discovery-ai-quality-gate-runtime-smoke": "node --test --test-name-pattern \"kiro discovery runtime wiring\" tests/kiro-ai-quality-gate-runtime-smoke.test.mjs",
-    "test:kiro-real-provider-smoke": "node --test tests/kiro-real-provider-smoke.test.mjs",
-    "cc-sdd:full": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-full -t",
-    "cc-sdd:requirements": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-requirements -t",
-    "cc-sdd:validate-gap": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-validate-gap -t",
-    "cc-sdd:design": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-design -t",
-    "cc-sdd:validate-design": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-validate-design -t",
-    "cc-sdd:tasks": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-tasks -t",
-    "cc-sdd:impl": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-impl -t",
-    "cc-sdd:validate-impl": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-validate-impl -t",
-    "cc-sdd:steering": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-steering -t",
-    "cc-sdd:steering-custom": "scripts/takt.sh --pipeline --skip-git -w cc-sdd-steering-custom -t",
-    "opsx:full": "scripts/takt.sh --pipeline --skip-git -w opsx-full -t",
-    "opsx:propose": "scripts/takt.sh --pipeline --skip-git -w opsx-propose -t",
-    "opsx:apply": "scripts/takt.sh --pipeline --skip-git -w opsx-apply -t",
-    "opsx:archive": "scripts/takt.sh --pipeline --skip-git -w opsx-archive -t",
-    "opsx:explore": "scripts/takt.sh --skip-git -w opsx-explore"
+    "test:kiro-real-provider-smoke": "node --test tests/kiro-real-provider-smoke.test.mjs"
   }
 }

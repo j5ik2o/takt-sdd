@@ -58,7 +58,7 @@
   - _Boundary:_ RetiredAssetCleanup
   - _Depends:_ 4
 
-- [ ] 6. root package の scripts と依存宣言を退役する
+- [x] 6. root package の scripts と依存宣言を退役する
   - cc-sdd:*（10）/ opsx:*（5）npm scripts を削除し、kiro:* scripts と files allowlist は無変更とする
   - OpenSpec / cc-sdd の依存宣言を削除し lockfile を同期する（root 依存は takt のみになる）
   - 退役 scripts のみが参照する補助 script が無いこと（takt.sh は kiro 実行経路の現役依存として維持）を確認する
@@ -98,3 +98,4 @@
 - 2: installer の SDD_SCRIPTS / OPENSPEC_* / CC_SDD_* はタスク 4 まで残存（中間状態として正。タスク 1.2 の緩和により検証は green を維持）
 - 4: `isRecoverablePartialInstall` も削除（レビュー裁定 KEEP_REMOVAL）。緩和条件は `!existsSync(openspecConfigPath)` 専用で v2 では構造的に到達不能、plain force ガード（`!isUpdate && workflowsExist && !force`）は維持。`removeLegacyOpsxScript` は update 時に無条件呼び出しへ変更（manifest null ガードで fresh は no-op）— タスク 5 が `RETIRED_MANIFEST_KEY_PATTERNS` へ一般化する際の吸収対象
 - 5: `RETIRED_MANIFEST_KEY_PATTERNS` は 3 正規表現（workflow / 新旧 facet レイアウト / scripts/opsx-cli.sh）。パターン 2 は `.takt/workflows/cc-sdd-*.yaml` にも重複マッチするが冪等で無害（kiro・共有 facet・openspec/ への過剰マッチなしを機械検証済み）。`removeLegacyOpsxScript` は吸収済みで installer の cleanup 入口はタスク 7 のクロスチェック対象が `RETIRED_MANIFEST_KEY_PATTERNS` になった
+- 6: devDependencies は cc-sdd が唯一の entry だったため block ごと削除。lockfile は 917 行削除で完全同期・npm install 冪等。`installer/node_modules/@fission-ai/openspec/` は installer 配下の vendored subtree（untracked）で root lockfile と無関係 — レビューで一度この path との混同による誤 REJECT があり、diff 方向の反証提示で撤回された
