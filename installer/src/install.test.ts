@@ -406,3 +406,14 @@ test("install.ts source does NOT contain removeLegacyOpsxScript (replaced by rem
     "removeLegacyOpsxScript must be removed and replaced by removeRetiredFiles",
   );
 });
+
+// PR #99 review (Devin): install-time usage guidance must not reference retired surfaces
+test("usageExamples contain no retired cc-sdd:/opsx:/OpenSpec references (en/ja)", () => {
+  for (const lang of ["en", "ja"] as const) {
+    const m = getMessages(lang);
+    assert.ok(!m.usageExamples.includes("cc-sdd:"), `${lang} usageExamples must not mention cc-sdd: scripts`);
+    assert.ok(!m.usageExamples.includes("opsx:"), `${lang} usageExamples must not mention opsx: scripts`);
+    assert.ok(!/openspec/i.test(m.usageExamples), `${lang} usageExamples must not mention OpenSpec`);
+    assert.ok(m.usageExamples.includes("kiro:"), `${lang} usageExamples must keep kiro:* guidance`);
+  }
+});
