@@ -76,7 +76,7 @@
   - _Boundary:_ SurfaceValidatorAlignment, PackageArtifactValidator
   - _Depends:_ 2, 5, 6
 
-- [ ] 8. ドキュメントを退役後 surface へ更新する
+- [x] 8. ドキュメントを退役後 surface へ更新する
   - README / README.ja の Global CLI 節を kiro 12 のみへ更新し、cc-sdd-*（退役済み）と opsx-*（退役済み・将来再提供予定）、update 時の後始末挙動、project に残った旧 scripts の手動削除案内を日英で意味的に揃えて記載する
   - 導入手順から OpenSpec / cc-sdd の初期化・依存の記述を除去し、cc-sdd 移行表を npm scripts 互換終了の明記へ整理する。COMMON は command surface 整合の最小更新とする
   - 観測可能な完了: README / README.ja / COMMON に退役の記載があり、opsx を supported とする記述・OpenSpec / cc-sdd init の手順記述が存在しない
@@ -100,3 +100,4 @@
 - 5: `RETIRED_MANIFEST_KEY_PATTERNS` は 3 正規表現（workflow / 新旧 facet レイアウト / scripts/opsx-cli.sh）。パターン 2 は `.takt/workflows/cc-sdd-*.yaml` にも重複マッチするが冪等で無害（kiro・共有 facet・openspec/ への過剰マッチなしを機械検証済み）。`removeLegacyOpsxScript` は吸収済みで installer の cleanup 入口はタスク 7 のクロスチェック対象が `RETIRED_MANIFEST_KEY_PATTERNS` になった
 - 6: devDependencies は cc-sdd が唯一の entry だったため block ごと削除。lockfile は 917 行削除で完全同期・npm install 冪等。`installer/node_modules/@fission-ai/openspec/` は installer 配下の vendored subtree（untracked）で root lockfile と無関係 — レビューで一度この path との混同による誤 REJECT があり、diff 方向の反証提示で撤回された
 - 7: クロスチェックは `INSTALLER_RETIRED_PATTERNS` の局所複製方式（設計が認めた二重定義 + 検証層整合固定）。初回レビューで「export のみで main() 未配線」の REJECT → main() で `allErrors` へ集約 + source-grep の wiring assertion テストで是正（installer テストの source 検査方式と整合）。新規検証関数は配線テストまで含めて初めて完了
+- 8: ドキュメントの退役記載は CLI 実メッセージ（main.mjs:228/234）を逐語引用し、catalog 12 名・install.ts の後始末挙動と機械突き合わせで一致を確認。README 日英は 383 行で意味的等価。COMMON は最小更新（dry-run 詳細は README 側が所有）
