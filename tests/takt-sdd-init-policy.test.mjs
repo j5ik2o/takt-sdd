@@ -12,9 +12,8 @@
  *
  * Network constraints:
  * - Dry-run: fully network-free (real core does no writes/spawns).
- * - Non-dry-run: openspec init is skipped if openspec/config.yaml exists (pre-seeded).
- * - Non-dry-run cc-sdd: pre-seeded fixture with local cc-sdd node_modules to
- *   avoid registry access. Pre-seeding copies cc-sdd from REPO_ROOT/node_modules.
+ * - Non-dry-run: fully offline — no openspec/cc-sdd init is executed.
+ *   Real-core fresh init completes without any external process spawning.
  */
 
 import test from "node:test";
@@ -27,8 +26,6 @@ import {
   readdirSync,
   rmSync,
   writeFileSync,
-  cpSync,
-  symlinkSync,
 } from "node:fs";
 import { join } from "node:path";
 import os from "node:os";
@@ -75,42 +72,6 @@ function walkDir(dir, base) {
     }
   }
   return results;
-}
-
-/**
- * Pre-seed the fixture so openspec init is skipped (checks for existing config).
- * @param {string} targetDir
- */
-function seedOpenspecConfig(targetDir) {
-  const configDir = join(targetDir, "openspec");
-  mkdirSync(configDir, { recursive: true });
-  writeFileSync(join(configDir, "config.yaml"), "version: 1\ntools: none\n", "utf-8");
-}
-
-/**
- * Pre-seed local cc-sdd node_modules so npm exec resolves without registry.
- * Copies cc-sdd package from REPO_ROOT/node_modules/cc-sdd and creates a symlink
- * for the .bin/cc-sdd entry (symlink is required so the bin script's relative
- * imports resolve correctly relative to the package dist/ directory).
- * @param {string} targetDir
- */
-function seedLocalCcSddSync(targetDir) {
-  const srcCcSdd = join(REPO_ROOT, "node_modules", "cc-sdd");
-  if (!existsSync(srcCcSdd)) return; // skip if not installed at repo root
-
-  const destModules = join(targetDir, "node_modules");
-  const destCcSdd = join(destModules, "cc-sdd");
-  const destBinDir = join(destModules, ".bin");
-
-  mkdirSync(destBinDir, { recursive: true });
-  cpSync(srcCcSdd, destCcSdd, { recursive: true });
-
-  // Create symlink matching npm's structure: .bin/cc-sdd -> ../cc-sdd/dist/cli.js
-  // The symlink is required so that dist/cli.js can resolve './index.js' correctly.
-  const binLink = join(destBinDir, "cc-sdd");
-  if (!existsSync(binLink)) {
-    symlinkSync("../cc-sdd/dist/cli.js", binLink);
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -471,9 +432,6 @@ test("real-core: fresh init creates .takt/.manifest.json with correct lang and v
   const { runInit } = await getInitAdapter();
   const tmpDir = makeTmp("real-init-fresh-");
   try {
-    seedOpenspecConfig(tmpDir);
-    seedLocalCcSddSync(tmpDir);
-
     const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
     const options = { targetDir: tmpDir, lang: "en", force: false, dryRun: false };
 
@@ -489,6 +447,24 @@ test("real-core: fresh init creates .takt/.manifest.json with correct lang and v
       "manifest.version must equal root package.json version",
     );
     assert.ok(typeof manifest.files === "object", "manifest.files must be an object");
+
+    // Req 4.1, 4.2: fresh init must NOT install openspec or cc-sdd.
+    // Success of this test WITHOUT any seeding proves no external process is spawned
+    // (cc-sdd exec would fail without network/local node_modules; openspec init would require the package).
+    const pkgPath = join(tmpDir, "package.json");
+    if (existsSync(pkgPath)) {
+      const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+      const devDeps = pkg.devDependencies ?? {};
+      const deps = pkg.dependencies ?? {};
+      assert.equal(devDeps["@fission-ai/openspec"], undefined, "openspec must NOT be in devDependencies after init");
+      assert.equal(devDeps["cc-sdd"], undefined, "cc-sdd must NOT be in devDependencies after init");
+      assert.equal(deps["@fission-ai/openspec"], undefined, "openspec must NOT be in dependencies after init");
+      assert.equal(deps["cc-sdd"], undefined, "cc-sdd must NOT be in dependencies after init");
+      const scripts = pkg.scripts ?? {};
+      const scriptKeys = Object.keys(scripts);
+      const nonKiroScripts = scriptKeys.filter((k) => !k.startsWith("kiro:"));
+      assert.deepEqual(nonKiroScripts, [], `scripts must be kiro:* only, found non-kiro: ${nonKiroScripts.join(", ")}`);
+    }
   } finally {
     rmSync(tmpDir, { recursive: true, force: true });
   }
@@ -498,9 +474,6 @@ test("real-core: fresh init places .takt/workflows/ yaml assets", async () => {
   const { runInit } = await getInitAdapter();
   const tmpDir = makeTmp("real-init-assets-");
   try {
-    seedOpenspecConfig(tmpDir);
-    seedLocalCcSddSync(tmpDir);
-
     const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
     const options = { targetDir: tmpDir, lang: "en", force: false, dryRun: false };
 
@@ -519,9 +492,6 @@ test("real-core: customized file is NOT overwritten on update (skip)", async () 
   const { runInit } = await getInitAdapter();
   const tmpDir = makeTmp("real-init-skip-");
   try {
-    seedOpenspecConfig(tmpDir);
-    seedLocalCcSddSync(tmpDir);
-
     const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
     const options = { targetDir: tmpDir, lang: "en", force: false, dryRun: false };
 
@@ -552,9 +522,6 @@ test("real-core: --force allows re-install when .takt/ exists but no manifest (n
   const { runInit } = await getInitAdapter();
   const tmpDir = makeTmp("real-init-force-");
   try {
-    seedOpenspecConfig(tmpDir);
-    seedLocalCcSddSync(tmpDir);
-
     // Pre-create .takt/workflows/ without a manifest — simulates a partial/corrupted state
     // Without --force, installer would error: "already exists, run --force"
     mkdirSync(join(tmpDir, ".takt", "workflows"), { recursive: true });
@@ -598,9 +565,6 @@ test("real-core: config.yaml is NOT created after fresh init", async () => {
   const { runInit } = await getInitAdapter();
   const tmpDir = makeTmp("real-init-no-config-");
   try {
-    seedOpenspecConfig(tmpDir);
-    seedLocalCcSddSync(tmpDir);
-
     const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
     const options = { targetDir: tmpDir, lang: "en", force: false, dryRun: false };
 
@@ -619,9 +583,6 @@ test("real-core: config.yaml ja preference is reflected in manifest.lang", async
   const { runInit } = await getInitAdapter();
   const tmpDir = makeTmp("real-init-config-lang-");
   try {
-    seedOpenspecConfig(tmpDir);
-    seedLocalCcSddSync(tmpDir);
-
     mkdirSync(join(tmpDir, ".takt"), { recursive: true });
     writeFileSync(join(tmpDir, ".takt", "config.yaml"), "language: ja\n", "utf-8");
 

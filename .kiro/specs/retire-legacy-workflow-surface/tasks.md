@@ -39,7 +39,7 @@
   - _Boundary:_ WorkflowRunner
   - _Depends:_ 1.2
 
-- [ ] 4. installer の init 退役と依存伝播の縮小を行う
+- [x] 4. installer の init 退役と依存伝播の縮小を行う
   - 伝播 scripts を kiro:* のみへ縮小し、OpenSpec / cc-sdd の初期化（関数・定数・opsx-cli.sh 導入分岐）を物理削除する
   - 依存伝播 allowlist を takt のみへ縮小する（既存 merge 意味論=不足のみ追加・ユーザー既存物の維持と、install() → installFromSource の委譲構造は無変更）
   - init 統合テストの cc-sdd local 解決シーディングを撤去し、外部 process 不起動を固定する
@@ -96,3 +96,4 @@
 
 - 2: 退役専用 facet の実数は en 70（workflow 68 + cc-sdd∧opsx のみ共有 2）/ ja 74（en ミラー + ja 固有 4 + 共有 2）。research.md の見積 59 は instructions 中心の概算だった。「未参照になった共有 facet」も要件 1.3 の削除対象（レビュー指摘で是正）
 - 2: installer の SDD_SCRIPTS / OPENSPEC_* / CC_SDD_* はタスク 4 まで残存（中間状態として正。タスク 1.2 の緩和により検証は green を維持）
+- 4: `isRecoverablePartialInstall` も削除（レビュー裁定 KEEP_REMOVAL）。緩和条件は `!existsSync(openspecConfigPath)` 専用で v2 では構造的に到達不能、plain force ガード（`!isUpdate && workflowsExist && !force`）は維持。`removeLegacyOpsxScript` は update 時に無条件呼び出しへ変更（manifest null ガードで fresh は no-op）— タスク 5 が `RETIRED_MANIFEST_KEY_PATTERNS` へ一般化する際の吸収対象
