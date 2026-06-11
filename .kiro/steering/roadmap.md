@@ -39,3 +39,10 @@ takt-sdd は、cc-sdd v3 由来の Kiro-style SDD を、プロンプト手順で
 - [x] kiro-spec-generation-workflows -- `kiro-spec-init`、requirements/design/tasks/quick 系の spec 生成 workflow を実装する。 Dependencies: kiro-shared-workflow-contracts
 - [x] kiro-discovery-batch-workflows -- `kiro-discovery`、`kiro-spec-batch`、cross-spec review を実装する。 Dependencies: kiro-spec-generation-workflows
 - [x] kiro-iterative-implementation-workflow -- `kiro-impl` と内部 review/debug/verify gate を実装する。 Dependencies: kiro-status-validation-workflows, kiro-spec-generation-workflows
+- [x] takt-sdd-global-cli -- `takt-sdd` グローバル CLI（init / kiro command / run）と package artifact 検証を整備する。 Dependencies: kiro-iterative-implementation-workflow
+- [x] retire-legacy-workflow-surface -- cc-sdd-* / opsx-* を退役し kiro-* のみの v2.0.0 surface にする。update 後始末と不在強制検証を含む。 Dependencies: takt-sdd-global-cli
+
+## Status Note (2026-06-11)
+
+- v2.0.0 で `cc-sdd-*` / `opsx-*` workflow と `cc-sdd:*` / `opsx:*` scripts は退役済み。Constraints の「OpenSpec workflow は分離したまま維持します」は退役により失効した（履歴として残置）。
+- OpenSpec（opsx）workflow の再提供は後続 spec が所有する（未着手）。
