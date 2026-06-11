@@ -4,7 +4,7 @@
   "description": "Kiro-compatible TAKT workflow surface for SDD; kiro-* workflows only (cc-sdd-* and opsx-* retired in v2.0.0)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/j5ik2o/takt-sdd"
+    "url": "git+https://github.com/j5ik2o/takt-sdd.git"
   },
   "license": "(MIT OR Apache-2.0)",
   "engines": {
