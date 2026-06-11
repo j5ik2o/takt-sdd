@@ -185,12 +185,17 @@ const FORBIDDEN_PATTERNS = [
     },
   },
   // Retired cc-sdd-*/opsx-* facets must not appear in the artifact (req 6.3).
+  // The retired prefix may be on any path segment, not just the filename —
+  // v1.x shipped nested dirs like facets/knowledge/cc-sdd-steering-template-files/
+  // whose contained files have neutral basenames.
   {
-    label: ".takt/{en,ja}/facets/**/(cc-sdd-|opsx-)* (retired cc-sdd/opsx facets)",
+    label: ".takt/{en,ja}/facets/**/(cc-sdd-|opsx-)* (retired cc-sdd/opsx facets, any path segment)",
     test: (/** @type {string} */ f) => {
-      if (!f.startsWith(".takt/en/facets/") && !f.startsWith(".takt/ja/facets/")) return false;
-      const base = f.split("/").pop() ?? "";
-      return base.startsWith("cc-sdd-") || base.startsWith("opsx-");
+      const m = f.match(/^\.takt\/(en|ja)\/facets\/(.+)$/);
+      if (!m) return false;
+      return m[2]
+        .split("/")
+        .some((seg) => seg.startsWith("cc-sdd-") || seg.startsWith("opsx-"));
     },
   },
   // Retired exclusive facets (prefix-external names) must not appear in the artifact (req 6.3).

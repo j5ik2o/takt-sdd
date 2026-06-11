@@ -448,6 +448,34 @@ test("validateFileList: retired opsx-* facet is forbidden", () => {
   );
 });
 
+test("validateFileList: neutral-basename file nested under retired-prefixed facet dir is forbidden", () => {
+  // v1.x shipped e.g. facets/knowledge/cc-sdd-steering-template-files/product.md —
+  // the retired prefix is on the directory, not the filename (req 6.3).
+  const files = [
+    ...MINIMAL_VALID_FILES,
+    ".takt/en/facets/knowledge/cc-sdd-steering-template-files/product.md",
+  ];
+  const errors = validateFileList(files);
+  assert.ok(errors.length > 0, "Expected forbidden file error for nested retired-dir facet");
+  assert.ok(
+    errors.some((e) => e.includes("cc-sdd-steering-template-files/product.md") && e.includes("FORBIDDEN")),
+    `Errors: ${errors.join("; ")}`,
+  );
+});
+
+test("validateFileList: nested file under opsx-prefixed facet dir is forbidden (ja)", () => {
+  const files = [
+    ...MINIMAL_VALID_FILES,
+    ".takt/ja/facets/templates/opsx-proposal-files/outline.md",
+  ];
+  const errors = validateFileList(files);
+  assert.ok(errors.length > 0, "Expected forbidden file error for nested opsx-dir facet");
+  assert.ok(
+    errors.some((e) => e.includes("opsx-proposal-files/outline.md") && e.includes("FORBIDDEN")),
+    `Errors: ${errors.join("; ")}`,
+  );
+});
+
 test("validateFileList: retired exclusive facet (ai-review-fix-loop-judge.md) is forbidden", () => {
   // This facet had no cc-sdd/opsx prefix but was exclusively used by retired workflows
   const files = [...MINIMAL_VALID_FILES, ".takt/en/facets/instructions/ai-review-fix-loop-judge.md"];
