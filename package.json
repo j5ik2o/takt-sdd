@@ -28,7 +28,7 @@
     "LICENSE-APACHE"
   ],
   "dependencies": {
-    "takt": "0.43.0"
+    "takt": "0.45.0"
   },
   "scripts": {
     "build:installer": "npm --prefix installer ci && npm --prefix installer run build",
