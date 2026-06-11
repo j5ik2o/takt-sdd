@@ -30,11 +30,11 @@ import { SUPPORTED_WORKFLOWS, EXCLUDED_WORKFLOWS } from "../cli/command-catalog.
 
 const defaultRepoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-// All catalog workflow names: supported ∪ legacy ∪ internal (30 total).
+// All catalog workflow names: supported ∪ internal (15 total).
+// Retired workflows (cc-sdd-* and opsx-*) are NOT bundled and must NOT appear.
 // Every entry must have both en and ja yaml files in the package.
 const ALL_CATALOG_WORKFLOWS = [
   ...SUPPORTED_WORKFLOWS,
-  ...EXCLUDED_WORKFLOWS.legacy,
   ...EXCLUDED_WORKFLOWS.internal,
 ];
 
@@ -223,40 +223,17 @@ export function validateFileList(files) {
  * Validate version consistency between compiled installer constants and
  * root package.json.
  *
- * @param {{ OPENSPEC_VERSION: string; CC_SDD_VERSION: string }} constants
- *   Version constants exported from installer/dist/install.js.
- * @param {{ dependencies?: Record<string, string>; devDependencies?: Record<string, string> }} pkg
+ * @param {Record<string, string>} constants
+ *   Version constants exported from installer/dist/install.js (unused post-v2).
+ * @param {{ dependencies?: Record<string, string> }} pkg
  *   Parsed root package.json object.
  * @returns {string[]} Array of error messages; empty means all checks passed.
  */
 export function validateVersionConsistency(constants, pkg) {
   const errors = [];
   const deps = pkg.dependencies ?? {};
-  const devDeps = pkg.devDependencies ?? {};
 
-  // 1. OPENSPEC_VERSION must match dependencies["@fission-ai/openspec"]
-  const pkgOpenspec = deps["@fission-ai/openspec"];
-  if (pkgOpenspec === undefined) {
-    errors.push(
-      `VERSION_MISMATCH: @fission-ai/openspec not found in package.json dependencies`,
-    );
-  } else if (constants.OPENSPEC_VERSION !== pkgOpenspec) {
-    errors.push(
-      `VERSION_MISMATCH: OPENSPEC_VERSION=${constants.OPENSPEC_VERSION} but package.json dependencies["@fission-ai/openspec"]=${pkgOpenspec}`,
-    );
-  }
-
-  // 2. CC_SDD_VERSION must match devDependencies["cc-sdd"]
-  const pkgCcSdd = devDeps["cc-sdd"];
-  if (pkgCcSdd === undefined) {
-    errors.push(`VERSION_MISMATCH: cc-sdd not found in package.json devDependencies`);
-  } else if (constants.CC_SDD_VERSION !== pkgCcSdd) {
-    errors.push(
-      `VERSION_MISMATCH: CC_SDD_VERSION=${constants.CC_SDD_VERSION} but package.json devDependencies["cc-sdd"]=${pkgCcSdd}`,
-    );
-  }
-
-  // 3. dependencies["takt"] must be an exact version pin (no ^, ~, >=, *, latest, etc.)
+  // dependencies["takt"] must be an exact version pin (no ^, ~, >=, *, latest, etc.)
   const taktVersion = deps["takt"];
   if (taktVersion === undefined) {
     errors.push(`VERSION_MISMATCH: takt not found in package.json dependencies`);
@@ -320,16 +297,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   allErrors.push(...fileErrors);
 
   // --- Version consistency validation ---
-  // Import OPENSPEC_VERSION and CC_SDD_VERSION from compiled install core.
-  const { OPENSPEC_VERSION, CC_SDD_VERSION } = await import(
-    join(repoRoot, "installer", "dist", "install.js")
-  );
+  // Import constants from compiled install core (post-v2: only takt pin is checked).
+  const constants = await import(join(repoRoot, "installer", "dist", "install.js"));
 
   const rootPkg = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"));
-  const versionErrors = validateVersionConsistency(
-    { OPENSPEC_VERSION, CC_SDD_VERSION },
-    rootPkg,
-  );
+  const versionErrors = validateVersionConsistency(constants, rootPkg);
   allErrors.push(...versionErrors);
 
   // --- Report ---

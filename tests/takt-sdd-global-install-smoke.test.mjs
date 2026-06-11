@@ -210,7 +210,7 @@ test("takt-sdd global install smoke", { skip: shouldSkip }, async (t) => {
   // --------------------------------------------------------------------------
   // Test 1: --help exits 0 and lists expected surface (req 8.2, 1.1)
   // --------------------------------------------------------------------------
-  await t.test("takt-sdd --help exits 0 and shows init, kiro-*, opsx-*, run", () => {
+  await t.test("takt-sdd --help exits 0 and shows init, kiro-*, run (no opsx-*)", () => {
     const result = runCli(["--help"]);
     assert.equal(
       result.status,
@@ -220,7 +220,7 @@ test("takt-sdd global install smoke", { skip: shouldSkip }, async (t) => {
     const output = result.stdout + result.stderr;
     assert.match(output, /\binit\b/, "--help must mention 'init'");
     assert.match(output, /kiro-/, "--help must mention at least one kiro-* command");
-    assert.match(output, /opsx-/, "--help must mention at least one opsx-* command");
+    assert.ok(!(output.match(/opsx-/)), "--help must NOT mention any opsx-* command");
     assert.match(output, /\brun\b/, "--help must mention 'run'");
   });
 
@@ -297,9 +297,9 @@ test("takt-sdd global install smoke", { skip: shouldSkip }, async (t) => {
   );
 
   // --------------------------------------------------------------------------
-  // Test 5a: takt-sdd cc-sdd-full → non-0 exit + unsupported message (req 8.4)
+  // Test 5a: takt-sdd cc-sdd-full → non-0 exit + v2.0.0 retirement message (req 2.3, 8.4)
   // --------------------------------------------------------------------------
-  await t.test("takt-sdd cc-sdd-full exits non-0 with unsupported message", () => {
+  await t.test("takt-sdd cc-sdd-full exits non-0 with v2.0.0 retirement message", () => {
     const result = runCli(["cc-sdd-full"]);
     assert.notEqual(
       result.status,
@@ -309,15 +309,15 @@ test("takt-sdd global install smoke", { skip: shouldSkip }, async (t) => {
     const output = result.stdout + result.stderr;
     assert.match(
       output,
-      /unsupported|not supported|legacy/i,
-      `Expected 'unsupported'/'legacy' message for cc-sdd-full, got:\n${output}`,
+      /v2\.0\.0|retired/i,
+      `Expected v2.0.0 retirement message for cc-sdd-full, got:\n${output}`,
     );
   });
 
   // --------------------------------------------------------------------------
-  // Test 5b: takt-sdd run cc-sdd-full → non-0 exit + unsupported message (req 8.4)
+  // Test 5b: takt-sdd run cc-sdd-full → non-0 exit + v2.0.0 retirement message (req 2.3, 8.4)
   // --------------------------------------------------------------------------
-  await t.test("takt-sdd run cc-sdd-full exits non-0 with unsupported message", () => {
+  await t.test("takt-sdd run cc-sdd-full exits non-0 with v2.0.0 retirement message", () => {
     const result = runCli(["run", "cc-sdd-full"]);
     assert.notEqual(
       result.status,
@@ -327,9 +327,39 @@ test("takt-sdd global install smoke", { skip: shouldSkip }, async (t) => {
     const output = result.stdout + result.stderr;
     assert.match(
       output,
-      /unsupported|not supported|legacy/i,
-      `Expected 'unsupported'/'legacy' message for run cc-sdd-full, got:\n${output}`,
+      /v2\.0\.0|retired/i,
+      `Expected v2.0.0 retirement message for run cc-sdd-full, got:\n${output}`,
     );
+  });
+
+  // --------------------------------------------------------------------------
+  // Test 5c: takt-sdd opsx-full → non-0 exit + retirement + future re-provision (req 2.4, 8.4)
+  // --------------------------------------------------------------------------
+  await t.test("takt-sdd opsx-full exits non-0 with retirement + future re-provision message", () => {
+    const result = runCli(["opsx-full"]);
+    assert.notEqual(
+      result.status,
+      0,
+      `Expected non-0 for opsx-full, got 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+    );
+    const output = result.stdout + result.stderr;
+    assert.match(output, /retired/i, `Expected 'retired' for opsx-full, got:\n${output}`);
+    assert.match(output, /future|re-provid/i, `Expected future re-provision for opsx-full, got:\n${output}`);
+  });
+
+  // --------------------------------------------------------------------------
+  // Test 5d: takt-sdd run opsx-full → non-0 exit + retirement + future re-provision (req 2.4, 8.4)
+  // --------------------------------------------------------------------------
+  await t.test("takt-sdd run opsx-full exits non-0 with retirement + future re-provision message", () => {
+    const result = runCli(["run", "opsx-full"]);
+    assert.notEqual(
+      result.status,
+      0,
+      `Expected non-0 for run opsx-full, got 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+    );
+    const output = result.stdout + result.stderr;
+    assert.match(output, /retired/i, `Expected 'retired' for run opsx-full, got:\n${output}`);
+    assert.match(output, /future|re-provid/i, `Expected future re-provision for run opsx-full, got:\n${output}`);
   });
 
   // --------------------------------------------------------------------------

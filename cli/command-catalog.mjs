@@ -2,8 +2,8 @@
  * cli/command-catalog.mjs
  *
  * Single source of truth for the public command catalog of the takt-sdd global CLI.
- * Defines SUPPORTED_WORKFLOWS, EXCLUDED_WORKFLOWS, classification predicates,
- * and help text generation derived from catalog constants.
+ * Defines SUPPORTED_WORKFLOWS, EXCLUDED_WORKFLOWS, RETIRED_WORKFLOWS,
+ * classification predicates, and help text generation derived from catalog constants.
  *
  * @module command-catalog
  */
@@ -11,10 +11,9 @@
 /**
  * Statically-defined set of supported workflow names exposed by the global CLI.
  * - kiro (12 entries)
- * - opsx (5 entries)
- * Total: 17 entries.
+ * Total: 12 entries.
  *
- * Invariant: no entry starts with "cc-sdd-" (requirement 5.7).
+ * Invariant: no entry starts with "cc-sdd-" or "opsx-".
  *
  * @type {readonly string[]}
  */
@@ -32,33 +31,46 @@ export const SUPPORTED_WORKFLOWS = Object.freeze([
   "kiro-validate-gap",
   "kiro-validate-design",
   "kiro-validate-impl",
-  // opsx workflows (5)
-  "opsx-propose",
-  "opsx-apply",
-  "opsx-archive",
-  "opsx-explore",
-  "opsx-full",
 ]);
 
 /**
- * Classification of workflow assets that are bundled in the package but NOT
- * exposed as global CLI commands.
+ * Classification of workflow assets that are NOT exposed as global CLI commands
+ * and are NOT bundled in the package (internal only).
  *
- * - legacy: cc-sdd-* workflows (10 entries) — rejected with an explicit error
- *   when invoked via the global CLI (requirement 5.4, 5.7).
  * - internal: AI quality gate workflows (3 entries) — used internally by other
  *   workflows, not intended for direct user invocation.
  *
  * Every .takt/{en,ja}/workflows/*.yaml basename must appear in either
- * SUPPORTED_WORKFLOWS or one of these excluded categories. Unclassified assets
+ * SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.internal. Unclassified assets
  * cause drift tests to fail, forcing an explicit classification decision on review.
  *
  * Note: kiro-steering and kiro-steering-custom have no workflow assets — they are
  * staged surface, not bundled, so they belong in neither list.
  *
- * @type {Readonly<Record<"legacy" | "internal", readonly string[]>>}
+ * @type {Readonly<Record<"internal", readonly string[]>>}
  */
 export const EXCLUDED_WORKFLOWS = Object.freeze({
+  internal: Object.freeze([
+    "kiro-ai-quality-gate",
+    "kiro-discovery-ai-quality-gate",
+    "kiro-spec-ai-quality-gate",
+  ]),
+});
+
+/**
+ * Retired workflow names, grouped by retirement reason.
+ *
+ * - legacy: cc-sdd-* workflows (10 entries) — retired in v2.0.0; rejected with
+ *   an explicit error when invoked via the global CLI.
+ * - opsx: opsx-* workflows (5 entries) — retired; will be re-provided in a
+ *   future release.
+ *
+ * These workflows are NOT bundled in the package and must not appear in
+ * .takt/{en,ja}/workflows/.
+ *
+ * @type {Readonly<Record<"legacy" | "opsx", readonly string[]>>}
+ */
+export const RETIRED_WORKFLOWS = Object.freeze({
   legacy: Object.freeze([
     "cc-sdd-design",
     "cc-sdd-full",
@@ -71,14 +83,18 @@ export const EXCLUDED_WORKFLOWS = Object.freeze({
     "cc-sdd-validate-gap",
     "cc-sdd-validate-impl",
   ]),
-  internal: Object.freeze([
-    "kiro-ai-quality-gate",
-    "kiro-discovery-ai-quality-gate",
-    "kiro-spec-ai-quality-gate",
+  opsx: Object.freeze([
+    "opsx-propose",
+    "opsx-apply",
+    "opsx-archive",
+    "opsx-explore",
+    "opsx-full",
   ]),
 });
 
 const _supportedSet = new Set(SUPPORTED_WORKFLOWS);
+const _retiredLegacySet = new Set(RETIRED_WORKFLOWS.legacy);
+const _retiredOpsxSet = new Set(RETIRED_WORKFLOWS.opsx);
 
 /**
  * Returns true if the given workflow name is in the public supported catalog.
@@ -91,21 +107,27 @@ export function isSupportedWorkflow(name) {
 }
 
 /**
- * Returns true if the given workflow name is a legacy cc-sdd-* workflow.
- * Legacy workflows are explicitly rejected by the global CLI (requirement 5.4, 5.7).
+ * Returns the retirement category of the given workflow name, or undefined if
+ * the workflow is not retired.
+ *
+ * - "legacy": cc-sdd-* workflows retired in v2.0.0 (no future re-provision)
+ * - "opsx": opsx-* workflows retired, will be re-provided in a future release
+ * - undefined: not a retired workflow
  *
  * @param {string} name
- * @returns {boolean}
+ * @returns {"legacy" | "opsx" | undefined}
  */
-export function isLegacyWorkflow(name) {
-  return /^cc-sdd-/.test(name);
+export function isRetiredWorkflow(name) {
+  if (_retiredLegacySet.has(name)) return "legacy";
+  if (_retiredOpsxSet.has(name)) return "opsx";
+  return undefined;
 }
 
 /**
  * Generates the help text for the global CLI, deriving all command names from
  * the catalog constants (no duplicated literals).
  *
- * Covers: init, kiro-* commands, opsx-* commands, run <supported-workflow>,
+ * Covers: init, kiro-* commands, run <supported-workflow>,
  * and global options (--cwd, --help, --version).
  *
  * @param {string} version - The package version string to include in the header.
@@ -113,7 +135,6 @@ export function isLegacyWorkflow(name) {
  */
 export function buildHelpText(version) {
   const kiroCommands = SUPPORTED_WORKFLOWS.filter((name) => name.startsWith("kiro-"));
-  const opsxCommands = SUPPORTED_WORKFLOWS.filter((name) => name.startsWith("opsx-"));
 
   const lines = [
     `takt-sdd ${version}`,
@@ -127,9 +148,6 @@ export function buildHelpText(version) {
     "  Kiro SDD workflows:",
     ...kiroCommands.map((name) => `    ${name}`),
     "",
-    "  OpenSpec workflows:",
-    ...opsxCommands.map((name) => `    ${name}`),
-    "",
     "  run <supported-workflow>",
     "                       Run any supported workflow by name",
     "",
@@ -138,8 +156,8 @@ export function buildHelpText(version) {
     "  --help, -h           Show this help message",
     "  --version, -v        Show the installed package version",
     "",
-    "Note: Legacy cc-sdd-* workflows are not supported by the global CLI.",
-    "      Use the npm scripts in your project for cc-sdd compatibility.",
+    "Note: Legacy cc-sdd and openspec workflows have been retired in v2.0.0.",
+    "      Run `takt-sdd --help` for the current command surface.",
   ];
 
   return lines.join("\n");

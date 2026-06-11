@@ -18,7 +18,7 @@
   - _Boundary:_ SurfaceValidatorAlignment
   - _Depends:_ none
 
-- [ ] 2. 公開 surface を縮小する（統合タスク）
+- [x] 2. 公開 surface を縮小する（統合タスク）
   - `.takt/en/` と `.takt/ja/` から cc-sdd-*（10）/ opsx-*（5）workflow と退役専用 facet（en 59 + ja ミラー。言語ごとの参照解析で確定）を削除する
   - catalog を SUPPORTED kiro 12 / EXCLUDED internal のみ / RETIRED {legacy, opsx} へ再編し、isRetiredWorkflow を新設（isLegacyWorkflow を置換）、help から opsx を除去する
   - dispatch に系統別退役案内を実装する（cc-sdd: v2.0.0 退役済み / opsx: 退役済み・将来再提供予定。run 形式も同経路、spawn 不到達、exit 1）
@@ -91,3 +91,8 @@
   - _Requirements: 7.1, 7.2, 7.3_
   - _Boundary:_ ReleaseBreakingRecord
   - _Depends:_ 7, 8
+
+## Implementation Notes
+
+- 2: 退役専用 facet の実数は en 70（workflow 68 + cc-sdd∧opsx のみ共有 2）/ ja 74（en ミラー + ja 固有 4 + 共有 2）。research.md の見積 59 は instructions 中心の概算だった。「未参照になった共有 facet」も要件 1.3 の削除対象（レビュー指摘で是正）
+- 2: installer の SDD_SCRIPTS / OPENSPEC_* / CC_SDD_* はタスク 4 まで残存（中間状態として正。タスク 1.2 の緩和により検証は green を維持）

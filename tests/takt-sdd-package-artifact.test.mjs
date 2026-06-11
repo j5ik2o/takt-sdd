@@ -30,9 +30,10 @@ const { validateFileList, validateVersionConsistency } = await import(
 const { SUPPORTED_WORKFLOWS, EXCLUDED_WORKFLOWS } = await import(
   "../cli/command-catalog.mjs"
 );
+// ALL_CATALOG_WORKFLOWS = SUPPORTED ∪ EXCLUDED.internal (15 entries after retirement).
+// RETIRED_WORKFLOWS are NOT included — they must not appear in the package artifact.
 const ALL_CATALOG_WORKFLOWS = [
   ...SUPPORTED_WORKFLOWS,
-  ...EXCLUDED_WORKFLOWS.legacy,
   ...EXCLUDED_WORKFLOWS.internal,
 ];
 
@@ -45,7 +46,7 @@ const ALL_CATALOG_WORKFLOWS = [
 // They are hard-required by the design (LICENSE-*) and validated as such.
 //
 // Workflow yamls are built from ALL_CATALOG_WORKFLOWS to stay in sync with the
-// catalog (30 workflows x 2 languages = 60 entries).
+// catalog (15 workflows x 2 languages = 30 entries after retirement of cc-sdd/opsx).
 const MINIMAL_VALID_FILES = [
   "package.json",
   "README.md",
@@ -353,57 +354,21 @@ test("validateFileList: .agents/skills/foo.md in files is forbidden", () => {
 // ---------------------------------------------------------------------------
 // validateVersionConsistency — positive
 // ---------------------------------------------------------------------------
-test("validateVersionConsistency: matching versions pass", () => {
+test("validateVersionConsistency: exact takt version passes", () => {
   const errors = validateVersionConsistency(
-    { OPENSPEC_VERSION: "1.4.1", CC_SDD_VERSION: "3.0.2" },
-    {
-      dependencies: { "@fission-ai/openspec": "1.4.1", takt: "0.43.0" },
-      devDependencies: { "cc-sdd": "3.0.2" },
-    },
+    {},
+    { dependencies: { takt: "0.43.0" } },
   );
   assert.deepEqual(errors, [], `Unexpected errors: ${errors.join("; ")}`);
 });
 
 // ---------------------------------------------------------------------------
-// validateVersionConsistency — negative cases
+// validateVersionConsistency — negative cases (takt exact-pin only; OPENSPEC/CC_SDD removed in v2)
 // ---------------------------------------------------------------------------
-test("validateVersionConsistency: OPENSPEC_VERSION mismatch is reported", () => {
-  const errors = validateVersionConsistency(
-    { OPENSPEC_VERSION: "1.3.1", CC_SDD_VERSION: "3.0.2" },
-    {
-      dependencies: { "@fission-ai/openspec": "1.4.1", takt: "0.43.0" },
-      devDependencies: { "cc-sdd": "3.0.2" },
-    },
-  );
-  assert.ok(errors.length > 0, "Expected OPENSPEC_VERSION mismatch error");
-  assert.ok(
-    errors.some((e) => /OPENSPEC_VERSION|openspec/i.test(e)),
-    `Errors: ${errors.join("; ")}`,
-  );
-});
-
-test("validateVersionConsistency: CC_SDD_VERSION mismatch is reported", () => {
-  const errors = validateVersionConsistency(
-    { OPENSPEC_VERSION: "1.4.1", CC_SDD_VERSION: "2.9.0" },
-    {
-      dependencies: { "@fission-ai/openspec": "1.4.1", takt: "0.43.0" },
-      devDependencies: { "cc-sdd": "3.0.2" },
-    },
-  );
-  assert.ok(errors.length > 0, "Expected CC_SDD_VERSION mismatch error");
-  assert.ok(
-    errors.some((e) => /CC_SDD_VERSION|cc-sdd/i.test(e)),
-    `Errors: ${errors.join("; ")}`,
-  );
-});
-
 test("validateVersionConsistency: takt floating version ^0.43.0 is rejected", () => {
   const errors = validateVersionConsistency(
-    { OPENSPEC_VERSION: "1.4.1", CC_SDD_VERSION: "3.0.2" },
-    {
-      dependencies: { "@fission-ai/openspec": "1.4.1", takt: "^0.43.0" },
-      devDependencies: { "cc-sdd": "3.0.2" },
-    },
+    {},
+    { dependencies: { takt: "^0.43.0" } },
   );
   assert.ok(errors.length > 0, "Expected error for floating takt version");
   assert.ok(
@@ -414,11 +379,8 @@ test("validateVersionConsistency: takt floating version ^0.43.0 is rejected", ()
 
 test("validateVersionConsistency: takt latest is rejected as floating", () => {
   const errors = validateVersionConsistency(
-    { OPENSPEC_VERSION: "1.4.1", CC_SDD_VERSION: "3.0.2" },
-    {
-      dependencies: { "@fission-ai/openspec": "1.4.1", takt: "latest" },
-      devDependencies: { "cc-sdd": "3.0.2" },
-    },
+    {},
+    { dependencies: { takt: "latest" } },
   );
   assert.ok(errors.length > 0, "Expected error for takt: latest");
   assert.ok(errors.some((e) => e.includes("takt")), `Errors: ${errors.join("; ")}`);
@@ -426,22 +388,16 @@ test("validateVersionConsistency: takt latest is rejected as floating", () => {
 
 test("validateVersionConsistency: takt ~0.43.0 is rejected as floating", () => {
   const errors = validateVersionConsistency(
-    { OPENSPEC_VERSION: "1.4.1", CC_SDD_VERSION: "3.0.2" },
-    {
-      dependencies: { "@fission-ai/openspec": "1.4.1", takt: "~0.43.0" },
-      devDependencies: { "cc-sdd": "3.0.2" },
-    },
+    {},
+    { dependencies: { takt: "~0.43.0" } },
   );
   assert.ok(errors.length > 0, "Expected error for takt: ~0.43.0");
 });
 
 test("validateVersionConsistency: missing takt is reported", () => {
   const errors = validateVersionConsistency(
-    { OPENSPEC_VERSION: "1.4.1", CC_SDD_VERSION: "3.0.2" },
-    {
-      dependencies: { "@fission-ai/openspec": "1.4.1" },
-      devDependencies: { "cc-sdd": "3.0.2" },
-    },
+    {},
+    { dependencies: {} },
   );
   assert.ok(errors.length > 0, "Expected error for missing takt");
   assert.ok(errors.some((e) => e.includes("takt")), `Errors: ${errors.join("; ")}`);
