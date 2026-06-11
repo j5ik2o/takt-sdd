@@ -34,9 +34,99 @@ takt-sdd uses [takt](https://github.com/nrslib/takt)'s state-machine-based workf
 
 - Node.js 22+ (takt is automatically added to `devDependencies` during installation)
 
-## Installation
+## Global CLI
 
-To add the SDD workflow to your project, run the following in your project root:
+`takt-sdd` is available as a global npm package, letting you run any supported `kiro-*` or `opsx-*` workflow from any project without relying on repo-local npm scripts.
+
+### Installation
+
+```bash
+npm install -g takt-sdd
+```
+
+### Initialize a project
+
+```bash
+takt-sdd init .
+```
+
+`init` copies the bundled `.takt` assets (workflows and facets matching the installed package version) into the target directory and merges the required devDependencies into `package.json`.  
+`init` does **not** run `npm install` automatically. After `init` completes, run:
+
+```bash
+npm install
+```
+
+### Supported commands
+
+| Command | Description |
+|---------|-------------|
+| `kiro-discovery` | Route a feature idea, update brief/roadmap when needed |
+| `kiro-spec-init` | Initialize a new spec with a project description |
+| `kiro-spec-requirements` | Generate requirements in EARS format |
+| `kiro-spec-design` | Generate technical design and discovery notes |
+| `kiro-spec-tasks` | Generate implementation tasks |
+| `kiro-spec-quick` | Generate requirements, design, and tasks in one pass |
+| `kiro-spec-batch` | Generate multiple specs from roadmap dependency order |
+| `kiro-spec-status` | Report spec phase, approvals, and readiness |
+| `kiro-impl` | Implement approved tasks with review/debug/verify gates |
+| `kiro-validate-gap` | Compare requirements with the current codebase |
+| `kiro-validate-design` | Review design quality and return a GO/NO-GO decision |
+| `kiro-validate-impl` | Validate implementation evidence and remaining manual checks |
+| `opsx-propose` | Create a change and generate all artifacts |
+| `opsx-apply` | Implement tasks from a change |
+| `opsx-archive` | Archive a completed change |
+| `opsx-explore` | Interactive exploration and thinking (pipeline mode — see note below) |
+| `opsx-full` | Run propose → apply → archive in one automated sequence |
+
+You can also use the `run` form:
+
+```bash
+takt-sdd run kiro-spec-design "feature=my-feature"
+takt-sdd run opsx-propose "my-change"
+```
+
+The `run` form is equivalent to the direct command form and accepts the same supported workflows only.
+
+### Global options
+
+| Option | Description |
+|--------|-------------|
+| `--cwd <dir>` | Set the target project root directory (default: current working directory) |
+
+### `init` options
+
+| Option | Description |
+|--------|-------------|
+| `--lang en\|ja` | Language for installed assets and initial language preference (default: `en`). Reads existing `.takt/config.yaml` language if present and `--lang` is not specified. |
+| `--force` | Overwrite customized files (same semantics as `create-takt-sdd --force`) |
+| `--dry-run` | Preview changes without writing any files, without running OpenSpec init, and without running cc-sdd init |
+
+`--tag` is **not** supported by the global CLI. The bundled assets matching the installed package version are always used.
+
+### Legacy `cc-sdd-*` workflows
+
+The global CLI rejects `cc-sdd-*` workflows in both direct and `run` form:
+
+```bash
+takt-sdd cc-sdd-full        # Error: legacy cc-sdd-* workflows are not supported
+takt-sdd run cc-sdd-full    # Error: same rejection
+```
+
+`cc-sdd:*` compatibility remains available through the project's npm scripts (a separate path managed by the project itself).
+
+### `opsx-explore` mode difference
+
+When invoked via the global CLI (`takt-sdd opsx-explore`), the workflow runs in **pipeline mode** (`--pipeline --skip-git`), which is the same flag set applied to all supported workflows.  
+When invoked via the project's npm script (`npm run opsx:explore`), it runs **without** `--pipeline` — the interactive mode. If you rely on the interactive exploration behavior, use the npm script.
+
+### `.takt/config.yaml` ownership
+
+`.takt/config.yaml` is a **user-owned** file. It may be placed globally at `~/.takt/config.yaml` or per-project, and is created and maintained by the user, not by the CLI. The CLI only **reads** it (to determine language preference during `init` and workflow resolution). The CLI never creates or modifies this file. Language preference from `init` is recorded in `.takt/.manifest.json`.
+
+## Installation (create-takt-sdd)
+
+To add the SDD workflow to your project using the installer, run the following in your project root:
 
 ```bash
 npx create-takt-sdd

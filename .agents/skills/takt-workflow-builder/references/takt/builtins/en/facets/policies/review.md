@@ -126,9 +126,9 @@ To prevent circular rejections, track findings by ID.
 
 Reopening a resolved finding requires reproducible evidence.
 
-- To reopen a previously `resolved` finding, all of the following are required
-  1. Reproduction steps (command/input)
-  2. Expected result vs. actual result
+- To reopen a previously `resolved` finding, all of the following are required  
+  1. Reproduction steps (command/input)  
+  2. Expected result vs. actual result  
   3. Failing file/line evidence
 - If any of the three is missing, the reopen attempt is invalid (cannot be used as REJECT grounds)
 - If reproduction conditions changed, treat it as a different problem and issue a new `finding_id`
@@ -146,9 +146,9 @@ Do not mix different problems under the same ID.
 Test file length and duplication are warning-level maintainability concerns by default.
 
 - Excessive test file length and duplicated test setup are `Warning` by default
-- They may be `REJECT` only when reproducible harm is shown
-  - flaky behavior
-  - false positives/false negatives
+- They may be `REJECT` only when reproducible harm is shown  
+  - flaky behavior  
+  - false positives/false negatives  
   - inability to detect regressions
 - "Too long" or "duplicated" alone is not sufficient for `REJECT`
 

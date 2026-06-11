@@ -17,7 +17,7 @@ description: >
 
 既存のTAKTワークフローの最適化を実行する。診断・分析は takt-analyze が担う。
 
-> **前提 takt バージョン**: v0.42.0
+> **前提 takt バージョン**: v0.44.0
 
 ## 参照資料
 
@@ -150,6 +150,7 @@ steps:
 | edit=false ビルド禁止の追記 | `edit: false` のステップが参照するインストラクションに「ビルドコマンドを実行しないこと」の禁止セクション（`## やらないこと`）を追加する |
 | loop monitor judge の instruction 正規化 | `loop_monitors.judge.instruction` をビルトインファセット参照（`loop-monitor-ai-antipattern-fix`, `loop-monitor-reviewers-fix`）へ統一し、旧 judge テンプレート記法を除去する |
 | allowed_tools の provider_options 移行 | トップレベルの `allowed_tools` を `provider_options.claude.allowed_tools` に移動する（v0.30.0〜） |
+| command quality gate の整理 | 文字列 gate と `type: command` gate を分け、command gate は agent step に限定する。不要な command gate は削除し、必要な場合は config 側の許可設定を確認する |
 
 **threshold推奨値:**
 - review→fix サイクル: 3回

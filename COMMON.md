@@ -19,6 +19,16 @@
 | `.kiro/steering/` | プロジェクトメモリ（product.md / tech.md / structure.md 等） |
 | `openspec/` | OpenSpec の設定・変更ディレクトリ |
 
+## Global CLI
+
+`takt-sdd` は npm グローバルパッケージとして提供されている。`npm install -g takt-sdd` → `takt-sdd init .` → `npm install` の順で導入し、`takt-sdd <workflow>` または `takt-sdd run <workflow>` で実行する。
+
+サポートコマンド: `kiro-discovery`, `kiro-spec-init`, `kiro-spec-requirements`, `kiro-spec-design`, `kiro-spec-tasks`, `kiro-spec-quick`, `kiro-spec-batch`, `kiro-spec-status`, `kiro-impl`, `kiro-validate-gap`, `kiro-validate-design`, `kiro-validate-impl`（kiro 12 件）、`opsx-propose`, `opsx-apply`, `opsx-archive`, `opsx-explore`, `opsx-full`（opsx 5 件）。
+
+`cc-sdd-*` workflow は global CLI では拒否される。互換 npm scripts は別経路として残る。  
+`opsx-explore` は global CLI では pipeline モード（`--pipeline --skip-git`）で実行される（npm script の `opsx:explore` は対話モード）。  
+`.takt/config.yaml` はユーザー所有ファイル（グローバルまたはプロジェクト単位）。CLI は読み取りのみ行い、作成・変更しない。
+
 ## Kiro SDD ワークフロー
 
 ```

@@ -27,6 +27,35 @@ jobs:
       - name: Dry-run (${{ matrix.lang }})
         run: node installer/dist/cli.js --dry-run --lang ${{ matrix.lang }}
 
+  global-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build installer
+        run: npm run build:installer
+
+      - name: CLI unit/integration tests
+        run: |
+          node --test tests/takt-sdd-cli.test.mjs
+          node --test tests/takt-sdd-init-policy.test.mjs
+          node --test tests/takt-sdd-package-artifact.test.mjs
+
+      - name: Validate package artifact
+        run: npm run validate:package-artifact
+
+      - name: Global install smoke
+        run: node --test tests/takt-sdd-global-install-smoke.test.mjs
+
   validate-workflows:
     runs-on: ubuntu-latest
     steps:

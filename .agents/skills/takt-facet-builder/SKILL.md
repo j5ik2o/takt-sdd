@@ -14,7 +14,7 @@ description: >
 
 TAKTの5種類のファセットファイルを個別に作成・編集する。
 
-> **前提 takt バージョン**: v0.42.0
+> **前提 takt バージョン**: v0.44.0
 
 ## 参照資料
 
@@ -30,7 +30,7 @@ TAKTの5種類のファセットファイルを個別に作成・編集する。
 | Faceted Prompting | `references/takt/docs/faceted-prompting.ja.md` | 5ファセット設計の理論 |
 | ビルトインファセット | `references/takt/builtins/ja/facets/{personas,policies,instructions,knowledge,output-contracts}/` | 既存ファセット例 |
 
-**注意**: `references/takt/builtins/{ja,en}/templates/` は v0.42.0 でも実在する。雛形として参照してよいが、実際の命名・責務分割・文体はビルトインファセットを source of truth として合わせる。
+**注意**: `references/takt/builtins/{ja,en}/templates/` は v0.43.0 でも実在する。雛形として参照してよいが、実際の命名・責務分割・文体はビルトインファセットを source of truth として合わせる。
 
 **重要**: ファセット作成前に該当するスタイルガイドを必ず読む。
 
@@ -63,11 +63,11 @@ TAKTの5種類のファセットファイルを個別に作成・編集する。
 
 | ファセット | ビルトイン例 |
 |-----------|-------------|
-| Persona | coder, planner, architect-planner, architecture-reviewer, qa-reviewer, supervisor, security-reviewer, frontend-reviewer, cqrs-es-reviewer, requirements-reviewer, testing-reviewer, terraform-reviewer, terraform-coder, dual-supervisor, research-analyzer, research-digger, research-planner, research-supervisor, conductor, pr-commenter, test-planner, ai-antipattern-reviewer, melchior, balthasar, casper |
-| Policy | coding, review, testing, qa, ai-antipattern, design-fidelity, design-planning, task-decomposition, screen-api, research, terraform |
-| Instruction | plan, plan-investigate, plan-test, implement, implement-after-tests, implement-test, implement-terraform, write-tests-first, team-leader-implement, dual-team-leader-implement, review-arch, review-qa, review-security, review-frontend, review-cqrs-es, review-requirements, review-test, review-terraform, supervise, fix, fix-supervisor, arbitrate, architect, ai-antipattern-review, ai-antipattern-fix, loop-monitor-ai-antipattern-fix, loop-monitor-reviewers-fix, research-plan, research-dig, research-analyze, research-supervise, gather-review, architecture-audit-plan, architecture-audit-review, architecture-audit-supervise, architecture-audit-team-leader, audit-security-plan, audit-security-review, audit-security-supervise, audit-security-team-leader, e2e-audit-plan, e2e-audit-review, e2e-audit-supervise, e2e-audit-team-leader, e2e-coverage-implement, e2e-coverage-plan, e2e-coverage-supervise, unit-audit-plan, unit-audit-review, unit-audit-supervise, unit-audit-team-leader |
-| Knowledge | architecture, backend, cqrs-es, frontend, security, task-decomposition, takt, terraform-aws, e2e-testing, react, unit-testing, research, research-comparative |
-| Output Contract | plan, architecture-design, architecture-review, ai-antipattern-review, qa-review, security-review, frontend-review, cqrs-es-review, requirements-review, testing-review, terraform-review, summary, validation, coder-scope, coder-decisions, review-gather, research-report, test-plan, test-report, plan-frontend, architecture-audit-plan, architecture-audit, audit-security, e2e-audit-plan, e2e-audit, e2e-coverage-plan, unit-audit-plan, unit-audit, supervisor-validation |
+| Persona | coder, planner, architect-planner, architecture-reviewer, qa-reviewer, supervisor, security-reviewer, frontend-reviewer, cqrs-es-reviewer, requirements-reviewer, testing-reviewer, terraform-reviewer, terraform-coder, dual-supervisor, research-analyzer, research-digger, research-planner, research-supervisor, conductor, pr-commenter, test-planner, ai-antipattern-reviewer, coding-reviewer, melchior, balthasar, casper |
+| Policy | coding, review, testing, qa, ai-antipattern, design-fidelity, design-planning, task-decomposition, screen-api, existing-system-respect, research, terraform |
+| Instruction | plan, plan-investigate, plan-test, implement, implement-after-tests, implement-test, implement-terraform, write-tests-first, team-leader-implement, dual-team-leader-implement, plan-maintenance, write-tests-maintenance, implement-maintenance, fix-maintenance, supervise-maintenance, review-coding, review-arch, review-qa, review-security, review-frontend, review-cqrs-es, review-requirements, review-test, review-terraform, supervise, fix, fix-supervisor, arbitrate, architect, ai-antipattern-review, ai-antipattern-fix, loop-monitor-ai-antipattern-fix, loop-monitor-reviewers-fix, research-plan, research-dig, research-analyze, research-supervise, gather-review, architecture-audit-plan, architecture-audit-review, architecture-audit-supervise, architecture-audit-team-leader, audit-security-plan, audit-security-review, audit-security-supervise, audit-security-team-leader, e2e-audit-plan, e2e-audit-review, e2e-audit-supervise, e2e-audit-team-leader, e2e-coverage-implement, e2e-coverage-plan, e2e-coverage-supervise, unit-audit-plan, unit-audit-review, unit-audit-supervise, unit-audit-team-leader |
+| Knowledge | architecture, backend, cqrs-es, frontend, security, task-decomposition, takt, terraform-aws, e2e-testing, react, unit-testing, existing-system, research, research-comparative |
+| Output Contract | plan, architecture-design, architecture-review, ai-antipattern-review, qa-review, security-review, frontend-review, cqrs-es-review, requirements-review, testing-review, terraform-review, summary, validation, coder-scope, coder-decisions, maintenance-scope, coding-review, review-gather, research-report, test-plan, test-report, plan-frontend, architecture-audit-plan, architecture-audit, audit-security, e2e-audit-plan, e2e-audit, e2e-coverage-plan, unit-audit-plan, unit-audit, supervisor-validation |
 
 **再利用判断**: ビルトインで足りる場合はカスタムファセットを作らない。
 
