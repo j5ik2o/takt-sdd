@@ -1,7 +1,7 @@
 # 実装計画
 
 - [ ] 1. 互換検証の事前整備
-- [ ] 1.1 検証フィクスチャの退役資産依存を除去する
+- [x] 1.1 検証フィクスチャの退役資産依存を除去する
   - LOOP_MONITOR_DRIFT 検証が cc-sdd-impl.yaml の raw content を素材に不正 kiro-impl fixture を構築している依存を、kiro-impl.yaml を素材とする構築へ差し替える
   - 観測可能な完了: 対象テストが退役予定資産を読まずに green である
   - _Requirements: 8.1_
