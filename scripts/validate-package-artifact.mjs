@@ -308,6 +308,7 @@ export function validateVersionConsistency(constants, pkg) {
 const INSTALLER_RETIRED_PATTERNS = [
   /^\.takt\/workflows\/(cc-sdd-|opsx-).*\.yaml$/,
   /^\.takt\/(?:facets\/)?[a-z-]+\/(cc-sdd-|opsx-).*/,
+  /^\.takt\/(?:facets\/)?instructions\/(ai-review-fix-loop-judge|batch-plan-implement-loop-judge)\.md$/,
   /^scripts\/opsx-cli\.sh$/,
 ];
 
@@ -355,6 +356,23 @@ export function validateRetiredCrossCheck() {
       errors.push(
         `RETIRED_CROSSCHECK FALSE_POSITIVE: active workflow "${name}" accidentally matches RETIRED_MANIFEST_KEY_PATTERNS (installer would incorrectly delete it)`,
       );
+    }
+  }
+
+  // Check 3: every retired-exclusive facet (prefix-external name) must be
+  // covered by the installer patterns in both installed layouts, so update
+  // cleanup removes it from v1.x projects (req 5.1).
+  for (const facetName of RETIRED_EXCLUSIVE_FACETS) {
+    for (const syntheticKey of [
+      `.takt/facets/instructions/${facetName}`,
+      `.takt/instructions/${facetName}`,
+    ]) {
+      const covered = INSTALLER_RETIRED_PATTERNS.some((p) => p.test(syntheticKey));
+      if (!covered) {
+        errors.push(
+          `RETIRED_CROSSCHECK NOT_COVERED: retired-exclusive facet key "${syntheticKey}" does not match any RETIRED_MANIFEST_KEY_PATTERNS (installer will not clean it up on update)`,
+        );
+      }
     }
   }
 

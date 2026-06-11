@@ -31,12 +31,15 @@ const SDD_DEPENDENCY_ALLOWLIST = ["takt"] as const;
  *   - .takt/workflows/(cc-sdd-|opsx-)*.yaml  (workflow yamls, both languages)
  *   - .takt/facets/{type}/(cc-sdd-|opsx-)*   (modern layout facets, including nested subdirs)
  *   - .takt/{type}/(cc-sdd-|opsx-)*          (legacy layout facets, including nested subdirs)
+ *   - retired-exclusive shared facets without a cc-sdd-/opsx- prefix
+ *     (ai-review-fix-loop-judge.md, batch-plan-implement-loop-judge.md; both layouts)
  *   - scripts/opsx-cli.sh                     (legacy opsx helper script)
  * Does NOT match: kiro-* workflows, openspec/, user-owned files.
  */
 export const RETIRED_MANIFEST_KEY_PATTERNS: readonly RegExp[] = [
   /^\.takt\/workflows\/(cc-sdd-|opsx-).*\.yaml$/,
   /^\.takt\/(?:facets\/)?[a-z-]+\/(cc-sdd-|opsx-).*/,
+  /^\.takt\/(?:facets\/)?instructions\/(ai-review-fix-loop-judge|batch-plan-implement-loop-judge)\.md$/,
   /^scripts\/opsx-cli\.sh$/,
 ] as const;
 

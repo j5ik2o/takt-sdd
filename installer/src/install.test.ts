@@ -264,6 +264,9 @@ test("planRetiredRemovals returns retired manifest keys that match RETIRED_MANIF
       ".takt/workflows/kiro-impl.yaml": "ghi",          // should NOT match
       ".takt/facets/instructions/cc-sdd-bootstrap-steering.md": "jkl",
       ".takt/facets/personas/opsx-implementer.md": "mno",
+      ".takt/facets/instructions/ai-review-fix-loop-judge.md": "vwx",      // retired-exclusive shared facet (no prefix)
+      ".takt/instructions/batch-plan-implement-loop-judge.md": "yz0",      // legacy layout, retired-exclusive shared facet
+      ".takt/facets/instructions/kiro-impl-guide.md": "123",               // should NOT match (kept facet)
       "scripts/opsx-cli.sh": "pqr",
       "scripts/kiro-staged.mjs": "stu",                  // should NOT match
     },
@@ -273,8 +276,11 @@ test("planRetiredRemovals returns retired manifest keys that match RETIRED_MANIF
   assert.ok(result.includes(".takt/workflows/opsx-apply.yaml"), "opsx workflow must be planned");
   assert.ok(result.includes(".takt/facets/instructions/cc-sdd-bootstrap-steering.md"), "cc-sdd facet must be planned");
   assert.ok(result.includes(".takt/facets/personas/opsx-implementer.md"), "opsx facet must be planned");
+  assert.ok(result.includes(".takt/facets/instructions/ai-review-fix-loop-judge.md"), "retired-exclusive shared facet (modern layout) must be planned");
+  assert.ok(result.includes(".takt/instructions/batch-plan-implement-loop-judge.md"), "retired-exclusive shared facet (legacy layout) must be planned");
   assert.ok(result.includes("scripts/opsx-cli.sh"), "opsx-cli.sh must be planned");
   assert.ok(!result.includes(".takt/workflows/kiro-impl.yaml"), "kiro-impl must NOT be planned");
+  assert.ok(!result.includes(".takt/facets/instructions/kiro-impl-guide.md"), "kept facet must NOT be planned");
   assert.ok(!result.includes("scripts/kiro-staged.mjs"), "kiro-staged must NOT be planned");
 });
 

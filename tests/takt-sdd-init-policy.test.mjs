@@ -647,6 +647,8 @@ async function buildV1xFixture(tmpDir, opts = {}) {
     { key: ".takt/workflows/opsx-apply.yaml", relPath: ".takt/workflows/opsx-apply.yaml", content: "name: opsx-apply\nsteps: []" },
     { key: ".takt/facets/instructions/cc-sdd-bootstrap-steering.md", relPath: ".takt/facets/instructions/cc-sdd-bootstrap-steering.md", content: "# cc-sdd-bootstrap-steering" },
     { key: ".takt/facets/personas/opsx-implementer.md", relPath: ".takt/facets/personas/opsx-implementer.md", content: "# opsx-implementer persona" },
+    { key: ".takt/facets/instructions/ai-review-fix-loop-judge.md", relPath: ".takt/facets/instructions/ai-review-fix-loop-judge.md", content: "# ai-review-fix-loop-judge (retired-exclusive shared facet)" },
+    { key: ".takt/instructions/batch-plan-implement-loop-judge.md", relPath: ".takt/instructions/batch-plan-implement-loop-judge.md", content: "# batch-plan-implement-loop-judge (legacy layout)" },
     { key: "scripts/opsx-cli.sh", relPath: "scripts/opsx-cli.sh", content: "#!/bin/sh\n# opsx-cli legacy script" },
   ];
 
