@@ -323,22 +323,58 @@ test("preflight: ja lang with missing ja workflow asset throws PreflightError (n
   }
 });
 
-// ─── preflight: opsx workflow + openspec binary absent → PreflightError with npm install ───
+// ─── preflight: opsx-* workflow with missing openspec binary → NO PreflightError (step 3 removed) ───
 
-test("preflight: opsx-* workflow with missing openspec binary throws PreflightError mentioning npm install", () => {
+test("preflight: opsx-* workflow with missing openspec binary does NOT throw PreflightError (spawn is reached)", async () => {
   const dir = makeTmpDir();
   try {
     writeManifest(dir, "en");
     writeWorkflowAsset(dir, "en", "opsx-propose");
-    // Do NOT write a fake openspec binary
+    // Do NOT write a fake openspec binary — should not matter anymore
+    const ctx = { projectRoot: dir, packageRoot: repoRoot };
+    let spawnCalled = false;
+    const captureSpawn = (_nodeExec, _args, _opts) => {
+      spawnCalled = true;
+      const emitter = new EventEmitter();
+      process.nextTick(() => emitter.emit("close", 0, null));
+      return emitter;
+    };
+    // Must NOT throw — spawn should be reached
+    const code = await runWorkflow("opsx-propose", [], ctx, captureSpawn);
+    assert.equal(code, 0);
+    assert.ok(spawnCalled, "spawnImpl must be called when openspec binary is absent (step 3 removed)");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ─── preflight: package.json declares takt dep but binary missing → PreflightError listing takt only ───
+
+test("preflight: declared takt devDependency with missing takt binary throws PreflightError listing takt", () => {
+  const dir = makeTmpDir();
+  try {
+    writeManifest(dir, "en");
+    writeWorkflowAsset(dir, "en", "kiro-impl");
+    // Declare takt dep only — @fission-ai/openspec and cc-sdd are no longer checked
+    writePkgJson(dir, { takt: "0.43.0" });
     const ctx = { projectRoot: dir, packageRoot: repoRoot };
     assert.throws(
-      () => preflight(ctx, "opsx-propose"),
+      () => preflight(ctx, "kiro-impl"),
       (err) => {
         assert.ok(err instanceof PreflightError, `Expected PreflightError, got ${err.constructor.name}`);
+        // Message should list takt as missing
         assert.ok(
-          err.message.includes("npm install"),
-          `Expected message to include 'npm install', got: ${err.message}`,
+          err.message.includes("takt"),
+          `Expected message to list 'takt' as missing, got: ${err.message}`,
+        );
+        // Message must NOT mention openspec or cc-sdd
+        assert.ok(
+          !err.message.includes("openspec"),
+          `Message must not mention 'openspec', got: ${err.message}`,
+        );
+        assert.ok(
+          !err.message.includes("cc-sdd"),
+          `Message must not mention 'cc-sdd', got: ${err.message}`,
         );
         return true;
       },
@@ -348,28 +384,18 @@ test("preflight: opsx-* workflow with missing openspec binary throws PreflightEr
   }
 });
 
-// ─── preflight: package.json declares SDD deps but binaries missing → lists them ───
+// ─── preflight: package.json declares @fission-ai/openspec or cc-sdd without takt → no error for those ───
 
-test("preflight: declared SDD devDependencies with missing binaries throws PreflightError listing missing deps", () => {
+test("preflight: @fission-ai/openspec and cc-sdd declared in package.json without binaries → no PreflightError", () => {
   const dir = makeTmpDir();
   try {
     writeManifest(dir, "en");
     writeWorkflowAsset(dir, "en", "kiro-impl");
-    // Declare SDD deps but provide no binaries
-    writePkgJson(dir, { takt: "0.43.0", "@fission-ai/openspec": "1.4.1", "cc-sdd": "3.0.2" });
+    // Declare openspec and cc-sdd deps but NOT takt — openspec/cc-sdd should not be checked
+    writePkgJson(dir, { "@fission-ai/openspec": "1.4.1", "cc-sdd": "3.0.2" });
     const ctx = { projectRoot: dir, packageRoot: repoRoot };
-    assert.throws(
-      () => preflight(ctx, "kiro-impl"),
-      (err) => {
-        assert.ok(err instanceof PreflightError, `Expected PreflightError, got ${err.constructor.name}`);
-        // Message should list missing binaries
-        assert.ok(
-          err.message.includes("takt") || err.message.includes("openspec") || err.message.includes("cc-sdd"),
-          `Expected message to list missing deps, got: ${err.message}`,
-        );
-        return true;
-      },
-    );
+    // Should NOT throw — openspec and cc-sdd are not in the binary check map anymore
+    assert.doesNotThrow(() => preflight(ctx, "kiro-impl"));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -405,27 +431,13 @@ test("preflight failure (ja lang, ja asset missing): spawnImpl is never called",
   }
 });
 
-test("preflight failure (opsx, openspec missing): spawnImpl is never called", async () => {
-  const dir = makeTmpDir();
-  try {
-    writeManifest(dir, "en");
-    writeWorkflowAsset(dir, "en", "opsx-propose");
-    const ctx = { projectRoot: dir, packageRoot: repoRoot };
-    await assert.rejects(
-      runWorkflow("opsx-propose", [], ctx, noSpawnImpl),
-      (err) => err instanceof PreflightError,
-    );
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
-});
-
-test("preflight failure (declared deps, missing binaries): spawnImpl is never called", async () => {
+test("preflight failure (declared takt dep, takt binary missing): spawnImpl is never called", async () => {
   const dir = makeTmpDir();
   try {
     writeManifest(dir, "en");
     writeWorkflowAsset(dir, "en", "kiro-impl");
-    writePkgJson(dir, { takt: "0.43.0", "cc-sdd": "3.0.2" });
+    // Only takt declared — cc-sdd no longer in the map
+    writePkgJson(dir, { takt: "0.43.0" });
     // No binaries in node_modules/.bin
     const ctx = { projectRoot: dir, packageRoot: repoRoot };
     await assert.rejects(

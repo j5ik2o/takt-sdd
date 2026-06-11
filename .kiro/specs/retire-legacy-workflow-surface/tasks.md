@@ -30,7 +30,7 @@
   - _Boundary:_ WorkflowAssetRetirement, CommandCatalog, CliMain, PackageArtifactValidator
   - _Depends:_ 1.2
 
-- [ ] 3. workflow 実行の preflight を takt のみへ縮小する
+- [x] 3. workflow 実行の preflight を takt のみへ縮小する
   - opsx 用の openspec binary 検査を削除し、宣言済み SDD 依存の binary 検査対象を takt のみとする
   - language 解決・strict 解決・takt 解決・引数組み立て・spawn は無変更であることをテストで確認する
   - タスク 2 と境界が重ならず並行可能だが、(P) 注釈は依存ありタスクに付与しない（repo の注釈契約）
