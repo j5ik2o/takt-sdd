@@ -7,8 +7,8 @@
  *   - main(argv) → Promise<number>   — entry point; returns process exit code
  *
  * Command classification priority (design):
- *   init → run <workflow> (normalised to direct command) → catalog match →
- *   legacy rejection → unknown command guidance
+ *   init → run <workflow> (normalised to direct command) → retired rejection →
+ *   catalog match → unknown command guidance
  *
  * Typed errors (UsageError / InitError from init-adapter, PreflightError from
  * workflow-runner) are caught here and written to stderr → exit 1.
@@ -26,7 +26,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   isSupportedWorkflow,
-  isLegacyWorkflow,
+  isRetiredWorkflow,
   buildHelpText,
 } from "./command-catalog.mjs";
 
@@ -220,11 +220,19 @@ export async function main(argv) {
       [effectiveCommand, ...effectiveArgs] = commandArgs;
     }
 
-    // ── legacy rejection (cc-sdd-*) ──────────────────────────────────────────
-    if (isLegacyWorkflow(effectiveCommand)) {
+    // ── retired workflow rejection ────────────────────────────────────────────
+    const retiredKind = isRetiredWorkflow(effectiveCommand);
+    if (retiredKind === "legacy") {
       stderrLine(
-        `Error: legacy \`cc-sdd-*\` workflows are not supported by the global CLI.\n` +
-          `Use the npm scripts in your project for cc-sdd compatibility.`,
+        `Error: \`cc-sdd-*\` workflows were retired in v2.0.0 and are no longer available.\n` +
+          `Use \`takt-sdd --help\` to see the current kiro-* command surface.`,
+      );
+      return 1;
+    }
+    if (retiredKind === "opsx") {
+      stderrLine(
+        `Error: \`opsx-*\` workflows have been retired and will be re-provided in a future release.\n` +
+          `Use \`takt-sdd --help\` to see the current kiro-* command surface.`,
       );
       return 1;
     }

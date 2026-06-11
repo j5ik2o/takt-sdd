@@ -145,10 +145,7 @@ test("validator rejects custom retry or loop health source of truth in workflow"
     "test:kiro-iterative-implementation-workflow": "node --test tests/kiro-iterative-implementation-workflow.test.mjs",
   });
   const repoRoot = join(import.meta.dirname, "..");
-  const workflow = readFileSync(join(repoRoot, ".takt", "ja", "workflows", "cc-sdd-impl.yaml"), "utf8")
-    .replace("name: cc-sdd-impl", "name: kiro-impl")
-    .replace("initial_step: plan", "initial_step: check-readiness")
-    .replace("max_steps: 50", "max_steps: 200")
+  const workflow = readFileSync(join(repoRoot, ".takt", "ja", "workflows", "kiro-impl.yaml"), "utf8")
     .concat("\n# maxAttempts: 3\n");
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(root, `.takt/${lang}/workflows/kiro-impl.yaml`, workflow);

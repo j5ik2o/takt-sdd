@@ -15,18 +15,17 @@
 | `.takt/{ja,en}/facets/` | Persona / Policy / Instruction / Knowledge / Output-Contract |
 | `references/okite-ai/` | AI ルール集（参照専用） |
 | `installer/` | `npx create-takt-sdd` のインストーラ本体（TypeScript） |
-| `.kiro/specs/` | CC-SDD の出力先（requirements.md / design.md / tasks.md 等） |
+| `.kiro/specs/` | Kiro SDD の出力先（requirements.md / design.md / tasks.md 等） |
 | `.kiro/steering/` | プロジェクトメモリ（product.md / tech.md / structure.md 等） |
-| `openspec/` | OpenSpec の設定・変更ディレクトリ |
 
 ## Global CLI
 
 `takt-sdd` は npm グローバルパッケージとして提供されている。`npm install -g takt-sdd` → `takt-sdd init .` → `npm install` の順で導入し、`takt-sdd <workflow>` または `takt-sdd run <workflow>` で実行する。
 
-サポートコマンド: `kiro-discovery`, `kiro-spec-init`, `kiro-spec-requirements`, `kiro-spec-design`, `kiro-spec-tasks`, `kiro-spec-quick`, `kiro-spec-batch`, `kiro-spec-status`, `kiro-impl`, `kiro-validate-gap`, `kiro-validate-design`, `kiro-validate-impl`（kiro 12 件）、`opsx-propose`, `opsx-apply`, `opsx-archive`, `opsx-explore`, `opsx-full`（opsx 5 件）。
+サポートコマンド: `kiro-discovery`, `kiro-spec-init`, `kiro-spec-requirements`, `kiro-spec-design`, `kiro-spec-tasks`, `kiro-spec-quick`, `kiro-spec-batch`, `kiro-spec-status`, `kiro-impl`, `kiro-validate-gap`, `kiro-validate-design`, `kiro-validate-impl`（kiro 12 件）。
 
-`cc-sdd-*` workflow は global CLI では拒否される。互換 npm scripts は別経路として残る。  
-`opsx-explore` は global CLI では pipeline モード（`--pipeline --skip-git`）で実行される（npm script の `opsx:explore` は対話モード）。  
+`cc-sdd-*` workflow は v2.0.0 で退役済み。global CLI は退役済みコマンドを明示的なエラーで拒否する。  
+`opsx-*` workflow も退役済みで、将来のリリースで再提供予定。global CLI は同様に拒否する。  
 `.takt/config.yaml` はユーザー所有ファイル（グローバルまたはプロジェクト単位）。CLI は読み取りのみ行い、作成・変更しない。
 
 ## Kiro SDD ワークフロー
@@ -35,21 +34,12 @@
 kiro-discovery → kiro-spec-init → kiro-spec-requirements → kiro-validate-gap → kiro-spec-design → kiro-validate-design → kiro-spec-tasks → kiro-impl → kiro-validate-impl
 ```
 
-Kiro スキルでは `$kiro-discovery`, `$kiro-spec-quick`, `$kiro-spec-batch`, `$kiro-impl`, `$kiro-spec-status` を正規導線として使う。npm scripts で個別実行する場合は、`package.json` に定義された `kiro:discovery`, `kiro:spec:*`, `kiro:validate:*`, `kiro:impl`, `kiro:steering*` の実名を使う（例: `npm run kiro:spec:requirements -- "..."`）。旧 `cc-sdd:*` は互換・移行用として残すが、新規案内では Kiro 系を優先する。
-
-## OpenSpec ワークフロー
-
-```
-opsx-propose → opsx-apply → opsx-archive
-```
-
-フルオートピース `opsx-full` で全フェーズを一括実行できる。各フェーズは `npm run opsx:{phase} -- "..."` で個別実行も可能。
+Kiro スキルでは `$kiro-discovery`, `$kiro-spec-quick`, `$kiro-spec-batch`, `$kiro-impl`, `$kiro-spec-status` を正規導線として使う。npm scripts で個別実行する場合は、`package.json` に定義された `kiro:discovery`, `kiro:spec:*`, `kiro:validate:*`, `kiro:impl`, `kiro:steering*` の実名を使う（例: `npm run kiro:spec:requirements -- "..."`）。旧 `cc-sdd:*` は v2.0.0 で互換サーフェスが終了した（npm scripts compatibility ended）。
 
 ## インストーラの仕組み
 
-- `installer/src/install.ts` が本体。`.takt/` のピースとファセットを配置し、`package.json` に必要な scripts と `takt` / `@fission-ai/openspec@1.3.1` の devDependencies を追加する。
-- インストール時に `openspec init --tools none --force .` を実行し、`openspec/config.yaml` を初期化する。
-- あわせて固定バージョンの `cc-sdd@3.0.2` 初期化を `--lang` 伝播で実行する（`--dry-run` 時はプレビューのみ）。
+- `installer/src/install.ts` が本体。`.takt/` のピースとファセットを配置し、`package.json` に必要な scripts と `takt` の devDependency を追加する。
+- v1.x から update すると、退役済みワークフロー資産（cc-sdd-* / opsx-*）のうちカスタマイズされていないものを自動削除する。カスタマイズ済みの場合は警告のみ。
 - TAKT スキルは別リポジトリで提供しており、必要に応じて個別に導入する。
 
 # 基本原則

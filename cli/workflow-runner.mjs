@@ -195,8 +195,7 @@ function readManifestLang(projectRoot) {
  * Steps (per design):
  *   1. Determine language: config.yaml (read-only) > manifest.lang > "en"
  *   2. Strict workflow resolution: if not resolvable → init guidance
- *   3. opsx-* workflows: check for openspec binary in projectRoot/node_modules/.bin
- *   4. project package.json SDD devDependencies: report missing binaries
+ *   3. project package.json SDD devDependencies (takt only): report missing binaries
  *
  * Precondition: workflowName is already catalog-validated (CliMain's responsibility).
  *
@@ -221,18 +220,7 @@ export function preflight(ctx, workflowName) {
     );
   }
 
-  // Step 3: opsx-* workflows require openspec binary
-  if (workflowName.startsWith("opsx-")) {
-    const openspecBin = join(projectRoot, "node_modules", ".bin", "openspec");
-    if (!existsSync(openspecBin)) {
-      throw new PreflightError(
-        `OpenSpec binary not found at '${openspecBin}'. ` +
-          `Run \`npm install\` in your project to install the required dependencies.`,
-      );
-    }
-  }
-
-  // Step 4: Check SDD devDependencies declared in project package.json
+  // Step 3: Check SDD devDependencies declared in project package.json (takt only)
   const missingDependencies = [];
   const pkgJsonPath = join(projectRoot, "package.json");
   if (existsSync(pkgJsonPath)) {
@@ -247,11 +235,9 @@ export function preflight(ctx, workflowName) {
         ...projectPkg.devDependencies,
         ...projectPkg.dependencies,
       };
-      // Binary name mapping: package → binary
+      // Binary name mapping: package → binary (takt only)
       const sddBinMap = {
         takt: "takt",
-        "@fission-ai/openspec": "openspec",
-        "cc-sdd": "cc-sdd",
       };
       for (const [pkg, bin] of Object.entries(sddBinMap)) {
         if (allDeps[pkg] !== undefined) {

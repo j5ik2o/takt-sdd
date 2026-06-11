@@ -8,8 +8,9 @@ import { EventEmitter } from "node:events";
 import {
   SUPPORTED_WORKFLOWS,
   EXCLUDED_WORKFLOWS,
+  RETIRED_WORKFLOWS,
   isSupportedWorkflow,
-  isLegacyWorkflow,
+  isRetiredWorkflow,
   buildHelpText,
 } from "../cli/command-catalog.mjs";
 import {
@@ -23,9 +24,9 @@ import {
 
 const repoRoot = join(import.meta.dirname, "..");
 
-// (a) catalog has 17 entries, every entry has en+ja asset files on disk
-test("SUPPORTED_WORKFLOWS has exactly 17 entries", () => {
-  assert.equal(SUPPORTED_WORKFLOWS.length, 17, `Expected 17 entries but got ${SUPPORTED_WORKFLOWS.length}: ${SUPPORTED_WORKFLOWS.join(", ")}`);
+// (a) catalog has 12 entries (kiro only), every entry has en+ja asset files on disk
+test("SUPPORTED_WORKFLOWS has exactly 12 entries", () => {
+  assert.equal(SUPPORTED_WORKFLOWS.length, 12, `Expected 12 entries but got ${SUPPORTED_WORKFLOWS.length}: ${SUPPORTED_WORKFLOWS.join(", ")}`);
 });
 
 test("every SUPPORTED_WORKFLOWS entry has a .takt/en/workflows/<name>.yaml asset", () => {
@@ -42,8 +43,9 @@ test("every SUPPORTED_WORKFLOWS entry has a .takt/ja/workflows/<name>.yaml asset
   assert.deepEqual(missing, [], `Missing ja assets: ${missing.join(", ")}`);
 });
 
-// (b) bidirectional drift: every .takt/en/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS ∪ EXCLUDED_WORKFLOWS
-test("every .takt/en/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS (no unclassified assets)", () => {
+// (b) bidirectional drift: every bundled .takt/en/workflows/*.yaml basename is in SUPPORTED ∪ internal
+// RETIRED assets must NOT be bundled
+test("every .takt/en/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.internal (no unclassified assets)", () => {
   const enDir = join(repoRoot, ".takt", "en", "workflows");
   const allNames = readdirSync(enDir)
     .filter((f) => f.endsWith(".yaml"))
@@ -51,7 +53,6 @@ test("every .takt/en/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS or EXCL
 
   const allClassified = new Set([
     ...SUPPORTED_WORKFLOWS,
-    ...EXCLUDED_WORKFLOWS.legacy,
     ...EXCLUDED_WORKFLOWS.internal,
   ]);
 
@@ -59,11 +60,11 @@ test("every .takt/en/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS or EXCL
   assert.deepEqual(
     unclassified,
     [],
-    `Unclassified workflow assets in .takt/en/workflows/: ${unclassified.join(", ")}. Add them to SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.`,
+    `Unclassified workflow assets in .takt/en/workflows/: ${unclassified.join(", ")}. Add them to SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.internal.`,
   );
 });
 
-test("every .takt/ja/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS (no unclassified assets)", async () => {
+test("every .takt/ja/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.internal (no unclassified assets)", async () => {
   const { readdirSync } = await import("node:fs");
   const jaDir = join(repoRoot, ".takt", "ja", "workflows");
   const allNames = readdirSync(jaDir)
@@ -72,7 +73,6 @@ test("every .takt/ja/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS or EXCL
 
   const allClassified = new Set([
     ...SUPPORTED_WORKFLOWS,
-    ...EXCLUDED_WORKFLOWS.legacy,
     ...EXCLUDED_WORKFLOWS.internal,
   ]);
 
@@ -80,22 +80,50 @@ test("every .takt/ja/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS or EXCL
   assert.deepEqual(
     unclassified,
     [],
-    `Unclassified workflow assets in .takt/ja/workflows/: ${unclassified.join(", ")}. Add them to SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.`,
+    `Unclassified workflow assets in .takt/ja/workflows/: ${unclassified.join(", ")}. Add them to SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.internal.`,
   );
 });
 
-// (c) no cc-sdd- prefix in SUPPORTED_WORKFLOWS; isLegacyWorkflow and isSupportedWorkflow behavior
+// (b-new) RETIRED workflow assets must NOT be bundled
+test("no RETIRED workflow asset is bundled in .takt/en/workflows/", () => {
+  const enDir = join(repoRoot, ".takt", "en", "workflows");
+  const allRetired = [...RETIRED_WORKFLOWS.legacy, ...RETIRED_WORKFLOWS.opsx];
+  const found = allRetired.filter((name) =>
+    existsSync(join(enDir, `${name}.yaml`)),
+  );
+  assert.deepEqual(found, [], `RETIRED workflow assets must not be bundled in en: ${found.join(", ")}`);
+});
+
+test("no RETIRED workflow asset is bundled in .takt/ja/workflows/", () => {
+  const jaDir = join(repoRoot, ".takt", "ja", "workflows");
+  const allRetired = [...RETIRED_WORKFLOWS.legacy, ...RETIRED_WORKFLOWS.opsx];
+  const found = allRetired.filter((name) =>
+    existsSync(join(jaDir, `${name}.yaml`)),
+  );
+  assert.deepEqual(found, [], `RETIRED workflow assets must not be bundled in ja: ${found.join(", ")}`);
+});
+
+// (c) no cc-sdd- or opsx- prefix in SUPPORTED_WORKFLOWS; isRetiredWorkflow and isSupportedWorkflow behavior
 test("SUPPORTED_WORKFLOWS contains no cc-sdd- prefixed entries", () => {
   const ccSddEntries = SUPPORTED_WORKFLOWS.filter((name) => name.startsWith("cc-sdd-"));
   assert.deepEqual(ccSddEntries, [], `Found cc-sdd- entries in SUPPORTED_WORKFLOWS: ${ccSddEntries.join(", ")}`);
 });
 
-test("isLegacyWorkflow('cc-sdd-full') returns true", () => {
-  assert.equal(isLegacyWorkflow("cc-sdd-full"), true);
+test("SUPPORTED_WORKFLOWS contains no opsx- prefixed entries", () => {
+  const opsxEntries = SUPPORTED_WORKFLOWS.filter((name) => name.startsWith("opsx-"));
+  assert.deepEqual(opsxEntries, [], `Found opsx- entries in SUPPORTED_WORKFLOWS: ${opsxEntries.join(", ")}`);
 });
 
-test("isLegacyWorkflow('kiro-impl') returns false", () => {
-  assert.equal(isLegacyWorkflow("kiro-impl"), false);
+test("isRetiredWorkflow('cc-sdd-full') returns 'legacy'", () => {
+  assert.equal(isRetiredWorkflow("cc-sdd-full"), "legacy");
+});
+
+test("isRetiredWorkflow('opsx-propose') returns 'opsx'", () => {
+  assert.equal(isRetiredWorkflow("opsx-propose"), "opsx");
+});
+
+test("isRetiredWorkflow('kiro-impl') returns undefined", () => {
+  assert.equal(isRetiredWorkflow("kiro-impl"), undefined);
 });
 
 test("isSupportedWorkflow('kiro-impl') returns true", () => {
@@ -106,15 +134,15 @@ test("isSupportedWorkflow('cc-sdd-full') returns false", () => {
   assert.equal(isSupportedWorkflow("cc-sdd-full"), false);
 });
 
-test("isSupportedWorkflow('opsx-full') returns true", () => {
-  assert.equal(isSupportedWorkflow("opsx-full"), true);
+test("isSupportedWorkflow('opsx-full') returns false", () => {
+  assert.equal(isSupportedWorkflow("opsx-full"), false);
 });
 
 test("isSupportedWorkflow('unknown-workflow') returns false", () => {
   assert.equal(isSupportedWorkflow("unknown-workflow"), false);
 });
 
-// (d) buildHelpText contains init, every supported workflow name, "run", global options, and no cc-sdd-* names
+// (d) buildHelpText contains init, kiro-* workflow names, "run", global options, and no cc-sdd-*/opsx-* names
 test("buildHelpText contains 'init'", () => {
   const text = buildHelpText("1.0.0");
   assert.ok(text.includes("init"), `buildHelpText output does not contain 'init'`);
@@ -127,11 +155,11 @@ test("buildHelpText contains every supported kiro-* workflow name", () => {
   assert.deepEqual(missing, [], `buildHelpText missing kiro-* workflow names: ${missing.join(", ")}`);
 });
 
-test("buildHelpText contains every supported opsx-* workflow name", () => {
+test("buildHelpText does NOT contain any opsx-* workflow name", () => {
   const text = buildHelpText("1.0.0");
-  const opsxWorkflows = SUPPORTED_WORKFLOWS.filter((name) => name.startsWith("opsx-"));
-  const missing = opsxWorkflows.filter((name) => !text.includes(name));
-  assert.deepEqual(missing, [], `buildHelpText missing opsx-* workflow names: ${missing.join(", ")}`);
+  const opsxNames = [...RETIRED_WORKFLOWS.opsx];
+  const found = opsxNames.filter((name) => text.includes(name));
+  assert.deepEqual(found, [], `buildHelpText must not contain opsx-* names, but found: ${found.join(", ")}`);
 });
 
 test("buildHelpText contains 'run'", () => {
@@ -153,7 +181,7 @@ test("buildHelpText contains the provided version string", () => {
 
 test("buildHelpText does not contain any cc-sdd-* workflow name", () => {
   const text = buildHelpText("1.0.0");
-  const ccSddNames = EXCLUDED_WORKFLOWS.legacy.filter((name) => name.startsWith("cc-sdd-"));
+  const ccSddNames = RETIRED_WORKFLOWS.legacy;
   const found = ccSddNames.filter((name) => text.includes(name));
   assert.deepEqual(found, [], `buildHelpText must not contain cc-sdd-* names, but found: ${found.join(", ")}`);
 });
@@ -295,22 +323,58 @@ test("preflight: ja lang with missing ja workflow asset throws PreflightError (n
   }
 });
 
-// ─── preflight: opsx workflow + openspec binary absent → PreflightError with npm install ───
+// ─── preflight: opsx-* workflow with missing openspec binary → NO PreflightError (step 3 removed) ───
 
-test("preflight: opsx-* workflow with missing openspec binary throws PreflightError mentioning npm install", () => {
+test("preflight: opsx-* workflow with missing openspec binary does NOT throw PreflightError (spawn is reached)", async () => {
   const dir = makeTmpDir();
   try {
     writeManifest(dir, "en");
     writeWorkflowAsset(dir, "en", "opsx-propose");
-    // Do NOT write a fake openspec binary
+    // Do NOT write a fake openspec binary — should not matter anymore
+    const ctx = { projectRoot: dir, packageRoot: repoRoot };
+    let spawnCalled = false;
+    const captureSpawn = (_nodeExec, _args, _opts) => {
+      spawnCalled = true;
+      const emitter = new EventEmitter();
+      process.nextTick(() => emitter.emit("close", 0, null));
+      return emitter;
+    };
+    // Must NOT throw — spawn should be reached
+    const code = await runWorkflow("opsx-propose", [], ctx, captureSpawn);
+    assert.equal(code, 0);
+    assert.ok(spawnCalled, "spawnImpl must be called when openspec binary is absent (step 3 removed)");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ─── preflight: package.json declares takt dep but binary missing → PreflightError listing takt only ───
+
+test("preflight: declared takt devDependency with missing takt binary throws PreflightError listing takt", () => {
+  const dir = makeTmpDir();
+  try {
+    writeManifest(dir, "en");
+    writeWorkflowAsset(dir, "en", "kiro-impl");
+    // Declare takt dep only — @fission-ai/openspec and cc-sdd are no longer checked
+    writePkgJson(dir, { takt: "0.43.0" });
     const ctx = { projectRoot: dir, packageRoot: repoRoot };
     assert.throws(
-      () => preflight(ctx, "opsx-propose"),
+      () => preflight(ctx, "kiro-impl"),
       (err) => {
         assert.ok(err instanceof PreflightError, `Expected PreflightError, got ${err.constructor.name}`);
+        // Message should list takt as missing
         assert.ok(
-          err.message.includes("npm install"),
-          `Expected message to include 'npm install', got: ${err.message}`,
+          err.message.includes("takt"),
+          `Expected message to list 'takt' as missing, got: ${err.message}`,
+        );
+        // Message must NOT mention openspec or cc-sdd
+        assert.ok(
+          !err.message.includes("openspec"),
+          `Message must not mention 'openspec', got: ${err.message}`,
+        );
+        assert.ok(
+          !err.message.includes("cc-sdd"),
+          `Message must not mention 'cc-sdd', got: ${err.message}`,
         );
         return true;
       },
@@ -320,28 +384,18 @@ test("preflight: opsx-* workflow with missing openspec binary throws PreflightEr
   }
 });
 
-// ─── preflight: package.json declares SDD deps but binaries missing → lists them ───
+// ─── preflight: package.json declares @fission-ai/openspec or cc-sdd without takt → no error for those ───
 
-test("preflight: declared SDD devDependencies with missing binaries throws PreflightError listing missing deps", () => {
+test("preflight: @fission-ai/openspec and cc-sdd declared in package.json without binaries → no PreflightError", () => {
   const dir = makeTmpDir();
   try {
     writeManifest(dir, "en");
     writeWorkflowAsset(dir, "en", "kiro-impl");
-    // Declare SDD deps but provide no binaries
-    writePkgJson(dir, { takt: "0.43.0", "@fission-ai/openspec": "1.4.1", "cc-sdd": "3.0.2" });
+    // Declare openspec and cc-sdd deps but NOT takt — openspec/cc-sdd should not be checked
+    writePkgJson(dir, { "@fission-ai/openspec": "1.4.1", "cc-sdd": "3.0.2" });
     const ctx = { projectRoot: dir, packageRoot: repoRoot };
-    assert.throws(
-      () => preflight(ctx, "kiro-impl"),
-      (err) => {
-        assert.ok(err instanceof PreflightError, `Expected PreflightError, got ${err.constructor.name}`);
-        // Message should list missing binaries
-        assert.ok(
-          err.message.includes("takt") || err.message.includes("openspec") || err.message.includes("cc-sdd"),
-          `Expected message to list missing deps, got: ${err.message}`,
-        );
-        return true;
-      },
-    );
+    // Should NOT throw — openspec and cc-sdd are not in the binary check map anymore
+    assert.doesNotThrow(() => preflight(ctx, "kiro-impl"));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -377,27 +431,13 @@ test("preflight failure (ja lang, ja asset missing): spawnImpl is never called",
   }
 });
 
-test("preflight failure (opsx, openspec missing): spawnImpl is never called", async () => {
-  const dir = makeTmpDir();
-  try {
-    writeManifest(dir, "en");
-    writeWorkflowAsset(dir, "en", "opsx-propose");
-    const ctx = { projectRoot: dir, packageRoot: repoRoot };
-    await assert.rejects(
-      runWorkflow("opsx-propose", [], ctx, noSpawnImpl),
-      (err) => err instanceof PreflightError,
-    );
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
-});
-
-test("preflight failure (declared deps, missing binaries): spawnImpl is never called", async () => {
+test("preflight failure (declared takt dep, takt binary missing): spawnImpl is never called", async () => {
   const dir = makeTmpDir();
   try {
     writeManifest(dir, "en");
     writeWorkflowAsset(dir, "en", "kiro-impl");
-    writePkgJson(dir, { takt: "0.43.0", "cc-sdd": "3.0.2" });
+    // Only takt declared — cc-sdd no longer in the map
+    writePkgJson(dir, { takt: "0.43.0" });
     // No binaries in node_modules/.bin
     const ctx = { projectRoot: dir, packageRoot: repoRoot };
     await assert.rejects(
@@ -687,12 +727,14 @@ test("main(['--help']): output contains 'init'", async () => {
   assert.ok(output.includes("init"), `--help output should contain 'init', got: ${output}`);
 });
 
-test("main(['--help']): output contains kiro-* and opsx-* workflow names", async () => {
+test("main(['--help']): output contains kiro-* workflow names and NOT opsx-*/cc-sdd-*", async () => {
   const output = await captureStdout(async () => { await main(["--help"]); });
   const kiroMissing = SUPPORTED_WORKFLOWS.filter((n) => n.startsWith("kiro-") && !output.includes(n));
-  const opsxMissing = SUPPORTED_WORKFLOWS.filter((n) => n.startsWith("opsx-") && !output.includes(n));
   assert.deepEqual(kiroMissing, [], `--help output missing kiro-* names: ${kiroMissing.join(", ")}`);
-  assert.deepEqual(opsxMissing, [], `--help output missing opsx-* names: ${opsxMissing.join(", ")}`);
+  const opsxPresent = [...RETIRED_WORKFLOWS.opsx].filter((n) => output.includes(n));
+  assert.deepEqual(opsxPresent, [], `--help must not contain opsx-* names, but found: ${opsxPresent.join(", ")}`);
+  const ccSddPresent = [...RETIRED_WORKFLOWS.legacy].filter((n) => output.includes(n));
+  assert.deepEqual(ccSddPresent, [], `--help must not contain cc-sdd-* names, but found: ${ccSddPresent.join(", ")}`);
 });
 
 test("main(['--help']): output contains 'run'", async () => {
@@ -724,7 +766,7 @@ test("main(['--version']): output contains package.json version", async () => {
   assert.ok(output.includes(pkgVersion), `--version output should contain '${pkgVersion}', got: ${output}`);
 });
 
-// ─── legacy command rejection ───
+// ─── legacy command rejection (cc-sdd-* → v2.0.0 retired) ───
 
 test("main(['cc-sdd-full']): returns exit code 1", async () => {
   const errOut = await captureStderr(async () => {
@@ -733,11 +775,11 @@ test("main(['cc-sdd-full']): returns exit code 1", async () => {
   });
 });
 
-test("main(['cc-sdd-full']): stderr contains unsupported message", async () => {
+test("main(['cc-sdd-full']): stderr contains v2.0.0 retirement message", async () => {
   const errOut = await captureStderr(async () => { await main(["cc-sdd-full"]); });
   assert.ok(
-    errOut.toLowerCase().includes("legacy") || errOut.toLowerCase().includes("unsupported") || errOut.toLowerCase().includes("not supported"),
-    `Expected unsupported message in stderr, got: ${errOut}`,
+    errOut.includes("v2.0.0") || errOut.toLowerCase().includes("retired"),
+    `Expected v2.0.0 retirement message in stderr, got: ${errOut}`,
   );
 });
 
@@ -748,11 +790,68 @@ test("main(['run', 'cc-sdd-full']): returns exit code 1", async () => {
   });
 });
 
-test("main(['run', 'cc-sdd-full']): stderr contains unsupported message", async () => {
+test("main(['run', 'cc-sdd-full']): stderr contains v2.0.0 retirement message", async () => {
   const errOut = await captureStderr(async () => { await main(["run", "cc-sdd-full"]); });
   assert.ok(
-    errOut.toLowerCase().includes("legacy") || errOut.toLowerCase().includes("unsupported") || errOut.toLowerCase().includes("not supported"),
-    `Expected unsupported message for 'run cc-sdd-full' in stderr, got: ${errOut}`,
+    errOut.includes("v2.0.0") || errOut.toLowerCase().includes("retired"),
+    `Expected v2.0.0 retirement message for 'run cc-sdd-full' in stderr, got: ${errOut}`,
+  );
+});
+
+// ─── opsx command rejection (opsx-* → retired, future re-provision) ───
+
+test("main(['opsx-propose']): returns exit code 1", async () => {
+  const errOut = await captureStderr(async () => {
+    const c = await main(["opsx-propose"]);
+    assert.equal(c, 1, `Expected exit code 1 for 'opsx-propose', got ${c}`);
+  });
+});
+
+test("main(['opsx-propose']): stderr contains retirement + future re-provision message", async () => {
+  const errOut = await captureStderr(async () => { await main(["opsx-propose"]); });
+  assert.ok(
+    errOut.toLowerCase().includes("retired"),
+    `Expected 'retired' in stderr for opsx-propose, got: ${errOut}`,
+  );
+  assert.ok(
+    errOut.toLowerCase().includes("future") || errOut.toLowerCase().includes("re-provide") || errOut.toLowerCase().includes("re-provided"),
+    `Expected future re-provision message in stderr for opsx-propose, got: ${errOut}`,
+  );
+});
+
+test("main(['run', 'opsx-full']): returns exit code 1", async () => {
+  const errOut = await captureStderr(async () => {
+    const c = await main(["run", "opsx-full"]);
+    assert.equal(c, 1, `Expected exit code 1 for 'run opsx-full', got ${c}`);
+  });
+});
+
+test("main(['run', 'opsx-full']): stderr contains retirement + future re-provision message", async () => {
+  const errOut = await captureStderr(async () => { await main(["run", "opsx-full"]); });
+  assert.ok(
+    errOut.toLowerCase().includes("retired"),
+    `Expected 'retired' in stderr for 'run opsx-full', got: ${errOut}`,
+  );
+  assert.ok(
+    errOut.toLowerCase().includes("future") || errOut.toLowerCase().includes("re-provide") || errOut.toLowerCase().includes("re-provided"),
+    `Expected future re-provision in stderr for 'run opsx-full', got: ${errOut}`,
+  );
+});
+
+// ─── retirement dispatch: spawn is never reached ───
+
+test("main(['opsx-propose']): spawnImpl is never called (no preflight)", async () => {
+  // opsx-propose dispatch returns 1 directly without hitting workflow runner
+  // We verify by ensuring the uninitialized project dir does NOT get a preflight error
+  // (if spawn were reached, it would complain about missing .takt — instead it's the retirement message)
+  const errOut = await captureStderr(async () => {
+    const c = await main(["opsx-propose"]);
+    assert.equal(c, 1);
+  });
+  // Must NOT contain preflight messages
+  assert.ok(
+    !errOut.includes("takt-sdd init"),
+    `Retirement should stop before preflight. Got: ${errOut}`,
   );
 });
 
@@ -836,7 +935,7 @@ test("main(['--cwd', <uninit-dir>, 'kiro-impl']): preflight error shows takt-sdd
 
 const binPath = join(repoRoot, "bin", "takt-sdd.mjs");
 
-test("bin entry: 'node bin/takt-sdd.mjs --help' exits 0 and outputs init/workflow names", () => {
+test("bin entry: 'node bin/takt-sdd.mjs --help' exits 0, outputs init/kiro-*, and NOT opsx-*", () => {
   let stdout = "";
   try {
     stdout = execFileSync(process.execPath, [binPath, "--help"], { encoding: "utf-8" });
@@ -846,6 +945,9 @@ test("bin entry: 'node bin/takt-sdd.mjs --help' exits 0 and outputs init/workflo
   assert.ok(stdout.includes("init"), `--help should contain 'init'`);
   const kiroMissing = SUPPORTED_WORKFLOWS.filter((n) => n.startsWith("kiro-") && !stdout.includes(n));
   assert.deepEqual(kiroMissing, [], `--help missing kiro-* names: ${kiroMissing.join(", ")}`);
+  // opsx must not appear in help
+  const opsxCount = (stdout.match(/opsx-/g) || []).length;
+  assert.equal(opsxCount, 0, `--help must not contain opsx-* (found ${opsxCount} occurrences)`);
 });
 
 test("bin entry: 'node bin/takt-sdd.mjs --version' exits 0 and outputs package version", () => {
@@ -859,7 +961,7 @@ test("bin entry: 'node bin/takt-sdd.mjs --version' exits 0 and outputs package v
   assert.ok(stdout.trim().length > 0, `--version output should be non-empty`);
 });
 
-test("bin entry: 'node bin/takt-sdd.mjs cc-sdd-full' exits non-0 with unsupported message", () => {
+test("bin entry: 'node bin/takt-sdd.mjs cc-sdd-full' exits non-0 with v2.0.0 retirement message", () => {
   let exitCode = 0;
   let stderr = "";
   try {
@@ -871,12 +973,12 @@ test("bin entry: 'node bin/takt-sdd.mjs cc-sdd-full' exits non-0 with unsupporte
   }
   assert.ok(exitCode !== 0, `Expected non-zero exit for 'cc-sdd-full', got ${exitCode}`);
   assert.ok(
-    stderr.toLowerCase().includes("legacy") || stderr.toLowerCase().includes("unsupported") || stderr.toLowerCase().includes("not supported"),
-    `Expected unsupported message in stderr for 'cc-sdd-full', got: ${stderr}`,
+    stderr.includes("v2.0.0") || stderr.toLowerCase().includes("retired"),
+    `Expected v2.0.0 retirement message in stderr for 'cc-sdd-full', got: ${stderr}`,
   );
 });
 
-test("bin entry: 'node bin/takt-sdd.mjs run cc-sdd-full' exits non-0 with unsupported message", () => {
+test("bin entry: 'node bin/takt-sdd.mjs run cc-sdd-full' exits non-0 with v2.0.0 retirement message", () => {
   let exitCode = 0;
   let stderr = "";
   try {
@@ -888,7 +990,49 @@ test("bin entry: 'node bin/takt-sdd.mjs run cc-sdd-full' exits non-0 with unsupp
   }
   assert.ok(exitCode !== 0, `Expected non-zero exit for 'run cc-sdd-full', got ${exitCode}`);
   assert.ok(
-    stderr.toLowerCase().includes("legacy") || stderr.toLowerCase().includes("unsupported") || stderr.toLowerCase().includes("not supported"),
-    `Expected unsupported message for 'run cc-sdd-full', got: ${stderr}`,
+    stderr.includes("v2.0.0") || stderr.toLowerCase().includes("retired"),
+    `Expected v2.0.0 retirement message for 'run cc-sdd-full', got: ${stderr}`,
+  );
+});
+
+test("bin entry: 'node bin/takt-sdd.mjs opsx-full' exits non-0 with retirement + future re-provision message", () => {
+  let exitCode = 0;
+  let stderr = "";
+  try {
+    execFileSync(process.execPath, [binPath, "opsx-full"], { encoding: "utf-8" });
+    exitCode = 0;
+  } catch (err) {
+    exitCode = err.status;
+    stderr = err.stderr || "";
+  }
+  assert.ok(exitCode !== 0, `Expected non-zero exit for 'opsx-full', got ${exitCode}`);
+  assert.ok(
+    stderr.toLowerCase().includes("retired"),
+    `Expected 'retired' in stderr for 'opsx-full', got: ${stderr}`,
+  );
+  assert.ok(
+    stderr.toLowerCase().includes("future") || stderr.toLowerCase().includes("re-provide") || stderr.toLowerCase().includes("re-provided"),
+    `Expected future re-provision in stderr for 'opsx-full', got: ${stderr}`,
+  );
+});
+
+test("bin entry: 'node bin/takt-sdd.mjs run opsx-full' exits non-0 with retirement + future re-provision message", () => {
+  let exitCode = 0;
+  let stderr = "";
+  try {
+    execFileSync(process.execPath, [binPath, "run", "opsx-full"], { encoding: "utf-8" });
+    exitCode = 0;
+  } catch (err) {
+    exitCode = err.status;
+    stderr = err.stderr || "";
+  }
+  assert.ok(exitCode !== 0, `Expected non-zero exit for 'run opsx-full', got ${exitCode}`);
+  assert.ok(
+    stderr.toLowerCase().includes("retired"),
+    `Expected 'retired' in stderr for 'run opsx-full', got: ${stderr}`,
+  );
+  assert.ok(
+    stderr.toLowerCase().includes("future") || stderr.toLowerCase().includes("re-provide") || stderr.toLowerCase().includes("re-provided"),
+    `Expected future re-provision in stderr for 'run opsx-full', got: ${stderr}`,
   );
 });

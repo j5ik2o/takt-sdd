@@ -21,20 +21,12 @@ interface Messages {
   scriptsCreated: string;
   depsAdded: (keys: string[]) => string;
   depsUpdated: (keys: string[]) => string;
-  recoveringPartialInstall: string;
   layoutDetected: (layout: string) => string;
   fileAdded: (path: string) => string;
   fileUpdated: (path: string) => string;
   fileRemoved: (path: string) => string;
   fileSkippedCustomized: (path: string) => string;
   manifestCreated: string;
-  openspecInitializing: (version: string) => string;
-  openspecInitialized: (path: string) => string;
-  openspecInitFailed: (details: string) => string;
-  ccSddInitializing: (version: string) => string;
-  ccSddInitialized: () => string;
-  ccSddInitFailed: (details: string) => string;
-  ccSddDryRunPlan: (version: string, lang: Lang) => string;
 }
 
 const en: Messages = {
@@ -59,20 +51,12 @@ const en: Messages = {
   scriptsCreated: "Created package.json with npm scripts and devDependencies",
   depsAdded: (keys) => `Added devDependencies: ${keys.join(", ")}`,
   depsUpdated: (keys) => `Updated devDependencies: ${keys.join(", ")}`,
-  recoveringPartialInstall: "Detected a partial install without an OpenSpec config. Continuing recovery install.",
   layoutDetected: (layout) => `Using ${layout} layout`,
   fileAdded: (path) => `Added: ${path}`,
   fileUpdated: (path) => `Updated: ${path}`,
   fileRemoved: (path) => `Removed: ${path}`,
   fileSkippedCustomized: (path) => `Skipped (customized): ${path}`,
   manifestCreated: "Created install manifest",
-  openspecInitializing: (version) => `Initializing OpenSpec ${version}...`,
-  openspecInitialized: (path) => `OpenSpec initialized: ${path}`,
-  openspecInitFailed: (details) => `Error: failed to initialize OpenSpec.\n${details}`,
-  ccSddInitializing: (version) => `Initializing cc-sdd ${version}...`,
-  ccSddInitialized: () => "cc-sdd initialized.",
-  ccSddInitFailed: (details) => `Error: failed to initialize cc-sdd.\n${details}`,
-  ccSddDryRunPlan: (version, lang) => `[dry-run] Would initialize cc-sdd ${version} (--lang ${lang}).`,
   helpText: `Usage: npx create-takt-sdd [options]
 
 Options:
@@ -95,17 +79,7 @@ Options:
     npm run kiro:spec:design -- "feature={feature}"
     npm run kiro:validate:design -- "feature={feature}"
     npm run kiro:spec:tasks -- "feature={feature}"
-    npm run kiro:validate:impl -- "feature={feature}"
-
-  Legacy CC-SDD scripts remain available during migration:
-    npm run cc-sdd:full -- "description of requirements"
-
-  Usage (OpenSpec):
-    npm run opsx:full -- "description of change"
-    npm run opsx:propose -- "change-name"
-    npm run opsx:apply -- "change-name"
-    npm run opsx:archive -- "change-name"
-    npm run opsx:explore`,
+    npm run kiro:validate:impl -- "feature={feature}"`,
 };
 
 const ja: Messages = {
@@ -132,20 +106,12 @@ const ja: Messages = {
   scriptsCreated: "npm scripts と devDependencies 付きの package.json を作成しました",
   depsAdded: (keys) => `devDependencies を追加しました: ${keys.join(", ")}`,
   depsUpdated: (keys) => `devDependencies を更新しました: ${keys.join(", ")}`,
-  recoveringPartialInstall: "OpenSpec 設定のない中途半端なインストールを検出しました。復旧インストールを続行します。",
   layoutDetected: (layout) => `${layout} レイアウトを使用します`,
   fileAdded: (path) => `追加: ${path}`,
   fileUpdated: (path) => `更新: ${path}`,
   fileRemoved: (path) => `削除: ${path}`,
   fileSkippedCustomized: (path) => `スキップ（カスタマイズ済み）: ${path}`,
   manifestCreated: "インストールマニフェストを作成しました",
-  openspecInitializing: (version) => `OpenSpec ${version} を初期化中...`,
-  openspecInitialized: (path) => `OpenSpec を初期化しました: ${path}`,
-  openspecInitFailed: (details) => `エラー: OpenSpec の初期化に失敗しました。\n${details}`,
-  ccSddInitializing: (version) => `cc-sdd ${version} を初期化中...`,
-  ccSddInitialized: () => "cc-sdd を初期化しました。",
-  ccSddInitFailed: (details) => `エラー: cc-sdd の初期化に失敗しました。\n${details}`,
-  ccSddDryRunPlan: (version, lang) => `[dry-run] cc-sdd ${version} を初期化します (--lang ${lang})。`,
   helpText: `使い方: npx create-takt-sdd [オプション]
 
 オプション:
@@ -168,17 +134,7 @@ const ja: Messages = {
     npm run kiro:spec:design -- "feature={feature}"
     npm run kiro:validate:design -- "feature={feature}"
     npm run kiro:spec:tasks -- "feature={feature}"
-    npm run kiro:validate:impl -- "feature={feature}"
-
-  旧 CC-SDD scripts は移行期間中も利用できます:
-    npm run cc-sdd:full -- "要件の説明"
-
-  使い方 (OpenSpec):
-    npm run opsx:full -- "変更の説明"
-    npm run opsx:propose -- "change-name"
-    npm run opsx:apply -- "change-name"
-    npm run opsx:archive -- "change-name"
-    npm run opsx:explore`,
+    npm run kiro:validate:impl -- "feature={feature}"`,
 };
 
 const messages: Record<Lang, Messages> = { en, ja };

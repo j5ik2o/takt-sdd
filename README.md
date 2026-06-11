@@ -36,7 +36,7 @@ takt-sdd uses [takt](https://github.com/nrslib/takt)'s state-machine-based workf
 
 ## Global CLI
 
-`takt-sdd` is available as a global npm package, letting you run any supported `kiro-*` or `opsx-*` workflow from any project without relying on repo-local npm scripts.
+`takt-sdd` is available as a global npm package, letting you run any supported `kiro-*` workflow from any project without relying on repo-local npm scripts.
 
 ### Installation
 
@@ -73,17 +73,11 @@ npm install
 | `kiro-validate-gap` | Compare requirements with the current codebase |
 | `kiro-validate-design` | Review design quality and return a GO/NO-GO decision |
 | `kiro-validate-impl` | Validate implementation evidence and remaining manual checks |
-| `opsx-propose` | Create a change and generate all artifacts |
-| `opsx-apply` | Implement tasks from a change |
-| `opsx-archive` | Archive a completed change |
-| `opsx-explore` | Interactive exploration and thinking (pipeline mode — see note below) |
-| `opsx-full` | Run propose → apply → archive in one automated sequence |
 
 You can also use the `run` form:
 
 ```bash
 takt-sdd run kiro-spec-design "feature=my-feature"
-takt-sdd run opsx-propose "my-change"
 ```
 
 The `run` form is equivalent to the direct command form and accepts the same supported workflows only.
@@ -100,25 +94,25 @@ The `run` form is equivalent to the direct command form and accepts the same sup
 |--------|-------------|
 | `--lang en\|ja` | Language for installed assets and initial language preference (default: `en`). Reads existing `.takt/config.yaml` language if present and `--lang` is not specified. |
 | `--force` | Overwrite customized files (same semantics as `create-takt-sdd --force`) |
-| `--dry-run` | Preview changes without writing any files, without running OpenSpec init, and without running cc-sdd init |
+| `--dry-run` | Preview changes without writing any files |
 
 `--tag` is **not** supported by the global CLI. The bundled assets matching the installed package version are always used.
 
-### Legacy `cc-sdd-*` workflows
+### Retired workflows
 
-The global CLI rejects `cc-sdd-*` workflows in both direct and `run` form:
+**`cc-sdd-*` workflows (retired in v2.0.0):** The global CLI rejects `cc-sdd-*` commands with an explicit error:
 
 ```bash
-takt-sdd cc-sdd-full        # Error: legacy cc-sdd-* workflows are not supported
+takt-sdd cc-sdd-full        # Error: `cc-sdd-*` workflows were retired in v2.0.0 and are no longer available.
 takt-sdd run cc-sdd-full    # Error: same rejection
 ```
 
-`cc-sdd:*` compatibility remains available through the project's npm scripts (a separate path managed by the project itself).
+**`opsx-*` workflows (retired, future re-provision planned):** The global CLI rejects `opsx-*` commands:
 
-### `opsx-explore` mode difference
-
-When invoked via the global CLI (`takt-sdd opsx-explore`), the workflow runs in **pipeline mode** (`--pipeline --skip-git`), which is the same flag set applied to all supported workflows.  
-When invoked via the project's npm script (`npm run opsx:explore`), it runs **without** `--pipeline` — the interactive mode. If you rely on the interactive exploration behavior, use the npm script.
+```bash
+takt-sdd opsx-propose       # Error: `opsx-*` workflows have been retired and will be re-provided in a future release.
+takt-sdd run opsx-full      # Error: same rejection
+```
 
 ### `.takt/config.yaml` ownership
 
@@ -148,9 +142,7 @@ npx create-takt-sdd --tag 0.1.2
 The installer sets up the following:
 
 - **`.takt/`** — Workflows (YAML workflows) and facets in the selected language (`--lang`)
-- **`openspec/config.yaml`** — OpenSpec project config initialized via the official OpenSpec `1.3.1` CLI
-- **`package.json`** — npm scripts for each phase + `takt` and `@fission-ai/openspec@1.3.1` as devDependencies
-- **cc-sdd** — Kiro-compatible project initialization run via the pinned `cc-sdd@3.0.2` CLI, propagating the selected `--lang`
+- **`package.json`** — npm scripts for each phase + `takt` as a devDependency
 
 Options:
 
@@ -161,7 +153,7 @@ Options:
 | `--lang <en\|ja>` | Facet and message language (default: `en`) |
 | `--dry-run` | Preview files without writing |
 
-When `package.json` already exists, only npm scripts are merged (existing scripts are not overwritten). The installer also runs `openspec init --tools none --force .`, so OpenSpec is ready without generating extra AI-tool-specific files. It then runs the pinned `cc-sdd@3.0.2` initialization with the same `--lang`. In `--dry-run` mode the cc-sdd initialization is previewed only and not executed.
+When `package.json` already exists, only npm scripts are merged (existing scripts are not overwritten).
 
 ### Adding Individual Skills
 
@@ -177,7 +169,7 @@ npx -y skills add j5ik2o/ai-tools --skill takt-task-builder
 
 ## Kiro Compatibility Workflow
 
-Use `kiro:*` scripts for new SDD workflow usage. Legacy `cc-sdd:*` scripts remain available for existing projects during migration, but new documentation and agent guidance should prefer the Kiro surface.
+Use `kiro:*` scripts for SDD workflow execution. The `cc-sdd:*` npm scripts compatibility surface ended in v2.0.0.
 
 | Phase | npm script | Workflow identity | Description |
 |-------|------------|-------------------|-------------|
@@ -245,10 +237,10 @@ Use `KIRO_REAL_PROVIDER_TIMEOUT_MS` or `KIRO_REAL_PROVIDER_IMPL_TIMEOUT_MS` to t
 
 ### Migration from legacy `cc-sdd:*` scripts
 
-Legacy scripts are compatibility entrypoints. They continue to call the existing `cc-sdd-*` workflows and are not aliases for `kiro:*`.
+`cc-sdd:*` npm scripts compatibility ended in v2.0.0. If your project still has `cc-sdd:*` scripts in `package.json` from a v1.x installation, remove them manually — they reference workflow files that no longer exist in the package.
 
-| Legacy script | New Kiro script |
-|---------------|-----------------|
+| Legacy script (remove manually) | Equivalent Kiro script |
+|----------------------------------|------------------------|
 | `cc-sdd:full` | `kiro:spec:quick` |
 | `cc-sdd:requirements` | `kiro:spec:requirements` |
 | `cc-sdd:validate-gap` | `kiro:validate:gap` |
@@ -259,22 +251,6 @@ Legacy scripts are compatibility entrypoints. They continue to call the existing
 | `cc-sdd:validate-impl` | `kiro:validate:impl` |
 | `cc-sdd:steering` | `kiro:steering` |
 | `cc-sdd:steering-custom` | `kiro:steering-custom` |
-
-<details>
-<summary>Legacy CC-SDD scripts</summary>
-
-```bash
-npm run cc-sdd:full -- "description of requirements..."
-npm run cc-sdd:requirements -- "description of requirements..."
-npm run cc-sdd:validate-gap -- "feature={feature}"
-npm run cc-sdd:design -- "feature={feature}"
-npm run cc-sdd:validate-design -- "feature={feature}"
-npm run cc-sdd:tasks -- "feature={feature}"
-npm run cc-sdd:impl -- "feature={feature}"
-npm run cc-sdd:validate-impl -- "feature={feature}"
-```
-
-</details>
 
 ### Output Files
 
@@ -362,60 +338,17 @@ npm run kiro:steering-custom -- "testing"
 
 Generated steering files are automatically referenced during design phases (`kiro:spec:design`, `kiro:validate:design`, etc.).
 
-## OpenSpec Compatibility Workflow
+## Updating an Existing Project (v1.x → v2.0.0)
 
-Separate from the SDD workflow, an OpenSpec-based change management workflow is provided. This workflow manages structured changes through proposal → implementation → archival phases.
+When you run `takt-sdd init .` on a project that was installed with v1.x, the installer automatically removes retired workflow assets (cc-sdd-* and opsx-* workflow files) that have not been customized, and removes them from the manifest. Assets that you have modified are left in place with a warning.
 
-The `npm run opsx:*` entrypoints stay intact, but the workflow definitions now follow the official OpenSpec CLI contract (`openspec new change`, `openspec status`, `openspec instructions`, `openspec archive --yes`) instead of a repo-local helper script.
+In `--dry-run` mode, the list of files that would be removed is displayed without making any changes.
 
-| Workflow | Description |
-|-------|-------------|
-| `opsx-propose` | Create a change and generate all artifacts (proposal, design, tasks) |
-| `opsx-apply` | Implement tasks from a change |
-| `opsx-archive` | Archive a completed change |
-| `opsx-full` | Run propose → apply → archive in one automated sequence |
-| `opsx-explore` | Interactive exploration and thinking (read-only, not included in full) |
+Note: `openspec/` directories and any files you have added yourself are never touched by the update.
 
-### Full-Auto Execution
+### Removing leftover `cc-sdd:*` and `opsx:*` scripts
 
-```bash
-npm run opsx:full -- "description of change"
-```
-
-### Phase-by-Phase Execution
-
-```bash
-# Create a change and generate artifacts
-npm run opsx:propose -- "change-name"
-
-# Implement tasks
-npm run opsx:apply -- "change-name"
-
-# Archive completed change
-npm run opsx:archive -- "change-name"
-
-# Interactive exploration (independent, thinking-only mode)
-npm run opsx:explore
-```
-
-### OpenSpec Configuration
-
-The `openspec/config.yaml` file defines the schema and optional project context:
-
-```yaml
-schema: spec-driven
-
-# Optional: project context shown to AI when creating artifacts
-# context: |
-#   Tech stack: TypeScript, React, Node.js
-
-# Optional: per-artifact rules
-# rules:
-#   proposal:
-#     - Keep proposals under 500 words
-```
-
-Changes are stored in `openspec/changes/<name>/` and archived to `openspec/changes/archive/`.
+`init` does not modify your `package.json` scripts beyond adding missing `kiro:*` entries. If your project still contains `cc-sdd:*` or `opsx:*` scripts from a v1.x installation, remove them manually. They reference workflow files that no longer exist, so running them will result in a takt resolution error.
 
 ## Project Structure
 

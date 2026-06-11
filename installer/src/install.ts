@@ -1,10 +1,9 @@
-import { execFileSync, execSync } from "node:child_process";
+import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import type { IncomingMessage } from "node:http";
 import https from "node:https";
 import { createWriteStream, mkdtempSync } from "node:fs";
-import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,7 +11,6 @@ import { type Lang, getMessages } from "./i18n.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const require = createRequire(import.meta.url);
 
 function getInstallerVersion(): string {
   const pkgPath = resolve(__dirname, "..", "package.json");
@@ -24,14 +22,74 @@ const REPO = "j5ik2o/takt-sdd";
 const TARGET_DIR = ".takt";
 const PIECE_DIR = "workflows";
 const KIRO_STAGED_SCRIPT_INSTALL_PATH = "scripts/kiro-staged.mjs";
-const LEGACY_OPSX_SCRIPT_INSTALL_PATH = "scripts/opsx-cli.sh";
-const OPENSPEC_PACKAGE = "@fission-ai/openspec";
-export const OPENSPEC_VERSION = "1.4.1";
-const OPENSPEC_CONFIG_PATH = "openspec/config.yaml";
-export const CC_SDD_PACKAGE = "cc-sdd";
-export const CC_SDD_VERSION = "3.0.2";
 
-const SDD_DEPENDENCY_ALLOWLIST = ["takt", OPENSPEC_PACKAGE, CC_SDD_PACKAGE] as const;
+const SDD_DEPENDENCY_ALLOWLIST = ["takt"] as const;
+
+/**
+ * Manifest key patterns for retired assets.
+ * Covers:
+ *   - .takt/workflows/(cc-sdd-|opsx-)*.yaml  (workflow yamls, both languages)
+ *   - .takt/facets/{type}/(cc-sdd-|opsx-)*   (modern layout facets, including nested subdirs)
+ *   - .takt/{type}/(cc-sdd-|opsx-)*          (legacy layout facets, including nested subdirs)
+ *   - retired-exclusive shared facets without a cc-sdd-/opsx- prefix
+ *     (ai-review-fix-loop-judge.md, batch-plan-implement-loop-judge.md; both layouts)
+ *   - scripts/opsx-cli.sh                     (legacy opsx helper script)
+ * Does NOT match: kiro-* workflows, openspec/, user-owned files.
+ */
+export const RETIRED_MANIFEST_KEY_PATTERNS: readonly RegExp[] = [
+  /^\.takt\/workflows\/(cc-sdd-|opsx-).*\.yaml$/,
+  /^\.takt\/(?:facets\/)?[a-z-]+\/(cc-sdd-|opsx-).*/,
+  /^\.takt\/(?:facets\/)?instructions\/(ai-review-fix-loop-judge|batch-plan-implement-loop-judge)\.md$/,
+  /^scripts\/opsx-cli\.sh$/,
+] as const;
+
+/**
+ * Return the list of manifest keys that are candidates for retired-asset cleanup.
+ * Returns [] when manifest is null (fresh install — cleanup must not fire).
+ */
+export function planRetiredRemovals(manifest: Manifest | null, _cwd: string): readonly string[] {
+  if (manifest === null) return [];
+  return Object.keys(manifest.files).filter((key) =>
+    RETIRED_MANIFEST_KEY_PATTERNS.some((pattern) => pattern.test(key)),
+  );
+}
+
+/**
+ * Remove retired assets from disk.
+ * Generalizes the former bespoke legacy script removal to cover all RETIRED_MANIFEST_KEY_PATTERNS.
+ *
+ * For each candidate key:
+ *   - If the on-disk file hash matches the manifest record → delete + empty-parent cleanup + log.
+ *   - If hash differs (customized) → warn and leave in place (req 5.2).
+ *   - If the key is not in the manifest → skip (no record, nothing to clean).
+ */
+export function removeRetiredFiles(
+  cwd: string,
+  manifest: Manifest,
+  msg: ReturnType<typeof getMessages>,
+): void {
+  const candidates = planRetiredRemovals(manifest, cwd);
+  for (const key of candidates) {
+    const filePath = join(cwd, key);
+    if (!existsSync(filePath)) continue;
+
+    const recordedHash = manifest.files[key];
+    if (recordedHash === undefined) continue;
+
+    const currentHash = computeFileHash(filePath);
+    if (currentHash !== recordedHash) {
+      warn(msg.fileSkippedCustomized(key));
+      continue;
+    }
+
+    rmSync(filePath, { force: true });
+    const parentDir = dirname(filePath);
+    if (existsSync(parentDir) && readdirSync(parentDir).length === 0) {
+      rmSync(parentDir, { recursive: true, force: true });
+    }
+    info(msg.fileRemoved(key));
+  }
+}
 
 export function resolveSddDependencySet(pkg: {
   readonly dependencies?: Readonly<Record<string, string>>;
@@ -47,41 +105,6 @@ export function resolveSddDependencySet(pkg: {
   return result;
 }
 
-export function buildCcSddExecArgs(npmCliPath: string, lang: Lang): string[] {
-  return [
-    npmCliPath,
-    "exec",
-    "--yes",
-    `--package=${CC_SDD_PACKAGE}@${CC_SDD_VERSION}`,
-    "--",
-    "cc-sdd",
-    "--lang",
-    lang,
-  ];
-}
-
-type CommandRunner = (file: string, args: readonly string[], options: { cwd: string }) => void;
-
-export class CcSddInitError extends Error {}
-
-export const defaultCcSddRun: CommandRunner = (file, args, { cwd }) => {
-  execFileSync(file, [...args], { cwd, encoding: "utf-8", stdio: ["ignore", "pipe", "pipe"] });
-};
-
-export function initializeCcSddProject(
-  cwd: string,
-  lang: Lang,
-  msg: ReturnType<typeof getMessages>,
-  run: CommandRunner = defaultCcSddRun,
-): void {
-  info(msg.ccSddInitializing(CC_SDD_VERSION));
-  try {
-    run(process.execPath, buildCcSddExecArgs(getNpmCliPath(), lang), { cwd });
-  } catch (error) {
-    throw new CcSddInitError(formatExecError(error));
-  }
-  info(msg.ccSddInitialized());
-}
 const FACET_TYPES = [
   "personas",
   "policies",
@@ -140,21 +163,6 @@ const SDD_SCRIPTS: Record<string, string> = {
   "kiro:validate:impl": "node scripts/kiro-staged.mjs kiro-validate-impl --pipeline --skip-git -t",
   "kiro:steering": "node scripts/kiro-staged.mjs kiro-steering --pipeline --skip-git -t",
   "kiro:steering-custom": "node scripts/kiro-staged.mjs kiro-steering-custom --pipeline --skip-git -t",
-  "cc-sdd:full": "takt --pipeline --skip-git -w cc-sdd-full -t",
-  "cc-sdd:requirements": "takt --pipeline --skip-git -w cc-sdd-requirements -t",
-  "cc-sdd:validate-gap": "takt --pipeline --skip-git -w cc-sdd-validate-gap -t",
-  "cc-sdd:design": "takt --pipeline --skip-git -w cc-sdd-design -t",
-  "cc-sdd:validate-design": "takt --pipeline --skip-git -w cc-sdd-validate-design -t",
-  "cc-sdd:tasks": "takt --pipeline --skip-git -w cc-sdd-tasks -t",
-  "cc-sdd:impl": "takt --pipeline --skip-git -w cc-sdd-impl -t",
-  "cc-sdd:validate-impl": "takt --pipeline --skip-git -w cc-sdd-validate-impl -t",
-  "cc-sdd:steering": "takt --pipeline --skip-git -w cc-sdd-steering -t",
-  "cc-sdd:steering-custom": "takt --pipeline --skip-git -w cc-sdd-steering-custom -t",
-  "opsx:full": "takt --pipeline --skip-git -w opsx-full -t",
-  "opsx:propose": "takt --pipeline --skip-git -w opsx-propose -t",
-  "opsx:apply": "takt --pipeline --skip-git -w opsx-apply -t",
-  "opsx:archive": "takt --pipeline --skip-git -w opsx-archive -t",
-  "opsx:explore": "takt --skip-git -w opsx-explore",
 };
 
 export interface InstallOptions {
@@ -368,100 +376,13 @@ function syncDirectory(
   return syncRelativeFiles(srcBase, destBase, collectFiles(srcDir, srcBase), manifest, msg, cwd);
 }
 
-function getOpenSpecCliPath(): string {
-  const packageEntry = require.resolve(OPENSPEC_PACKAGE);
-  return resolve(dirname(packageEntry), "..", "bin", "openspec.js");
-}
-
-function getNpmCliPath(): string {
-  return resolve(dirname(process.execPath), "..", "lib", "node_modules", "npm", "bin", "npm-cli.js");
-}
-
-function formatExecError(error: unknown): string {
-  if (typeof error === "object" && error !== null) {
-    const stderr = Reflect.get(error, "stderr");
-    if (typeof stderr === "string" && stderr.trim() !== "") return stderr.trim();
-    if (stderr instanceof Buffer && stderr.length > 0) return stderr.toString("utf-8").trim();
-
-    const stdout = Reflect.get(error, "stdout");
-    if (typeof stdout === "string" && stdout.trim() !== "") return stdout.trim();
-    if (stdout instanceof Buffer && stdout.length > 0) return stdout.toString("utf-8").trim();
-
-    const message = Reflect.get(error, "message");
-    if (typeof message === "string" && message.trim() !== "") return message.trim();
-  }
-  return String(error);
-}
-
-function initializeOpenSpecProject(
-  cwd: string,
-  openspecVersionSpec: string,
-  msg: ReturnType<typeof getMessages>,
-): void {
-  info(msg.openspecInitializing(openspecVersionSpec));
-  try {
-    const args = openspecVersionSpec === OPENSPEC_VERSION
-      ? [getOpenSpecCliPath(), "init", "--tools", "none", "--force", "."]
-      : [
-        getNpmCliPath(),
-        "exec",
-        "--yes",
-        `--package=${OPENSPEC_PACKAGE}@${openspecVersionSpec}`,
-        "--",
-        "openspec",
-        "init",
-        "--tools",
-        "none",
-        "--force",
-        ".",
-      ];
-    execFileSync(process.execPath, args, {
-      cwd,
-      encoding: "utf-8",
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-  } catch (error) {
-    errorExit(msg.openspecInitFailed(formatExecError(error)));
-  }
-  info(msg.openspecInitialized(OPENSPEC_CONFIG_PATH));
-}
-
-function removeLegacyOpsxScript(
-  cwd: string,
-  manifest: Manifest | null,
-  msg: ReturnType<typeof getMessages>,
-): void {
-  if (manifest === null) return;
-
-  const legacyScriptPath = join(cwd, LEGACY_OPSX_SCRIPT_INSTALL_PATH);
-  if (!existsSync(legacyScriptPath)) return;
-
-  const manifestKey = LEGACY_OPSX_SCRIPT_INSTALL_PATH;
-  const recordedHash = manifest.files[manifestKey];
-  if (recordedHash === undefined) return;
-
-  const currentHash = computeFileHash(legacyScriptPath);
-  if (currentHash !== recordedHash) {
-    warn(msg.fileSkippedCustomized(manifestKey));
-    return;
-  }
-
-  rmSync(legacyScriptPath, { force: true });
-  const legacyScriptDir = dirname(legacyScriptPath);
-  if (existsSync(legacyScriptDir) && readdirSync(legacyScriptDir).length === 0) {
-    rmSync(legacyScriptDir, { recursive: true, force: true });
-  }
-  info(msg.fileRemoved(manifestKey));
-}
 
 export async function installFromSource(options: CoreInstallOptions, source: InstallSource): Promise<void> {
   const msg = getMessages(options.lang);
   const targetPath = join(options.cwd, TARGET_DIR);
   const manifestPath = join(targetPath, MANIFEST_FILE);
-  const openspecConfigPath = join(options.cwd, OPENSPEC_CONFIG_PATH);
 
   const taktDir = join(source.rootDir, TARGET_DIR);
-  const legacyOpsxPath = join(source.rootDir, LEGACY_OPSX_SCRIPT_INSTALL_PATH);
   const kiroStagedPath = join(source.rootDir, KIRO_STAGED_SCRIPT_INSTALL_PATH);
   const packagedAssetBase = join(__dirname, "assets");
   const packagedKiroStagedPath = join(packagedAssetBase, KIRO_STAGED_SCRIPT_INSTALL_PATH);
@@ -470,19 +391,14 @@ export async function installFromSource(options: CoreInstallOptions, source: Ins
     errorExit(msg.archiveError);
   }
 
-  const hasLegacyOpsxScript = existsSync(legacyOpsxPath);
   const hasKiroStagedScript = existsSync(kiroStagedPath) || existsSync(packagedKiroStagedPath);
 
   const manifest = loadManifest(manifestPath);
   const isUpdate = manifest !== null;
   const workflowsExist = existsSync(join(targetPath, PIECE_DIR));
-  const isRecoverablePartialInstall = !isUpdate && workflowsExist && !existsSync(openspecConfigPath);
 
-  if (!isUpdate && workflowsExist && !options.force && !isRecoverablePartialInstall) {
+  if (!isUpdate && workflowsExist && !options.force) {
     errorExit(msg.existsError("npx create-takt-sdd"));
-  }
-  if (isRecoverablePartialInstall) {
-    warn(msg.recoveringPartialInstall);
   }
 
   const resolvedLayout = options.layout === "auto" ? detectLayout() : options.layout;
@@ -494,8 +410,6 @@ export async function installFromSource(options: CoreInstallOptions, source: Ins
     const sddPkg = JSON.parse(readFileSync(sddPkgPath, "utf-8"));
     Object.assign(sddDevDependencies, resolveSddDependencySet(sddPkg));
   }
-  const openspecVersionSpec = sddDevDependencies[OPENSPEC_PACKAGE];
-  const usesOfficialOpenSpec = openspecVersionSpec !== undefined;
 
   if (options.dryRun) {
     info(msg.dryRunHeader);
@@ -514,17 +428,20 @@ export async function installFromSource(options: CoreInstallOptions, source: Ins
         }
       }
     }
-    if (usesOfficialOpenSpec) {
-      console.log(msg.dryRunItem(OPENSPEC_CONFIG_PATH));
-    } else if (hasLegacyOpsxScript) {
-      console.log(msg.dryRunItem(LEGACY_OPSX_SCRIPT_INSTALL_PATH));
-    }
     if (hasKiroStagedScript) {
       console.log(msg.dryRunItem(KIRO_STAGED_SCRIPT_INSTALL_PATH));
     } else {
       errorExit(msg.requiredFileMissing(KIRO_STAGED_SCRIPT_INSTALL_PATH));
     }
-    console.log(msg.ccSddDryRunPlan(CC_SDD_VERSION, options.lang));
+    // Show retired-asset removal plan (update only; fresh install has no candidates)
+    const retiredPlan = planRetiredRemovals(manifest, options.cwd);
+    if (retiredPlan.length > 0) {
+      console.log("");
+      info("[dry-run] The following retired files would be removed:");
+      for (const key of retiredPlan) {
+        console.log(msg.dryRunItem(key));
+      }
+    }
     console.log("");
     info(msg.dryRunSkipped);
     return;
@@ -573,22 +490,6 @@ export async function installFromSource(options: CoreInstallOptions, source: Ins
         );
         Object.assign(allFiles, result.files);
       }
-    }
-
-    if (!usesOfficialOpenSpec && hasLegacyOpsxScript) {
-      const scriptFilesResult = syncRelativeFiles(
-        source.rootDir,
-        options.cwd,
-        [LEGACY_OPSX_SCRIPT_INSTALL_PATH],
-        isUpdate ? manifest : null,
-        msg,
-        options.cwd,
-      );
-      Object.assign(allFiles, scriptFilesResult.files);
-    }
-
-    if (!usesOfficialOpenSpec && !hasLegacyOpsxScript) {
-      errorExit(msg.requiredFileMissing(LEGACY_OPSX_SCRIPT_INSTALL_PATH));
     }
 
     if (!hasKiroStagedScript) {
@@ -656,11 +557,8 @@ export async function installFromSource(options: CoreInstallOptions, source: Ins
       info(msg.scriptsCreated);
     }
 
-    if (usesOfficialOpenSpec && !existsSync(openspecConfigPath)) {
-      initializeOpenSpecProject(options.cwd, openspecVersionSpec, msg);
-    }
-    if (usesOfficialOpenSpec) {
-      removeLegacyOpsxScript(options.cwd, manifest, msg);
+    if (isUpdate) {
+      removeRetiredFiles(options.cwd, manifest!, msg);
     }
 
     const newManifest: Manifest = {
@@ -671,15 +569,6 @@ export async function installFromSource(options: CoreInstallOptions, source: Ins
     };
     writeFileSync(manifestPath, JSON.stringify(newManifest, null, 2) + "\n", "utf-8");
     info(msg.manifestCreated);
-
-    try {
-      initializeCcSddProject(options.cwd, options.lang, msg);
-    } catch (error) {
-      if (error instanceof CcSddInitError) {
-        errorExit(msg.ccSddInitFailed(error.message));
-      }
-      throw error;
-    }
 
     info(isUpdate ? msg.updateComplete : msg.complete);
     console.log(msg.usageExamples);

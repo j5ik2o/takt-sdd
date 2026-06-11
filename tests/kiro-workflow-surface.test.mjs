@@ -20,8 +20,6 @@ function copyCurrentSurfaceFixture() {
   const root = makeFixture();
   for (const path of [
     "package.json",
-    "README.md",
-    "README.ja.md",
     "CC-SDD-CODEX.md",
     "CC-SDD-CLAUDE.md",
     "COMMON.md",
@@ -31,16 +29,6 @@ function copyCurrentSurfaceFixture() {
     writeFixtureFile(root, path, readFileSync(join(repoRoot, path), "utf8"));
   }
   for (const workflow of [
-    "cc-sdd-full",
-    "cc-sdd-requirements",
-    "cc-sdd-validate-gap",
-    "cc-sdd-design",
-    "cc-sdd-validate-design",
-    "cc-sdd-tasks",
-    "cc-sdd-impl",
-    "cc-sdd-validate-impl",
-    "cc-sdd-steering",
-    "cc-sdd-steering-custom",
     "kiro-spec-init",
     "kiro-spec-requirements",
     "kiro-validate-gap",
@@ -79,101 +67,96 @@ test("validation rejects Kiro script catalog drift and direct takt public script
   assert.ok(result.failures.some((failure) => failure.includes("KIRO_SCRIPT_SET_DRIFT") && failure.includes("kiro:spec:status")));
 });
 
-test("validation rejects legacy scripts that alias Kiro workflows", () => {
-  const root = copyCurrentSurfaceFixture();
-  const packagePath = join(root, "package.json");
-  const pkg = JSON.parse(readFileSync(packagePath, "utf8"));
-  pkg.scripts["cc-sdd:full"] = "node scripts/kiro-staged.mjs kiro-spec-quick --pipeline --skip-git -t";
-  writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
-
-  const result = validateKiroWorkflowSurface({ repoRoot: root });
-
-  assert.equal(result.ok, false);
-  assert.ok(result.failures.some((failure) => failure.includes("LEGACY_SCRIPT_POLICY_DRIFT") && failure.includes("cc-sdd:full")));
-});
-
-test("validation rejects legacy workflow name prefix collisions", () => {
-  const root = copyCurrentSurfaceFixture();
-  const packagePath = join(root, "package.json");
-  const pkg = JSON.parse(readFileSync(packagePath, "utf8"));
-  pkg.scripts["cc-sdd:steering"] = "scripts/takt.sh --pipeline --skip-git -w cc-sdd-steering-custom -t";
-  writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
-
-  const installerPath = join(root, "installer", "src", "install.ts");
-  writeFixtureFile(
-    root,
-    "installer/src/install.ts",
-    readFileSync(installerPath, "utf8").replace(
-      '"cc-sdd:steering": "takt --pipeline --skip-git -w cc-sdd-steering -t"',
-      '"cc-sdd:steering": "takt --pipeline --skip-git -w cc-sdd-steering-custom -t"',
-    ),
-  );
-
-  const result = validateKiroWorkflowSurface({ repoRoot: root });
-
-  assert.equal(result.ok, false);
-  assert.ok(result.failures.some((failure) => failure.includes("LEGACY_SCRIPT_POLICY_DRIFT") && failure.includes("cc-sdd:steering")));
-  assert.ok(result.failures.some((failure) => failure.includes("INSTALLED_LEGACY_SCRIPT_DRIFT") && failure.includes("cc-sdd:steering")));
-});
-
-test("validation rejects old canonical README wording", () => {
-  const root = copyCurrentSurfaceFixture();
-  writeFixtureFile(
-    root,
-    "README.md",
-    readFileSync(join(root, "README.md"), "utf8").replace(
-      "Use `kiro:*` scripts for new SDD workflow usage.",
-      "Use the full-auto workflow `cc-sdd-full` to run Phases 1-5.",
-    ),
-  );
-
-  const result = validateKiroWorkflowSurface({ repoRoot: root });
-
-  assert.equal(result.ok, false);
-  assert.ok(result.failures.some((failure) => failure.includes("GUIDANCE_DRIFT") && failure.includes("README.md")));
-});
-
-test("validation rejects missing migration table rows even when prefixed rows remain", () => {
-  const root = copyCurrentSurfaceFixture();
-  writeFixtureFile(
-    root,
-    "README.md",
-    readFileSync(join(root, "README.md"), "utf8").replace("| `cc-sdd:steering` | `kiro:steering` |\n", ""),
-  );
-
-  const result = validateKiroWorkflowSurface({ repoRoot: root });
-
-  assert.equal(result.ok, false);
-  assert.ok(
-    result.failures.some((failure) =>
-      failure.includes("GUIDANCE_DRIFT")
-      && failure.includes("README.md")
-      && failure.includes("cc-sdd:steering -> kiro:steering"),
-    ),
-  );
-});
-
-test("validation rejects nonexistent sdd design script references", () => {
-  const root = copyCurrentSurfaceFixture();
-  writeFixtureFile(
-    root,
-    "README.md",
-    readFileSync(join(root, "README.md"), "utf8").replace(
-      "`kiro:spec:design`, `kiro:validate:design`",
-      "`sdd:design`, `sdd:validate-design`",
-    ),
-  );
-
-  const result = validateKiroWorkflowSurface({ repoRoot: root });
-
-  assert.equal(result.ok, false);
-  assert.ok(result.failures.some((failure) => failure.includes("GUIDANCE_DRIFT") && failure.includes("sdd:*")));
-});
-
 test("validation accepts staged public scripts for workflows not installed yet", () => {
   const root = copyCurrentSurfaceFixture();
 
   const result = validateKiroWorkflowSurface({ repoRoot: root });
 
   assert.equal(result.ok, true, result.failures.join("\n"));
+});
+
+// ---------------------------------------------------------------------------
+// Negative cases: retired script absence enforcement (req 8.2 / SurfaceValidatorAlignment)
+// ---------------------------------------------------------------------------
+
+test("validation rejects cc-sdd:* scripts in package.json (absence enforcement)", () => {
+  const root = copyCurrentSurfaceFixture();
+  const packagePath = join(root, "package.json");
+  const pkg = JSON.parse(readFileSync(packagePath, "utf8"));
+  // Inject a retired cc-sdd script
+  pkg.scripts["cc-sdd:full"] = "node scripts/takt.sh cc-sdd-full";
+  writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
+
+  const result = validateKiroWorkflowSurface({ repoRoot: root });
+
+  assert.equal(result.ok, false, "Expected failure when cc-sdd:* script present in package.json");
+  assert.ok(
+    result.failures.some((f) => f.includes("RETIRED_SCRIPT") && f.includes("cc-sdd:full")),
+    `Expected RETIRED_SCRIPT failure for cc-sdd:full, got: ${result.failures.join("; ")}`,
+  );
+});
+
+test("validation rejects opsx:* scripts in package.json (absence enforcement)", () => {
+  const root = copyCurrentSurfaceFixture();
+  const packagePath = join(root, "package.json");
+  const pkg = JSON.parse(readFileSync(packagePath, "utf8"));
+  // Inject a retired opsx script
+  pkg.scripts["opsx:full"] = "node scripts/takt.sh opsx-full";
+  writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
+
+  const result = validateKiroWorkflowSurface({ repoRoot: root });
+
+  assert.equal(result.ok, false, "Expected failure when opsx:* script present in package.json");
+  assert.ok(
+    result.failures.some((f) => f.includes("RETIRED_SCRIPT") && f.includes("opsx:full")),
+    `Expected RETIRED_SCRIPT failure for opsx:full, got: ${result.failures.join("; ")}`,
+  );
+});
+
+test("validation rejects cc-sdd:* scripts in installer SDD_SCRIPTS (absence enforcement)", () => {
+  const root = copyCurrentSurfaceFixture();
+  // Inject cc-sdd:* into installer/src/install.ts SDD_SCRIPTS
+  const installPath = join(root, "installer/src/install.ts");
+  const original = readFileSync(installPath, "utf8");
+  const injected = original.replace(
+    /const SDD_SCRIPTS: Record<string, string> = \{/,
+    'const SDD_SCRIPTS: Record<string, string> = {\n  "cc-sdd:full": "node scripts/takt.sh cc-sdd-full",',
+  );
+  writeFileSync(installPath, injected);
+
+  const result = validateKiroWorkflowSurface({ repoRoot: root });
+
+  assert.equal(result.ok, false, "Expected failure when cc-sdd:* in installer SDD_SCRIPTS");
+  assert.ok(
+    result.failures.some((f) => f.includes("RETIRED_SCRIPT") && f.includes("cc-sdd")),
+    `Expected RETIRED_SCRIPT failure for installer cc-sdd, got: ${result.failures.join("; ")}`,
+  );
+});
+
+test("validation rejects retired workflow yaml in distribution asset path (absence enforcement)", () => {
+  const root = copyCurrentSurfaceFixture();
+  // Inject a retired cc-sdd workflow file
+  writeFixtureFile(root, ".takt/ja/workflows/cc-sdd-full.yaml", "name: cc-sdd-full\nsteps: []\n");
+
+  const result = validateKiroWorkflowSurface({ repoRoot: root });
+
+  assert.equal(result.ok, false, "Expected failure when retired cc-sdd workflow file present");
+  assert.ok(
+    result.failures.some((f) => f.includes("RETIRED_WORKFLOW_ASSET") && f.includes("cc-sdd-full")),
+    `Expected RETIRED_WORKFLOW_ASSET failure, got: ${result.failures.join("; ")}`,
+  );
+});
+
+test("validation rejects retired opsx workflow yaml in distribution asset path (absence enforcement)", () => {
+  const root = copyCurrentSurfaceFixture();
+  // Inject a retired opsx workflow file
+  writeFixtureFile(root, ".takt/en/workflows/opsx-full.yaml", "name: opsx-full\nsteps: []\n");
+
+  const result = validateKiroWorkflowSurface({ repoRoot: root });
+
+  assert.equal(result.ok, false, "Expected failure when retired opsx workflow file present");
+  assert.ok(
+    result.failures.some((f) => f.includes("RETIRED_WORKFLOW_ASSET") && f.includes("opsx-full")),
+    `Expected RETIRED_WORKFLOW_ASSET failure, got: ${result.failures.join("; ")}`,
+  );
 });

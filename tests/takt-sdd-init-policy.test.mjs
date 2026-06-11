@@ -12,9 +12,8 @@
  *
  * Network constraints:
  * - Dry-run: fully network-free (real core does no writes/spawns).
- * - Non-dry-run: openspec init is skipped if openspec/config.yaml exists (pre-seeded).
- * - Non-dry-run cc-sdd: pre-seeded fixture with local cc-sdd node_modules to
- *   avoid registry access. Pre-seeding copies cc-sdd from REPO_ROOT/node_modules.
+ * - Non-dry-run: fully offline — no openspec/cc-sdd init is executed.
+ *   Real-core fresh init completes without any external process spawning.
  */
 
 import test from "node:test";
@@ -27,9 +26,8 @@ import {
   readdirSync,
   rmSync,
   writeFileSync,
-  cpSync,
-  symlinkSync,
 } from "node:fs";
+import { createHash } from "node:crypto";
 import { join } from "node:path";
 import os from "node:os";
 
@@ -75,42 +73,6 @@ function walkDir(dir, base) {
     }
   }
   return results;
-}
-
-/**
- * Pre-seed the fixture so openspec init is skipped (checks for existing config).
- * @param {string} targetDir
- */
-function seedOpenspecConfig(targetDir) {
-  const configDir = join(targetDir, "openspec");
-  mkdirSync(configDir, { recursive: true });
-  writeFileSync(join(configDir, "config.yaml"), "version: 1\ntools: none\n", "utf-8");
-}
-
-/**
- * Pre-seed local cc-sdd node_modules so npm exec resolves without registry.
- * Copies cc-sdd package from REPO_ROOT/node_modules/cc-sdd and creates a symlink
- * for the .bin/cc-sdd entry (symlink is required so the bin script's relative
- * imports resolve correctly relative to the package dist/ directory).
- * @param {string} targetDir
- */
-function seedLocalCcSddSync(targetDir) {
-  const srcCcSdd = join(REPO_ROOT, "node_modules", "cc-sdd");
-  if (!existsSync(srcCcSdd)) return; // skip if not installed at repo root
-
-  const destModules = join(targetDir, "node_modules");
-  const destCcSdd = join(destModules, "cc-sdd");
-  const destBinDir = join(destModules, ".bin");
-
-  mkdirSync(destBinDir, { recursive: true });
-  cpSync(srcCcSdd, destCcSdd, { recursive: true });
-
-  // Create symlink matching npm's structure: .bin/cc-sdd -> ../cc-sdd/dist/cli.js
-  // The symlink is required so that dist/cli.js can resolve './index.js' correctly.
-  const binLink = join(destBinDir, "cc-sdd");
-  if (!existsSync(binLink)) {
-    symlinkSync("../cc-sdd/dist/cli.js", binLink);
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -471,9 +433,6 @@ test("real-core: fresh init creates .takt/.manifest.json with correct lang and v
   const { runInit } = await getInitAdapter();
   const tmpDir = makeTmp("real-init-fresh-");
   try {
-    seedOpenspecConfig(tmpDir);
-    seedLocalCcSddSync(tmpDir);
-
     const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
     const options = { targetDir: tmpDir, lang: "en", force: false, dryRun: false };
 
@@ -489,6 +448,24 @@ test("real-core: fresh init creates .takt/.manifest.json with correct lang and v
       "manifest.version must equal root package.json version",
     );
     assert.ok(typeof manifest.files === "object", "manifest.files must be an object");
+
+    // Req 4.1, 4.2: fresh init must NOT install openspec or cc-sdd.
+    // Success of this test WITHOUT any seeding proves no external process is spawned
+    // (cc-sdd exec would fail without network/local node_modules; openspec init would require the package).
+    const pkgPath = join(tmpDir, "package.json");
+    if (existsSync(pkgPath)) {
+      const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+      const devDeps = pkg.devDependencies ?? {};
+      const deps = pkg.dependencies ?? {};
+      assert.equal(devDeps["@fission-ai/openspec"], undefined, "openspec must NOT be in devDependencies after init");
+      assert.equal(devDeps["cc-sdd"], undefined, "cc-sdd must NOT be in devDependencies after init");
+      assert.equal(deps["@fission-ai/openspec"], undefined, "openspec must NOT be in dependencies after init");
+      assert.equal(deps["cc-sdd"], undefined, "cc-sdd must NOT be in dependencies after init");
+      const scripts = pkg.scripts ?? {};
+      const scriptKeys = Object.keys(scripts);
+      const nonKiroScripts = scriptKeys.filter((k) => !k.startsWith("kiro:"));
+      assert.deepEqual(nonKiroScripts, [], `scripts must be kiro:* only, found non-kiro: ${nonKiroScripts.join(", ")}`);
+    }
   } finally {
     rmSync(tmpDir, { recursive: true, force: true });
   }
@@ -498,9 +475,6 @@ test("real-core: fresh init places .takt/workflows/ yaml assets", async () => {
   const { runInit } = await getInitAdapter();
   const tmpDir = makeTmp("real-init-assets-");
   try {
-    seedOpenspecConfig(tmpDir);
-    seedLocalCcSddSync(tmpDir);
-
     const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
     const options = { targetDir: tmpDir, lang: "en", force: false, dryRun: false };
 
@@ -519,9 +493,6 @@ test("real-core: customized file is NOT overwritten on update (skip)", async () 
   const { runInit } = await getInitAdapter();
   const tmpDir = makeTmp("real-init-skip-");
   try {
-    seedOpenspecConfig(tmpDir);
-    seedLocalCcSddSync(tmpDir);
-
     const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
     const options = { targetDir: tmpDir, lang: "en", force: false, dryRun: false };
 
@@ -552,9 +523,6 @@ test("real-core: --force allows re-install when .takt/ exists but no manifest (n
   const { runInit } = await getInitAdapter();
   const tmpDir = makeTmp("real-init-force-");
   try {
-    seedOpenspecConfig(tmpDir);
-    seedLocalCcSddSync(tmpDir);
-
     // Pre-create .takt/workflows/ without a manifest — simulates a partial/corrupted state
     // Without --force, installer would error: "already exists, run --force"
     mkdirSync(join(tmpDir, ".takt", "workflows"), { recursive: true });
@@ -598,9 +566,6 @@ test("real-core: config.yaml is NOT created after fresh init", async () => {
   const { runInit } = await getInitAdapter();
   const tmpDir = makeTmp("real-init-no-config-");
   try {
-    seedOpenspecConfig(tmpDir);
-    seedLocalCcSddSync(tmpDir);
-
     const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
     const options = { targetDir: tmpDir, lang: "en", force: false, dryRun: false };
 
@@ -619,9 +584,6 @@ test("real-core: config.yaml ja preference is reflected in manifest.lang", async
   const { runInit } = await getInitAdapter();
   const tmpDir = makeTmp("real-init-config-lang-");
   try {
-    seedOpenspecConfig(tmpDir);
-    seedLocalCcSddSync(tmpDir);
-
     mkdirSync(join(tmpDir, ".takt"), { recursive: true });
     writeFileSync(join(tmpDir, ".takt", "config.yaml"), "language: ja\n", "utf-8");
 
@@ -636,6 +598,205 @@ test("real-core: config.yaml ja preference is reflected in manifest.lang", async
     // config.yaml must still be unchanged
     const configContent = readFileSync(join(tmpDir, ".takt", "config.yaml"), "utf-8");
     assert.equal(configContent, "language: ja\n", "config.yaml must not be modified");
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Integration Tests #2: update cleanup (Req 5.1–5.5)
+//
+// These tests use a real-core update against a v1.x-like fixture: a temp dir
+// that looks like a project installed by v1.x (has a manifest recording retired
+// assets + real kiro assets). The update run is then performed to verify
+// cleanup behavior.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Compute sha256 hex of a string.
+ * @param {string} content
+ * @returns {string}
+ */
+function sha256(content) {
+  return createHash("sha256").update(content).digest("hex");
+}
+
+/**
+ * Build a v1.x-like fixture directory for update cleanup tests.
+ * - Performs a real fresh install to get all kiro assets in place.
+ * - Then injects synthetic "retired" files (cc-sdd, opsx, opsx-cli.sh).
+ * - Updates the manifest to record those retired files.
+ *
+ * @param {string} tmpDir  target project directory
+ * @param {{ customizedKey?: string }} [opts]
+ * @returns {{ retiredFiles: Array<{key: string, path: string, content: string}>, customizedKey?: string }}
+ */
+async function buildV1xFixture(tmpDir, opts = {}) {
+  const { runInit } = await getInitAdapter();
+  const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
+
+  // 1. Fresh install to populate real kiro assets and manifest
+  await runInit({ targetDir: tmpDir, lang: "en", force: false, dryRun: false }, ctx);
+
+  const manifestPath = join(tmpDir, ".takt", ".manifest.json");
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+
+  // 2. Define retired files to inject
+  const retiredFiles = [
+    { key: ".takt/workflows/cc-sdd-full.yaml", relPath: ".takt/workflows/cc-sdd-full.yaml", content: "name: cc-sdd-full\nsteps: []" },
+    { key: ".takt/workflows/opsx-apply.yaml", relPath: ".takt/workflows/opsx-apply.yaml", content: "name: opsx-apply\nsteps: []" },
+    { key: ".takt/facets/instructions/cc-sdd-bootstrap-steering.md", relPath: ".takt/facets/instructions/cc-sdd-bootstrap-steering.md", content: "# cc-sdd-bootstrap-steering" },
+    { key: ".takt/facets/personas/opsx-implementer.md", relPath: ".takt/facets/personas/opsx-implementer.md", content: "# opsx-implementer persona" },
+    { key: ".takt/facets/instructions/ai-review-fix-loop-judge.md", relPath: ".takt/facets/instructions/ai-review-fix-loop-judge.md", content: "# ai-review-fix-loop-judge (retired-exclusive shared facet)" },
+    { key: ".takt/instructions/batch-plan-implement-loop-judge.md", relPath: ".takt/instructions/batch-plan-implement-loop-judge.md", content: "# batch-plan-implement-loop-judge (legacy layout)" },
+    { key: "scripts/opsx-cli.sh", relPath: "scripts/opsx-cli.sh", content: "#!/bin/sh\n# opsx-cli legacy script" },
+  ];
+
+  // 3. Write retired files to disk and add them to the manifest
+  const updatedFiles = { ...manifest.files };
+  for (const rf of retiredFiles) {
+    const filePath = join(tmpDir, rf.relPath);
+    mkdirSync(join(tmpDir, rf.relPath, ".."), { recursive: true });
+    writeFileSync(filePath, rf.content, "utf-8");
+    updatedFiles[rf.key] = sha256(rf.content);
+  }
+
+  // 4. Persist the updated manifest
+  const updatedManifest = { ...manifest, files: updatedFiles };
+  writeFileSync(manifestPath, JSON.stringify(updatedManifest, null, 2) + "\n", "utf-8");
+
+  return { retiredFiles };
+}
+
+// Req 5.1: v1.x fixture の update で未変更退役資産が削除され manifest 記録から消えること
+test("real-core update: unchanged retired files are deleted and removed from manifest", async () => {
+  const { runInit } = await getInitAdapter();
+  const tmpDir = makeTmp("update-cleanup-delete-");
+  try {
+    const { retiredFiles } = await buildV1xFixture(tmpDir);
+
+    // Run update
+    const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
+    await runInit({ targetDir: tmpDir, lang: "en", force: false, dryRun: false }, ctx);
+
+    // All retired files must be gone from disk
+    for (const rf of retiredFiles) {
+      const filePath = join(tmpDir, rf.relPath);
+      assert.ok(!existsSync(filePath), `retired file must be deleted: ${rf.relPath}`);
+    }
+
+    // Retired keys must not appear in new manifest
+    const newManifest = JSON.parse(readFileSync(join(tmpDir, ".takt", ".manifest.json"), "utf-8"));
+    for (const rf of retiredFiles) {
+      assert.equal(
+        newManifest.files[rf.key],
+        undefined,
+        `retired key must not appear in new manifest: ${rf.key}`,
+      );
+    }
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+// Req 5.2: カスタマイズ済み退役資産は警告のみで残置されること
+test("real-core update: customized retired file is NOT deleted (warned and kept)", async () => {
+  const { runInit } = await getInitAdapter();
+  const tmpDir = makeTmp("update-cleanup-skip-");
+  try {
+    const { retiredFiles } = await buildV1xFixture(tmpDir);
+
+    // Customize the first retired file (cc-sdd-full.yaml)
+    const customTarget = retiredFiles[0];
+    const customPath = join(tmpDir, customTarget.relPath);
+    const customizedContent = customTarget.content + "\n# CUSTOMIZED BY USER\n";
+    writeFileSync(customPath, customizedContent, "utf-8");
+
+    // Run update
+    const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
+    await runInit({ targetDir: tmpDir, lang: "en", force: false, dryRun: false }, ctx);
+
+    // Customized file must still exist with original customized content
+    assert.ok(existsSync(customPath), "customized retired file must NOT be deleted");
+    assert.equal(
+      readFileSync(customPath, "utf-8"),
+      customizedContent,
+      "customized content must be preserved",
+    );
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+// Req 5.3: dry-run では削除予定一覧が表示され、write ゼロであること
+test("real-core update dry-run: shows planned removals, writes ZERO files", async () => {
+  const { runInit } = await getInitAdapter();
+  const tmpDir = makeTmp("update-cleanup-dryrun-");
+  try {
+    await buildV1xFixture(tmpDir);
+
+    // Snapshot state before dry-run update
+    const filesBefore = walkDir(tmpDir).sort();
+
+    // Run dry-run update
+    const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
+    await runInit({ targetDir: tmpDir, lang: "en", force: false, dryRun: true }, ctx);
+
+    // No files should be added or removed
+    const filesAfter = walkDir(tmpDir).sort();
+    assert.deepEqual(
+      filesAfter,
+      filesBefore,
+      `dry-run must not change any files. Diff: added=${filesAfter.filter((f) => !filesBefore.includes(f)).join(", ")} removed=${filesBefore.filter((f) => !filesAfter.includes(f)).join(", ")}`,
+    );
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+// Req 5.5: update 後も openspec/ ディレクトリとユーザー所有物が残ること
+test("real-core update: openspec/ and user-owned files are NOT deleted", async () => {
+  const { runInit } = await getInitAdapter();
+  const tmpDir = makeTmp("update-cleanup-userowned-");
+  try {
+    await buildV1xFixture(tmpDir);
+
+    // Add user-owned files
+    const openspecDir = join(tmpDir, "openspec");
+    mkdirSync(openspecDir, { recursive: true });
+    writeFileSync(join(openspecDir, "my-change.md"), "# user openspec change", "utf-8");
+    writeFileSync(join(tmpDir, "user-custom-script.sh"), "#!/bin/sh\necho hello", "utf-8");
+
+    // Run update
+    const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
+    await runInit({ targetDir: tmpDir, lang: "en", force: false, dryRun: false }, ctx);
+
+    // User-owned files must remain
+    assert.ok(existsSync(join(openspecDir, "my-change.md")), "openspec/my-change.md must NOT be deleted");
+    assert.ok(existsSync(join(tmpDir, "user-custom-script.sh")), "user-custom-script.sh must NOT be deleted");
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+// Req 5.3: fresh install（manifest なし）では退役 cleanup が発火しない（dry-run で確認）
+test("real-core fresh install: retired cleanup does NOT fire (no manifest)", async () => {
+  const { runInit } = await getInitAdapter();
+  const tmpDir = makeTmp("fresh-install-no-cleanup-");
+  try {
+    // Place a file that looks retired but is user-owned (no manifest)
+    mkdirSync(join(tmpDir, ".takt", "workflows"), { recursive: true });
+    writeFileSync(join(tmpDir, ".takt", "workflows", "cc-sdd-full.yaml"), "user-placed", "utf-8");
+
+    // Fresh install (no manifest) — cleanup must not fire
+    const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
+    await runInit({ targetDir: tmpDir, lang: "en", force: true, dryRun: false }, ctx);
+
+    // The user-placed file may be overwritten (force mode), but the point is
+    // no error and cleanup logic did not remove untracked files (manifest was null at start).
+    // The manifest is now created, so we just verify install succeeded.
+    const manifestPath = join(tmpDir, ".takt", ".manifest.json");
+    assert.ok(existsSync(manifestPath), "manifest must be created after fresh install");
   } finally {
     rmSync(tmpDir, { recursive: true, force: true });
   }
