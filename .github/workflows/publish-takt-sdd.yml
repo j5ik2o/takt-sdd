@@ -20,7 +20,7 @@ jobs:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
       - run: npm run build:installer
 
