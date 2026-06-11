@@ -84,7 +84,7 @@
   - _Boundary:_ Documentation
   - _Depends:_ 2, 6
 
-- [ ] 9. breaking change を記録し release 判定を検証する
+- [x] 9. breaking change を記録し release 判定を検証する
   - cc-sdd-* / opsx-* 退役と opsx 再提供方針を本文に含む breaking change コミット（feat! + BREAKING CHANGE footer）を作成する
   - release workflow の dry_run プレビューで次期 version が v2.0.0 と判定されることを確認し、その証跡を記録する
   - 観測可能な完了: dry_run の出力が major 繰り上がり（v2.0.0）を示し、changelog 本文に退役と再提供方針が含まれる
@@ -101,3 +101,4 @@
 - 6: devDependencies は cc-sdd が唯一の entry だったため block ごと削除。lockfile は 917 行削除で完全同期・npm install 冪等。`installer/node_modules/@fission-ai/openspec/` は installer 配下の vendored subtree（untracked）で root lockfile と無関係 — レビューで一度この path との混同による誤 REJECT があり、diff 方向の反証提示で撤回された
 - 7: クロスチェックは `INSTALLER_RETIRED_PATTERNS` の局所複製方式（設計が認めた二重定義 + 検証層整合固定）。初回レビューで「export のみで main() 未配線」の REJECT → main() で `allErrors` へ集約 + source-grep の wiring assertion テストで是正（installer テストの source 検査方式と整合）。新規検証関数は配線テストまで含めて初めて完了
 - 8: ドキュメントの退役記載は CLI 実メッセージ（main.mjs:228/234）を逐語引用し、catalog 12 名・install.ts の後始末挙動と機械突き合わせで一致を確認。README 日英は 383 行で意味的等価。COMMON は最小更新（dry-run 詳細は README 側が所有）
+- 9: 専用 breaking commit `8c919f2`（feat! + BREAKING CHANGE footer、--allow-empty）。release.yml dry_run（run 27330722836, branch dispatch）が「Recommended release type: major（2 BREAKING CHANGES: 8c919f2 + task 2 の 55abeea）」「New version: 2.0.0」「⚠ BREAKING CHANGES に退役 + opsx 再提供方針」を出力。タグ・リリース・release commit の副作用ゼロをレビューで機械確認済み
