@@ -1,3 +1,11 @@
+## [2.0.1](https://github.com/j5ik2o/takt-sdd/compare/v2.0.0...v2.0.1) (2026-06-15)
+
+
+### Bug Fixes
+
+* **deps:** update dependency takt to v0.45.0 ([7c8450d](https://github.com/j5ik2o/takt-sdd/commit/7c8450dc7c1f486f1f45e32f728a37c0b2d2ff1a))
+* **release:** keep the core takt-sdd release marked as Latest ([3ede9f3](https://github.com/j5ik2o/takt-sdd/commit/3ede9f3130ca6705dcf470470cd91b9fe5d8a094))
+
 ## [2.0.0](https://github.com/j5ik2o/takt-sdd/compare/v1.1.0...v2.0.0) (2026-06-11)
 
 
