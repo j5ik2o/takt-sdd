@@ -26,7 +26,7 @@ When the `reviewers` group routes here through `any("needs_fix")`, use the rejec
 
 ## Implementation Notes reference
 
-When forming the root-cause analysis (`ROOT_CAUSE`) and fix plan (`FIX_PLAN`), consult the `## Implementation Notes` section in `tasks.md` and use entries relevant to the selected task's boundary or dependencies as input. Cross-cutting lessons recorded from earlier tasks assist hypothesis formation and guide repair decisions. Restrict any reference to the selected task or the shared notes section only — do not modify unrelated entries.
+When forming the root-cause analysis (`ROOT_CAUSE`) and fix plan (`FIX_PLAN`), consult the `## Implementation Notes` entries in `tasks.md` relevant to the selected task's boundary or dependencies as input. Cross-cutting lessons recorded from earlier tasks assist hypothesis formation and guide repair decisions. Restrict any reference to the selected task or the shared notes section only — do not modify unrelated entries.
 
 ## Output mapping
 

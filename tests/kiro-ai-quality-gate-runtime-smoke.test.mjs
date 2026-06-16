@@ -58,7 +58,7 @@ function makeRuntimeFixture() {
   writeFixtureFile(
     root,
     ".takt/config.yaml",
-    "provider: mock\nlanguage: ja\nmodel: claude-opus-4-8\nconcurrency: 1\nbase_branch: main\nsubmodules: all\n",
+    "provider: mock\nlanguage: ja\nmodel: claude-opus-4-8\nconcurrency: 1\nbase_branch: main\nsubmodules: all\nworkflow_command_gates:\n  custom_scripts: true\n",
   );
   return root;
 }

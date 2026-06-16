@@ -41,7 +41,7 @@ After the code edit completes, the command quality gate (`verify.sh`) runs at th
 
 ## Implementation Notes intake
 
-Before starting the selected task implementation, read the `## Implementation Notes` section in `tasks.md` and identify entries relevant to the selected task's boundary or dependencies. These notes capture cross-cutting lessons learned from earlier tasks; use them as recurrence-prevention input to avoid repeating past mistakes. Restrict any reference or addition to the selected task or the shared notes section only — do not modify unrelated entries.
+Before starting the selected task implementation, read the `## Implementation Notes` entries in `tasks.md` and identify items relevant to the selected task's boundary or dependencies. These notes capture cross-cutting lessons learned from earlier tasks; use them as recurrence-prevention input to avoid repeating past mistakes. Restrict any reference or addition to the selected task or the shared notes section only — do not modify unrelated entries.
 
 ## Output mapping
 
