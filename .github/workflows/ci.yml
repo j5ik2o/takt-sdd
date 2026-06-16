@@ -71,7 +71,13 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Install takt
-        run: npm install -g takt
+        # Pin to the takt version declared in package.json. Floating "latest" (0.46.0)
+        # dropped builtin facets (e.g. review-requirements) that spec workflows extend,
+        # which broke the `takt prompt` lint below. Tracking the pinned version keeps
+        # the global CLI aligned with node_modules and renovate bumps.
+        run: |
+          TAKT_VERSION="$(node -p "require('./package.json').devDependencies.takt")"
+          npm install -g "takt@${TAKT_VERSION}"
 
       - name: Validate workflows (en)
         run: |
