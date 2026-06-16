@@ -30,3 +30,14 @@ completion verificationまたはblocker decisionの後に、selected task progre
 - progressまたはblocker noteを書く前に人間の入力が必要な場合は `STATUS: NEEDS_CONTEXT`。
 
 progress updateは、planning、debug、completion adapter stepがselected taskとwrite intentを解決した後だけ許可される。
+
+## タスク単位コミット（VERIFIED 経路のみ）
+
+completion `STATUS` が `VERIFIED` かつ selected task checkbox を `- [x]` に更新した場合、選択的 per-task commit を実行する。手順は以下の通り。
+
+1. `git add <changed_files> tasks.md`（選択タスクが変更したファイルと `tasks.md` のみをステージ。`git add -A` は絶対に使わない）
+2. `git commit -m "feat(<feature>): <task>"` でコミットを作成する
+
+`BLOCK_TASK`、`STOP_FOR_HUMAN`、または非生産的ループ（BLOCKED/NEEDS_CONTEXT 経路）でこの step に来た場合は、コミットを作成しない。
+
+reconciliation note: pipeline/`--skip-git` モードでは takt の自動コミットが無効なため、この per-task commit が唯一のコミットとなりタスク粒度が保たれる。worktree モードでは末尾の `git add -A` 自動コミットが残るが、per-task commit により clean tree を保つため残差のみとなる。本ステップでコミットが許可されるのは `allow_git_commit: true` ステップ属性があるためである。

@@ -350,6 +350,7 @@ steps:
           - Write
           - Bash
     required_permission_mode: edit
+    allow_git_commit: true
     pass_previous_response: false
     instruction: kiro-impl-update-progress
     output_contracts:

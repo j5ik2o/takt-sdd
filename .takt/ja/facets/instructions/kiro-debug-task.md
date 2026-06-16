@@ -24,6 +24,10 @@ selected taskのimplementation、validation、review failureを調査し、root-
 
 `reviewers` group が `any("needs_fix")` でここへ来た場合は、rejected child report の観点、report file、finding refs、selected task refs、requirement/design refsを root cause 判定に使う。AI gate の `need_replan` でここへ来た場合は、`NEED_REPLAN` / `BLOCKED` / ambiguous AI review evidence を人間確認または blocker candidate として扱う。
 
+## Implementation Notes の参照
+
+根本原因分析（`ROOT_CAUSE`）と修正計画（`FIX_PLAN`）を形成する際、`tasks.md` の `## Implementation Notes` のうち選択タスクの境界・依存に関連する項目を入力として参照する。先行タスクで記録された横断的な学びは、デバッグの仮説形成と修正方針の決定を補助する。参照は選択タスクまたは共有 notes セクションの範囲に限定し、無関係な記述は変更しない。
+
 ## Output mapping
 
 `$kiro-debug` または `/kiro-debug` の `## Debug Report` 形式を返す。

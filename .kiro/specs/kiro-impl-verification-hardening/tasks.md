@@ -38,7 +38,7 @@
   - _Boundary:_ 検証コマンドゲート（kiro-ai-quality-gate.yaml ai-antipattern-fix）
   - _Depends:_ 1.1, 1.2
 
-- [ ] 2.3 update-progress へのタスク単位コミット付与
+- [x] 2.3 update-progress へのタスク単位コミット付与
   - 完了検証が VERIFIED の後、update-progress が選択タスクの変更ファイルと tasks.md のみを選択的にステージしてコミットできるよう、コミット許可属性と選択的コミット手順を付与する（`git add -A` は用いない）
   - blocker 経路ではコミットせず、stale 検出時は他 worker を上書きしないという既存ガードを維持する
   - 既定 auto-commit との粒度調停（pipeline では本コミットが唯一、worktree 末尾の一括コミットは残差のみ）を SKILL/facet に明記する
@@ -56,7 +56,7 @@
   - _Boundary:_ adversarial review facets
   - _Depends:_ 1.2
 
-- [ ] 2.5 (P) Implementation Notes の明示伝播
+- [x] 2.5 (P) Implementation Notes の明示伝播
   - execute-task facet に「着手前に選択タスクの境界・依存に関連する Implementation Notes を読み、再発防止に充てる」を明記する（ja/en）
   - debug-task facet に「関連する Implementation Notes を root cause 分析と修正計画の入力に用いる」を明記する（ja/en）
   - 参照・追記は選択タスクまたは共有 notes の範囲に限定する
@@ -106,3 +106,5 @@
 - 2.1: execute-task に `quality_gates`（`type: command`, command は `sh -c '...verify.sh...'` の folded scalar、ja/en バイト一致）を `output_contracts:` 直後・`rules:` 直前に配置。execute-task facet に「ゲート失敗=同一step差し戻し / review・verify 失敗=debug-task / loop_monitors のみ」を追記。3.1 validator はこの execute-task step 内の `quality_gates`/`type: command`/`.kiro/settings/verify.sh` を assert する。2.3(update-progress, 同じ kiro-impl.yaml) と 2.5(execute-task facet) は本タスク後に実施。
 - 2.2: ai-quality-gate.yaml の ai-antipattern-fix に execute-task と byte-identical なゲートを付与（ja/en）。3.1 validator は ai-antipattern-fix step の `quality_gates`/`type: command`/`.kiro/settings/verify.sh` を assert。
 - 2.4: 4 review facet（ja/en 計8）に正確マーカー `Adversarial review posture: default VERDICT is REJECTED; approve only with cited evidence (selected task, requirement, boundary, actual diff).` を追加。coding 専用文（ゲートが機械的正しさを所有）は kiro-review-task のみ。3.1 validator はこのマーカー文字列を全 review facet で assert する。
+- 2.3: update-progress step に `allow_git_commit: true`（`required_permission_mode: edit` 直後）。facet に「VERIFIED 経路のみ・`git add <changed_files> tasks.md`・`git add -A` 禁止・pipeline/worktree 調停」を追記。3.1 validator は update-progress step の `allow_git_commit: true` を assert。
+- 2.5: execute-task facet に「## Implementation Notes intake/読込」、debug facet に「## Implementation Notes reference/参照」を追加（2.1 のゲートnote と別段落）。3.1 validator は execute-task / debug-task facet に `Implementation Notes` トークンを assert（既存 spec の terms 配列に追加）。

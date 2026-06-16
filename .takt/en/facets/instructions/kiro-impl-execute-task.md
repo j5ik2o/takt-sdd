@@ -39,6 +39,10 @@ Execute only the selected task boundary and return the exact `## Status Report` 
 
 After the code edit completes, the command quality gate (`verify.sh`) runs at the end of this step. If the gate exits non-zero, takt feeds the failure output back to **this same execute-task step for remediation** (takt-native mechanism). This is a distinct layer from the debug-task route triggered by review or verify failures — it introduces no custom retry counter, and re-execution bounds remain governed only by `loop_monitors` (Requirement 2).
 
+## Implementation Notes intake
+
+Before starting the selected task implementation, read the `## Implementation Notes` section in `tasks.md` and identify entries relevant to the selected task's boundary or dependencies. These notes capture cross-cutting lessons learned from earlier tasks; use them as recurrence-prevention input to avoid repeating past mistakes. Restrict any reference or addition to the selected task or the shared notes section only — do not modify unrelated entries.
+
 ## Output mapping
 
 Use the `kiro-implementation-result` report format. Workflow rules branch on `STATUS`, not on prose or a translated validation field.

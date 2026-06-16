@@ -30,3 +30,14 @@ After writing `tasks.md`, emit one of these machine statuses for workflow routin
 - `STATUS: NEEDS_CONTEXT` when human input is required before any progress or blocker note can be written.
 
 Progress update is allowed only after planning, debug, or completion adapter steps have resolved the selected task and write intent.
+
+## Per-task commit (VERIFIED path only)
+
+When completion `STATUS` is `VERIFIED` and the selected task checkbox is updated to `- [x]`, perform a selective per-task commit as follows:
+
+1. `git add <changed_files> tasks.md` — stage only the selected task's changed files and `tasks.md`. NEVER use `git add -A`.
+2. `git commit -m "feat(<feature>): <task>"` — create the commit.
+
+When `BLOCK_TASK`, `STOP_FOR_HUMAN`, or nonproductive loop handling (BLOCKED/NEEDS_CONTEXT paths) reaches this step, do not create a commit.
+
+Reconciliation note: in pipeline/`--skip-git` mode takt's automatic commit is disabled, so this per-task commit is the only commit and preserves per-task granularity; in worktree mode the end-of-run `git add -A` auto-commit remains, but the per-task commit keeps the tree clean so only residue is captured. The `allow_git_commit: true` step attribute is what permits this commit.

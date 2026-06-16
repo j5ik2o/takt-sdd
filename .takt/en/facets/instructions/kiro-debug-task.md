@@ -24,6 +24,10 @@ Investigate implementation, validation, or review failure for the selected task 
 
 When the `reviewers` group routes here through `any("needs_fix")`, use the rejected child report perspective, report file, finding refs, selected task refs, and requirement/design refs for root cause analysis. When AI gate routes here through `need_replan`, treat `NEED_REPLAN` / `BLOCKED` / ambiguous AI review evidence as human-confirmation or blocker candidates.
 
+## Implementation Notes reference
+
+When forming the root-cause analysis (`ROOT_CAUSE`) and fix plan (`FIX_PLAN`), consult the `## Implementation Notes` section in `tasks.md` and use entries relevant to the selected task's boundary or dependencies as input. Cross-cutting lessons recorded from earlier tasks assist hypothesis formation and guide repair decisions. Restrict any reference to the selected task or the shared notes section only — do not modify unrelated entries.
+
 ## Output mapping
 
 Return the `## Debug Report` shape from `$kiro-debug` or `/kiro-debug`.
