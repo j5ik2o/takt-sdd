@@ -21,7 +21,7 @@
   - _Depends:_ none
 
 - [ ] 2. コア
-- [ ] 2.1 execute-task への決定論的コマンドゲート付与
+- [x] 2.1 execute-task への決定論的コマンドゲート付与
   - 実装ワークフローの execute-task に、コード編集完了後に検証フックを実行する command 型品質ゲートを付与する（ja/en 同一コマンド文字列）
   - ゲート非ゼロ終了時は同一ステップへ失敗出力を差し戻す挙動とし、レビュー/検証失敗の debug 経路とは別レイヤであることを facet に明記する（重複リトライ防止）
   - 再実行上限は loop_monitors のみに保ち、独自リトライカウンタを導入しない
@@ -103,3 +103,4 @@
 
 - 1.1: 検証フックは `.kiro/settings/verify.sh`。gate は `sh .kiro/settings/verify.sh`（存在時実行・不在は no-op exit 0）で呼ぶ。`set -e` + `npm run validate:kiro-iterative-implementation-workflow` / `validate:kiro-ai-quality-gate-workflow-coverage` を実行。**verify.sh は impl 中 immutable（タスク境界外）**。タスク2.1/2.2 の gate command 文字列はこのパスに揃えること。
 - 1.2: SKILL 正本（`.claude` / `.agents`）に4挙動を追加記述済み。既存セクション見出しは保持。`.claude` の Manual Mode 見出しを `#### → ###` に補正し facet 参照（`### Manual Mode (main context)`）と整合させた。タスク2.x の facet 追記時はこの SKILL 記述と齟齬がないようにする。
+- 2.1: execute-task に `quality_gates`（`type: command`, command は `sh -c '...verify.sh...'` の folded scalar、ja/en バイト一致）を `output_contracts:` 直後・`rules:` 直前に配置。execute-task facet に「ゲート失敗=同一step差し戻し / review・verify 失敗=debug-task / loop_monitors のみ」を追記。3.1 validator はこの execute-task step 内の `quality_gates`/`type: command`/`.kiro/settings/verify.sh` を assert する。2.3(update-progress, 同じ kiro-impl.yaml) と 2.5(execute-task facet) は本タスク後に実施。
