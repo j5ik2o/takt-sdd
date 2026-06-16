@@ -770,19 +770,38 @@ test("validator rejects debug facet missing implementation notes reference", () 
 
 // --- Runtime smoke tests: gate command deterministic behavior (Task 4.2) ---
 //
-// Extract the exact quality_gates command shipped in execute-task from kiro-impl.yaml and
-// exercise it against three scenarios to prove deterministic gate behavior (Requirements 1, 2).
+// GATE_COMMAND is extracted at test load time from the shipped workflow:
+//   .takt/ja/workflows/kiro-impl.yaml  →  execute-task  →  quality_gates[0].command
 //
-// Command extracted from .takt/ja/workflows/kiro-impl.yaml execute-task quality_gates:
-//   sh -c 'if [ -f .kiro/settings/verify.sh ]; then sh .kiro/settings/verify.sh;
-//   else echo "[kiro-impl] .kiro/settings/verify.sh not found; skipping deterministic gate"; fi'
+// If extraction fails the sanity test below fails immediately (non-empty guard),
+// preventing the three behavior tests from running against a stale hard-coded string.
 //
-// Sanity assertion: the command must reference .kiro/settings/verify.sh.
+// Sanity assertion: the extracted command must reference .kiro/settings/verify.sh.
 
-const GATE_COMMAND =
-  "sh -c 'if [ -f .kiro/settings/verify.sh ]; then sh .kiro/settings/verify.sh; else echo \"[kiro-impl] .kiro/settings/verify.sh not found; skipping deterministic gate\"; fi'";
+const _kiroImplYaml = readFileSync(
+  join(import.meta.dirname, "..", ".takt", "ja", "workflows", "kiro-impl.yaml"),
+  "utf8",
+);
+
+// Locate the execute-task step and pull the quality_gates command (folded scalar).
+// The YAML shape is:
+//   - name: execute-task
+//     ...
+//     quality_gates:
+//       - type: command
+//         ...
+//         command: >-
+//           sh -c '...'
+const _executeTaskMatch = _kiroImplYaml.match(
+  /- name: execute-task[\s\S]*?quality_gates:[\s\S]*?command: >-\s*\n([ \t]+)(.+)/,
+);
+const GATE_COMMAND = _executeTaskMatch ? _executeTaskMatch[2].trim() : "";
 
 test("kiro-impl execute-task gate command references .kiro/settings/verify.sh (sanity)", () => {
+  assert.ok(
+    GATE_COMMAND.length > 0,
+    "GATE_COMMAND extraction failed: execute-task quality_gates command not found in kiro-impl.yaml",
+  );
   assert.ok(
     GATE_COMMAND.includes(".kiro/settings/verify.sh"),
     "Gate command must reference .kiro/settings/verify.sh",

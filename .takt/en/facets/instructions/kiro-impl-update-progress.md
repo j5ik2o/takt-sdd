@@ -35,7 +35,7 @@ Progress update is allowed only after planning, debug, or completion adapter ste
 
 When completion `STATUS` is `VERIFIED` and the selected task checkbox is updated to `- [x]`, perform a selective per-task commit as follows:
 
-1. `git add <changed_files> tasks.md` — stage only the selected task's changed files and `tasks.md`. NEVER use `git add -A`.
+1. Collect all files to stage: start with the implementation report's `changed_files`; if an AI antipattern fix report was produced for this run (written by the ai-quality-gate sub-workflow's fix step), add its `changed_files` to the staged set as well; always include `tasks.md`. Stage the union: `git add <implementation_changed_files> [<antipattern_fix_changed_files>] tasks.md`. NEVER use `git add -A`.
 2. `git commit -m "feat(<feature>): <task>"` — create the commit.
 
 When `BLOCK_TASK`, `STOP_FOR_HUMAN`, or nonproductive loop handling (BLOCKED/NEEDS_CONTEXT paths) reaches this step, do not create a commit.

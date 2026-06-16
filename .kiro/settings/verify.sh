@@ -12,5 +12,7 @@ echo "[kiro-impl verify] Starting deterministic verification for takt-sdd..."
 
 npm run --silent validate:kiro-iterative-implementation-workflow
 npm run --silent validate:kiro-ai-quality-gate-workflow-coverage
+npm run --silent test:kiro-iterative-implementation-workflow
+npm run --silent test:kiro-ai-quality-gate-workflow-coverage
 
-echo "[kiro-impl verify] PASS: all deterministic validators exited 0."
+echo "[kiro-impl verify] PASS: all deterministic validators and test suites exited 0."
