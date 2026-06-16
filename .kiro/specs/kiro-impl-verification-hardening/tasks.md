@@ -12,7 +12,7 @@
   - _Boundary:_ verify.sh 規約
   - _Depends:_ none
 
-- [ ] 1.2 SKILL 正本へ新挙動を記述
+- [x] 1.2 SKILL 正本へ新挙動を記述
   - kiro-impl skill 定義（`.claude` と `.agents` の2箇所）に「コマンドゲートによる決定論的検証」「タスク単位の選択的コミット」「アドバーサリアル複数観点レビュー」「Implementation Notes の明示伝播」を記述する
   - facet が参照する既存セクション見出しは変更せず、本文に挙動を追記する（facet→skill section 参照を壊さない）
   - 観測可能完了: 両 SKILL.md に4挙動が記述され、既存の参照セクション見出しが不変であることを差分で確認できる
@@ -102,3 +102,4 @@
 ## Implementation Notes
 
 - 1.1: 検証フックは `.kiro/settings/verify.sh`。gate は `sh .kiro/settings/verify.sh`（存在時実行・不在は no-op exit 0）で呼ぶ。`set -e` + `npm run validate:kiro-iterative-implementation-workflow` / `validate:kiro-ai-quality-gate-workflow-coverage` を実行。**verify.sh は impl 中 immutable（タスク境界外）**。タスク2.1/2.2 の gate command 文字列はこのパスに揃えること。
+- 1.2: SKILL 正本（`.claude` / `.agents`）に4挙動を追加記述済み。既存セクション見出しは保持。`.claude` の Manual Mode 見出しを `#### → ###` に補正し facet 参照（`### Manual Mode (main context)`）と整合させた。タスク2.x の facet 追記時はこの SKILL 記述と齟齬がないようにする。

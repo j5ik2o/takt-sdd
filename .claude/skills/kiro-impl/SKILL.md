@@ -88,16 +88,18 @@ For each task (one at a time):
   - Exact requirement and design section numbers this task must satisfy (using source numbering, NOT invented `REQ-*` aliases)
   - Task-relevant steering context and parent-discovered validation commands (tests/build/smoke as relevant)
   - Whether the task is behavioral (Feature Flag Protocol) or non-behavioral
-  - **Previous learnings**: Include any `## Implementation Notes` entries from tasks.md that are relevant to this task's boundary or dependencies (e.g., "better-sqlite3 requires separate rebuild for Electron"). This prevents the same mistakes from recurring.
+  - **Previous learnings (knowledge propagation)**: Before implementing, read the `## Implementation Notes` entries in tasks.md that are relevant to this task's boundary or dependencies and include them in the implementer prompt. These notes capture cross-cutting learnings from prior tasks (e.g., "better-sqlite3 requires separate rebuild for Electron") and prevent the same mistakes from recurring.
 - The implementer subagent will read the spec files and build its own Task Brief (acceptance criteria, completion definition, design constraints, verification method) before implementation
 - Dispatch via **Agent tool** as a fresh subagent
 
 **b) Handle implementer status**:
 - Parse implementer status only from the exact `## Status Report` block and `- STATUS:` field.
 - If `STATUS` is missing, ambiguous, or replaced with prose, re-dispatch the implementer once requesting the exact structured status block only. Do NOT proceed to review without a parseable `READY_FOR_REVIEW | BLOCKED | NEEDS_CONTEXT` value.
-- **READY_FOR_REVIEW** → proceed to review
+- **READY_FOR_REVIEW** → the repo verification hook (`.kiro/settings/verify.sh`) runs as a deterministic command gate; its exit code — not the implementer's self-report — gates progression (see Command-gate Verification below)
 - **BLOCKED** → dispatch debug subagent (see section below); do NOT immediately skip
 - **NEEDS_CONTEXT** → re-dispatch once with the requested additional context; if still unresolved → dispatch debug subagent
+
+**Command-gate Verification**: After a code-editing step, the workflow runs `.kiro/settings/verify.sh` when the file is present; its exit code gates progression to the next step. When the hook is absent, the gate is a logged no-op (exit 0), but task completion still requires fresh `kiro-verify-completion` evidence — a missing hook never auto-passes a task. Gate failure feeds back to the same step for remediation; this is a separate path from the `debug-task` route triggered by reviewer/verify failures. Re-execution bounds are governed exclusively by `loop_monitors` — no custom retry counters.
 
 **c) Dispatch reviewer**:
 - Read `templates/reviewer-prompt.md` from this skill's directory
@@ -108,6 +110,7 @@ For each task (one at a time):
 - The reviewer must apply the `kiro-review` protocol to this task-local review.
 - Preserve the existing task-specific context: task text, spec refs, `_Boundary:_` scope, validation commands, implementer report, and the actual `git diff` as the primary source of truth.
 - The reviewer subagent will run `git diff` itself to read the actual code changes and verify against the spec
+- **Adversarial multi-perspective review**: Each reviewer (coding / architecture / qa / testing) defaults to REJECT and approves only when it can cite evidence from the selected task, requirements, boundary constraints, and actual diff. Because the command gate owns mechanical correctness, the coding reviewer focuses on confirming the green gate evidence plus code-correctness, boundary adherence, and diff judgment — not re-discovering test failures. All four reviewer verdicts must be `approved` before proceeding; do NOT add an always-on security reviewer.
 - Dispatch via **Agent tool** as a fresh subagent
 
 **d) Handle reviewer verdict**:
@@ -117,14 +120,15 @@ For each task (one at a time):
 - **REJECTED (round 1-2)** → re-dispatch implementer with review feedback
 - **REJECTED (round 3)** → dispatch debug subagent (see section below)
 
-**e) Commit** (parent-only, selective staging):
+**e) Commit** (parent-only, selective staging — per-task granularity):
 - Stage only the files actually changed for this task, plus tasks.md
 - **NEVER** use `git add -A` or `git add .`
 - Use `git add <file1> <file2> ...` with explicit file paths
 - Commit message format: `feat(<feature-name>): <task description>`
+- **Per-task commit semantics**: In pipeline / `--skip-git` mode the workflow engine does not auto-commit, so this selective commit is the only commit and provides per-task granularity. In worktree mode the engine performs a final `git add -A` commit at the end of the run, but because each task's per-task commit keeps the tree clean, that end-of-run commit captures only residue (effectively empty). Do NOT attempt to suppress the worktree end-of-run commit — it is harmless and has no dedicated disable config.
 
-**f) Record learnings**:
-- If this task revealed cross-cutting insights, append a one-line note to the `## Implementation Notes` section at the bottom of tasks.md
+**f) Record learnings (knowledge propagation)**:
+- If this task revealed cross-cutting insights (new patterns, unexpected constraints, integration gotchas), append a concise one-line note to the `## Implementation Notes` section at the bottom of tasks.md. Limit writes to the selected task or shared notes scope; do not modify unrelated entries.
 
 **g) Debug subagent** (triggered by BLOCKED, NEEDS_CONTEXT unresolved, or REJECTED after 2 remediation rounds):
 
@@ -136,6 +140,7 @@ The debug subagent runs in a **fresh context** — it receives only the error in
   - `git diff` of the current uncommitted changes
   - The task description and relevant spec section numbers
   - Paths to spec files so the debugger can read them
+  - **Relevant Implementation Notes**: Include `## Implementation Notes` entries from tasks.md that relate to this task's boundary or dependencies. The debugger uses them as primary root-cause input to avoid repeating previously diagnosed mistakes.
 - The debugger must apply the `kiro-debug` protocol to this failure investigation.
 - Preserve rich failure context: error output, reviewer findings, current `git diff`, task/spec refs, and any relevant Implementation Notes.
 - When available, the debugger should inspect runtime/config state and use web or official documentation research to validate root-cause hypotheses before proposing a fix plan.
@@ -155,7 +160,7 @@ The debug subagent runs in a **fresh context** — it receives only the error in
 
 **Completion check**: If all remaining tasks are BLOCKED, stop and report blocked tasks with reasons to the user.
 
-#### Manual Mode (main context)
+### Manual Mode (main context)
 
 For each selected task:
 
@@ -165,14 +170,16 @@ Before writing any code, read the relevant sections of requirements.md and desig
 - What files/functions/tests must exist (completion definition)
 - What technical decisions to follow from design.md (design constraints)
 - How to confirm the task works (verification method)
+- **Knowledge propagation**: Read `## Implementation Notes` entries relevant to this task's boundary or dependencies before writing any code. Use them to avoid repeating past mistakes.
 
 **2. Execute TDD cycle** (Kent Beck's RED → GREEN → REFACTOR):
 - **RED**: Write test for the next small piece of functionality based on the acceptance criteria. Test should fail.
 - **GREEN**: Implement simplest solution to make test pass, following the design constraints.
 - **REFACTOR**: Improve code structure, remove duplication. All tests must still pass.
-- **VERIFY**: All tests pass (new and existing), no regressions. Confirm verification method passes.
-- **REVIEW**: Apply `kiro-review` before marking the task complete. If the host supports fresh subagents in manual mode, use a fresh reviewer; otherwise perform the review in the main context using the `kiro-review` protocol. Do NOT continue until the verdict is parseably `APPROVED`.
-- **MARK COMPLETE**: Only after review returns `APPROVED`, apply `kiro-verify-completion`, then update the checkbox from `- [ ]` to `- [x]` in tasks.md.
+- **VERIFY**: All tests pass (new and existing), no regressions. Confirm verification method passes. Then run `.kiro/settings/verify.sh` if present; its exit code is the deterministic gate — a non-zero exit means remediate in this step before proceeding. If the hook is absent, treat as no-op (exit 0) but still gather fresh evidence for `kiro-verify-completion`.
+- **REVIEW**: Apply `kiro-review` before marking the task complete. Each reviewer (coding / architecture / qa / testing) defaults to REJECT and approves only on evidence (selected task, requirement, boundary, actual diff); coding review confirms the green gate evidence plus code-correctness rather than re-running tests. Do NOT add a security reviewer as always-on gate. If the host supports fresh subagents in manual mode, use a fresh reviewer; otherwise perform the review in the main context using the `kiro-review` protocol. Do NOT continue until the verdict is parseably `APPROVED`.
+- **MARK COMPLETE**: Only after review returns `APPROVED`, apply `kiro-verify-completion`, then update the checkbox from `- [ ]` to `- [x]` in tasks.md. Commit selectively — only the task's changed files plus tasks.md using `git add <file1> <file2> tasks.md`; never `git add -A`.
+- **Record learnings**: If this task revealed a cross-cutting insight, append a one-line note to `## Implementation Notes` in tasks.md (selected task or shared scope only).
 
 ### Step 4: Final Validation
 
