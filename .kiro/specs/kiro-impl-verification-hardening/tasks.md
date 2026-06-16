@@ -75,7 +75,7 @@
   - _Boundary:_ 検証層（validators）
   - _Depends:_ 2.1, 2.2, 2.3, 2.4, 2.5
 
-- [ ] 3.2 検証テストへの reject ケース追加
+- [x] 3.2 検証テストへの reject ケース追加
   - 新契約ごとの reject ケース（ゲート欠落・コミット許可欠落・非アドバーサリアル facet・Implementation Notes 欠落・parity 不一致）をテストに追加し、カバレッジ配列を更新する
   - 既存 reject ケースの回帰がないことを保つ
   - 観測可能完了: node:test が新旧 reject ケースを含めて緑で完了する（`npm run test:kiro-iterative-implementation-workflow` 等）
@@ -109,3 +109,4 @@
 - 2.3: update-progress step に `allow_git_commit: true`（`required_permission_mode: edit` 直後）。facet に「VERIFIED 経路のみ・`git add <changed_files> tasks.md`・`git add -A` 禁止・pipeline/worktree 調停」を追記。3.1 validator は update-progress step の `allow_git_commit: true` を assert。
 - 2.5: execute-task facet に「## Implementation Notes intake/読込」、debug facet に「## Implementation Notes reference/参照」を追加（2.1 のゲートnote と別段落）。3.1 validator は execute-task / debug-task facet に `Implementation Notes` トークンを assert（既存 spec の terms 配列に追加）。
 - 3.1: iterative validator に `COMMAND_GATE_DRIFT`(execute-task ゲート)・`COMMIT_GATE_DRIFT`(update-progress allow_git_commit)、review terms に adversarial マーカー、execute/debug terms に Implementation Notes を追加。coverage validator に `validateAntipatternFixCommandGate`(ai-fix ゲート)。**ミューテーションテストで実在証明済み**（契約削除→validate RED、復元→GREEN）。item5(coding専用文)は ja facet に当該英文が無いため skip。3.2 は reject ケース test で再証明する。
+- 3.2: reject ケース6本追加（iterative test に5: execute gate/commit/adversarial/exec-notes/debug-notes、ai-gate coverage test に1: ai-fix gate）。`validateTaskFixtureCoverage` 配列に新テスト名を登録（削除耐性）。test 両スイート exit 0、validate 緑。`.replace`→`.replaceAll` の RED→GREEN 修正含む。`.takt` 非汚染（temp/文字列 mutation）。

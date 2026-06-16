@@ -735,3 +735,22 @@ test("repository scripts and CI run Kiro AI quality gate coverage checks", () =>
     assert.ok(ciWorkflow.includes(`npm run ${scriptName}`), `CI should run ${scriptName}`);
   }
 });
+
+test("validator rejects ai-antipattern-fix without command quality gate", () => {
+  const root = makeCoverageFixture();
+  const path = ".takt/en/workflows/kiro-ai-quality-gate.yaml";
+  const original = readFixtureFile(root, path);
+  const mutated = original.replace(
+    /    quality_gates:\n      - type: command\n        name: kiro-impl task verification\n        command: >-\n          sh -c 'if \[ -f \.kiro\/settings\/verify\.sh \]; then sh \.kiro\/settings\/verify\.sh; else echo "\[kiro-impl\] \.kiro\/settings\/verify\.sh not found; skipping deterministic gate"; fi'\n/,
+    "",
+  );
+  writeFixtureFile(root, path, mutated);
+
+  const result = validateKiroAiQualityGateWorkflowCoverage({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.failures.some((failure) => failure.includes("COMMAND_GATE_DRIFT") && failure.includes("ai-antipattern-fix")),
+    result.failures.join("\n"),
+  );
+});

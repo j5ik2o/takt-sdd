@@ -700,3 +700,69 @@ test("validator rejects progress policy drift that loses selected task guard", (
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("kiro-impl-task-progress.md")));
 });
+
+test("validator rejects execute-task without command quality gate", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    /    quality_gates:\n      - type: command\n        name: kiro-impl task verification\n        command: >-\n          sh -c 'if \[ -f \.kiro\/settings\/verify\.sh \]; then sh \.kiro\/settings\/verify\.sh; else echo "\[kiro-impl\] \.kiro\/settings\/verify\.sh not found; skipping deterministic gate"; fi'\n/,
+    "",
+  );
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("COMMAND_GATE_DRIFT") && failure.includes("execute-task")));
+});
+
+test("validator rejects update-progress without allow_git_commit", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace("    allow_git_commit: true\n", "");
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("COMMIT_GATE_DRIFT") && failure.includes("update-progress")));
+});
+
+test("validator rejects review facet missing adversarial posture marker", () => {
+  const root = makeCurrentSurfaceFixture();
+  const facetPath = join(root, ".takt", "en", "facets", "instructions", "kiro-review-qa-task.md");
+  const facet = readFileSync(facetPath, "utf8").replace(
+    "Adversarial review posture: default VERDICT is REJECTED; approve only with cited evidence (selected task, requirement, boundary, actual diff).",
+    "",
+  );
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-review-qa-task.md", facet);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("FACET_DRIFT") && failure.includes("kiro-review-qa-task.md")));
+});
+
+test("validator rejects execute-task facet missing implementation notes intake", () => {
+  const root = makeCurrentSurfaceFixture();
+  const facetPath = join(root, ".takt", "en", "facets", "instructions", "kiro-impl-execute-task.md");
+  const facet = readFileSync(facetPath, "utf8").replaceAll("Implementation Notes", "Task Notes");
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-impl-execute-task.md", facet);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("FACET_DRIFT") && failure.includes("kiro-impl-execute-task.md")));
+});
+
+test("validator rejects debug facet missing implementation notes reference", () => {
+  const root = makeCurrentSurfaceFixture();
+  const facetPath = join(root, ".takt", "en", "facets", "instructions", "kiro-debug-task.md");
+  const facet = readFileSync(facetPath, "utf8").replaceAll("Implementation Notes", "Task Notes");
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-debug-task.md", facet);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("FACET_DRIFT") && failure.includes("kiro-debug-task.md")));
+});
