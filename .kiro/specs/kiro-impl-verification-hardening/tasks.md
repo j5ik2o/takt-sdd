@@ -66,7 +66,7 @@
   - _Depends:_ 1.2
 
 - [ ] 3. 統合
-- [ ] 3.1 検証スクリプトへの新契約アサーション追加
+- [x] 3.1 検証スクリプトへの新契約アサーション追加
   - 実装ワークフロー検証スクリプトに、execute-task のコマンドゲート存在、update-progress のコミット許可属性、レビュー facet のアドバーサリアル語彙、execute/debug facet の Implementation Notes、ゲートコマンドの ja/en parity を検証するアサーションを追加する
   - AI 品質ゲート検証スクリプトに、ai-antipattern-fix のコマンドゲート存在のアサーションを追加する
   - 既存契約（ステップ順序・all 承認集約・loop_monitors 文字列・security 非常時・独自カウンタ禁止）の検証は保持する
@@ -108,3 +108,4 @@
 - 2.4: 4 review facet（ja/en 計8）に正確マーカー `Adversarial review posture: default VERDICT is REJECTED; approve only with cited evidence (selected task, requirement, boundary, actual diff).` を追加。coding 専用文（ゲートが機械的正しさを所有）は kiro-review-task のみ。3.1 validator はこのマーカー文字列を全 review facet で assert する。
 - 2.3: update-progress step に `allow_git_commit: true`（`required_permission_mode: edit` 直後）。facet に「VERIFIED 経路のみ・`git add <changed_files> tasks.md`・`git add -A` 禁止・pipeline/worktree 調停」を追記。3.1 validator は update-progress step の `allow_git_commit: true` を assert。
 - 2.5: execute-task facet に「## Implementation Notes intake/読込」、debug facet に「## Implementation Notes reference/参照」を追加（2.1 のゲートnote と別段落）。3.1 validator は execute-task / debug-task facet に `Implementation Notes` トークンを assert（既存 spec の terms 配列に追加）。
+- 3.1: iterative validator に `COMMAND_GATE_DRIFT`(execute-task ゲート)・`COMMIT_GATE_DRIFT`(update-progress allow_git_commit)、review terms に adversarial マーカー、execute/debug terms に Implementation Notes を追加。coverage validator に `validateAntipatternFixCommandGate`(ai-fix ゲート)。**ミューテーションテストで実在証明済み**（契約削除→validate RED、復元→GREEN）。item5(coding専用文)は ja facet に当該英文が無いため skip。3.2 は reject ケース test で再証明する。

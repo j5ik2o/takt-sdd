@@ -44,6 +44,7 @@ const instructionSpecs = [
       "kiro-implementation-result",
       "baseline_dirty_files",
       "changed_files",
+      "Implementation Notes",
     ],
   },
   {
@@ -87,6 +88,7 @@ const instructionSpecs = [
       "changed_files",
       "git diff -- <changed_files>",
       "implementation_scope_mismatch",
+      "Adversarial review posture: default VERDICT is REJECTED",
     ],
   },
   {
@@ -108,6 +110,7 @@ const instructionSpecs = [
       "changed_files",
       "git diff -- <changed_files>",
       "implementation_scope_mismatch",
+      "Adversarial review posture: default VERDICT is REJECTED",
     ],
   },
   {
@@ -129,6 +132,7 @@ const instructionSpecs = [
       "changed_files",
       "git diff -- <changed_files>",
       "implementation_scope_mismatch",
+      "Adversarial review posture: default VERDICT is REJECTED",
     ],
   },
   {
@@ -150,6 +154,7 @@ const instructionSpecs = [
       "changed_files",
       "git diff -- <changed_files>",
       "implementation_scope_mismatch",
+      "Adversarial review posture: default VERDICT is REJECTED",
     ],
   },
   {
@@ -172,6 +177,7 @@ const instructionSpecs = [
       "kiro-task-testing-review.md",
       "any(\"needs_fix\")",
       "need_replan",
+      "Implementation Notes",
     ],
   },
   {
@@ -594,6 +600,12 @@ function validateWorkflowFiles(repoRoot) {
     if (!hasRuleWithTerms(executeBlock, ["STATUS NEEDS_CONTEXT", "next: debug-task"])) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} execute-task must branch NEEDS_CONTEXT to debug-task`);
     }
+    const executeGate = (blocks.get("execute-task") ?? []).join("\n");
+    for (const needle of ["quality_gates:", "type: command", ".kiro/settings/verify.sh"]) {
+      if (!executeGate.includes(needle)) {
+        failures.push(`COMMAND_GATE_DRIFT: ${rel(repoRoot, workflowPath)} execute-task must run a command quality gate on .kiro/settings/verify.sh (missing ${needle})`);
+      }
+    }
     const gateBlock = blocks.get("ai-quality-gate") ?? [];
     if (stepScalar(gateBlock, "kind") !== "workflow_call" || stepScalar(gateBlock, "call") !== "./kiro-ai-quality-gate.yaml") {
       failures.push(`AI_QUALITY_GATE_DRIFT: ${rel(repoRoot, workflowPath)} ai-quality-gate must call ./kiro-ai-quality-gate.yaml via workflow_call`);
@@ -717,6 +729,9 @@ function validateWorkflowFiles(repoRoot) {
     }
     if (!hasRuleWithTerms(updateBlock, ["STATUS BLOCKED", "selected task blocker note written", "next: ABORT"])) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must route written blocker notes to ABORT`);
+    }
+    if (!(blocks.get("update-progress") ?? []).join("\n").includes("allow_git_commit: true")) {
+      failures.push(`COMMIT_GATE_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must set allow_git_commit: true for per-task commits`);
     }
     if (!canonicalBlock(content, "loop_monitors").join("\n").includes("execute-task")) {
       failures.push(`LOOP_MONITOR_DRIFT: ${rel(repoRoot, workflowPath)} loop_monitors must cover execute-task`);
