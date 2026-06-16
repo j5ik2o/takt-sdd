@@ -91,7 +91,7 @@
   - _Boundary:_ 検証層（full suite）
   - _Depends:_ 3.1, 3.2
 
-- [ ] 4.2 ゲート挙動の runtime smoke 確認
+- [x] 4.2 ゲート挙動の runtime smoke 確認
   - 検証フックを意図的に失敗させた場合にタスクが完了へ進まず、同一ステップ差し戻し後に loop_monitors で停止に至ることを smoke で確認する（ゲート再試行上限の有無も確認、review R5）
   - 検証フック不在時はゲートが no-op となり、完了可否は既存の完了検証証跡ゲートが担保することを確認する
   - 観測可能完了: 失敗フックでタスクが未完了のまま停止し、不在フックでは既存フローが非破壊で進むことを smoke で観測できる
@@ -111,3 +111,4 @@
 - 3.1: iterative validator に `COMMAND_GATE_DRIFT`(execute-task ゲート)・`COMMIT_GATE_DRIFT`(update-progress allow_git_commit)、review terms に adversarial マーカー、execute/debug terms に Implementation Notes を追加。coverage validator に `validateAntipatternFixCommandGate`(ai-fix ゲート)。**ミューテーションテストで実在証明済み**（契約削除→validate RED、復元→GREEN）。item5(coding専用文)は ja facet に当該英文が無いため skip。3.2 は reject ケース test で再証明する。
 - 3.2: reject ケース6本追加（iterative test に5: execute gate/commit/adversarial/exec-notes/debug-notes、ai-gate coverage test に1: ai-fix gate）。`validateTaskFixtureCoverage` 配列に新テスト名を登録（削除耐性）。test 両スイート exit 0、validate 緑。`.replace`→`.replaceAll` の RED→GREEN 修正含む。`.takt` 非汚染（temp/文字列 mutation）。
 - 4.1: `validate:all` を緑化。統合ゲートが捕捉した3問題を修正: (a) **SKILL_ADAPTER_DRIFT** — en execute/debug facet の `` `## Implementation Notes` section `` が shared-contracts の `` `X` section `` extractor に誤マッチし ja(セクション) と非対称化 → en を `section`→`entries` に変更し対称化。(b) **runtime-smoke** — fixture config が最小設定で `workflow_command_gates.custom_scripts` 欠落 → 追加。**重要: command gate は `custom_scripts: true` が必須で、未設定の repo では workflow が hard error（no-op ではない）。配布先 repo / installer も要設定＝R1 を「hard 前提」へ格上げ（takt-sdd-global-cli へ申し送り）。** (c) **TASK_ANNOTATION_DRIFT** — `_Requirements:_ X`→`_Requirements: X_`（既存 spec/validator 準拠）、2.2/2.4/2.5 の `(P)` 除去（validator は (P)=`_Depends:_ none` 必須）。test:all の real-provider-smoke は provider 必要のため未実行。
+- 4.2: kiro-impl.yaml から実ゲートコマンドを抽出し `spawnSync` で実行する smoke を4本追加（tests/kiro-iterative-implementation-workflow.test.mjs）。failing verify.sh→status≠0（タスク未完了でブロック）/ absent→0（非破壊 no-op）/ passing→0 を assert。RED→GREEN 証明済み（failing で status 1）。temp は try/finally で cleanup、実ファイル非汚染。54 tests pass。

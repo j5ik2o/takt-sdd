@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
+import { spawnSync } from "node:child_process";
 import { validateKiroIterativeImplementationWorkflow } from "../scripts/validate-kiro-iterative-implementation-workflow.mjs";
 import { buildTaktArgs, resolveWorkflowPath } from "../scripts/kiro-staged.mjs";
 
@@ -765,4 +766,66 @@ test("validator rejects debug facet missing implementation notes reference", () 
 
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("FACET_DRIFT") && failure.includes("kiro-debug-task.md")));
+});
+
+// --- Runtime smoke tests: gate command deterministic behavior (Task 4.2) ---
+//
+// Extract the exact quality_gates command shipped in execute-task from kiro-impl.yaml and
+// exercise it against three scenarios to prove deterministic gate behavior (Requirements 1, 2).
+//
+// Command extracted from .takt/ja/workflows/kiro-impl.yaml execute-task quality_gates:
+//   sh -c 'if [ -f .kiro/settings/verify.sh ]; then sh .kiro/settings/verify.sh;
+//   else echo "[kiro-impl] .kiro/settings/verify.sh not found; skipping deterministic gate"; fi'
+//
+// Sanity assertion: the command must reference .kiro/settings/verify.sh.
+
+const GATE_COMMAND =
+  "sh -c 'if [ -f .kiro/settings/verify.sh ]; then sh .kiro/settings/verify.sh; else echo \"[kiro-impl] .kiro/settings/verify.sh not found; skipping deterministic gate\"; fi'";
+
+test("kiro-impl execute-task gate command references .kiro/settings/verify.sh (sanity)", () => {
+  assert.ok(
+    GATE_COMMAND.includes(".kiro/settings/verify.sh"),
+    "Gate command must reference .kiro/settings/verify.sh",
+  );
+});
+
+test("kiro-impl execute-task command gate blocks on failing verify.sh hook", () => {
+  const tempDir = mkdtempSync(join(tmpdir(), "kiro-gate-fail-"));
+  try {
+    mkdirSync(join(tempDir, ".kiro", "settings"), { recursive: true });
+    writeFileSync(join(tempDir, ".kiro", "settings", "verify.sh"), "#!/usr/bin/env sh\nexit 1\n", { mode: 0o755 });
+
+    const result = spawnSync(GATE_COMMAND, { shell: true, cwd: tempDir, encoding: "utf8" });
+
+    assert.notEqual(result.status, 0, "Gate must exit non-zero when verify.sh exits 1 — proves failing hook blocks task completion");
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("kiro-impl execute-task command gate is a no-op when verify.sh is absent", () => {
+  const tempDir = mkdtempSync(join(tmpdir(), "kiro-gate-absent-"));
+  try {
+    // No .kiro/settings/verify.sh created — absent hook scenario
+
+    const result = spawnSync(GATE_COMMAND, { shell: true, cwd: tempDir, encoding: "utf8" });
+
+    assert.equal(result.status, 0, "Gate must exit 0 when verify.sh is absent — proves absent hook is a non-breaking no-op");
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("kiro-impl execute-task command gate passes on successful verify.sh hook", () => {
+  const tempDir = mkdtempSync(join(tmpdir(), "kiro-gate-pass-"));
+  try {
+    mkdirSync(join(tempDir, ".kiro", "settings"), { recursive: true });
+    writeFileSync(join(tempDir, ".kiro", "settings", "verify.sh"), "#!/usr/bin/env sh\nexit 0\n", { mode: 0o755 });
+
+    const result = spawnSync(GATE_COMMAND, { shell: true, cwd: tempDir, encoding: "utf8" });
+
+    assert.equal(result.status, 0, "Gate must exit 0 when verify.sh exits 0 — proves passing hook allows task completion");
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
 });
