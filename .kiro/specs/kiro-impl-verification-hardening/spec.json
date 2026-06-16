@@ -1,0 +1,22 @@
+{
+  "feature_name": "kiro-impl-verification-hardening",
+  "created_at": "2026-06-16T16:34:32Z",
+  "updated_at": "2026-06-16T17:23:29Z",
+  "language": "ja",
+  "phase": "tasks-generated",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": true
+    }
+  },
+  "ready_for_implementation": true
+}
