@@ -20,6 +20,9 @@ Before forming the verdict, read `kiro-ai-antipattern-review.md`. Read `kiro-ai-
 
 Return the `## Review Verdict` shape from `$kiro-review` or `/kiro-review`, specialized for architecture concerns.
 
+Adversarial review posture: default VERDICT is REJECTED; approve only with cited evidence (selected task, requirement, boundary, actual diff).
+The reviewer starts from REJECTED and may only return APPROVED when it can cite concrete evidence from the selected task, requirement, boundary, and actual diff; absence of disconfirming evidence is not sufficient for approval.
+
 - `VERDICT`: `APPROVED` or `REJECTED`.
 - `APPROVED`: Use only when the Kiro selected task boundary, design boundary, dependency direction, scope guard, and AI gate evidence are all acceptable.
 - `REJECTED`: Use only when the selected task implementation has actionable architecture findings.

@@ -20,6 +20,9 @@ verdict を作る前に `kiro-ai-antipattern-review.md` を読む。`kiro-ai-ant
 
 `$kiro-review` または `/kiro-review` の `## Review Verdict` 形式を返し、QA concerns に特化して判定する。
 
+Adversarial review posture: default VERDICT is REJECTED; approve only with cited evidence (selected task, requirement, boundary, actual diff).
+レビュアーは既定の判定を REJECTED とし、選択タスク・要件・境界・実 diff の証拠を具体的に引用できる場合に限り APPROVED を返す。反証が見当たらないことは承認の根拠として不十分である。
+
 - `VERDICT`: `APPROVED` または `REJECTED`。
 - `APPROVED`: selected task の acceptance coverage、edge cases、error handling、manual verification requirement、AI gate evidence がすべて問題ない場合だけ使う。
 - `REJECTED`: selected task implementationに修正可能なQA findingがある場合だけ使う。

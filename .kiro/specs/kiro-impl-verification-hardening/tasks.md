@@ -30,7 +30,7 @@
   - _Boundary:_ 検証コマンドゲート（kiro-impl.yaml execute-task）
   - _Depends:_ 1.1, 1.2
 
-- [ ] 2.2 (P) ai-antipattern-fix への決定論的コマンドゲート付与
+- [x] 2.2 (P) ai-antipattern-fix への決定論的コマンドゲート付与
   - AI 品質ゲートサブワークフローの ai-antipattern-fix（コード編集ステップ）に、execute-task と同型の command 型品質ゲートを付与する（ja/en）
   - サブワークフローの内部ステップ構成・ループ設計は変更せず、ゲート属性付与のみに留める（Adjacent 最小変更）
   - 観測可能完了: ja/en の ai-antipattern-fix に同型ゲートが存在し、修正後に検証フックが実行される
@@ -47,7 +47,7 @@
   - _Boundary:_ per-task commit（kiro-impl.yaml update-progress + facet）
   - _Depends:_ 1.2, 2.1
 
-- [ ] 2.4 (P) 複数観点レビューのアドバーサリアル化
+- [x] 2.4 (P) 複数観点レビューのアドバーサリアル化
   - coding / architecture / qa / testing の各レビュー facet を「既定は却下、選択タスク・要件・境界・実 diff の証拠を引用できる場合のみ承認」へ更新する（ja/en）
   - コマンドゲートが機械的正しさを担保する前提で、coding review を緑証跡の確認とコード正当性・境界・diff の判断に集中させる
   - reviewer 構成（名前・順序・persona・report・approved/needs_fix 集約・all 承認集約）と security 非常時の方針は変更しない
@@ -104,3 +104,5 @@
 - 1.1: 検証フックは `.kiro/settings/verify.sh`。gate は `sh .kiro/settings/verify.sh`（存在時実行・不在は no-op exit 0）で呼ぶ。`set -e` + `npm run validate:kiro-iterative-implementation-workflow` / `validate:kiro-ai-quality-gate-workflow-coverage` を実行。**verify.sh は impl 中 immutable（タスク境界外）**。タスク2.1/2.2 の gate command 文字列はこのパスに揃えること。
 - 1.2: SKILL 正本（`.claude` / `.agents`）に4挙動を追加記述済み。既存セクション見出しは保持。`.claude` の Manual Mode 見出しを `#### → ###` に補正し facet 参照（`### Manual Mode (main context)`）と整合させた。タスク2.x の facet 追記時はこの SKILL 記述と齟齬がないようにする。
 - 2.1: execute-task に `quality_gates`（`type: command`, command は `sh -c '...verify.sh...'` の folded scalar、ja/en バイト一致）を `output_contracts:` 直後・`rules:` 直前に配置。execute-task facet に「ゲート失敗=同一step差し戻し / review・verify 失敗=debug-task / loop_monitors のみ」を追記。3.1 validator はこの execute-task step 内の `quality_gates`/`type: command`/`.kiro/settings/verify.sh` を assert する。2.3(update-progress, 同じ kiro-impl.yaml) と 2.5(execute-task facet) は本タスク後に実施。
+- 2.2: ai-quality-gate.yaml の ai-antipattern-fix に execute-task と byte-identical なゲートを付与（ja/en）。3.1 validator は ai-antipattern-fix step の `quality_gates`/`type: command`/`.kiro/settings/verify.sh` を assert。
+- 2.4: 4 review facet（ja/en 計8）に正確マーカー `Adversarial review posture: default VERDICT is REJECTED; approve only with cited evidence (selected task, requirement, boundary, actual diff).` を追加。coding 専用文（ゲートが機械的正しさを所有）は kiro-review-task のみ。3.1 validator はこのマーカー文字列を全 review facet で assert する。

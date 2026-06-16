@@ -20,6 +20,11 @@ Read `kiro-ai-antipattern-review.md` before forming the verdict. Read `kiro-ai-a
 
 Return the `## Review Verdict` shape from `$kiro-review` or `/kiro-review`.
 
+Adversarial review posture: default VERDICT is REJECTED; approve only with cited evidence (selected task, requirement, boundary, actual diff).
+The reviewer starts from REJECTED and may only return APPROVED when it can cite concrete evidence from the selected task, requirement, boundary, and actual diff; absence of disconfirming evidence is not sufficient for approval.
+
+The command quality gate owns mechanical correctness (tests/build green), so this review confirms the green gate result and concentrates on code-correctness, selected-task boundary, and actual diff judgment rather than re-discovering mechanical failures.
+
 - `VERDICT`: `APPROVED` or `REJECTED`.
 - `FINDINGS`: actionable findings tied to the selected task, requirement refs, and boundary evidence.
 - `MECHANICAL_RESULTS`: validation command results, static checks, boundary audit, and RED phase status.

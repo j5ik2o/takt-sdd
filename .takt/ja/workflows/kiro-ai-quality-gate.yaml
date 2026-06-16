@@ -111,6 +111,11 @@ steps:
       report:
         - name: kiro-ai-antipattern-fix.md
           format: kiro-ai-antipattern-fix-result
+    quality_gates:
+      - type: command
+        name: kiro-impl task verification
+        command: >-
+          sh -c 'if [ -f .kiro/settings/verify.sh ]; then sh .kiro/settings/verify.sh; else echo "[kiro-impl] .kiro/settings/verify.sh not found; skipping deterministic gate"; fi'
     rules:
       - condition: STATUS FIXED
         next: ai-antipattern-review-1st
