@@ -3,7 +3,7 @@
 > 前提: 本 spec は既存 `kiro-iterative-implementation-workflow` を Extends し、**ステップ topology を変えず** step 属性 + facet 内容 + 検証層拡張で実現する。挙動の正本は kiro-impl SKILL.md（`.claude` / `.agents`）。全変更を ja/en 対で行う。
 
 - [ ] 1. 基盤
-- [ ] 1.1 検証フック規約と dogfooding フックの確立
+- [x] 1.1 検証フック規約と dogfooding フックの確立
   - リポジトリ提供の任意検証フック（`.kiro/settings/verify.sh`）を「存在すればゲートが実行、不在なら no-op 通知で成功」とする規約を定義する
   - takt-sdd 自身の検証フックを用意し、リポジトリ標準の検証（validate/test）を実行して失敗時に非ゼロ終了する
   - 検証フックを**全タスクの境界外（実装中は不変）**と位置づけ、タスクによる改変を許さない旨を境界ガイダンスに含める（review Issue 3 緩和）
@@ -98,3 +98,7 @@
   - _Requirements:_ 1, 2
   - _Boundary:_ runtime smoke
   - _Depends:_ 2.1, 2.2
+
+## Implementation Notes
+
+- 1.1: 検証フックは `.kiro/settings/verify.sh`。gate は `sh .kiro/settings/verify.sh`（存在時実行・不在は no-op exit 0）で呼ぶ。`set -e` + `npm run validate:kiro-iterative-implementation-workflow` / `validate:kiro-ai-quality-gate-workflow-coverage` を実行。**verify.sh は impl 中 immutable（タスク境界外）**。タスク2.1/2.2 の gate command 文字列はこのパスに揃えること。
