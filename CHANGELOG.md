@@ -1,3 +1,10 @@
+## [2.1.0](https://github.com/j5ik2o/takt-sdd/compare/v2.0.1...v2.1.0) (2026-06-17)
+
+
+### Features
+
+* **kiro:** support parallel task waves ([361632b](https://github.com/j5ik2o/takt-sdd/commit/361632b08a5eab5254f669a9e7098e564bfbf3c8))
+
 ## [2.0.1](https://github.com/j5ik2o/takt-sdd/compare/v2.0.0...v2.0.1) (2026-06-15)
 
 
