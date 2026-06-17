@@ -127,8 +127,8 @@ export function isRetiredWorkflow(name) {
  * Generates the help text for the global CLI, deriving all command names from
  * the catalog constants (no duplicated literals).
  *
- * Covers: init, kiro-* commands, run <supported-workflow>,
- * and global options (--cwd, --help, --version).
+ * Covers: normal package-bundled workflow execution, eject customization,
+ * deprecated init guidance, and global options (--cwd, --help, --version).
  *
  * @param {string} version - The package version string to include in the header.
  * @returns {string}
@@ -143,21 +143,32 @@ export function buildHelpText(version) {
     "  takt-sdd [--cwd <dir>] <command> [options]",
     "",
     "Commands:",
-    "  init <dir> [--lang en|ja] [--force] [--dry-run]",
-    "                       Initialize or update bundled .takt assets",
+    "  Normal execution:",
+    "    Kiro SDD workflows:",
+    ...kiroCommands.map((name) => `      ${name}`),
     "",
-    "  Kiro SDD workflows:",
-    ...kiroCommands.map((name) => `    ${name}`),
-    "",
-    "  run <supported-workflow>",
+    "    run <supported-workflow>",
     "                       Run any supported workflow by name",
+    "",
+    "    Run workflows directly from bundled workflows/facets in the installed package.",
+    "    Project-local .takt copies are not required for ordinary use.",
+    "",
+    "  Customization:",
+    "    eject [--lang en|ja] [--all-languages] [--force] [--dry-run]",
+    "                       Copy bundled workflows/facets for project-owned customization",
+    "                       Use `takt-sdd eject --help` for copy safety options.",
+    "",
+    "  Retired commands:",
+    "    init [--help]",
+    "                       Deprecated guidance-only command; no asset copy, manifest,",
+    "                       script, or package.json writes. Use `takt-sdd init --help`.",
     "",
     "Global Options:",
     "  --cwd <dir>          Set the target project root directory",
     "  --help, -h           Show this help message",
     "  --version, -v        Show the installed package version",
     "",
-    "Note: Legacy cc-sdd and openspec workflows have been retired in v2.0.0.",
+    "Note: Legacy cc-sdd and opsx workflow families have been retired in v2.0.0.",
     "      Run `takt-sdd --help` for the current command surface.",
   ];
 

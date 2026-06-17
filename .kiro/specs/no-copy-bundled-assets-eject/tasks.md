@@ -38,7 +38,7 @@
   - _Boundary:_ CreateTaktSddRetiredCli
   - _Depends:_ none
 
-- [ ] 2.3 (P) command catalog の表示を新しい導線へ揃える
+- [x] 2.3 (P) command catalog の表示を新しい導線へ揃える
   - top-level help で `eject` を案内し、`init` は deprecated command として扱う。
   - supported workflow catalog と retired workflow rejection は維持する。
   - package bundled runtime と retired command の説明が help 上で矛盾しないようにする。

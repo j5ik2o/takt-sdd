@@ -143,10 +143,13 @@ test("isSupportedWorkflow('unknown-workflow') returns false", () => {
   assert.equal(isSupportedWorkflow("unknown-workflow"), false);
 });
 
-// (d) buildHelpText contains init, kiro-* workflow names, "run", global options, and no cc-sdd-*/opsx-* names
-test("buildHelpText contains 'init'", () => {
+// (d) buildHelpText contains package runtime, eject customization, deprecated init, kiro-* workflow names, "run", global options, and no cc-sdd-*/opsx-* names
+test("buildHelpText contains deprecated init guidance", () => {
   const text = buildHelpText("1.0.0");
   assert.ok(text.includes("init"), `buildHelpText output does not contain 'init'`);
+  assert.match(text, /deprecated/i);
+  assert.match(text, /guidance-only/i);
+  assert.ok(!text.includes("Initialize or update bundled .takt assets"), `buildHelpText should not present init as an asset-copy command`);
 });
 
 test("buildHelpText contains every supported kiro-* workflow name", () => {
@@ -168,9 +171,18 @@ test("buildHelpText contains 'run'", () => {
   assert.ok(text.includes("run"), `buildHelpText output does not contain 'run'`);
 });
 
-test("buildHelpText contains init options --lang, --force, and --dry-run", () => {
+test("buildHelpText explains package bundled runtime for normal execution", () => {
   const text = buildHelpText("1.0.0");
+  assert.match(text, /Run workflows directly from bundled workflows\/facets/i);
+  assert.match(text, /installed package/i);
+});
+
+test("buildHelpText contains eject customization entrypoint and options", () => {
+  const text = buildHelpText("1.0.0");
+  assert.ok(text.includes("eject"), `buildHelpText missing eject`);
+  assert.match(text, /project-owned customization/i);
   assert.ok(text.includes("--lang"), `buildHelpText missing --lang`);
+  assert.ok(text.includes("--all-languages"), `buildHelpText missing --all-languages`);
   assert.ok(text.includes("--force"), `buildHelpText missing --force`);
   assert.ok(text.includes("--dry-run"), `buildHelpText missing --dry-run`);
 });
@@ -783,7 +795,7 @@ async function captureStderr(fn) {
   return chunks.join("");
 }
 
-// ─── --help: exit 0, output contains init, kiro-*, opsx-*, run ───
+// ─── --help: exit 0, output contains package runtime, eject, deprecated init, kiro-*, run ───
 
 test("main(['--help']): returns exit code 0", async () => {
   const code = await captureStdout(async () => {
@@ -799,10 +811,13 @@ test("main(['-h']): returns exit code 0", async () => {
   });
 });
 
-test("main(['--help']): output contains 'init'", async () => {
+test("main(['--help']): output contains deprecated init guidance", async () => {
   let output = "";
   output = await captureStdout(async () => { await main(["--help"]); });
   assert.ok(output.includes("init"), `--help output should contain 'init', got: ${output}`);
+  assert.match(output, /deprecated/i);
+  assert.match(output, /guidance-only/i);
+  assert.ok(!output.includes("Initialize or update bundled .takt assets"), `--help should not present init as an asset-copy command, got: ${output}`);
 });
 
 test("main(['--help']): output contains kiro-* workflow names and NOT opsx-*/cc-sdd-*", async () => {
@@ -818,6 +833,17 @@ test("main(['--help']): output contains kiro-* workflow names and NOT opsx-*/cc-
 test("main(['--help']): output contains 'run'", async () => {
   const output = await captureStdout(async () => { await main(["--help"]); });
   assert.ok(output.includes("run"), `--help output should contain 'run', got: ${output}`);
+});
+
+test("main(['--help']): output distinguishes normal execution, customization, and retired command entrypoints", async () => {
+  const output = await captureStdout(async () => { await main(["--help"]); });
+  assert.match(output, /Run workflows directly from bundled workflows\/facets/i);
+  assert.match(output, /installed package/i);
+  assert.match(output, /takt-sdd eject/i);
+  assert.match(output, /project-owned customization/i);
+  assert.match(output, /takt-sdd init/i);
+  assert.match(output, /deprecated/i);
+  assert.match(output, /guidance-only/i);
 });
 
 test("main(['init', '--help']): returns exit code 0 and shows deprecated guidance", async () => {
@@ -1011,7 +1037,7 @@ test("preflight with uninitialized --cwd target resolves package workflow withou
 
 const binPath = join(repoRoot, "bin", "takt-sdd.mjs");
 
-test("bin entry: 'node bin/takt-sdd.mjs --help' exits 0, outputs init/kiro-*, and NOT opsx-*", () => {
+test("bin entry: 'node bin/takt-sdd.mjs --help' exits 0, outputs new help surface, and NOT opsx-*", () => {
   let stdout = "";
   try {
     stdout = execFileSync(process.execPath, [binPath, "--help"], { encoding: "utf-8" });
@@ -1019,6 +1045,13 @@ test("bin entry: 'node bin/takt-sdd.mjs --help' exits 0, outputs init/kiro-*, an
     assert.fail(`Expected exit 0 for --help, got exit ${err.status}: ${err.stderr}`);
   }
   assert.ok(stdout.includes("init"), `--help should contain 'init'`);
+  assert.match(stdout, /deprecated/i);
+  assert.match(stdout, /guidance-only/i);
+  assert.match(stdout, /takt-sdd eject/i);
+  assert.match(stdout, /project-owned customization/i);
+  assert.match(stdout, /Run workflows directly from bundled workflows\/facets/i);
+  assert.match(stdout, /installed package/i);
+  assert.ok(!stdout.includes("Initialize or update bundled .takt assets"), `--help should not present init as an asset-copy command`);
   const kiroMissing = SUPPORTED_WORKFLOWS.filter((n) => n.startsWith("kiro-") && !stdout.includes(n));
   assert.deepEqual(kiroMissing, [], `--help missing kiro-* names: ${kiroMissing.join(", ")}`);
   // opsx must not appear in help
