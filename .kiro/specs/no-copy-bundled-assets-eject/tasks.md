@@ -78,7 +78,7 @@
   - _Depends:_ 3.2
 
 - [ ] 4. CLI dispatch を新 surface に統合する
-- [ ] 4.1 `takt-sdd` の top-level dispatch を runtime、retired、eject に接続する
+- [x] 4.1 `takt-sdd` の top-level dispatch を runtime、retired、eject に接続する
   - `init`、`eject`、`run <workflow>`、direct workflow の分岐順を新しい command surface に揃える。
   - supported workflow 実行から installer build prerequisite を外し、package bundled runtime を直接使えるようにする。
   - retired workflow rejection と unknown command guidance は既存の挙動を維持する。

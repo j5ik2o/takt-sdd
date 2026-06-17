@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readdirSync, mkdirSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, readdirSync, mkdirSync, writeFileSync, mkdtempSync, rmSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import os from "node:os";
@@ -864,6 +864,41 @@ test("main(['init', '-h']): returns exit code 0 and shows deprecated guidance", 
   assert.match(output, /takt-sdd eject/);
 });
 
+test("main(['eject', '--help']): returns exit code 0 and shows eject usage", async () => {
+  const output = await captureStdout(async () => {
+    const c = await main(["eject", "--help"]);
+    assert.equal(c, 0, `Expected exit code 0, got ${c}`);
+  });
+  assert.match(output, /Usage:/);
+  assert.match(output, /takt-sdd eject/);
+  assert.ok(output.includes("--lang"), `eject help missing --lang: ${output}`);
+  assert.ok(output.includes("--all-languages"), `eject help missing --all-languages: ${output}`);
+  assert.ok(output.includes("--dry-run"), `eject help missing --dry-run: ${output}`);
+});
+
+test("main(['eject', '-h']): returns exit code 0 and shows eject usage", async () => {
+  const output = await captureStdout(async () => {
+    const c = await main(["eject", "-h"]);
+    assert.equal(c, 0, `Expected exit code 0, got ${c}`);
+  });
+  assert.match(output, /Usage:/);
+  assert.match(output, /takt-sdd eject/);
+});
+
+test("main(['eject', '--lang', 'ja', '--all-languages']): returns UsageError without writes", async () => {
+  const dir = makeTmpDir();
+  try {
+    const errOut = await captureStderr(async () => {
+      const c = await main(["--cwd", dir, "eject", "--lang", "ja", "--all-languages"]);
+      assert.equal(c, 1, `Expected exit code 1, got ${c}`);
+    });
+    assert.match(errOut, /Cannot combine --lang with --all-languages/);
+    assert.equal(existsSync(join(dir, ".takt")), false, "invalid eject options must not create .takt");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // ─── --version: exit 0, output matches package.json version ───
 
 test("main(['--version']): returns exit code 0", async () => {
@@ -1031,6 +1066,43 @@ test("preflight with uninitialized --cwd target resolves package workflow withou
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("main supported workflow dispatch is injectable and does not execute real workflow in tests", async () => {
+  assert.ok(main.length >= 2, "main must accept a test dependency injection argument");
+
+  const root = makeTmpDir();
+  try {
+    const dir = join(root, "project");
+    const packageRootWithoutInstaller = join(root, "package-root-without-installer");
+    mkdirSync(dir, { recursive: true });
+    mkdirSync(packageRootWithoutInstaller, { recursive: true });
+
+    let captured = null;
+    const code = await main(["--cwd", dir, "kiro-impl", "example-feature"], {
+      packageRoot: packageRootWithoutInstaller,
+      runWorkflow: async (workflowName, forwarded, ctx) => {
+        captured = { workflowName, forwarded, ctx };
+        return 37;
+      },
+    });
+
+    assert.equal(code, 37);
+    assert.deepEqual(captured, {
+      workflowName: "kiro-impl",
+      forwarded: ["example-feature"],
+      ctx: { projectRoot: dir, packageRoot: packageRootWithoutInstaller },
+    });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("CliMain supported workflow dispatch does not require installer/dist/install.js", () => {
+  const source = readFileSync(join(repoRoot, "cli", "main.mjs"), "utf-8");
+  assert.ok(!source.includes("checkInstallerBuilt"), "CliMain must not gate workflow dispatch on checkInstallerBuilt()");
+  assert.ok(!source.includes("installer/dist/install.js"), "CliMain must not require installer/dist/install.js for workflow dispatch");
+  assert.ok(!source.includes("build:installer"), "CliMain must not ask users to build the installer before workflow dispatch");
 });
 
 // ─── bin entry E2E (child_process): --help, --version, cc-sdd-full, run cc-sdd-full ───

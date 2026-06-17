@@ -7,21 +7,16 @@
  *   - main(argv) → Promise<number>   — entry point; returns process exit code
  *
  * Command classification priority (design):
- *   init → run <workflow> (normalised to direct command) → retired rejection →
+ *   init → eject → run <workflow> (normalised to direct command) → retired rejection →
  *   catalog match → unknown command guidance
  *
  * Typed errors (UsageError / InitError from init-adapter, PreflightError from
  * workflow-runner) are caught here and written to stderr → exit 1.
  *
- * Workflow setup error: if installer/dist/install.js is absent for workflow
- * execution, an explicit friendly error advising `npm run build:installer` is
- * shown instead of leaking ERR_MODULE_NOT_FOUND. Retired init does not require
- * installer/dist/install.js.
- *
  * No args → print help, return 1 (same as unknown command).
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -41,6 +36,10 @@ import {
   PreflightError,
   runWorkflow,
 } from "./workflow-runner.mjs";
+
+import {
+  runEject,
+} from "./eject-command.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -125,24 +124,6 @@ function parseGlobalOptions(argv) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Compiled install core availability check
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Check that installer/dist/install.js exists.
- * Throws a friendly UsageError if it is absent (fresh checkout, not yet built).
- */
-function checkInstallerBuilt() {
-  const installJsPath = join(packageRoot, "installer", "dist", "install.js");
-  if (!existsSync(installJsPath)) {
-    throw new UsageError(
-      "The compiled install core is missing (installer/dist/install.js not found).\n" +
-        "Run `npm run build:installer` to build it before using this command.",
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // main
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -150,9 +131,14 @@ function checkInstallerBuilt() {
  * Main dispatch function for the takt-sdd global CLI.
  *
  * @param {readonly string[]} argv - argv slice (process.argv.slice(2) from bin entry)
+ * @param {{
+ *   readonly runWorkflow?: typeof runWorkflow,
+ *   readonly runEject?: typeof runEject,
+ *   readonly packageRoot?: string,
+ * }} [dependencies] - test injection only; public CLI callers omit this
  * @returns {Promise<number>} exit code
  */
-export async function main(argv) {
+export async function main(argv, dependencies) {
   let globalOpts;
   try {
     globalOpts = parseGlobalOptions(argv);
@@ -165,11 +151,14 @@ export async function main(argv) {
   }
 
   const { cwd, help, version, rest } = globalOpts;
+  const runWorkflowImpl = dependencies?.runWorkflow ?? runWorkflow;
+  const runEjectImpl = dependencies?.runEject ?? runEject;
+  const runtimePackageRoot = dependencies?.packageRoot ?? packageRoot;
 
   // Build CliContext
   const projectRoot = resolve(cwd ?? process.cwd());
   /** @type {{ projectRoot: string, packageRoot: string }} */
-  const ctx = { projectRoot, packageRoot };
+  const ctx = { projectRoot, packageRoot: runtimePackageRoot };
 
   // --help / -h
   if (help) {
@@ -198,6 +187,11 @@ export async function main(argv) {
     // ── init ──────────────────────────────────────────────────────────────────
     if (command === "init") {
       return runRetiredInit(commandArgs);
+    }
+
+    // ── eject ────────────────────────────────────────────────────────────────
+    if (command === "eject") {
+      return await runEjectImpl(commandArgs, ctx);
     }
 
     // ── run <workflow> ────────────────────────────────────────────────────────
@@ -233,8 +227,7 @@ export async function main(argv) {
 
     // ── catalog match → dispatch to workflow runner ───────────────────────────
     if (isSupportedWorkflow(effectiveCommand)) {
-      checkInstallerBuilt();
-      return await runWorkflow(effectiveCommand, effectiveArgs, ctx);
+      return await runWorkflowImpl(effectiveCommand, effectiveArgs, ctx);
     }
 
     // ── unknown command ───────────────────────────────────────────────────────
