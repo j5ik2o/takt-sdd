@@ -88,6 +88,14 @@ test("staged Kiro wrapper resolves configured language workflow path", () => {
   ]);
 });
 
+test("staged Kiro wrapper resolves configured language from config.yml fallback", () => {
+  const root = makeCurrentSurfaceFixture();
+  rmSync(join(root, ".takt", "config.yaml"), { force: true });
+  writeFixtureFile(root, ".takt/config.yml", "language: en\n");
+
+  assert.equal(resolveWorkflowPath(root, "kiro-impl"), join(root, ".takt", "en", "workflows", "kiro-impl.yaml"));
+});
+
 test("validator accepts body Kiro Skill Source instructions", () => {
   const root = makeCurrentSurfaceFixture();
 
@@ -185,6 +193,94 @@ test("validator rejects readiness routing that skips ready-for-implementation", 
 
   assert.equal(result.ok, false);
   assert.ok(result.failures.some((failure) => failure.includes("readiness before edit")));
+});
+
+test("validator rejects dispatch routing that bypasses single-task fallback", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    "STATUS READY_FOR_REVIEW and dispatch_mode single\n        next: plan-one-task",
+    "STATUS READY_FOR_REVIEW and dispatch_mode single\n        next: execute-task",
+  );
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("fall back to plan-one-task")));
+});
+
+test("validator rejects TeamLeader wave execution without team_leader configuration", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace("    team_leader:\n", "    leader:\n");
+  writeFixtureFile(root, ".takt/ja/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("team_leader:")));
+});
+
+test("validator rejects wave collection reverting to planning parent", () => {
+  const root = makeCurrentSurfaceFixture();
+  const collectPath = join(root, ".takt", "en", "facets", "instructions", "kiro-impl-collect-wave-results.md");
+  const collect = readFileSync(collectPath, "utf8").replace("{extends: implement-after-tests}", "{extends: plan}");
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-impl-collect-wave-results.md", collect);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.failures.some(
+      (failure) => failure.includes("kiro-impl-collect-wave-results.md") && failure.includes("implement-after-tests"),
+    ),
+  );
+});
+
+test("validator rejects wave collection that omits COMPLETE part status handling", () => {
+  const root = makeCurrentSurfaceFixture();
+  const collectPath = join(root, ".takt", "ja", "facets", "instructions", "kiro-impl-collect-wave-results.md");
+  const collect = readFileSync(collectPath, "utf8").replaceAll("COMPLETE", "DONE");
+  writeFixtureFile(root, ".takt/ja/facets/instructions/kiro-impl-collect-wave-results.md", collect);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("kiro-impl-collect-wave-results.md") && failure.includes("COMPLETE")));
+});
+
+test("validator rejects wave execution that can invent task branch names", () => {
+  const root = makeCurrentSurfaceFixture();
+  const executePath = join(root, ".takt", "en", "facets", "instructions", "kiro-impl-execute-task-wave.md");
+  const execute = readFileSync(executePath, "utf8").replace("Do not invent wave-id-derived branch names", "Use clear branch names");
+  writeFixtureFile(root, ".takt/en/facets/instructions/kiro-impl-execute-task-wave.md", execute);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("kiro-impl-execute-task-wave.md") &&
+        failure.includes("Do not invent wave-id-derived branch names"),
+    ),
+  );
+});
+
+test("validator rejects wave apply routing that bypasses AI quality gate", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "en", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    "STATUS READY_FOR_REVIEW and selected task exists\n        next: ai-quality-gate",
+    "STATUS READY_FOR_REVIEW and selected task exists\n        next: reviewers",
+  );
+  writeFixtureFile(root, ".takt/en/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("apply-wave-task must rejoin")));
 });
 
 test("validator rejects blocked execution routing to reviewers", () => {
@@ -626,6 +722,33 @@ test("validator rejects progress routing that drops task set status", () => {
   assert.ok(result.failures.some((failure) => failure.includes("update-progress")));
 });
 
+test("validator rejects progress routing that skips dispatch re-entry", () => {
+  const root = makeCurrentSurfaceFixture();
+  const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");
+  const workflow = readFileSync(workflowPath, "utf8").replace(
+    "task_set_status REMAINING_TASKS_EXIST\n        next: plan-dispatch",
+    "task_set_status REMAINING_TASKS_EXIST\n        next: plan-one-task",
+  );
+  writeFixtureFile(root, ".takt/ja/workflows/kiro-impl.yaml", workflow);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("back to plan-dispatch")));
+});
+
+test("validator rejects implementation result contract without wave dispatch fields", () => {
+  const root = makeCurrentSurfaceFixture();
+  const contractPath = join(root, ".takt", "en", "facets", "output-contracts", "kiro-implementation-result.md");
+  const contract = readFileSync(contractPath, "utf8").replaceAll("dispatch_mode", "execution_mode");
+  writeFixtureFile(root, ".takt/en/facets/output-contracts/kiro-implementation-result.md", contract);
+
+  const result = validateKiroIterativeImplementationWorkflow({ repoRoot: root });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some((failure) => failure.includes("dispatch_mode")));
+});
+
 test("validator rejects progress updates that count group header checkboxes as remaining tasks", () => {
   const root = makeCurrentSurfaceFixture();
   const progressPath = join(root, ".takt", "en", "facets", "instructions", "kiro-impl-update-progress.md");
@@ -651,7 +774,7 @@ test("validator rejects single-shot completion when tasks remain", () => {
   const root = makeCurrentSurfaceFixture();
   const workflowPath = join(root, ".takt", "ja", "workflows", "kiro-impl.yaml");
   const workflow = readFileSync(workflowPath, "utf8").replace(
-    "task_set_status REMAINING_TASKS_EXIST\n        next: plan-one-task",
+    "task_set_status REMAINING_TASKS_EXIST\n        next: plan-dispatch",
     "task_set_status REMAINING_TASKS_EXIST\n        next: COMPLETE",
   );
   writeFixtureFile(root, ".takt/ja/workflows/kiro-impl.yaml", workflow);

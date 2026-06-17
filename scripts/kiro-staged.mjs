@@ -8,8 +8,10 @@ import { fileURLToPath } from "node:url";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 function configuredLanguage(root) {
-  const configPath = resolve(root, ".takt", "config.yaml");
-  if (!existsSync(configPath)) {
+  const configPath = [resolve(root, ".takt", "config.yaml"), resolve(root, ".takt", "config.yml")].find((path) =>
+    existsSync(path),
+  );
+  if (!configPath) {
     return undefined;
   }
   const match = readFileSync(configPath, "utf8").match(/^language:\s*(en|ja)\s*$/m);
