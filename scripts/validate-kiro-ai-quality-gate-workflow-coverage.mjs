@@ -466,7 +466,7 @@ function validatePolicyFacetBoundaries(repoRoot, coverageEntries) {
   return { ok: failures.length === 0, failures };
 }
 
-function validateAntipatternFixCommandGate(repoRoot) {
+function validateNoAntipatternFixCommandGate(repoRoot) {
   const failures = [];
   for (const lang of languages) {
     const path = workflowPath(repoRoot, lang, "kiro-ai-quality-gate");
@@ -477,10 +477,8 @@ function validateAntipatternFixCommandGate(repoRoot) {
     const content = readText(path);
     const blocks = new Map(stepBlocks(content).map((block) => [stepScalar(block, "name"), block]));
     const fixBlock = (blocks.get("ai-antipattern-fix") ?? []).join("\n");
-    for (const needle of ["quality_gates:", "type: command", ".kiro/settings/verify.sh"]) {
-      if (!fixBlock.includes(needle)) {
-        failures.push(`COMMAND_GATE_DRIFT: ${rel(repoRoot, path)} ai-antipattern-fix must run a command quality gate on .kiro/settings/verify.sh (missing ${needle})`);
-      }
+    if (fixBlock.includes("quality_gates:") || fixBlock.includes("type: command")) {
+      failures.push(`COMMAND_GATE_DRIFT: ${rel(repoRoot, path)} ai-antipattern-fix must not use unconditional command quality_gates; BLOCKED / NEED_REPLAN routing must remain available`);
     }
   }
   return { ok: failures.length === 0, failures };
@@ -499,7 +497,7 @@ export function validateKiroAiQualityGateWorkflowCoverage(options = {}) {
     downstreamGateEvidenceInstructions: validateDownstreamGateEvidenceInstructions(repoRoot),
     quickGateEvidenceInstructions: validateQuickGateEvidenceInstructions(repoRoot),
     policyFacetBoundaries: validatePolicyFacetBoundaries(repoRoot, coverageEntries),
-    antipatternFixCommandGate: validateAntipatternFixCommandGate(repoRoot),
+    noAntipatternFixCommandGate: validateNoAntipatternFixCommandGate(repoRoot),
   };
   const failures = Object.entries(sections).flatMap(([name, result]) =>
     result.failures.map((failure) => `${name}: ${failure}`),

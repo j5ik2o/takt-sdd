@@ -99,7 +99,7 @@ For each task (one at a time):
 - **BLOCKED** → dispatch debug subagent (see section below); do NOT immediately skip
 - **NEEDS_CONTEXT** → re-dispatch once with the requested additional context; if still unresolved → dispatch debug subagent
 
-**Command-gate Verification (parent-run, skill-mode equivalent of the TAKT `quality_gates` block)**: After the implementer reports `READY_FOR_REVIEW`, the PARENT (not the implementer) must run `.kiro/settings/verify.sh` before dispatching the reviewer. In the TAKT workflow the engine runs `quality_gates` automatically; in skill mode the parent must run it explicitly. Steps: (1) If `.kiro/settings/verify.sh` is present, run `sh .kiro/settings/verify.sh`. (2) If the hook exits non-zero, treat this as a failed verification — do NOT dispatch the reviewer; instead route to remediation (re-dispatch the implementer with the hook output, or if already failed once, dispatch the debug subagent). (3) If the hook is absent, log a no-op notice and continue — but a missing hook never auto-passes a task; fresh `kiro-verify-completion` evidence is still required. Gate failure is a separate path from the `debug-task` route triggered by reviewer/verify failures. Re-execution bounds are governed exclusively by `loop_monitors` — no custom retry counters.
+**Parent-run verification hook**: After the implementer reports `READY_FOR_REVIEW`, the PARENT (not the implementer) must run `.kiro/settings/verify.sh` before dispatching the reviewer. Steps: (1) If `.kiro/settings/verify.sh` is present, run `sh .kiro/settings/verify.sh`. (2) If the hook exits non-zero, treat this as failed verification — do NOT dispatch the reviewer; instead route to remediation (re-dispatch the implementer with the hook output, or if already failed once, dispatch the debug subagent). (3) If the hook is absent, log a no-op notice and continue — but a missing hook never auto-passes a task; fresh `kiro-verify-completion` evidence is still required. This hook runs only on the `READY_FOR_REVIEW` path. Do not model it as an unconditional TAKT command `quality_gates` block on `execute-task`, because TAKT command gates run after every agent completion and would intercept `BLOCKED` / `NEEDS_CONTEXT` routing before workflow rules are evaluated.
 
 **c) Dispatch reviewer**:
 - Read `templates/reviewer-prompt.md` from this skill's directory
@@ -110,7 +110,7 @@ For each task (one at a time):
 - The reviewer must apply the `kiro-review` protocol to this task-local review.
 - Preserve the existing task-specific context: task text, spec refs, `_Boundary:_` scope, validation commands, implementer report, and the actual `git diff` as the primary source of truth.
 - The reviewer subagent will run `git diff` itself to read the actual code changes and verify against the spec
-- **Adversarial multi-perspective review**: In skill mode, a SINGLE reviewer subagent applies ALL FOUR perspectives (coding / architecture / qa / testing) within one `kiro-review` pass and must reach an evidence-backed `APPROVED` verdict before proceeding. Each perspective defaults to REJECT and approves only when it can cite evidence from the selected task, requirements, boundary constraints, and actual diff. Because the command gate owns mechanical correctness, the coding perspective focuses on confirming the green gate evidence plus code-correctness, boundary adherence, and diff judgment — not re-discovering test failures. Do NOT add an always-on security reviewer. (Note: the TAKT workflow implements the same contract as a parallel `reviewers` group where all four run concurrently and all must approve — that is the engine-level equivalent.)
+- **Adversarial multi-perspective review**: In skill mode, a SINGLE reviewer subagent applies ALL FOUR perspectives (coding / architecture / qa / testing) within one `kiro-review` pass and must reach an evidence-backed `APPROVED` verdict before proceeding. Each perspective defaults to REJECT and approves only when it can cite evidence from the selected task, requirements, boundary constraints, validation evidence, and actual diff. The coding perspective focuses on confirming fresh green evidence plus code-correctness, boundary adherence, and diff judgment. Do NOT add an always-on security reviewer. (Note: the TAKT workflow implements the same contract as a parallel `reviewers` group where all four run concurrently and all must approve — that is the engine-level equivalent.)
 - Dispatch via **Agent tool** as a fresh subagent
 
 **d) Handle reviewer verdict**:
@@ -121,9 +121,9 @@ For each task (one at a time):
 - **REJECTED (round 3)** → dispatch debug subagent (see section below)
 
 **e) Commit** (parent-only, selective staging — per-task granularity):
-- Stage only the files actually changed for this task, plus tasks.md
+- Stage the union of files actually changed for this task, any files changed by the current AI antipattern fix report, and the selected spec task file at `.kiro/specs/<feature>/tasks.md`
 - **NEVER** use `git add -A` or `git add .`
-- Use `git add <file1> <file2> ...` with explicit file paths
+- Use `git add <file1> <file2> ... .kiro/specs/<feature>/tasks.md` with explicit file paths
 - Commit message format: `feat(<feature-name>): <task description>`
 - **Per-task commit semantics**: In pipeline / `--skip-git` mode the workflow engine does not auto-commit, so this selective commit is the only commit and provides per-task granularity. In worktree mode the engine performs a final `git add -A` commit at the end of the run, but because each task's per-task commit keeps the tree clean, that end-of-run commit captures only residue (effectively empty). Do NOT attempt to suppress the worktree end-of-run commit — it is harmless and has no dedicated disable config.
 

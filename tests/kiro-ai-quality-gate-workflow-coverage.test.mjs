@@ -736,13 +736,13 @@ test("repository scripts and CI run Kiro AI quality gate coverage checks", () =>
   }
 });
 
-test("validator rejects ai-antipattern-fix without command quality gate", () => {
+test("validator rejects ai-antipattern-fix with unconditional command quality gate", () => {
   const root = makeCoverageFixture();
   const path = ".takt/en/workflows/kiro-ai-quality-gate.yaml";
   const original = readFixtureFile(root, path);
   const mutated = original.replace(
-    /    quality_gates:\n      - type: command\n        name: kiro-impl task verification\n        command: >-\n          sh -c 'if \[ -f \.kiro\/settings\/verify\.sh \]; then sh \.kiro\/settings\/verify\.sh; else echo "\[kiro-impl\] \.kiro\/settings\/verify\.sh not found; skipping deterministic gate"; fi'\n/,
-    "",
+    "    rules:\n      - condition: STATUS FIXED\n",
+    "    quality_gates:\n      - type: command\n        name: kiro-impl task verification\n        command: >-\n          sh -c 'if [ -f .kiro/settings/verify.sh ]; then sh .kiro/settings/verify.sh; else echo \"[kiro-impl] .kiro/settings/verify.sh not found; skipping deterministic gate\"; fi'\n    rules:\n      - condition: STATUS FIXED\n",
   );
   writeFixtureFile(root, path, mutated);
 

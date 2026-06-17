@@ -23,7 +23,7 @@ verdict を作る前に `kiro-ai-antipattern-review.md` を読む。`kiro-ai-ant
 Adversarial review posture: default VERDICT is REJECTED; approve only with cited evidence (selected task, requirement, boundary, actual diff).
 レビュアーは既定の判定を REJECTED とし、選択タスク・要件・境界・実 diff の証拠を具体的に引用できる場合に限り APPROVED を返す。反証が見当たらないことは承認の根拠として不十分である。
 
-コマンド品質ゲートが機械的正しさ（テスト・ビルドの緑）を担保するため、coding review はゲートの緑証跡を確認したうえで、コード正当性・選択タスク境界・実 diff の判断に集中する。機械的失敗の再発見は行わない。
+機械的正しさは、implementer の task-local validation output と、skill mode では存在時に親が実行する `.kiro/settings/verify.sh` hook によって証跡化される。coding review は fresh な緑証跡が存在することを確認し、prose だけに依存せず、コード正当性・選択タスク境界・実 diff の判断に集中する。
 
 - `VERDICT`: `APPROVED` または `REJECTED`。
 - `FINDINGS`: selected task、requirement refs、boundary evidenceに紐づくactionable findings。

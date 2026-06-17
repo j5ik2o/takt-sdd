@@ -35,7 +35,7 @@ Progress update is allowed only after planning, debug, or completion adapter ste
 
 When completion `STATUS` is `VERIFIED` and the selected task checkbox is updated to `- [x]`, perform a selective per-task commit as follows:
 
-1. Collect all files to stage: start with the implementation report's `changed_files`; if an AI antipattern fix report was produced for this run (written by the ai-quality-gate sub-workflow's fix step), add its `changed_files` to the staged set as well; always include `tasks.md`. Stage the union: `git add <implementation_changed_files> [<antipattern_fix_changed_files>] tasks.md`. NEVER use `git add -A`.
+1. Collect all files to stage: start with the implementation report's `changed_files`; if the current ai-quality-gate sub-workflow run produced an AI antipattern fix report, add that report's `changed_files` to the staged set as well; always include the selected spec task file at `.kiro/specs/<feature>/tasks.md`. Stage the union: `git add <implementation_changed_files> [<antipattern_fix_changed_files>] .kiro/specs/<feature>/tasks.md`. NEVER use `git add -A`.
 2. `git commit -m "feat(<feature>): <task>"` — create the commit.
 
 When `BLOCK_TASK`, `STOP_FOR_HUMAN`, or nonproductive loop handling (BLOCKED/NEEDS_CONTEXT paths) reaches this step, do not create a commit.

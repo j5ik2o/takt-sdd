@@ -35,9 +35,11 @@ Execute only the selected task boundary and return the exact `## Status Report` 
 - `debug_context`: failure symptom, command output, and current state when `STATUS` is `BLOCKED`.
 - `summary`: human-readable summary only.
 
-## Command gate vs debug routing
+## Verification evidence routing
 
-After the code edit completes, the command quality gate (`verify.sh`) runs at the end of this step. If the gate exits non-zero, takt feeds the failure output back to **this same execute-task step for remediation** (takt-native mechanism). This is a distinct layer from the debug-task route triggered by review or verify failures — it introduces no custom retry counter, and re-execution bounds remain governed only by `loop_monitors` (Requirement 2).
+This adapter runs in a fresh TAKT agent step, separate from the downstream reviewers and completion verifier. Do not describe this as same-agent self-approval: the risk is that downstream agents read agent-reported validation evidence from `kiro-task-implementation-result.md`, not that a single coder approves its own work.
+
+Return `STATUS: READY_FOR_REVIEW` only after task-local validation commands have actually run and their command, exit code, and fresh output are recorded in `validation_evidence`. If validation fails or cannot run, return `STATUS: BLOCKED` or `STATUS: NEEDS_CONTEXT` so the workflow rules can route to `debug-task`. Do not rely on an unconditional TAKT command `quality_gates` block here; command gates run after every agent completion and would intercept `BLOCKED` / `NEEDS_CONTEXT` routing before these rules are evaluated.
 
 ## Implementation Notes intake
 

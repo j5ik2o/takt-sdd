@@ -65,6 +65,7 @@ const instructionSpecs = [
       "executable leaf task",
       "group header",
       "Implementation Notes",
+      ".kiro/specs/<feature>/tasks.md",
       "re-read",
     ],
   },
@@ -601,10 +602,8 @@ function validateWorkflowFiles(repoRoot) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} execute-task must branch NEEDS_CONTEXT to debug-task`);
     }
     const executeGate = (blocks.get("execute-task") ?? []).join("\n");
-    for (const needle of ["quality_gates:", "type: command", ".kiro/settings/verify.sh"]) {
-      if (!executeGate.includes(needle)) {
-        failures.push(`COMMAND_GATE_DRIFT: ${rel(repoRoot, workflowPath)} execute-task must run a command quality gate on .kiro/settings/verify.sh (missing ${needle})`);
-      }
+    if (executeGate.includes("quality_gates:") || executeGate.includes("type: command")) {
+      failures.push(`COMMAND_GATE_DRIFT: ${rel(repoRoot, workflowPath)} execute-task must not use unconditional command quality_gates; READY_FOR_REVIEW-only verification belongs in reported evidence / skill-mode parent hook`);
     }
     const gateBlock = blocks.get("ai-quality-gate") ?? [];
     if (stepScalar(gateBlock, "kind") !== "workflow_call" || stepScalar(gateBlock, "call") !== "./kiro-ai-quality-gate.yaml") {
@@ -1166,7 +1165,7 @@ function validateTaskFixtureCoverage(repoRoot) {
       "validator rejects plan blockers that bypass progress blocker notes",
       "validator rejects progress updates that omit routing status outputs",
       "validator rejects progress policy drift that loses selected task guard",
-      "validator rejects execute-task without command quality gate",
+      "validator rejects execute-task with unconditional command quality gate",
       "validator rejects update-progress without allow_git_commit",
       "validator rejects review facet missing adversarial posture marker",
       "validator rejects execute-task facet missing implementation notes intake",

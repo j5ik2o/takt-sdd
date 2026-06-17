@@ -126,11 +126,6 @@ steps:
       report:
         - name: kiro-task-implementation-result.md
           format: kiro-implementation-result
-    quality_gates:
-      - type: command
-        name: kiro-impl task verification
-        command: >-
-          sh -c 'if [ -f .kiro/settings/verify.sh ]; then sh .kiro/settings/verify.sh; else echo "[kiro-impl] .kiro/settings/verify.sh not found; skipping deterministic gate"; fi'
     rules:
       - condition: STATUS READY_FOR_REVIEW
         next: ai-quality-gate
