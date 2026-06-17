@@ -15,6 +15,8 @@ interface Messages {
   archiveError: string;
   requiredFileMissing: (path: string) => string;
   helpText: string;
+  retiredHelpText: string;
+  retiredGuidance: string;
   usageExamples: string;
   scriptsAdded: (count: number) => string;
   scriptsSkipped: (keys: string[]) => string;
@@ -67,6 +69,29 @@ Options:
   --layout <mode>    Directory layout: auto, modern, legacy (default: auto)
   -h, --help         Show this help
   -v, --version      Show version`,
+  retiredHelpText: `Usage: npx create-takt-sdd [--help] [--version]
+
+create-takt-sdd is retired.
+
+Use takt-sdd directly for Kiro-compatible SDD workflows:
+  npx takt-sdd kiro-spec-quick -- "description of requirements"
+  npx takt-sdd kiro-impl -- "feature={feature}"
+
+For customization, eject bundled workflows and facets into your project:
+  npx takt-sdd eject
+
+Options:
+  -h, --help         Show this retired help
+  -v, --version      Show version`,
+  retiredGuidance: `create-takt-sdd is retired and no longer installs or copies .takt assets.
+
+Use takt-sdd directly; bundled workflows and facets run from the installed package:
+  npx takt-sdd kiro-spec-quick -- "description of requirements"
+
+For customization, eject bundled workflows and facets into your project:
+  npx takt-sdd eject
+
+No files were written.`,
   usageExamples: `
   Installed to: .takt/
 
@@ -122,6 +147,29 @@ const ja: Messages = {
   --layout <mode>    ディレクトリレイアウト: auto, modern, legacy（デフォルト: auto）
   -h, --help         ヘルプを表示
   -v, --version      バージョンを表示`,
+  retiredHelpText: `使い方: npx create-takt-sdd [--help] [--version]
+
+create-takt-sdd は廃止済みです。
+
+Kiro 互換 SDD ワークフローは takt-sdd を直接使ってください:
+  npx takt-sdd kiro-spec-quick -- "要件の説明"
+  npx takt-sdd kiro-impl -- "feature={feature}"
+
+カスタマイズする場合は bundled workflows/facets を project に取り出してください:
+  npx takt-sdd eject
+
+オプション:
+  -h, --help         この廃止案内を表示
+  -v, --version      バージョンを表示`,
+  retiredGuidance: `create-takt-sdd は廃止済みであり、.takt assets の install や copy は行いません。
+
+takt-sdd を直接使ってください。bundled workflows/facets は installed package から実行されます:
+  npx takt-sdd kiro-spec-quick -- "要件の説明"
+
+カスタマイズする場合は bundled workflows/facets を project に取り出してください:
+  npx takt-sdd eject
+
+ファイルは書き込まれていません。`,
   usageExamples: `
   インストール先: .takt/
 

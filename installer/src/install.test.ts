@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 
 import {
   syncRelativeFiles,
@@ -15,10 +17,122 @@ import {
 import { getMessages } from "./i18n.js";
 
 const msg = getMessages("ja");
+const createCliPath = fileURLToPath(new URL("./cli.js", import.meta.url));
 
 function sha256(content: string): string {
   return createHash("sha256").update(content).digest("hex");
 }
+
+function runCreateTaktSdd(args: readonly string[], cwd: string) {
+  return spawnSync(process.execPath, [createCliPath, ...args], {
+    cwd,
+    encoding: "utf-8",
+  });
+}
+
+// Req 6.1 / 6.4: public create-takt-sdd help is retained, but only as retired guidance.
+test("create-takt-sdd --help/-h prints retired help and exits successfully", () => {
+  const root = mkdtempSync(join(tmpdir(), "create-takt-help-"));
+  try {
+    for (const flag of ["--help", "-h"]) {
+      const result = runCreateTaktSdd([flag], root);
+
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(result.stderr, "");
+      assert.match(result.stdout, /create-takt-sdd is retired/i);
+      assert.match(result.stdout, /takt-sdd/);
+      assert.match(result.stdout, /takt-sdd eject/);
+      assert.ok(!existsSync(join(root, ".takt")), "help must not create .takt");
+      assert.ok(!existsSync(join(root, "scripts", "kiro-staged.mjs")), "help must not create scripts");
+      assert.ok(!existsSync(join(root, "package.json")), "help must not create package.json");
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Req 6.1: version remains a successful metadata-only path.
+test("create-takt-sdd --version/-v prints package version and exits successfully", () => {
+  const root = mkdtempSync(join(tmpdir(), "create-takt-version-"));
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf-8"));
+  try {
+    for (const flag of ["--version", "-v"]) {
+      const result = runCreateTaktSdd([flag], root);
+
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(result.stdout.trim(), pkg.version);
+      assert.equal(result.stderr, "");
+      assert.ok(!existsSync(join(root, ".takt")), "version must not create .takt");
+      assert.ok(!existsSync(join(root, "scripts", "kiro-staged.mjs")), "version must not create scripts");
+      assert.ok(!existsSync(join(root, "package.json")), "version must not create package.json");
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Req 6.2 / 6.3 / 6.4 / 7.3 / 7.4: invalid legacy flags must not run old validation or write files.
+test("create-takt-sdd invalid legacy args print retired guidance without writing files", () => {
+  const root = mkdtempSync(join(tmpdir(), "create-takt-retired-invalid-"));
+  try {
+    const result = runCreateTaktSdd(["--lang", "bogus"], root);
+
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, "");
+    assert.match(result.stderr, /create-takt-sdd is retired/i);
+    assert.match(result.stderr, /Use takt-sdd directly/i);
+    assert.match(result.stderr, /takt-sdd eject/);
+    assert.doesNotMatch(result.stderr, /--lang requires/);
+    assert.ok(!existsSync(join(root, ".takt")), "retired guidance must not create .takt");
+    assert.ok(!existsSync(join(root, ".takt", ".manifest.json")), "retired guidance must not create manifest");
+    assert.ok(!existsSync(join(root, "scripts", "kiro-staged.mjs")), "retired guidance must not create scripts");
+    assert.ok(!existsSync(join(root, "package.json")), "retired guidance must not create package.json");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Req 6.2 / 6.3 / 7.3 / 7.4: normal invocation is now guidance-only and preserves project-owned files.
+test("create-takt-sdd normal invocation prints retired guidance and preserves existing files", () => {
+  const root = mkdtempSync(join(tmpdir(), "create-takt-retired-normal-"));
+  const packageJsonPath = join(root, "package.json");
+  const scriptPath = join(root, "scripts", "kiro-staged.mjs");
+  const packageJson = `${JSON.stringify({ scripts: { existing: "node ./existing.js" } }, null, 2)}\n`;
+  const scriptContent = "console.log('project-owned script');\n";
+
+  try {
+    mkdirSync(join(root, "scripts"), { recursive: true });
+    writeFileSync(packageJsonPath, packageJson, "utf-8");
+    writeFileSync(scriptPath, scriptContent, "utf-8");
+
+    const result = runCreateTaktSdd([], root);
+
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, "");
+    assert.match(result.stderr, /create-takt-sdd is retired/i);
+    assert.match(result.stderr, /Use takt-sdd directly/i);
+    assert.match(result.stderr, /takt-sdd eject/);
+    assert.ok(!existsSync(join(root, ".takt")), "retired guidance must not create .takt");
+    assert.equal(readFileSync(packageJsonPath, "utf-8"), packageJson, "package.json must not be changed");
+    assert.equal(readFileSync(scriptPath, "utf-8"), scriptContent, "project script must not be changed");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Req 6.3 / 6.5 / 7.3 / 7.4: published bin must not regain the old installer copy path.
+test("create-takt-sdd public CLI does not import or call legacy install core", () => {
+  const source = readFileSync(new URL("../src/cli.ts", import.meta.url), "utf-8");
+
+  assert.ok(
+    !/from\s+["']\.\/install\.js["']/.test(source),
+    "create-takt-sdd CLI must not import install()",
+  );
+  assert.ok(
+    !/\binstall\s*\(/.test(source),
+    "create-takt-sdd CLI must not call install()",
+  );
+});
 
 // Req 4.3, 4.4: resolveSddDependencySet — takt のみ抽出。openspec / cc-sdd は抽出しない。
 test("resolveSddDependencySet extracts only takt from dependencies ∪ devDependencies", () => {

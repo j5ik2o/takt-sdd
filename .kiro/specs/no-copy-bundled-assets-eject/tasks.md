@@ -29,7 +29,7 @@
   - _Boundary:_ RetiredInitCommand
   - _Depends:_ none
 
-- [ ] 2.2 (P) `create-takt-sdd` を retired guidance のみに変更する
+- [x] 2.2 (P) `create-takt-sdd` を retired guidance のみに変更する
   - help と version は従来通り成功終了し、通常実行は retired guidance を返す。
   - 通常実行では install core、download、asset copy、manifest、script、package metadata の書き込み経路へ到達しないようにする。
   - guidance で `takt-sdd` 直接利用と、カスタマイズには `eject` を使うことを示す。
