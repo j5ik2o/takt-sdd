@@ -48,7 +48,7 @@
   - _Depends:_ none
 
 - [ ] 3. `takt-sdd eject` を明示 copy 導線として実装する
-- [ ] 3.1 eject の option parsing と対象 language 解決を追加する
+- [x] 3.1 eject の option parsing と対象 language 解決を追加する
   - `--help`、`--lang en|ja`、`--all-languages`、`--force`、`--dry-run` を扱う。
   - `--lang` と `--all-languages` の同時指定を write zero の usage error にする。
   - language option がない場合は resolved language のみを対象にする。
