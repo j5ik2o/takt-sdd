@@ -13,6 +13,14 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 - `implementation_plan`: selected task boundary, dependencies, requirement coverage, file scope, and validation commands.
 - `baseline_dirty_files`: pre-existing dirty files captured during planning; these are not part of the selected task diff.
 - `task_set_status`: one of `ALL_TASKS_COMPLETE`, `REMAINING_TASKS_EXIST`, or `N/A`; derived from executable leaf task checkboxes only, not group header checkboxes.
+- `dispatch_mode`: one of `single`, `wave`, `wave_apply`, or `N/A`; selects the normal one-task path, TeamLeader wave path, or wave-result apply path.
+- `wave_id`: stable identifier for a `(P)` task wave, or `N/A`.
+- `wave_tasks`: selected `(P)` executable leaf tasks for a TeamLeader wave, including `_Boundary:_`, `_Depends:_`, `task_worktree`, and `task_branch` when prepared.
+- `wave_worktrees`: preparation status for isolated worktrees, or `N/A`.
+- `wave_result_refs`: references to TeamLeader part results that are ready, blocked, or still pending application.
+- `wave_part_status`: per-part result status for a TeamLeader wave task, such as `READY_FOR_REVIEW`, `COMPLETE`, `BLOCKED`, or `NEEDS_CONTEXT`.
+- `task_worktree`: isolated worktree path for a wave task, or `N/A` on the normal one-task path.
+- `task_branch`: isolated branch for a wave task, or `N/A` on the normal one-task path.
 - `changed_files`: files edited for the selected task.
 - `validation_evidence`: commands, exit codes, and fresh outputs.
 - `RED_PHASE_OUTPUT`: failing test evidence for behavioral tasks, or `N/A`.
@@ -24,3 +32,7 @@ Full custom reason: N/A; this facet extends the built-in validation output contr
 ## Branching Rule
 
 Workflow rules branch on `STATUS` plus the documented machine fields above; `summary` is never used for routing.
+
+## Report Preservation
+
+This contract describes an implementation result, not a validation review. Report generation must preserve the step's implementation machine fields and must not rewrite them as `APPROVE`, `REJECT`, `Final Validation Result`, or finding tables unless the step explicitly produced that shape. When the step response already contains `STATUS`, `dispatch_mode`, `wave_result_refs`, `changed_files`, or `validation_evidence`, carry those fields into the report instead of re-judging them.

@@ -263,6 +263,13 @@ No production files are owned by this fixture.
 
 function writeMockScenario(root) {
   const entries = [
+    { persona: "planner", content: "Dispatch smoke task through the single-task fallback. STATUS: READY_FOR_REVIEW." },
+    {
+      persona: "planner",
+      content:
+        "## Status Report\n\nSTATUS: READY_FOR_REVIEW\nready_for_implementation: true\ndispatch_mode: single\nwave_tasks: N/A\nwave_result_refs: N/A\nbaseline_dirty_files: none\nsummary: no safe (P) wave, use single task path",
+    },
+    { persona: "conductor", content: '{"step":3}', structured_output: { step: 3 } },
     { persona: "planner", content: "Plan smoke task. STATUS: READY_FOR_REVIEW." },
     {
       persona: "planner",
@@ -782,9 +789,9 @@ test("kiro full lifecycle smoke runs init, requirements, design, tasks, and impl
       writeMockScenario(root),
     );
     assert.equal(implementation.status, 0, implementation.output);
-    assert.match(implementation.output, /\[3\/200\] ai-quality-gate/);
-    assert.match(implementation.output, /\[5\/200\] reviewers/);
-    assert.match(implementation.output, /\[8\/200\] validate-impl-final/);
+    assert.match(implementation.output, /\[4\/200\] ai-quality-gate/);
+    assert.match(implementation.output, /\[6\/200\] reviewers/);
+    assert.match(implementation.output, /\[9\/200\] validate-impl-final/);
     assert.match(implementation.output, /Result: Success/);
 
     const reportRoot = join(root, ".takt", "runs");
@@ -813,11 +820,11 @@ test("kiro impl runtime wiring calls AI quality gate subworkflow and returns to 
     const output = workflowOutput(result);
 
     assert.equal(result.status, 0, output);
-    assert.match(output, /\[3\/200\] ai-quality-gate/);
-    assert.match(output, /\[4\/200\] ai-antipattern-review-1st/);
+    assert.match(output, /\[4\/200\] ai-quality-gate/);
+    assert.match(output, /\[5\/200\] ai-antipattern-review-1st/);
     assert.match(output, /Status: COMPLETE/);
-    assert.match(output, /\[5\/200\] reviewers/);
-    assert.match(output, /\[8\/200\] validate-impl-final/);
+    assert.match(output, /\[6\/200\] reviewers/);
+    assert.match(output, /\[9\/200\] validate-impl-final/);
     assert.match(output, /Result: Success/);
 
     const reportRoot = join(root, ".takt", "runs");

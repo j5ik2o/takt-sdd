@@ -1,5 +1,5 @@
 name: kiro-impl
-description: Kiro - Implement eligible tasks from an approved spec one at a time, repeating review, debug, verify, and progress updates until all tasks complete
+description: Kiro - Implement eligible tasks from an approved spec, using TeamLeader only for safe (P) task waves and otherwise preserving the one-task review loop
 workflow_config:
   provider_options:
     codex:
@@ -7,9 +7,14 @@ workflow_config:
     opencode:
       network_access: true
 max_steps: 200
-initial_step: plan-one-task
+initial_step: plan-dispatch
 
 instructions:
+  kiro-impl-plan-dispatch: ../facets/instructions/kiro-impl-plan-dispatch.md
+  kiro-impl-prepare-task-wave: ../facets/instructions/kiro-impl-prepare-task-wave.md
+  kiro-impl-execute-task-wave: ../facets/instructions/kiro-impl-execute-task-wave.md
+  kiro-impl-collect-wave-results: ../facets/instructions/kiro-impl-collect-wave-results.md
+  kiro-impl-apply-wave-task: ../facets/instructions/kiro-impl-apply-wave-task.md
   kiro-impl-plan-one-task: ../facets/instructions/kiro-impl-plan-one-task.md
   kiro-impl-execute-task: ../facets/instructions/kiro-impl-execute-task.md
   kiro-impl-update-progress: ../facets/instructions/kiro-impl-update-progress.md
@@ -65,6 +70,188 @@ loop_monitors:
           next: update-progress
 
 steps:
+  - name: plan-dispatch
+    edit: false
+    persona: planner
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-lifecycle
+      - kiro-spec-task-annotations
+      - kiro-impl-task-progress
+    session: refresh
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+    required_permission_mode: readonly
+    pass_previous_response: false
+    instruction: kiro-impl-plan-dispatch
+    output_contracts:
+      report:
+        - name: kiro-implementation-dispatch.md
+          format: kiro-implementation-result
+    rules:
+      - condition: STATUS READY_FOR_REVIEW and dispatch_mode wave and wave_tasks emitted
+        next: prepare-task-wave
+      - condition: STATUS READY_FOR_REVIEW and dispatch_mode wave_apply and wave_result_refs emitted
+        next: apply-wave-task
+      - condition: STATUS READY_FOR_REVIEW and dispatch_mode single
+        next: plan-one-task
+      - condition: STATUS BLOCKED and selected task exists and blocker_note_required true
+        next: update-progress
+      - condition: STATUS BLOCKED and no selected task or readiness gate failed
+        next: ABORT
+      - condition: STATUS NEEDS_CONTEXT
+        next: ABORT
+
+  - name: prepare-task-wave
+    edit: true
+    persona: coder
+    policy:
+      - kiro-artifact-operations
+      - kiro-spec-task-annotations
+      - kiro-impl-task-progress
+    session: refresh
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Write
+          - Bash
+    required_permission_mode: full
+    instruction: kiro-impl-prepare-task-wave
+    output_contracts:
+      report:
+        - name: kiro-task-wave-prepare.md
+          format: kiro-implementation-result
+    rules:
+      - condition: STATUS READY_FOR_REVIEW and dispatch_mode wave and wave_tasks emitted and wave_worktrees prepared
+        next: execute-task-wave
+      - condition: STATUS BLOCKED and selected task exists and blocker_note_required true
+        next: update-progress
+      - condition: STATUS BLOCKED
+        next: ABORT
+      - condition: STATUS NEEDS_CONTEXT
+        next: ABORT
+
+  - name: execute-task-wave
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+      - kiro-artifact-operations
+      - kiro-impl-task-progress
+    session: refresh
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Write
+          - Bash
+    required_permission_mode: edit
+    team_leader:
+      max_parts: 2
+      refill_threshold: 0
+      timeout_ms: 1200000
+      part_persona: coder
+      part_edit: true
+      part_permission_mode: edit
+      part_allowed_tools:
+        - Read
+        - Glob
+        - Grep
+        - Edit
+        - Write
+        - Bash
+    instruction: kiro-impl-execute-task-wave
+    rules:
+      - condition: "true"
+        next: collect-wave-results
+
+  - name: collect-wave-results
+    edit: false
+    persona: coder
+    policy:
+      - testing
+      - kiro-artifact-operations
+      - kiro-impl-task-progress
+    session: refresh
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+    required_permission_mode: readonly
+    pass_previous_response: false
+    instruction: kiro-impl-collect-wave-results
+    output_contracts:
+      report:
+        - name: kiro-task-wave-implementation-result.md
+          format: kiro-implementation-result
+    rules:
+      - condition: STATUS READY_FOR_REVIEW and dispatch_mode wave and wave_result_refs emitted
+        next: apply-wave-task
+      - condition: STATUS BLOCKED and selected task exists and blocker_note_required true
+        next: update-progress
+      - condition: STATUS BLOCKED
+        next: ABORT
+      - condition: STATUS NEEDS_CONTEXT
+        next: ABORT
+
+  - name: apply-wave-task
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+      - kiro-artifact-operations
+      - kiro-impl-task-progress
+    session: refresh
+    knowledge:
+      - architecture
+    provider_options:
+      claude:
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Write
+          - Bash
+    required_permission_mode: edit
+    instruction: kiro-impl-apply-wave-task
+    output_contracts:
+      report:
+        - name: kiro-task-implementation-result.md
+          format: kiro-implementation-result
+    rules:
+      - condition: STATUS READY_FOR_REVIEW and selected task exists
+        next: ai-quality-gate
+      - condition: STATUS BLOCKED
+        next: debug-task
+      - condition: STATUS NEEDS_CONTEXT
+        next: debug-task
+
   - name: plan-one-task
     edit: false
     persona: planner
@@ -355,7 +542,7 @@ steps:
       - condition: STATUS READY_FOR_REVIEW and selected task checkbox updated and task_set_status ALL_TASKS_COMPLETE
         next: validate-impl-final
       - condition: STATUS READY_FOR_REVIEW and selected task checkbox updated and task_set_status REMAINING_TASKS_EXIST
-        next: plan-one-task
+        next: plan-dispatch
       - condition: STATUS BLOCKED and selected task blocker note written
         next: ABORT
       - condition: STATUS BLOCKED and progress update could not be written safely

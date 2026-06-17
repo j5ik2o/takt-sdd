@@ -1,4 +1,4 @@
-{extends: review-requirements}
+{extends: review-pure}
 
 ## Kiro Skill Source
 

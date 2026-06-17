@@ -11,6 +11,151 @@ const languages = ["en", "ja"];
 
 const instructionSpecs = [
   {
+    name: "kiro-impl-plan-dispatch",
+    skill: "kiro-impl",
+    section: "## Step 2: Select Tasks & Determine Mode",
+    parent: "plan",
+    terms: [
+      "ready_for_implementation",
+      "spec.json",
+      "tasks.md",
+      "_Boundary:_",
+      "_Depends:_",
+      "(P)",
+      "dispatch_mode",
+      "wave",
+      "wave_apply",
+      "single",
+      "wave_tasks",
+      "first two",
+      "wave_result_refs",
+      "task_worktree",
+      "task_branch",
+      "baseline_dirty_files",
+      "selected_task",
+      "blocker_note_required",
+      "READY_FOR_REVIEW",
+      "BLOCKED",
+      "NEEDS_CONTEXT",
+    ],
+  },
+  {
+    name: "kiro-impl-prepare-task-wave",
+    skill: "kiro-impl",
+    section: "## Step 3: Execute Implementation",
+    parent: "fix",
+    terms: [
+      "dispatch_mode",
+      "wave_id",
+      "wave_tasks",
+      "wave_worktrees",
+      ".takt/worktrees/kiro-impl",
+      "kiro-impl/<feature>/<task-id>",
+      "task_worktree",
+      "task_branch",
+      "_Boundary:_",
+      "_Depends:_ none",
+      "manifest entry",
+      "baseline_dirty_files",
+      "selected_task",
+      "blocker_note_required",
+      "READY_FOR_REVIEW",
+      "BLOCKED",
+      "NEEDS_CONTEXT",
+    ],
+  },
+  {
+    name: "kiro-impl-execute-task-wave",
+    skill: "kiro-impl",
+    section: "## Step 3: Execute Implementation",
+    parent: "implement-after-tests",
+    terms: [
+      "TeamLeader",
+      "dispatch_mode",
+      "wave_id",
+      "wave_tasks",
+      "wave_result_refs",
+      "wave_part_status",
+      "task_worktree",
+      "task_branch",
+      "verbatim",
+      "validation command hint",
+      "Do not invent wave-id-derived branch names",
+      "literal boundary-file task",
+      "_Boundary:_",
+      "git -C <task_worktree>",
+      "main worktree",
+      "verification",
+      "filesystem evidence",
+      "part output",
+      "git -C <task_worktree> status --porcelain",
+      "done=true",
+      "parts: []",
+      "collect-wave-results",
+      "RED_PHASE_OUTPUT",
+      "changed_files",
+      "validation_evidence",
+      "READY_FOR_REVIEW",
+      "COMPLETE",
+      "BLOCKED",
+      "NEEDS_CONTEXT",
+    ],
+  },
+  {
+    name: "kiro-impl-collect-wave-results",
+    skill: "kiro-impl",
+    section: "## Step 3: Execute Implementation",
+    parent: "implement-after-tests",
+    terms: [
+      "dispatch_mode",
+      "wave_id",
+      "wave_tasks",
+      "wave_result_refs",
+      "wave_part_status",
+      "task_worktree",
+      "task_branch",
+      "_Boundary:_",
+      "manifest entry",
+      "filesystem evidence",
+      "part output",
+      "context/previous_responses/execute-task-wave",
+      "git -C <task_worktree> status --porcelain",
+      "git -C <task_worktree> ls-files --others --exclude-standard -- <boundary>",
+      "changed_files",
+      "validation_evidence",
+      "RED_PHASE_OUTPUT",
+      "READY_FOR_REVIEW",
+      "COMPLETE",
+      "BLOCKED",
+      "NEEDS_CONTEXT",
+      "apply-wave-task",
+    ],
+  },
+  {
+    name: "kiro-impl-apply-wave-task",
+    skill: "kiro-impl",
+    section: "## Step 3: Execute Implementation",
+    parent: "implement-after-tests",
+    terms: [
+      "dispatch_mode",
+      "wave_apply",
+      "wave_result_refs",
+      "wave_part_status",
+      "selected_task",
+      "task_worktree",
+      "task_branch",
+      "baseline_dirty_files",
+      "changed_files",
+      "validation_evidence",
+      "RED_PHASE_OUTPUT",
+      "kiro-task-implementation-result.md",
+      "READY_FOR_REVIEW",
+      "COMPLETE",
+      "BLOCKED",
+      "NEEDS_CONTEXT",
+    ],
+  },
+  {
     name: "kiro-impl-plan-one-task",
     skill: "kiro-impl",
     section: "## Step 2: Select Tasks & Determine Mode",
@@ -255,11 +400,22 @@ const outputContractSpecs = [
       "task_set_status",
       "executable leaf task",
       "group header",
+      "dispatch_mode",
+      "wave_id",
+      "wave_tasks",
+      "wave_worktrees",
+      "wave_result_refs",
+      "wave_part_status",
+      "task_worktree",
+      "task_branch",
       "baseline_dirty_files",
       "changed_files",
       "validation_evidence",
       "missing_context",
       "RED_PHASE_OUTPUT",
+      "Report Preservation",
+      "APPROVE",
+      "REJECT",
       "summary",
     ],
   },
@@ -319,6 +475,11 @@ const workflowPolicyNames = [
   "kiro-impl-task-progress",
 ];
 const expectedSteps = [
+  "plan-dispatch",
+  "prepare-task-wave",
+  "execute-task-wave",
+  "collect-wave-results",
+  "apply-wave-task",
   "plan-one-task",
   "execute-task",
   "ai-quality-gate",
@@ -535,7 +696,7 @@ function validateWorkflowFiles(repoRoot) {
       content,
       [
         "name: kiro-impl",
-        "initial_step: plan-one-task",
+        "initial_step: plan-dispatch",
         "max_steps: 200",
         "loop_monitors:",
         "threshold:",
@@ -567,6 +728,95 @@ function validateWorkflowFiles(repoRoot) {
       if (!facetReferenceExists(repoRoot, lang, "personas", persona)) {
         failures.push(`RESOURCE_REFERENCE_DRIFT: ${rel(repoRoot, workflowPath)} persona references missing resource ${persona}`);
       }
+    }
+    const dispatchBlock = blocks.get("plan-dispatch") ?? [];
+    if (stepScalar(dispatchBlock, "session") !== "refresh") {
+      failures.push(`SESSION_DRIFT: ${rel(repoRoot, workflowPath)} plan-dispatch must refresh session on each dispatch pass`);
+    }
+    if (stepScalar(dispatchBlock, "pass_previous_response") !== "false") {
+      failures.push(`SESSION_DRIFT: ${rel(repoRoot, workflowPath)} plan-dispatch must not inherit progress or wave-apply responses when selecting the next route`);
+    }
+    if (!hasRuleWithTerms(dispatchBlock, ["dispatch_mode wave", "wave_tasks emitted", "next: prepare-task-wave"])) {
+      failures.push(`TEAMLEADER_WAVE_DRIFT: ${rel(repoRoot, workflowPath)} plan-dispatch must route safe (P) waves to prepare-task-wave`);
+    }
+    if (!hasRuleWithTerms(dispatchBlock, ["dispatch_mode wave_apply", "wave_result_refs emitted", "next: apply-wave-task"])) {
+      failures.push(`TEAMLEADER_WAVE_DRIFT: ${rel(repoRoot, workflowPath)} plan-dispatch must route unapplied wave results to apply-wave-task`);
+    }
+    if (!hasRuleWithTerms(dispatchBlock, ["dispatch_mode single", "next: plan-one-task"])) {
+      failures.push(`TEAMLEADER_WAVE_DRIFT: ${rel(repoRoot, workflowPath)} plan-dispatch must fall back to plan-one-task when no safe (P) wave exists`);
+    }
+    if (!hasRuleWithTerms(dispatchBlock, ["selected task exists", "blocker_note_required true", "next: update-progress"])) {
+      failures.push(`TEAMLEADER_WAVE_DRIFT: ${rel(repoRoot, workflowPath)} plan-dispatch must route selected-task blockers to update-progress`);
+    }
+    const prepareWaveBlock = blocks.get("prepare-task-wave") ?? [];
+    if (stepScalar(prepareWaveBlock, "edit") !== "true" || stepScalar(prepareWaveBlock, "required_permission_mode") !== "full") {
+      failures.push(
+        `TEAMLEADER_WAVE_DRIFT: ${rel(repoRoot, workflowPath)} prepare-task-wave must run with full permission because git worktree setup writes .git refs`,
+      );
+    }
+    if (!hasRuleWithTerms(prepareWaveBlock, ["dispatch_mode wave", "wave_tasks emitted", "wave_worktrees prepared", "next: execute-task-wave"])) {
+      failures.push(`TEAMLEADER_WAVE_DRIFT: ${rel(repoRoot, workflowPath)} prepare-task-wave must route prepared waves to execute-task-wave`);
+    }
+    if (!hasRuleWithTerms(prepareWaveBlock, ["selected task exists", "blocker_note_required true", "next: update-progress"])) {
+      failures.push(`TEAMLEADER_WAVE_DRIFT: ${rel(repoRoot, workflowPath)} prepare-task-wave must route selected-task blockers to update-progress`);
+    }
+    const executeWaveBlock = blocks.get("execute-task-wave") ?? [];
+    containsAll(
+      executeWaveBlock.join("\n"),
+      [
+        "team_leader:",
+        "max_parts: 2",
+        "refill_threshold: 0",
+        "part_persona: coder",
+        "part_edit: true",
+        "part_permission_mode: edit",
+        "part_allowed_tools:",
+      ],
+      workflowPath,
+      failures,
+      repoRoot,
+      "TEAMLEADER_WAVE_DRIFT",
+    );
+    if (executeWaveBlock.join("\n").includes("name: kiro-task-wave-implementation-result.md")) {
+      failures.push(`TEAMLEADER_WAVE_DRIFT: ${rel(repoRoot, workflowPath)} execute-task-wave must not run report phase; collect-wave-results owns wave result reporting`);
+    }
+    if (!hasRuleWithTerms(executeWaveBlock, ['condition: "true"', "next: collect-wave-results"])) {
+      failures.push(`TEAMLEADER_WAVE_DRIFT: ${rel(repoRoot, workflowPath)} execute-task-wave must always route completed TeamLeader execution to collect-wave-results`);
+    }
+    const collectWaveBlock = blocks.get("collect-wave-results") ?? [];
+    containsAll(
+      collectWaveBlock.join("\n"),
+      [
+        "instruction: kiro-impl-collect-wave-results",
+        "pass_previous_response: false",
+        "name: kiro-task-wave-implementation-result.md",
+        "format: kiro-implementation-result",
+      ],
+      workflowPath,
+      failures,
+      repoRoot,
+      "TEAMLEADER_WAVE_DRIFT",
+    );
+    if (!hasRuleWithTerms(collectWaveBlock, ["dispatch_mode wave", "wave_result_refs emitted", "next: apply-wave-task"])) {
+      failures.push(`TEAMLEADER_WAVE_DRIFT: ${rel(repoRoot, workflowPath)} collect-wave-results must route ready wave results to apply-wave-task`);
+    }
+    if (!hasRuleWithTerms(collectWaveBlock, ["selected task exists", "blocker_note_required true", "next: update-progress"])) {
+      failures.push(`TEAMLEADER_WAVE_DRIFT: ${rel(repoRoot, workflowPath)} collect-wave-results must route selected-task blockers to update-progress`);
+    }
+    const applyWaveBlock = blocks.get("apply-wave-task") ?? [];
+    containsAll(
+      applyWaveBlock.join("\n"),
+      ["instruction: kiro-impl-apply-wave-task", "name: kiro-task-implementation-result.md", "format: kiro-implementation-result"],
+      workflowPath,
+      failures,
+      repoRoot,
+      "TEAMLEADER_WAVE_DRIFT",
+    );
+    if (!hasRuleWithTerms(applyWaveBlock, ["STATUS READY_FOR_REVIEW", "selected task exists", "next: ai-quality-gate"])) {
+      failures.push(`TEAMLEADER_WAVE_DRIFT: ${rel(repoRoot, workflowPath)} apply-wave-task must rejoin the normal ai-quality-gate path`);
+    }
+    if (!hasRuleWithTerms(applyWaveBlock, ["STATUS BLOCKED", "next: debug-task"])) {
+      failures.push(`TEAMLEADER_WAVE_DRIFT: ${rel(repoRoot, workflowPath)} apply-wave-task must route BLOCKED to debug-task for single-task fallback repair`);
     }
     const planBlock = blocks.get("plan-one-task") ?? [];
     if (stepScalar(planBlock, "session") !== "refresh") {
@@ -709,8 +959,8 @@ function validateWorkflowFiles(repoRoot) {
     if (!hasRuleWithTerms(updateBlock, ["STATUS READY_FOR_REVIEW", "selected task checkbox updated", "task_set_status ALL_TASKS_COMPLETE", "next: validate-impl-final"])) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must route successful final checkbox updates to validate-impl-final`);
     }
-    if (!hasRuleWithTerms(updateBlock, ["STATUS READY_FOR_REVIEW", "selected task checkbox updated", "task_set_status REMAINING_TASKS_EXIST", "next: plan-one-task"])) {
-      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must route non-final checkbox updates back to plan-one-task`);
+    if (!hasRuleWithTerms(updateBlock, ["STATUS READY_FOR_REVIEW", "selected task checkbox updated", "task_set_status REMAINING_TASKS_EXIST", "next: plan-dispatch"])) {
+      failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must route non-final checkbox updates back to plan-dispatch`);
     }
     if (hasRuleWithTerms(updateBlock, ["task_set_status REMAINING_TASKS_EXIST", "next: COMPLETE"])) {
       failures.push(`FIELD_CONTRACT_DRIFT: ${rel(repoRoot, workflowPath)} update-progress must not complete while remaining tasks exist`);
@@ -1064,6 +1314,14 @@ function validateLanguageParity(repoRoot) {
         "need_replan",
         "kiro-ai-antipattern-review.md",
         "kiro-ai-antipattern-fix.md",
+        "dispatch_mode",
+        "wave_id",
+        "wave_tasks",
+        "wave_worktrees",
+        "wave_result_refs",
+        "wave_part_status",
+        "task_worktree",
+        "task_branch",
       ])
       .filter((term) => readText(enPath).includes(term));
     for (const term of enMachineTerms) {
@@ -1126,6 +1384,9 @@ function validateTaskFixtureCoverage(repoRoot) {
     [
       "validator rejects completion-before-checkbox gate drift",
       "validator rejects readiness routing that skips ready-for-implementation",
+      "validator rejects dispatch routing that bypasses single-task fallback",
+      "validator rejects TeamLeader wave execution without team_leader configuration",
+      "validator rejects wave apply routing that bypasses AI quality gate",
       "validator rejects blocked execution routing to reviewers",
       "validator rejects direct review routing that bypasses AI quality gate",
       "validator rejects missing parallel reviewer group",
@@ -1150,6 +1411,8 @@ function validateTaskFixtureCoverage(repoRoot) {
       "validator rejects progress adapter reading AI gate reports directly",
       "validator rejects plan blockers that bypass progress blocker notes",
       "validator rejects progress updates that omit routing status outputs",
+      "validator rejects progress routing that skips dispatch re-entry",
+      "validator rejects implementation result contract without wave dispatch fields",
       "validator rejects progress policy drift that loses selected task guard",
     ],
     testPath,

@@ -2,14 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { spawn, spawnSync } from "node:child_process";
 
 // Real-provider smoke intentionally uses semantic assertions instead of exact
-// generated text because Claude output can vary. Mock-provider smoke tests
+// generated text because provider output can vary. Mock-provider smoke tests
 // should stay strict and deterministic.
 const featureName = "kiro-real-provider-smoke";
-const defaultModel = "claude-opus-4-8";
 const defaultWorkflowTimeoutMs = 900000;
 const defaultImplWorkflowTimeoutMs = 1800000;
 const fatalWorkflowPatterns = [
@@ -27,6 +26,61 @@ function writeFixtureFile(root, path, content) {
   const fullPath = join(root, path);
   mkdirSync(dirname(fullPath), { recursive: true });
   writeFileSync(fullPath, content);
+}
+
+function runFixtureCommand(root, command, args) {
+  const result = spawnSync(command, args, { cwd: root, encoding: "utf8" });
+  assert.equal(result.status, 0, `${command} ${args.join(" ")} failed\n${result.stdout}\n${result.stderr}`);
+  return result;
+}
+
+function initializeFixtureGit(root) {
+  runFixtureCommand(root, "git", ["init", "-b", "main"]);
+  runFixtureCommand(root, "git", ["config", "user.email", "kiro-smoke@example.test"]);
+  runFixtureCommand(root, "git", ["config", "user.name", "Kiro Smoke"]);
+  commitFixtureState(root, "initial smoke fixture");
+}
+
+function commitFixtureState(root, message) {
+  const status = spawnSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" });
+  assert.equal(status.status, 0, `git status failed\n${status.stdout}\n${status.stderr}`);
+  if (!status.stdout.trim()) {
+    return;
+  }
+  runFixtureCommand(root, "git", ["add", "."]);
+  runFixtureCommand(root, "git", ["commit", "-m", message]);
+}
+
+function fixtureConfigPath(root) {
+  for (const name of ["config.yaml", "config.yml"]) {
+    const path = join(root, ".takt", name);
+    if (existsSync(path)) {
+      return path;
+    }
+  }
+  assert.fail("expected .takt/config.yaml or .takt/config.yml in real-provider smoke fixture");
+}
+
+function configuredProvider(root) {
+  const config = readFileSync(fixtureConfigPath(root), "utf8");
+  return config.match(/^provider:\s*(\S+)\s*$/m)?.[1];
+}
+
+function linkCodexHomeIfConfigured(root) {
+  if (configuredProvider(root) !== "codex") {
+    return;
+  }
+  const candidates = [
+    process.env.KIRO_REAL_PROVIDER_CODEX_HOME,
+    process.env.CODEX_HOME,
+    join(homedir(), ".codex-personal"),
+  ].filter(Boolean);
+  const codexHome = candidates.find((path) => existsSync(path));
+  assert.ok(
+    codexHome,
+    "provider is codex; set CODEX_HOME or KIRO_REAL_PROVIDER_CODEX_HOME, or create ~/.codex-personal",
+  );
+  symlinkSync(codexHome, join(root, ".codex"), "dir");
 }
 
 function makeRealProviderFixture() {
@@ -59,17 +113,8 @@ function makeRealProviderFixture() {
       2,
     )}\n`,
   );
-  writeFixtureFile(
-    root,
-    ".takt/config.yaml",
-    `provider: claude
-language: ja
-model: ${process.env.KIRO_REAL_PROVIDER_MODEL ?? defaultModel}
-concurrency: 1
-base_branch: main
-submodules: all
-`,
-  );
+  writeFixtureFile(root, ".gitignore", ".codex\n.takt/runs/\n.takt/worktrees/\n");
+  linkCodexHomeIfConfigured(root);
   writeFixtureFile(root, ".kiro/steering/product.md", "# Product\n\nReal-provider smoke fixture for TAKT/Kiro workflow validation.\n");
   writeFixtureFile(root, ".kiro/steering/tech.md", "# Tech\n\nUse only local files in this temporary fixture.\n");
   writeFixtureFile(root, ".kiro/steering/structure.md", "# Structure\n\nSmoke artifacts may be written under `smoke-output/` only.\n");
@@ -79,17 +124,129 @@ submodules: all
     `.kiro/specs/${featureName}/brief.md`,
     `# Brief
 
-Create a minimal Kiro full-chain smoke spec using the real Claude provider.
+Create a minimal Kiro full-chain smoke spec using the configured real provider.
 
 The implementation must be tiny and deterministic:
 
-- Own only \`smoke-output/provider-smoke.txt\`.
-- The final implementation task should create or update that file with a short line containing \`claude provider smoke passed\`.
+- Own only \`smoke-output/provider-smoke-alpha.txt\` and \`smoke-output/provider-smoke-beta.txt\`.
+- The final implementation tasks should be independent and parallelizable.
+- One task should create or update \`smoke-output/provider-smoke-alpha.txt\` with a short line containing \`real provider smoke passed alpha\`.
+- One task should create or update \`smoke-output/provider-smoke-beta.txt\` with a short line containing \`real provider smoke passed beta\`.
 - Do not change production files, package metadata, workflows, facets, scripts, or settings.
 - Keep requirements, design, and tasks minimal but valid.
 `,
   );
+  initializeFixtureGit(root);
   return root;
+}
+
+function writeParallelProviderSmokeImplementationArtifacts(root) {
+  const now = new Date().toISOString();
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/requirements.md`,
+    `# Requirements Document
+
+## Requirements
+
+### Requirement 1: Parallel real-provider smoke outputs
+
+**User Story:** As a workflow maintainer, I want two tiny independent implementation tasks, so that the real-provider smoke covers the TeamLeader \`(P)\` route.
+
+#### Acceptance Criteria
+
+1. WHEN implementation completes THEN \`smoke-output/provider-smoke-alpha.txt\` SHALL contain \`real provider smoke passed alpha\`.
+2. WHEN implementation completes THEN \`smoke-output/provider-smoke-beta.txt\` SHALL contain \`real provider smoke passed beta\`.
+`,
+  );
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/design.md`,
+    `# Design Document
+
+## Overview
+
+This fixture validates the real-provider Kiro implementation workflow with two independent \`(P)\` tasks.
+
+## Boundary Commitments
+
+### This Spec Owns
+
+- \`smoke-output/provider-smoke-alpha.txt\`
+- \`smoke-output/provider-smoke-beta.txt\`
+
+### Out of Boundary
+
+- Production files, package metadata, workflows, facets, scripts, and settings.
+
+### Allowed Dependencies
+
+- Existing Kiro implementation workflow and local filesystem writes.
+
+### Revalidation Triggers
+
+- Kiro implementation workflow routing changes.
+
+## File Structure Plan
+
+\`\`\`
+smoke-output/
+  provider-smoke-alpha.txt
+  provider-smoke-beta.txt
+\`\`\`
+
+## Requirements Traceability
+
+| Requirement | Design Element |
+|-------------|----------------|
+| 1.1 | \`provider-smoke-alpha.txt\` |
+| 1.2 | \`provider-smoke-beta.txt\` |
+`,
+  );
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/tasks.md`,
+    `# Implementation Plan
+
+- [ ] 1. Create parallel real-provider smoke outputs
+- [ ] 1.1 (P) Write alpha smoke output
+  - Create or update \`smoke-output/provider-smoke-alpha.txt\`.
+  - The file must contain \`real provider smoke passed alpha\`.
+  - _Requirements: 1.1_
+  - _Boundary:_ smoke-output/provider-smoke-alpha.txt
+  - _Depends:_ none
+- [ ] 1.2 (P) Write beta smoke output
+  - Create or update \`smoke-output/provider-smoke-beta.txt\`.
+  - The file must contain \`real provider smoke passed beta\`.
+  - _Requirements: 1.2_
+  - _Boundary:_ smoke-output/provider-smoke-beta.txt
+  - _Depends:_ none
+`,
+  );
+  const spec = existsSync(join(root, ".kiro", "specs", featureName, "spec.json"))
+    ? readSpec(root)
+    : {
+        feature_name: featureName,
+        created_at: now,
+        updated_at: now,
+        language: "ja",
+        phase: "initialized",
+        approvals: {
+          requirements: { generated: false, approved: false },
+          design: { generated: false, approved: false },
+          tasks: { generated: false, approved: false },
+        },
+        ready_for_implementation: false,
+      };
+  spec.phase = "tasks-generated";
+  spec.approvals = {
+    requirements: { generated: true, approved: true },
+    design: { generated: true, approved: true },
+    tasks: { generated: true, approved: true },
+  };
+  spec.ready_for_implementation = true;
+  spec.updated_at = now;
+  writeFixtureFile(root, `.kiro/specs/${featureName}/spec.json`, `${JSON.stringify(spec, null, 2)}\n`);
 }
 
 function terminateProcessGroup(child, signal) {
@@ -149,6 +306,7 @@ function runWorkflow(root, scriptName, target, options = {}) {
   delete env.NO_COLOR;
   const timeoutMs = options.timeoutMs ?? workflowTimeoutMs(scriptName);
   const patterns = options.fatalPatterns ?? fatalWorkflowPatterns;
+  const successWhen = options.successWhen;
   const targetArgs = Array.isArray(target) ? target : [target];
 
   return new Promise((resolve) => {
@@ -160,13 +318,18 @@ function runWorkflow(root, scriptName, target, options = {}) {
     });
     let output = "";
     let earlyAbortReason = "";
+    let earlySuccessReason = "";
     let killTimer;
 
-    const abort = (reason) => {
-      if (earlyAbortReason) {
+    const abort = (reason, { success = false } = {}) => {
+      if (earlyAbortReason || earlySuccessReason) {
         return;
       }
-      earlyAbortReason = reason;
+      if (success) {
+        earlySuccessReason = reason;
+      } else {
+        earlyAbortReason = reason;
+      }
       terminateProcessGroup(child, "SIGTERM");
       terminateFixtureProcesses(root, "SIGTERM");
       killTimer = setTimeout(() => {
@@ -185,6 +348,15 @@ function runWorkflow(root, scriptName, target, options = {}) {
       if (matchedPattern) {
         abort(`fatal workflow output matched ${matchedPattern}`);
       }
+      let successConditionMet = false;
+      try {
+        successConditionMet = Boolean(successWhen?.({ output: stripAnsi(output), root }));
+      } catch {
+        successConditionMet = false;
+      }
+      if (successConditionMet) {
+        abort("success condition satisfied", { success: true });
+      }
     };
 
     child.stdout.on("data", onOutput);
@@ -199,13 +371,14 @@ function runWorkflow(root, scriptName, target, options = {}) {
     child.on("close", (status, signal) => {
       clearTimeout(timeout);
       clearTimeout(killTimer);
-      if (earlyAbortReason) {
+      if (earlyAbortReason || earlySuccessReason) {
         terminateFixtureProcesses(root, "SIGKILL");
       }
       resolve({
         status,
         signal,
         earlyAbortReason,
+        earlySuccessReason,
         output,
       });
     });
@@ -224,6 +397,16 @@ function assertRealProviderWorkflowSuccess(result, name) {
   assertWorkflowSuccess(result, name);
 }
 
+function assertRealProviderEarlySmokeSuccess(result, name) {
+  const output = stripAnsi(result.output);
+  assert.equal(result.earlyAbortReason, "", `${name} stopped early: ${result.earlyAbortReason}\n${output}`);
+  if (result.earlySuccessReason) {
+    assert.equal(result.earlySuccessReason, "success condition satisfied", `${name} stopped unexpectedly\n${output}`);
+    return;
+  }
+  assertWorkflowSuccess(result, name);
+}
+
 function assertRealProviderPhase(root, phase, requiredArtifacts = []) {
   assert.equal(readSpec(root).phase, phase);
   for (const artifact of requiredArtifacts) {
@@ -231,17 +414,62 @@ function assertRealProviderPhase(root, phase, requiredArtifacts = []) {
   }
 }
 
-function hasGoDecision(report) {
-  return /(?:^|\n)\s*(?:-\s*)?`?DECISION`?\s*(?::|=)\s*`?GO`?\b/im.test(report);
+function latestReportsDirIfAny(root) {
+  const runRoot = join(root, ".takt", "runs");
+  if (!existsSync(runRoot)) {
+    return undefined;
+  }
+  const latestRun = readdirSync(runRoot)
+    .filter((entry) => statSync(join(runRoot, entry)).isDirectory())
+    .sort()
+    .at(-1);
+  return latestRun ? join(runRoot, latestRun, "reports") : undefined;
 }
 
-function assertRealProviderSmokeOutcome(root) {
-  const reportsDir = latestReportsDir(root);
-  const finalReport = readFileSync(join(reportsDir, "kiro-final-implementation-validation.md"), "utf8");
-  assert.equal(hasGoDecision(finalReport), true, `expected final validation to report GO\n${finalReport}`);
+function hasCollectedWaveResults(root) {
+  const reportsDir = latestReportsDirIfAny(root);
+  if (!reportsDir) {
+    return false;
+  }
+  const waveReportPath = join(reportsDir, "kiro-task-wave-implementation-result.md");
+  if (!existsSync(waveReportPath)) {
+    return false;
+  }
+  const waveReport = readFileSync(waveReportPath, "utf8");
+  return (
+    /STATUS:\s*READY_FOR_REVIEW/.test(waveReport) &&
+    /dispatch_mode:\s*wave/.test(waveReport) &&
+    /wave[_\s]+result[_\s]+refs/i.test(waveReport) &&
+    /Task 1\.1/.test(waveReport) &&
+    /Task 1\.2/.test(waveReport) &&
+    existsSync(join(root, ".takt", "worktrees", "kiro-impl", featureName, "1.1", "smoke-output", "provider-smoke-alpha.txt")) &&
+    existsSync(join(root, ".takt", "worktrees", "kiro-impl", featureName, "1.2", "smoke-output", "provider-smoke-beta.txt"))
+  );
+}
 
-  const smokeOutput = readFileSync(join(root, "smoke-output", "provider-smoke.txt"), "utf8");
-  assert.match(smokeOutput, /claude provider smoke passed/i);
+function assertRealProviderWaveSmokeOutcome(root) {
+  const reportsDir = latestReportsDir(root);
+  const waveReport = readFileSync(join(reportsDir, "kiro-task-wave-implementation-result.md"), "utf8");
+  assert.match(waveReport, /STATUS:\s*READY_FOR_REVIEW/);
+  assert.match(waveReport, /dispatch_mode:\s*wave/);
+  assert.match(waveReport, /wave[_\s]+result[_\s]+refs/i);
+  assert.match(waveReport, /Task 1\.1/);
+  assert.match(waveReport, /Task 1\.2/);
+
+  const alphaOutput = readFileSync(
+    join(root, ".takt", "worktrees", "kiro-impl", featureName, "1.1", "smoke-output", "provider-smoke-alpha.txt"),
+    "utf8",
+  );
+  const betaOutput = readFileSync(
+    join(root, ".takt", "worktrees", "kiro-impl", featureName, "1.2", "smoke-output", "provider-smoke-beta.txt"),
+    "utf8",
+  );
+  assert.match(alphaOutput, /real provider smoke passed alpha/i);
+  assert.match(betaOutput, /real provider smoke passed beta/i);
+
+  const tasks = readFileSync(join(root, ".kiro", "specs", featureName, "tasks.md"), "utf8");
+  assert.match(tasks, /1\.1 \(P\)/);
+  assert.match(tasks, /1\.2 \(P\)/);
 }
 
 function readSpec(root) {
@@ -332,28 +560,29 @@ setInterval(() => {}, 60000);
 });
 
 test(
-  "kiro full lifecycle smoke runs with the real Claude provider",
-  { skip: process.env.KIRO_REAL_PROVIDER_SMOKE === "1" ? false : "set KIRO_REAL_PROVIDER_SMOKE=1 to call the real Claude provider" },
+  "kiro impl smoke runs with the configured real provider and (P) implementation tasks",
+  { skip: process.env.KIRO_REAL_PROVIDER_SMOKE === "1" ? false : "set KIRO_REAL_PROVIDER_SMOKE=1 to call the real provider" },
   async () => {
     const root = makeRealProviderFixture();
     let success = false;
     try {
-      assertRealProviderWorkflowSuccess(await runWorkflow(root, "kiro:spec:init", featureName), "kiro:spec:init");
-      assertRealProviderPhase(root, "initialized", ["requirements.md", "spec.json"]);
-
-      assertRealProviderWorkflowSuccess(await runWorkflow(root, "kiro:spec:requirements", [`feature=${featureName}`, "-y"]), "kiro:spec:requirements");
-      assertRealProviderPhase(root, "requirements-generated", ["requirements.md"]);
-
-      assertRealProviderWorkflowSuccess(await runWorkflow(root, "kiro:spec:design", [`feature=${featureName}`, "-y"]), "kiro:spec:design");
-      assertRealProviderPhase(root, "design-generated", ["requirements.md", "design.md"]);
-
-      assertRealProviderWorkflowSuccess(await runWorkflow(root, "kiro:spec:tasks", [`feature=${featureName}`, "-y"]), "kiro:spec:tasks");
+      writeParallelProviderSmokeImplementationArtifacts(root);
       assertRealProviderPhase(root, "tasks-generated", ["requirements.md", "design.md", "tasks.md"]);
       const tasksSpec = readSpec(root);
       assert.equal(tasksSpec.ready_for_implementation, true);
+      assert.match(readFileSync(join(root, ".kiro", "specs", featureName, "tasks.md"), "utf8"), /\(P\)/);
+      commitFixtureState(root, "real provider parallel implementation tasks");
 
-      assertRealProviderWorkflowSuccess(await runWorkflow(root, "kiro:impl", `feature=${featureName}`), "kiro:impl");
-      assertRealProviderSmokeOutcome(root);
+      const implResult = await runWorkflow(root, "kiro:impl", `feature=${featureName}`, {
+        successWhen: ({ root }) => hasCollectedWaveResults(root),
+      });
+      assertRealProviderEarlySmokeSuccess(implResult, "kiro:impl");
+      const implOutput = stripAnsi(implResult.output);
+      assert.match(implOutput, /plan-dispatch/, implOutput);
+      assert.match(implOutput, /prepare-task-wave/, implOutput);
+      assert.match(implOutput, /execute-task-wave/, implOutput);
+      assert.match(implOutput, /collect-wave-results/, implOutput);
+      assertRealProviderWaveSmokeOutcome(root);
       success = true;
     } finally {
       if (success && process.env.KIRO_REAL_PROVIDER_KEEP !== "1") {
