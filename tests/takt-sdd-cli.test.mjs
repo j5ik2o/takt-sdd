@@ -13,6 +13,7 @@ import {
   isRetiredWorkflow,
   buildHelpText,
 } from "../cli/command-catalog.mjs";
+import { buildInitHelpText } from "../cli/init-adapter.mjs";
 import {
   PreflightError,
   preflight,
@@ -167,11 +168,25 @@ test("buildHelpText contains 'run'", () => {
   assert.ok(text.includes("run"), `buildHelpText output does not contain 'run'`);
 });
 
+test("buildHelpText contains init options --lang, --force, and --dry-run", () => {
+  const text = buildHelpText("1.0.0");
+  assert.ok(text.includes("--lang"), `buildHelpText missing --lang`);
+  assert.ok(text.includes("--force"), `buildHelpText missing --force`);
+  assert.ok(text.includes("--dry-run"), `buildHelpText missing --dry-run`);
+});
+
 test("buildHelpText contains global options --cwd, --help, --version", () => {
   const text = buildHelpText("1.0.0");
   assert.ok(text.includes("--cwd"), `buildHelpText missing --cwd`);
   assert.ok(text.includes("--help"), `buildHelpText missing --help`);
   assert.ok(text.includes("--version"), `buildHelpText missing --version`);
+});
+
+test("buildInitHelpText contains init usage and --force", () => {
+  const text = buildInitHelpText("1.0.0");
+  assert.ok(text.includes("takt-sdd init <dir>"), `buildInitHelpText missing init usage`);
+  assert.ok(text.includes("--force"), `buildInitHelpText missing --force`);
+  assert.ok(text.includes("--dry-run"), `buildInitHelpText missing --dry-run`);
 });
 
 test("buildHelpText contains the provided version string", () => {
@@ -740,6 +755,23 @@ test("main(['--help']): output contains kiro-* workflow names and NOT opsx-*/cc-
 test("main(['--help']): output contains 'run'", async () => {
   const output = await captureStdout(async () => { await main(["--help"]); });
   assert.ok(output.includes("run"), `--help output should contain 'run', got: ${output}`);
+});
+
+test("main(['init', '--help']): returns exit code 0 and shows --force", async () => {
+  const output = await captureStdout(async () => {
+    const c = await main(["init", "--help"]);
+    assert.equal(c, 0, `Expected exit code 0, got ${c}`);
+  });
+  assert.ok(output.includes("takt-sdd init <dir>"), `init --help output should contain init usage, got: ${output}`);
+  assert.ok(output.includes("--force"), `init --help output should contain --force, got: ${output}`);
+});
+
+test("main(['init', '-h']): returns exit code 0 and shows --force", async () => {
+  const output = await captureStdout(async () => {
+    const c = await main(["init", "-h"]);
+    assert.equal(c, 0, `Expected exit code 0, got ${c}`);
+  });
+  assert.ok(output.includes("--force"), `init -h output should contain --force, got: ${output}`);
 });
 
 // ─── --version: exit 0, output matches package.json version ───

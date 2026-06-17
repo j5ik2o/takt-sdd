@@ -49,6 +49,31 @@ export class InitError extends Error {
   }
 }
 
+/**
+ * Build help text for the init subcommand.
+ *
+ * @param {string} version - The package version string to include in the header.
+ * @returns {string}
+ */
+export function buildInitHelpText(version) {
+  return [
+    `takt-sdd ${version}`,
+    "",
+    "Usage:",
+    "  takt-sdd init <dir> [--lang en|ja] [--force] [--dry-run]",
+    "",
+    "Options:",
+    "  --lang en|ja         Install bundled assets for the selected language",
+    "  --force              Overwrite bundled .takt assets, including customized files",
+    "  --dry-run            Preview install/update actions without writing files",
+    "  --help, -h           Show this help message",
+    "",
+    "Notes:",
+    "  .takt/config.yaml is user-owned and is never created or modified by init.",
+    "  init does not run npm install; run it manually after init completes.",
+  ].join("\n");
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // parseInitArgs
 // ─────────────────────────────────────────────────────────────────────────────

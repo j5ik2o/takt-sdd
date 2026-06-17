@@ -519,6 +519,32 @@ test("real-core: customized file is NOT overwritten on update (skip)", async () 
   }
 });
 
+test("real-core: --force overwrites customized bundled files on update", async () => {
+  const { runInit } = await getInitAdapter();
+  const tmpDir = makeTmp("real-init-force-update-");
+  try {
+    const ctx = { projectRoot: tmpDir, packageRoot: REPO_ROOT };
+    const options = { targetDir: tmpDir, lang: "en", force: false, dryRun: false };
+
+    await runInit(options, ctx);
+
+    const workflowsDir = join(tmpDir, ".takt", "workflows");
+    const yamlFiles = readdirSync(workflowsDir).filter((f) => f.endsWith(".yaml"));
+    assert.ok(yamlFiles.length > 0, "expected at least one workflow file");
+
+    const targetFile = join(workflowsDir, yamlFiles[0]);
+    const originalContent = readFileSync(targetFile, "utf-8");
+    writeFileSync(targetFile, originalContent + "\n# CUSTOMIZED\n", "utf-8");
+
+    await runInit({ ...options, force: true }, ctx);
+
+    const afterContent = readFileSync(targetFile, "utf-8");
+    assert.equal(afterContent, originalContent, "--force must overwrite customized bundled files on update");
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
 test("real-core: --force allows re-install when .takt/ exists but no manifest (no-manifest guard)", async () => {
   const { runInit } = await getInitAdapter();
   const tmpDir = makeTmp("real-init-force-");

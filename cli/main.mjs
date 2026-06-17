@@ -33,6 +33,7 @@ import {
 import {
   UsageError,
   InitError,
+  buildInitHelpText,
   parseInitArgs,
   runInit,
 } from "./init-adapter.mjs";
@@ -197,6 +198,11 @@ export async function main(argv) {
   try {
     // ── init ──────────────────────────────────────────────────────────────────
     if (command === "init") {
+      if (commandArgs.includes("--help") || commandArgs.includes("-h")) {
+        const ver = readPackageVersion();
+        stdoutLine(buildInitHelpText(ver));
+        return 0;
+      }
       checkInstallerBuilt();
       const initOpts = parseInitArgs(commandArgs);
       const absoluteTargetDir = resolve(projectRoot, initOpts.targetDir);

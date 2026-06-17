@@ -196,6 +196,16 @@ test("syncRelativeFiles handles add, overwrite, and skip cases", () => {
     };
     syncRelativeFiles(srcBase, destBase, [relFile], manifestUntracked, msg, root);
     assert.equal(readFileSync(destPath, "utf-8"), untrackedContent);
+
+    // (e) --force 指定時は追跡済み・改変（hash 不一致）でも上書きする
+    writeFileSync(destPath, customizedContent, "utf-8");
+    syncRelativeFiles(srcBase, destBase, [relFile], manifestCustomized, msg, root, true);
+    assert.equal(readFileSync(destPath, "utf-8"), srcContent);
+
+    // (f) --force 指定時は manifest 未追跡の既存バンドルパスも上書きする
+    writeFileSync(destPath, untrackedContent, "utf-8");
+    syncRelativeFiles(srcBase, destBase, [relFile], manifestUntracked, msg, root, true);
+    assert.equal(readFileSync(destPath, "utf-8"), srcContent);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

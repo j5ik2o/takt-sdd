@@ -326,6 +326,7 @@ export function syncRelativeFiles(
   manifest: Manifest | null,
   msg: ReturnType<typeof getMessages>,
   cwd: string,
+  force = false,
 ): SyncResult {
   const files: Record<string, string> = {};
 
@@ -342,6 +343,9 @@ export function syncRelativeFiles(
       mkdirSync(dirname(destPath), { recursive: true });
       cpSync(srcPath, destPath);
       info(msg.fileAdded(manifestKey));
+    } else if (force) {
+      cpSync(srcPath, destPath);
+      info(msg.fileUpdated(manifestKey));
     } else if (manifest !== null) {
       const recordedHash = manifest.files[manifestKey];
       if (recordedHash === undefined) {
@@ -371,9 +375,10 @@ function syncDirectory(
   manifest: Manifest | null,
   msg: ReturnType<typeof getMessages>,
   cwd: string,
+  force = false,
 ): SyncResult {
   if (!existsSync(srcDir)) return { files: {} };
-  return syncRelativeFiles(srcBase, destBase, collectFiles(srcDir, srcBase), manifest, msg, cwd);
+  return syncRelativeFiles(srcBase, destBase, collectFiles(srcDir, srcBase), manifest, msg, cwd, force);
 }
 
 
@@ -471,7 +476,7 @@ export async function installFromSource(options: CoreInstallOptions, source: Ins
       const result = syncDirectory(
         effectiveSrc, piecesDest,
         effectiveSrc, piecesDest,
-        isUpdate ? manifest : null, msg, options.cwd,
+        isUpdate ? manifest : null, msg, options.cwd, options.force,
       );
       Object.assign(allFiles, result.files);
     }
@@ -486,7 +491,7 @@ export async function installFromSource(options: CoreInstallOptions, source: Ins
         const result = syncDirectory(
           srcDir, destDir,
           srcDir, destDir,
-          isUpdate ? manifest : null, msg, options.cwd,
+          isUpdate ? manifest : null, msg, options.cwd, options.force,
         );
         Object.assign(allFiles, result.files);
       }
@@ -503,6 +508,7 @@ export async function installFromSource(options: CoreInstallOptions, source: Ins
       isUpdate ? manifest : null,
       msg,
       options.cwd,
+      options.force,
     );
     Object.assign(allFiles, kiroStagedScriptResult.files);
 

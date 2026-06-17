@@ -62,7 +62,7 @@ const en: Messages = {
 Options:
   --tag <version>    Version to install ("latest", "0.2.0", default: installer version)
   --lang <en|ja>     Message language (default: en)
-  --force            Overwrite existing .takt/ directory (ignored if manifest exists)
+  --force            Overwrite existing bundled .takt/ assets, including customized files
   --dry-run          Preview without writing files
   --layout <mode>    Directory layout: auto, modern, legacy (default: auto)
   -h, --help         Show this help
@@ -117,7 +117,7 @@ const ja: Messages = {
 オプション:
   --tag <version>    インストールするバージョン ("latest", "0.2.0", デフォルト: インストーラのバージョン)
   --lang <en|ja>     メッセージ言語 (デフォルト: en)
-  --force            既存の .takt/ を上書き（マニフェストがある場合は無視）
+  --force            既存のバンドル済み .takt/ 資産を上書き（カスタマイズ済みも含む）
   --dry-run          プレビューのみ（ファイル書き込みなし）
   --layout <mode>    ディレクトリレイアウト: auto, modern, legacy（デフォルト: auto）
   -h, --help         ヘルプを表示
