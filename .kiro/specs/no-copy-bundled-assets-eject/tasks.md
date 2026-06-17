@@ -88,7 +88,7 @@
   - _Depends:_ 1.2, 2.1, 2.3, 3.3
 
 - [ ] 5. 自動検証を追加・更新する
-- [ ] 5.1 (P) package bundled runtime の実行前提を検証する
+- [x] 5.1 (P) package bundled runtime の実行前提を検証する
   - `.takt/` 不在、root override、language override、package fallback の preflight 結果を検証する。
   - config、manifest、default language の優先順位と no language fallback を検証する。
   - project-local `takt` dependency があって binary がない場合も workflow 実行を拒否しないことを検証する。

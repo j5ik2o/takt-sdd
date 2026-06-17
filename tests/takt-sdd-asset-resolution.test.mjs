@@ -105,6 +105,22 @@ test("resolveLanguage defaults to en without creating .takt", () => {
   }
 });
 
+test("resolveLanguage defaults to en when config and manifest do not contain supported languages", () => {
+  const projectRoot = makeTmpDir("takt-sdd-assets-project-");
+  try {
+    writeProjectConfig(projectRoot, "language: fr\n");
+    writeManifest(projectRoot, "de");
+
+    assert.deepEqual(resolveLanguage(projectRoot), {
+      lang: "en",
+      source: "default",
+    });
+    assert.equal(getProjectConfigLanguage(projectRoot), undefined);
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+  }
+});
+
 test("getProjectConfigLanguage reads only config and ignores manifest fallback", () => {
   const projectRoot = makeTmpDir("takt-sdd-assets-project-");
   try {

@@ -369,6 +369,37 @@ test("preflight: project facet-only files do not change package workflow selecti
   }
 });
 
+test("runWorkflow: package workflow with project facet-only files passes only the selected package workflow", async () => {
+  const dir = makeTmpDir();
+  try {
+    const facetDir = join(dir, ".takt", "en", "facets", "personas");
+    mkdirSync(facetDir, { recursive: true });
+    writeFileSync(join(facetDir, "coding-reviewer.md"), "# project-local facet only\n", "utf-8");
+
+    let spawnCalledWith = null;
+    const captureSpawn = (nodeExec, args, opts) => {
+      spawnCalledWith = { nodeExec, args, opts };
+      const emitter = new EventEmitter();
+      process.nextTick(() => emitter.emit("close", 0, null));
+      return emitter;
+    };
+
+    const code = await runWorkflow("kiro-impl", ["example-feature"], { projectRoot: dir, packageRoot: repoRoot }, captureSpawn);
+
+    assert.equal(code, 0);
+    assert.ok(spawnCalledWith !== null, "spawnImpl should have been called");
+    const expectedWorkflow = join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml");
+    const workflowArgs = spawnCalledWith.args.filter((arg) => arg.endsWith("kiro-impl.yaml"));
+    assert.deepEqual(workflowArgs, [expectedWorkflow]);
+    assert.ok(
+      !spawnCalledWith.args.some((arg) => arg.includes(join(dir, ".takt", "en", "facets"))),
+      `project-local facet paths must not be passed to TAKT: ${JSON.stringify(spawnCalledWith.args)}`,
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // ─── preflight: ja lang + ja asset absent → PreflightError (no fallback to en) ───
 
 test("preflight: ja lang with missing ja workflow asset throws PreflightError (no en fallback)", () => {
@@ -515,6 +546,34 @@ test("declared takt dep with missing project-local binary: runWorkflow reaches s
     });
     assert.equal(code, 0);
     assert.equal(spawnCalled, true);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("declared takt dep with missing project-local binary: runWorkflow uses packageRoot takt", async () => {
+  const dir = makeTmpDir();
+  try {
+    writeManifest(dir, "en");
+    writePkgJson(dir, { takt: "0.43.0" });
+
+    let spawnCalledWith = null;
+    const code = await runWorkflow("kiro-impl", [], { projectRoot: dir, packageRoot: repoRoot }, (nodeExec, args, opts) => {
+      spawnCalledWith = { nodeExec, args, opts };
+      return makeSpawnImpl(0)(nodeExec, args, opts);
+    });
+
+    assert.equal(code, 0);
+    assert.ok(spawnCalledWith !== null, "spawnImpl should have been called");
+    assert.equal(spawnCalledWith.nodeExec, process.execPath);
+    assert.ok(
+      spawnCalledWith.args[0].includes(join(repoRoot, "node_modules")),
+      `takt CLI must resolve from packageRoot node_modules, got: ${spawnCalledWith.args[0]}`,
+    );
+    assert.ok(
+      !spawnCalledWith.args[0].startsWith(join(dir, "node_modules")),
+      `takt CLI must not resolve from project node_modules, got: ${spawnCalledWith.args[0]}`,
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -689,6 +748,41 @@ test("runWorkflow: exit code 0 on success", async () => {
     const ctx = { projectRoot: dir, packageRoot: repoRoot };
     const code = await runWorkflow("kiro-impl", [], ctx, makeSpawnImpl(0));
     assert.equal(code, 0, `Expected exit code 0, got ${code}`);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("runWorkflow: project workflow passes only the selected project workflow without package facet fallback", async () => {
+  const dir = makeTmpDir();
+  try {
+    writeManifest(dir, "en");
+    writeWorkflowAsset(dir, "en", "kiro-impl");
+
+    let spawnCalledWith = null;
+    const captureSpawn = (nodeExec, args, opts) => {
+      spawnCalledWith = { nodeExec, args, opts };
+      const emitter = new EventEmitter();
+      process.nextTick(() => emitter.emit("close", 0, null));
+      return emitter;
+    };
+
+    const code = await runWorkflow("kiro-impl", [], { projectRoot: dir, packageRoot: repoRoot }, captureSpawn);
+
+    assert.equal(code, 0);
+    assert.ok(spawnCalledWith !== null, "spawnImpl should have been called");
+    const expectedWorkflow = join(dir, ".takt", "en", "workflows", "kiro-impl.yaml");
+    const packageWorkflow = join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml");
+    const wIdx = spawnCalledWith.args.indexOf("-w");
+    assert.equal(spawnCalledWith.args[wIdx + 1], expectedWorkflow);
+    assert.ok(
+      !spawnCalledWith.args.includes(packageWorkflow),
+      `package workflow path must not be passed when project workflow is selected: ${JSON.stringify(spawnCalledWith.args)}`,
+    );
+    assert.ok(
+      !spawnCalledWith.args.some((arg) => arg.includes(join(repoRoot, ".takt", "en", "facets"))),
+      `package facet paths must not be passed to TAKT: ${JSON.stringify(spawnCalledWith.args)}`,
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
