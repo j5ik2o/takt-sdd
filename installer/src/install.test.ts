@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -30,6 +30,82 @@ function runCreateTaktSdd(args: readonly string[], cwd: string) {
   });
 }
 
+function walkFiles(dir: string, base = dir): string[] {
+  if (!existsSync(dir)) return [];
+  const files: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...walkFiles(full, base));
+    } else {
+      files.push(full.slice(base.length + 1));
+    }
+  }
+  return files.sort();
+}
+
+function snapshotFiles(dir: string): Map<string, string> {
+  return new Map(
+    walkFiles(dir).map((relativePath) => [
+      relativePath,
+      readFileSync(join(dir, relativePath), "utf-8"),
+    ]),
+  );
+}
+
+function writeExistingNoCopyProjectFiles(root: string): void {
+  mkdirSync(join(root, ".takt", "en", "workflows"), { recursive: true });
+  mkdirSync(join(root, ".takt", "en", "facets", "instructions"), { recursive: true });
+  mkdirSync(join(root, "scripts"), { recursive: true });
+  writeFileSync(join(root, ".takt", "config.yaml"), "language: ja\n# keep user config\n", "utf-8");
+  writeFileSync(
+    join(root, ".takt", ".manifest.json"),
+    `${JSON.stringify(
+      {
+        version: "1.0.0",
+        installedAt: "2026-06-17T00:00:00.000Z",
+        lang: "en",
+        files: {
+          ".takt/en/workflows/kiro-impl.yaml": "project-owned-workflow-hash",
+        },
+      },
+      null,
+      2,
+    )}\n`,
+    "utf-8",
+  );
+  writeFileSync(
+    join(root, ".takt", "en", "workflows", "kiro-impl.yaml"),
+    "name: project-owned-kiro-impl\nsteps: []\n",
+    "utf-8",
+  );
+  writeFileSync(
+    join(root, ".takt", "en", "facets", "instructions", "custom.md"),
+    "# Project-owned instruction\n",
+    "utf-8",
+  );
+  writeFileSync(join(root, "scripts", "kiro-staged.mjs"), "console.log('project-owned');\n", "utf-8");
+  writeFileSync(
+    join(root, "package.json"),
+    `${JSON.stringify(
+      {
+        name: "project-owned-app",
+        private: true,
+        scripts: {
+          "kiro:impl": "takt-sdd kiro-impl",
+          test: "node --test",
+        },
+        metadata: {
+          keep: "project-owned",
+        },
+      },
+      null,
+      2,
+    )}\n`,
+    "utf-8",
+  );
+}
+
 // Req 6.1 / 6.4: public create-takt-sdd help is retained, but only as retired guidance.
 test("create-takt-sdd --help/-h prints retired help and exits successfully", () => {
   const root = mkdtempSync(join(tmpdir(), "create-takt-help-"));
@@ -45,6 +121,26 @@ test("create-takt-sdd --help/-h prints retired help and exits successfully", () 
       assert.ok(!existsSync(join(root, ".takt")), "help must not create .takt");
       assert.ok(!existsSync(join(root, "scripts", "kiro-staged.mjs")), "help must not create scripts");
       assert.ok(!existsSync(join(root, "package.json")), "help must not create package.json");
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Req 6.1 / 6.3 / 7.3 / 7.4: help is metadata-only and must preserve project-owned files.
+test("create-takt-sdd --help/-h preserves existing manifest, ejected assets, script, and package metadata", () => {
+  const root = mkdtempSync(join(tmpdir(), "create-takt-help-preserve-"));
+  try {
+    writeExistingNoCopyProjectFiles(root);
+    for (const flag of ["--help", "-h"]) {
+      const before = snapshotFiles(root);
+      const result = runCreateTaktSdd([flag], root);
+
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(result.stderr, "");
+      assert.match(result.stdout, /create-takt-sdd is retired/i);
+      assert.match(result.stdout, /takt-sdd eject/);
+      assert.deepEqual(snapshotFiles(root), before);
     }
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -71,6 +167,26 @@ test("create-takt-sdd --version/-v prints package version and exits successfully
   }
 });
 
+// Req 6.1 / 6.3 / 7.3 / 7.4: version is metadata-only and must preserve project-owned files.
+test("create-takt-sdd --version/-v preserves existing manifest, ejected assets, script, and package metadata", () => {
+  const root = mkdtempSync(join(tmpdir(), "create-takt-version-preserve-"));
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf-8"));
+  try {
+    writeExistingNoCopyProjectFiles(root);
+    for (const flag of ["--version", "-v"]) {
+      const before = snapshotFiles(root);
+      const result = runCreateTaktSdd([flag], root);
+
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(result.stdout.trim(), pkg.version);
+      assert.equal(result.stderr, "");
+      assert.deepEqual(snapshotFiles(root), before);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 // Req 6.2 / 6.3 / 6.4 / 7.3 / 7.4: invalid legacy flags must not run old validation or write files.
 test("create-takt-sdd invalid legacy args print retired guidance without writing files", () => {
   const root = mkdtempSync(join(tmpdir(), "create-takt-retired-invalid-"));
@@ -87,6 +203,26 @@ test("create-takt-sdd invalid legacy args print retired guidance without writing
     assert.ok(!existsSync(join(root, ".takt", ".manifest.json")), "retired guidance must not create manifest");
     assert.ok(!existsSync(join(root, "scripts", "kiro-staged.mjs")), "retired guidance must not create scripts");
     assert.ok(!existsSync(join(root, "package.json")), "retired guidance must not create package.json");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Req 6.2 / 6.3 / 6.4 / 7.3 / 7.4: invalid legacy flags must preserve project-owned files.
+test("create-takt-sdd invalid legacy args preserve existing manifest, ejected assets, script, and package metadata", () => {
+  const root = mkdtempSync(join(tmpdir(), "create-takt-retired-invalid-preserve-"));
+  try {
+    writeExistingNoCopyProjectFiles(root);
+    const before = snapshotFiles(root);
+    const result = runCreateTaktSdd(["--lang", "bogus", "--force", "target-project"], root);
+
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, "");
+    assert.match(result.stderr, /create-takt-sdd is retired/i);
+    assert.match(result.stderr, /Use takt-sdd directly/i);
+    assert.match(result.stderr, /takt-sdd eject/);
+    assert.doesNotMatch(result.stderr, /--lang requires/);
+    assert.deepEqual(snapshotFiles(root), before);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -120,9 +256,29 @@ test("create-takt-sdd normal invocation prints retired guidance and preserves ex
   }
 });
 
+// Req 6.2 / 6.3 / 6.4 / 7.3 / 7.4: normal invocation must preserve existing no-copy project state.
+test("create-takt-sdd normal invocation preserves existing manifest, ejected assets, script, and package metadata", () => {
+  const root = mkdtempSync(join(tmpdir(), "create-takt-retired-normal-preserve-"));
+  try {
+    writeExistingNoCopyProjectFiles(root);
+    const before = snapshotFiles(root);
+    const result = runCreateTaktSdd([], root);
+
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, "");
+    assert.match(result.stderr, /create-takt-sdd is retired/i);
+    assert.match(result.stderr, /Use takt-sdd directly/i);
+    assert.match(result.stderr, /takt-sdd eject/);
+    assert.deepEqual(snapshotFiles(root), before);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 // Req 6.3 / 6.5 / 7.3 / 7.4: published bin must not regain the old installer copy path.
 test("create-takt-sdd public CLI does not import or call legacy install core", () => {
   const source = readFileSync(new URL("../src/cli.ts", import.meta.url), "utf-8");
+  const builtSource = readFileSync(new URL("./cli.js", import.meta.url), "utf-8");
 
   assert.ok(
     !/from\s+["']\.\/install\.js["']/.test(source),
@@ -131,6 +287,14 @@ test("create-takt-sdd public CLI does not import or call legacy install core", (
   assert.ok(
     !/\binstall\s*\(/.test(source),
     "create-takt-sdd CLI must not call install()",
+  );
+  assert.ok(
+    !/from\s+["']\.\/install\.js["']/.test(builtSource),
+    "built create-takt-sdd CLI must not import install()",
+  );
+  assert.ok(
+    !/\binstall\s*\(/.test(builtSource),
+    "built create-takt-sdd CLI must not call install()",
   );
 });
 

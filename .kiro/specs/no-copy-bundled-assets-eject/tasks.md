@@ -97,7 +97,7 @@
   - _Boundary:_ WorkflowRunner, AssetResolution
   - _Depends:_ 1.2
 
-- [ ] 5.2 (P) retired `init` と `create-takt-sdd` の no-write を検証する
+- [x] 5.2 (P) retired `init` と `create-takt-sdd` の no-write を検証する
   - help と通常実行の exit code、message、旧 option validation skip を検証する。
   - temp project で `.takt`、manifest、script、package metadata が作成・変更されないことを検証する。
   - `create-takt-sdd` public CLI が install core に到達しないことを検証する。

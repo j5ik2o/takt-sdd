@@ -89,6 +89,59 @@ function writeExistingProjectFiles(root) {
   );
 }
 
+function writeExistingNoCopyProjectFiles(root) {
+  mkdirSync(join(root, ".takt", "en", "workflows"), { recursive: true });
+  mkdirSync(join(root, ".takt", "en", "facets", "instructions"), { recursive: true });
+  mkdirSync(join(root, "scripts"), { recursive: true });
+  writeFileSync(join(root, ".takt", "config.yaml"), "language: ja\n# keep user config\n", "utf-8");
+  writeFileSync(
+    join(root, ".takt", ".manifest.json"),
+    `${JSON.stringify(
+      {
+        version: "1.0.0",
+        installedAt: "2026-06-17T00:00:00.000Z",
+        lang: "en",
+        files: {
+          ".takt/en/workflows/kiro-impl.yaml": "project-owned-workflow-hash",
+        },
+      },
+      null,
+      2,
+    )}\n`,
+    "utf-8",
+  );
+  writeFileSync(
+    join(root, ".takt", "en", "workflows", "kiro-impl.yaml"),
+    "name: project-owned-kiro-impl\nsteps: []\n",
+    "utf-8",
+  );
+  writeFileSync(
+    join(root, ".takt", "en", "facets", "instructions", "custom.md"),
+    "# Project-owned instruction\n",
+    "utf-8",
+  );
+  writeFileSync(join(root, "scripts", "kiro-staged.mjs"), "console.log('project-owned');\n", "utf-8");
+  writeFileSync(
+    join(root, "package.json"),
+    `${JSON.stringify(
+      {
+        name: "project-owned-app",
+        private: true,
+        scripts: {
+          "kiro:impl": "takt-sdd kiro-impl",
+          test: "node --test",
+        },
+        metadata: {
+          keep: "project-owned",
+        },
+      },
+      null,
+      2,
+    )}\n`,
+    "utf-8",
+  );
+}
+
 test("buildInitHelpText returns deprecated help that points to bundled assets and eject", () => {
   const text = buildInitHelpText("1.2.3");
   assert.match(text, /takt-sdd 1\.2\.3/);
@@ -151,6 +204,23 @@ test("main init help prints deprecated help to stdout and exits 0", async () => 
   assert.match(output, /takt-sdd eject/);
 });
 
+test("main init help preserves existing manifest, ejected assets, script, and package metadata", async () => {
+  const tmpDir = makeTmp();
+  try {
+    writeExistingNoCopyProjectFiles(tmpDir);
+    const before = snapshotFiles(tmpDir);
+
+    const { value: code, output } = await captureStdout(() => main(["--cwd", tmpDir, "init", "--help"]));
+
+    assert.equal(code, 0);
+    assert.match(output, /deprecated/i);
+    assert.match(output, /takt-sdd eject/);
+    assert.deepEqual(snapshotFiles(tmpDir), before);
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
 test("main init mixed help args print retired guidance to stderr, exit 1, and write no files", async () => {
   for (const args of [
     ["init", ".", "--help"],
@@ -198,6 +268,28 @@ test("main init normal run exits 1, emits retired guidance, skips old validation
     assert.deepEqual(snapshotFiles(tmpDir), before);
     assert.equal(existsSync(join(tmpDir, ".takt", ".manifest.json")), false);
     assert.equal(existsSync(join(tmpDir, ".takt", "workflows")), false);
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test("main init normal run preserves existing manifest, ejected assets, script, and package metadata", async () => {
+  const tmpDir = makeTmp();
+  try {
+    writeExistingNoCopyProjectFiles(tmpDir);
+    const before = snapshotFiles(tmpDir);
+
+    const { value: code, output } = await captureStderr(() =>
+      main(["--cwd", tmpDir, "init", ".", "--force", "--dry-run", "--lang", "bogus", "--tag", "v1"]),
+    );
+
+    assert.equal(code, 1);
+    assert.match(output, /retired/i);
+    assert.match(output, /bundled workflows\/facets/i);
+    assert.match(output, /takt-sdd eject/);
+    assert.doesNotMatch(output, /--lang must be/);
+    assert.doesNotMatch(output, /--tag is not supported/);
+    assert.deepEqual(snapshotFiles(tmpDir), before);
   } finally {
     rmSync(tmpDir, { recursive: true, force: true });
   }
