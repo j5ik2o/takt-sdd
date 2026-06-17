@@ -67,7 +67,7 @@
   - _Boundary:_ EjectCommand
   - _Depends:_ 3.1
 
-- [ ] 3.3 eject の dry-run、apply、result guidance を追加する
+- [x] 3.3 eject の dry-run、apply、result guidance を追加する
   - dry-run は plan、no-op、collision、overwrite 予定を表示し、file を変更しない。
   - force なし collision は collision list を表示して exit 1、force ありは differing target を overwrite する。
   - success result で copied、skipped、overwritten と project-owned の注意を表示する。

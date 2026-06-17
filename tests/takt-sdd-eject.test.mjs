@@ -54,6 +54,24 @@ function actionByRelativePath(plan) {
   return new Map(plan.items.map((item) => [item.relativePath, item.action]));
 }
 
+async function captureStdout(fn) {
+  const chunks = [];
+  const originalWrite = process.stdout.write;
+  process.stdout.write = function write(chunk, encoding, callback) {
+    chunks.push(String(chunk));
+    if (typeof encoding === "function") encoding();
+    if (typeof callback === "function") callback();
+    return true;
+  };
+
+  try {
+    const result = await fn();
+    return { result, stdout: chunks.join("") };
+  } finally {
+    process.stdout.write = originalWrite;
+  }
+}
+
 test("buildEjectHelpText shows usage, options, and version", () => {
   const text = buildEjectHelpText("2.3.4");
 
@@ -273,6 +291,168 @@ test("buildEjectPlan uses the resolved language when no language option is provi
       plan.items.map((item) => item.relativePath),
       [".takt/ja/workflows/kiro-impl.yaml"],
     );
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
+});
+
+test("runEject dry-run reports copy, no-op, and collisions without writing files", async () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    writePackageAsset(packageRoot, "en", "workflows", "new.yaml", "new\n");
+    writePackageAsset(packageRoot, "en", "facets", "same.md", "same\n");
+    writePackageAsset(packageRoot, "en", "facets", "changed.md", "upstream\n");
+    writeProjectAsset(projectRoot, "en", "facets", "same.md", "same\n");
+    const changedTarget = writeProjectAsset(
+      projectRoot,
+      "en",
+      "facets",
+      "changed.md",
+      "project\n",
+    );
+
+    const { result, stdout } = await captureStdout(() =>
+      runEject(["--lang", "en", "--dry-run"], { projectRoot, packageRoot }),
+    );
+
+    assert.equal(result, 1);
+    assert.match(stdout, /Dry run/i);
+    assert.match(stdout, /copy/i);
+    assert.match(stdout, /skip|no-op/i);
+    assert.match(stdout, /collision/i);
+    assert.match(stdout, /\.takt\/en\/workflows\/new\.yaml/);
+    assert.match(stdout, /\.takt\/en\/facets\/same\.md/);
+    assert.match(stdout, /\.takt\/en\/facets\/changed\.md/);
+    assert.equal(existsSync(join(projectRoot, ".takt", "en", "workflows", "new.yaml")), false);
+    assert.equal(readFileSync(changedTarget, "utf-8"), "project\n");
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
+});
+
+test("runEject dry-run force reports overwrites and does not write files", async () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    writePackageAsset(packageRoot, "en", "workflows", "new.yaml", "new\n");
+    writePackageAsset(packageRoot, "en", "facets", "changed.md", "upstream\n");
+    const changedTarget = writeProjectAsset(
+      projectRoot,
+      "en",
+      "facets",
+      "changed.md",
+      "project\n",
+    );
+
+    const { result, stdout } = await captureStdout(() =>
+      runEject(["--lang", "en", "--dry-run", "--force"], { projectRoot, packageRoot }),
+    );
+
+    assert.equal(result, 0);
+    assert.match(stdout, /Dry run/i);
+    assert.match(stdout, /copy/i);
+    assert.match(stdout, /overwrite/i);
+    assert.match(stdout, /\.takt\/en\/workflows\/new\.yaml/);
+    assert.match(stdout, /\.takt\/en\/facets\/changed\.md/);
+    assert.equal(existsSync(join(projectRoot, ".takt", "en", "workflows", "new.yaml")), false);
+    assert.equal(readFileSync(changedTarget, "utf-8"), "project\n");
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
+});
+
+test("runEject refuses collisions without force before any writes", async () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    writePackageAsset(packageRoot, "en", "workflows", "new.yaml", "new\n");
+    writePackageAsset(packageRoot, "en", "facets", "changed.md", "upstream\n");
+    const changedTarget = writeProjectAsset(
+      projectRoot,
+      "en",
+      "facets",
+      "changed.md",
+      "project\n",
+    );
+
+    const { result, stdout } = await captureStdout(() =>
+      runEject(["--lang", "en"], { projectRoot, packageRoot }),
+    );
+
+    assert.equal(result, 1);
+    assert.match(stdout, /collision/i);
+    assert.match(stdout, /\.takt\/en\/facets\/changed\.md/);
+    assert.equal(existsSync(join(projectRoot, ".takt", "en", "workflows", "new.yaml")), false);
+    assert.equal(readFileSync(changedTarget, "utf-8"), "project\n");
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
+});
+
+test("runEject applies copies and force overwrites with success guidance", async () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    writePackageAsset(packageRoot, "en", "workflows", "new.yaml", "new\n");
+    writePackageAsset(packageRoot, "en", "facets", "same.md", "same\n");
+    writePackageAsset(packageRoot, "en", "facets", "changed.md", "upstream\n");
+    writeProjectAsset(projectRoot, "en", "facets", "same.md", "same\n");
+    const changedTarget = writeProjectAsset(
+      projectRoot,
+      "en",
+      "facets",
+      "changed.md",
+      "project\n",
+    );
+
+    const { result, stdout } = await captureStdout(() =>
+      runEject(["--lang", "en", "--force"], { projectRoot, packageRoot }),
+    );
+
+    assert.equal(result, 0);
+    assert.equal(
+      readFileSync(join(projectRoot, ".takt", "en", "workflows", "new.yaml"), "utf-8"),
+      "new\n",
+    );
+    assert.equal(readFileSync(changedTarget, "utf-8"), "upstream\n");
+    assert.match(stdout, /copied:\s*1/i);
+    assert.match(stdout, /skipped:\s*1/i);
+    assert.match(stdout, /overwritten:\s*1/i);
+    assert.match(stdout, /project-owned/i);
+    assert.match(stdout, /\.takt\/config\.yaml/);
+    assert.match(stdout, /not create or change/i);
+    assert.equal(existsSync(join(projectRoot, ".takt", "config.yaml")), false);
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
+});
+
+test("runEject shows ja-only manual config guidance using config-only language", async () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    writePackageAsset(packageRoot, "ja", "workflows", "kiro-impl.yaml", "ja\n");
+    mkdirSync(join(projectRoot, ".takt"), { recursive: true });
+    writeFileSync(
+      join(projectRoot, ".takt", ".manifest.json"),
+      JSON.stringify({ lang: "ja" }),
+      "utf-8",
+    );
+
+    const { result, stdout } = await captureStdout(() =>
+      runEject(["--lang", "ja"], { projectRoot, packageRoot }),
+    );
+
+    assert.equal(result, 0);
+    assert.match(stdout, /language:\s*ja/);
+    assert.match(stdout, /\.takt\/config\.yaml/);
+    assert.match(stdout, /manual|yourself|set/i);
   } finally {
     rmSync(projectRoot, { recursive: true, force: true });
     rmSync(packageRoot, { recursive: true, force: true });

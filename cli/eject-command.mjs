@@ -2,16 +2,24 @@
  * cli/eject-command.mjs
  *
  * EjectCommand: option parsing and target language resolution for
- * `takt-sdd eject`, plus read-only copy planning for bundled assets.
- *
- * This task intentionally stops before file writes and CLI plan reporting.
+ * `takt-sdd eject`, plus copy planning, dry-run reporting, and apply.
  */
 
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+} from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { resolveLanguage } from "./asset-resolution.mjs";
+import {
+  getProjectConfigLanguage,
+  resolveLanguage,
+} from "./asset-resolution.mjs";
 import { UsageError } from "./init-adapter.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -95,6 +103,83 @@ function classifyEjectAction(sourcePath, targetPath, force) {
   if (!existsSync(targetPath)) return "copy";
   if (hasSameContent(sourcePath, targetPath)) return "skip";
   return force ? "overwrite" : "collision";
+}
+
+function countActions(plan) {
+  const counts = {
+    copy: 0,
+    skip: 0,
+    collision: 0,
+    overwrite: 0,
+  };
+
+  for (const item of plan.items) {
+    counts[item.action] += 1;
+  }
+
+  return counts;
+}
+
+function itemsByAction(plan, action) {
+  return plan.items.filter((item) => item.action === action);
+}
+
+function printActionSection(label, items) {
+  stdoutLine(`${label}: ${items.length}`);
+  for (const item of items) {
+    stdoutLine(`  ${item.relativePath}`);
+  }
+}
+
+function printPlan(plan, { dryRun }) {
+  if (dryRun) {
+    stdoutLine("Dry run: no files will be created or changed.");
+  }
+
+  stdoutLine("Eject plan:");
+  printActionSection("copy", itemsByAction(plan, "copy"));
+  printActionSection("skip (no-op)", itemsByAction(plan, "skip"));
+  printActionSection("overwrite", itemsByAction(plan, "overwrite"));
+  printActionSection("collision", itemsByAction(plan, "collision"));
+}
+
+function printCollisionFailure(plan, { dryRun }) {
+  if (!dryRun) {
+    stdoutLine("Eject aborted: collisions were found and no files were written.");
+  }
+
+  printActionSection("collision", plan.collisions);
+  stdoutLine("Use --force to overwrite differing project-owned files.");
+}
+
+function applyEjectPlan(plan) {
+  for (const item of plan.items) {
+    if (item.action !== "copy" && item.action !== "overwrite") continue;
+
+    mkdirSync(dirname(item.targetPath), { recursive: true });
+    copyFileSync(item.sourcePath, item.targetPath);
+  }
+}
+
+function printSuccessResult(plan, projectRoot, languages) {
+  const counts = countActions(plan);
+
+  stdoutLine("Eject completed.");
+  stdoutLine(`copied: ${counts.copy}`);
+  stdoutLine(`skipped: ${counts.skip}`);
+  stdoutLine(`overwritten: ${counts.overwrite}`);
+  stdoutLine("Ejected files are project-owned and will not be automatically updated.");
+  stdoutLine("takt-sdd eject does not create or change .takt/config.yaml.");
+
+  if (
+    languages.length === 1 &&
+    languages[0] === "ja" &&
+    getProjectConfigLanguage(projectRoot) !== "ja"
+  ) {
+    stdoutLine(
+      "For ja-only eject, set language: ja in .takt/config.yaml yourself if the project should use Japanese workflows by default.",
+    );
+  }
 }
 
 /**
@@ -287,8 +372,7 @@ export function buildEjectPlan(ctx, options) {
 }
 
 /**
- * Placeholder command runner for help, validation, and target language
- * resolution. Plan reporting and writes are implemented in later tasks.
+ * Run `takt-sdd eject`.
  *
  * @param {readonly string[]} argv
  * @param {{ readonly projectRoot: string, readonly packageRoot: string }} ctx
@@ -297,12 +381,34 @@ export function buildEjectPlan(ctx, options) {
 export async function runEject(argv, ctx) {
   const options = parseEjectArgs(argv);
   const packageRoot = ctx?.packageRoot ?? defaultPackageRoot;
+  const projectRoot = ctx.projectRoot;
 
   if (options.help) {
     stdoutLine(buildEjectHelpText(readPackageVersion(packageRoot)));
     return 0;
   }
 
-  resolveEjectTargetLanguages(options, ctx.projectRoot);
+  const languages = resolveEjectTargetLanguages(options, projectRoot);
+  const plan = buildEjectPlan(
+    { projectRoot, packageRoot },
+    { ...options, languages },
+  );
+
+  if (options.dryRun) {
+    printPlan(plan, { dryRun: true });
+    if (plan.collisions.length > 0) {
+      printCollisionFailure(plan, { dryRun: true });
+      return 1;
+    }
+    return 0;
+  }
+
+  if (plan.collisions.length > 0) {
+    printCollisionFailure(plan, { dryRun: false });
+    return 1;
+  }
+
+  applyEjectPlan(plan);
+  printSuccessResult(plan, projectRoot, languages);
   return 0;
 }
