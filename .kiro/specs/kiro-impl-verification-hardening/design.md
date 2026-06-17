@@ -220,3 +220,4 @@ quality_gates:
 - **R3（低）**: worktree モードの末尾 `git add -A` 自動コミットは無効化 config が無いため残存。per-task commit で clean tree を保ち実害を最小化、SKILL に明記。
 - **R4（低）**: タスク agent が verify.sh を改変するとゲートを骨抜きにできる。タスク境界外編集として scope-guard/レビューで検出する前提。
 - **R5（中）**: ゲート失敗は同一ステップへ差し戻される（takt ネイティブ）。恒常的に赤いゲートがステップを無限再実行しないよう、実装時に takt のゲート再試行上限の有無を確認し、無い場合は loop_monitors（execute-task 再入の計数）で停止に至ることを runtime smoke で確認する。
+- **R6（中・既知の限界 / PR #104 review 指摘）**: `execute-task` の command `quality_gates` は無条件実行のため、`verify.sh` がある repo で実装者が `BLOCKED` / `NEEDS_CONTEXT` を返すと、ゲート失敗が同一ステップ差し戻しを誘発し `STATUS BLOCKED → debug-task` ルーティングを先取りし得る（debug-task の root-cause 分析がスキップされる）。緩和: 再実行は `loop_monitors` / `max_steps` で有界化され最終的に blocker へ収束する。根本解決（`READY_FOR_REVIEW` 時のみゲートを走らせる status 条件付きゲート）は現行 takt の無条件 `quality_gates` では表現できないため、**takt 側の機能拡張を要する既知の限界**として記録する。skill autonomous mode 側は親が `verify.sh` 非ゼロを debug/remediation へ明示ルーティングして回避済み。
