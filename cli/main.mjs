@@ -13,9 +13,10 @@
  * Typed errors (UsageError / InitError from init-adapter, PreflightError from
  * workflow-runner) are caught here and written to stderr → exit 1.
  *
- * Setup error: if installer/dist/install.js is absent (fresh checkout, not yet
- * built), an explicit friendly error advising `npm run build:installer` is shown
- * instead of leaking ERR_MODULE_NOT_FOUND.
+ * Workflow setup error: if installer/dist/install.js is absent for workflow
+ * execution, an explicit friendly error advising `npm run build:installer` is
+ * shown instead of leaking ERR_MODULE_NOT_FOUND. Retired init does not require
+ * installer/dist/install.js.
  *
  * No args → print help, return 1 (same as unknown command).
  */
@@ -33,9 +34,7 @@ import {
 import {
   UsageError,
   InitError,
-  buildInitHelpText,
-  parseInitArgs,
-  runInit,
+  runRetiredInit,
 } from "./init-adapter.mjs";
 
 import {
@@ -198,18 +197,7 @@ export async function main(argv) {
   try {
     // ── init ──────────────────────────────────────────────────────────────────
     if (command === "init") {
-      if (commandArgs.includes("--help") || commandArgs.includes("-h")) {
-        const ver = readPackageVersion();
-        stdoutLine(buildInitHelpText(ver));
-        return 0;
-      }
-      checkInstallerBuilt();
-      const initOpts = parseInitArgs(commandArgs);
-      const absoluteTargetDir = resolve(projectRoot, initOpts.targetDir);
-      return await runInit(
-        { ...initOpts, targetDir: absoluteTargetDir },
-        ctx,
-      );
+      return runRetiredInit(commandArgs);
     }
 
     // ── run <workflow> ────────────────────────────────────────────────────────

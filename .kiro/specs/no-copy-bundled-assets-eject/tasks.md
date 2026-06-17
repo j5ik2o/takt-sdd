@@ -20,7 +20,7 @@
   - _Depends:_ 1.1
 
 - [ ] 2. 廃止導線と help surface を安全化する
-- [ ] 2.1 `takt-sdd init` を retired guidance のみに変更する
+- [x] 2.1 `takt-sdd init` を retired guidance のみに変更する
   - help は deprecated help を表示して成功終了し、help 以外は旧 option を検証せず retired guidance を返す。
   - installer core、asset copy、manifest、script、package metadata の書き込み経路へ到達しないようにする。
   - guidance で package bundled assets を通常利用することと、カスタマイズには `eject` を使うことを示す。

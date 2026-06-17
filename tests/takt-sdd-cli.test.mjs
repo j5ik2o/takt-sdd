@@ -182,11 +182,11 @@ test("buildHelpText contains global options --cwd, --help, --version", () => {
   assert.ok(text.includes("--version"), `buildHelpText missing --version`);
 });
 
-test("buildInitHelpText contains init usage and --force", () => {
+test("buildInitHelpText contains deprecated init guidance and eject migration", () => {
   const text = buildInitHelpText("1.0.0");
-  assert.ok(text.includes("takt-sdd init <dir>"), `buildInitHelpText missing init usage`);
-  assert.ok(text.includes("--force"), `buildInitHelpText missing --force`);
-  assert.ok(text.includes("--dry-run"), `buildInitHelpText missing --dry-run`);
+  assert.match(text, /deprecated/i);
+  assert.match(text, /bundled workflows\/facets/i);
+  assert.match(text, /takt-sdd eject/);
 });
 
 test("buildHelpText contains the provided version string", () => {
@@ -820,21 +820,22 @@ test("main(['--help']): output contains 'run'", async () => {
   assert.ok(output.includes("run"), `--help output should contain 'run', got: ${output}`);
 });
 
-test("main(['init', '--help']): returns exit code 0 and shows --force", async () => {
+test("main(['init', '--help']): returns exit code 0 and shows deprecated guidance", async () => {
   const output = await captureStdout(async () => {
     const c = await main(["init", "--help"]);
     assert.equal(c, 0, `Expected exit code 0, got ${c}`);
   });
-  assert.ok(output.includes("takt-sdd init <dir>"), `init --help output should contain init usage, got: ${output}`);
-  assert.ok(output.includes("--force"), `init --help output should contain --force, got: ${output}`);
+  assert.match(output, /deprecated/i);
+  assert.match(output, /takt-sdd eject/);
 });
 
-test("main(['init', '-h']): returns exit code 0 and shows --force", async () => {
+test("main(['init', '-h']): returns exit code 0 and shows deprecated guidance", async () => {
   const output = await captureStdout(async () => {
     const c = await main(["init", "-h"]);
     assert.equal(c, 0, `Expected exit code 0, got ${c}`);
   });
-  assert.ok(output.includes("--force"), `init -h output should contain --force, got: ${output}`);
+  assert.match(output, /deprecated/i);
+  assert.match(output, /takt-sdd eject/);
 });
 
 // ─── --version: exit 0, output matches package.json version ───
