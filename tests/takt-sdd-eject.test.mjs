@@ -1,10 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { dirname, join } from "node:path";
 import os from "node:os";
 import { UsageError } from "../cli/init-adapter.mjs";
 import {
+  buildEjectPlan,
   buildEjectHelpText,
   parseEjectArgs,
   resolveEjectTargetLanguages,
@@ -21,11 +29,29 @@ function writeProjectConfig(projectRoot, lang) {
   writeFileSync(join(taktDir, "config.yaml"), `language: ${lang}\n`, "utf-8");
 }
 
+function writePackageAsset(packageRoot, lang, section, relativePath, content) {
+  const assetPath = join(packageRoot, ".takt", lang, section, relativePath);
+  mkdirSync(dirname(assetPath), { recursive: true });
+  writeFileSync(assetPath, content, "utf-8");
+  return assetPath;
+}
+
+function writeProjectAsset(projectRoot, lang, section, relativePath, content) {
+  const assetPath = join(projectRoot, ".takt", lang, section, relativePath);
+  mkdirSync(dirname(assetPath), { recursive: true });
+  writeFileSync(assetPath, content, "utf-8");
+  return assetPath;
+}
+
 function assertUsageError(fn, messagePattern) {
   assert.throws(
     fn,
     (err) => err instanceof UsageError && messagePattern.test(err.message),
   );
+}
+
+function actionByRelativePath(plan) {
+  return new Map(plan.items.map((item) => [item.relativePath, item.action]));
 }
 
 test("buildEjectHelpText shows usage, options, and version", () => {
@@ -147,4 +173,108 @@ test("parseEjectArgs rejects unknown options and positional arguments", () => {
     () => parseEjectArgs(["target-dir"]),
     /Unexpected argument: target-dir/,
   );
+});
+
+test("buildEjectPlan classifies package workflows and facets without non-asset files", () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    writePackageAsset(packageRoot, "en", "workflows", "new.yaml", "new workflow\n");
+    writePackageAsset(packageRoot, "en", "facets", "shared.md", "same facet\n");
+    writePackageAsset(packageRoot, "en", "facets", "changed.md", "upstream facet\n");
+    writePackageAsset(packageRoot, "en", "facets", "nested/deep.md", "nested facet\n");
+    writeFileSync(join(packageRoot, "package.json"), "{}\n", "utf-8");
+    writeFileSync(join(packageRoot, ".takt", "config.yaml"), "language: en\n", "utf-8");
+    writeFileSync(join(packageRoot, ".takt", ".manifest.json"), "{}\n", "utf-8");
+    mkdirSync(join(packageRoot, "scripts"), { recursive: true });
+    writeFileSync(join(packageRoot, "scripts", "kiro-staged.mjs"), "script\n", "utf-8");
+    mkdirSync(join(packageRoot, ".takt", "en", "metadata"), { recursive: true });
+    writeFileSync(join(packageRoot, ".takt", "en", "metadata", "ignored.json"), "{}\n", "utf-8");
+
+    writeProjectAsset(projectRoot, "en", "facets", "shared.md", "same facet\n");
+    const changedTarget = writeProjectAsset(
+      projectRoot,
+      "en",
+      "facets",
+      "changed.md",
+      "project facet\n",
+    );
+    const extraProjectFile = writeProjectAsset(
+      projectRoot,
+      "en",
+      "workflows",
+      "project-only.yaml",
+      "project only\n",
+    );
+    writeProjectConfig(projectRoot, "en");
+    writeFileSync(join(projectRoot, ".takt", ".manifest.json"), "{}\n", "utf-8");
+    mkdirSync(join(projectRoot, "scripts"), { recursive: true });
+    writeFileSync(join(projectRoot, "scripts", "kiro-staged.mjs"), "project script\n", "utf-8");
+    writeFileSync(join(projectRoot, "package.json"), "{}\n", "utf-8");
+
+    const plan = buildEjectPlan(
+      { projectRoot, packageRoot },
+      parseEjectArgs(["--lang", "en"]),
+    );
+
+    assert.deepEqual(actionByRelativePath(plan), new Map([
+      [".takt/en/facets/changed.md", "collision"],
+      [".takt/en/facets/nested/deep.md", "copy"],
+      [".takt/en/facets/shared.md", "skip"],
+      [".takt/en/workflows/new.yaml", "copy"],
+    ]));
+    assert.deepEqual(
+      plan.collisions.map((item) => item.relativePath),
+      [".takt/en/facets/changed.md"],
+    );
+    assert.equal(existsSync(join(projectRoot, ".takt", "en", "workflows", "new.yaml")), false);
+    assert.equal(readFileSync(changedTarget, "utf-8"), "project facet\n");
+    assert.equal(readFileSync(extraProjectFile, "utf-8"), "project only\n");
+    assert.equal(readFileSync(join(projectRoot, "scripts", "kiro-staged.mjs"), "utf-8"), "project script\n");
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
+});
+
+test("buildEjectPlan classifies differing targets as overwrite when force is set", () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    writePackageAsset(packageRoot, "en", "workflows", "kiro-impl.yaml", "upstream\n");
+    writeProjectAsset(projectRoot, "en", "workflows", "kiro-impl.yaml", "project\n");
+
+    const plan = buildEjectPlan(
+      { projectRoot, packageRoot },
+      parseEjectArgs(["--lang", "en", "--force"]),
+    );
+
+    assert.deepEqual(actionByRelativePath(plan), new Map([
+      [".takt/en/workflows/kiro-impl.yaml", "overwrite"],
+    ]));
+    assert.deepEqual(plan.collisions, []);
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
+});
+
+test("buildEjectPlan uses the resolved language when no language option is provided", () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    writeProjectConfig(projectRoot, "ja");
+    writePackageAsset(packageRoot, "en", "workflows", "kiro-impl.yaml", "english\n");
+    writePackageAsset(packageRoot, "ja", "workflows", "kiro-impl.yaml", "japanese\n");
+
+    const plan = buildEjectPlan({ projectRoot, packageRoot }, parseEjectArgs([]));
+
+    assert.deepEqual(
+      plan.items.map((item) => item.relativePath),
+      [".takt/ja/workflows/kiro-impl.yaml"],
+    );
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
 });

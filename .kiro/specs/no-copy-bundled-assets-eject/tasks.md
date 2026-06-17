@@ -57,7 +57,7 @@
   - _Boundary:_ EjectCommand
   - _Depends:_ 1.1
 
-- [ ] 3.2 eject の copy plan と collision 判定を追加する
+- [x] 3.2 eject の copy plan と collision 判定を追加する
   - package bundled workflows/facets だけを列挙し、config、manifest、script、package metadata は plan から除外する。
   - target の missing、same content、different content を copy、skip、collision、overwrite 予定に分類する。
   - collision without force では write phase に入らない plan 結果を返す。
