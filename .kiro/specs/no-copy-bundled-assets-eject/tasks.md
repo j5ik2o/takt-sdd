@@ -10,7 +10,7 @@
   - _Boundary:_ AssetResolution
   - _Depends:_ none
 
-- [ ] 1.2 WorkflowRunner を package bundled runtime 前提へ更新する
+- [x] 1.2 WorkflowRunner を package bundled runtime 前提へ更新する
   - preflight を language と workflow source の存在確認へ絞り、project-local `takt` binary の有無を実行可否に使わない。
   - selected workflow path だけを TAKT に渡し、package workflow と project facets の暗黙混在を作らない。
   - missing workflow error は workflow name と language を示し、`init` 実行を求めない。

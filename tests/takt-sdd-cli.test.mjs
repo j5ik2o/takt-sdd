@@ -251,6 +251,17 @@ function writeWorkflowAsset(projectRoot, lang, name, slotType = "lang") {
 }
 
 /**
+ * Helper: create a package bundled workflow YAML in the given lang slot.
+ */
+function writePackageWorkflowAsset(packageRoot, lang, name) {
+  const dir = join(packageRoot, ".takt", lang, "workflows");
+  mkdirSync(dir, { recursive: true });
+  const workflowPath = join(dir, `${name}.yaml`);
+  writeFileSync(workflowPath, `# package workflow ${name}\nsteps: []\n`, "utf-8");
+  return workflowPath;
+}
+
+/**
  * Helper: write a minimal project package.json.
  */
 function writePkgJson(projectRoot, devDependencies = {}) {
@@ -291,23 +302,56 @@ function makeSpawnImpl(exitCode) {
   };
 }
 
-// ─── preflight: uninitialized (.takt absent) → PreflightError with init guidance ───
+// ─── preflight: uninitialized (.takt absent) → package bundled workflow ───
 
-test("preflight: uninitialized project (.takt absent) throws PreflightError mentioning takt-sdd init", () => {
+test("preflight: uninitialized project (.takt absent) resolves package bundled workflow", () => {
   const dir = makeTmpDir();
   try {
     const ctx = { projectRoot: dir, packageRoot: repoRoot };
-    assert.throws(
-      () => preflight(ctx, "kiro-impl"),
-      (err) => {
-        assert.ok(err instanceof PreflightError, `Expected PreflightError, got ${err.constructor.name}`);
-        assert.ok(
-          err.message.includes("takt-sdd init"),
-          `Expected message to include 'takt-sdd init', got: ${err.message}`,
-        );
-        return true;
-      },
-    );
+    const result = preflight(ctx, "kiro-impl");
+    assert.equal(result.lang, "en");
+    assert.equal(result.workflowSource, "package");
+    assert.equal(result.workflowPath, join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml"));
+    assert.equal(existsSync(join(dir, ".takt")), false);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("preflight: project root workflow remains the highest-priority override", () => {
+  const dir = makeTmpDir();
+  try {
+    writeWorkflowAsset(dir, "en", "kiro-impl", "root");
+    const result = preflight({ projectRoot: dir, packageRoot: repoRoot }, "kiro-impl");
+    assert.equal(result.workflowSource, "project-root");
+    assert.equal(result.workflowPath, join(dir, ".takt", "workflows", "kiro-impl.yaml"));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("preflight: project language workflow overrides package bundled workflow", () => {
+  const dir = makeTmpDir();
+  try {
+    writeWorkflowAsset(dir, "en", "kiro-impl");
+    const result = preflight({ projectRoot: dir, packageRoot: repoRoot }, "kiro-impl");
+    assert.equal(result.workflowSource, "project-language");
+    assert.equal(result.workflowPath, join(dir, ".takt", "en", "workflows", "kiro-impl.yaml"));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("preflight: project facet-only files do not change package workflow selection", () => {
+  const dir = makeTmpDir();
+  try {
+    const facetDir = join(dir, ".takt", "en", "facets", "personas");
+    mkdirSync(facetDir, { recursive: true });
+    writeFileSync(join(facetDir, "coding-reviewer.md"), "# project-local facet only\n", "utf-8");
+
+    const result = preflight({ projectRoot: dir, packageRoot: repoRoot }, "kiro-impl");
+    assert.equal(result.workflowSource, "package");
+    assert.equal(result.workflowPath, join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml"));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -317,24 +361,29 @@ test("preflight: uninitialized project (.takt absent) throws PreflightError ment
 
 test("preflight: ja lang with missing ja workflow asset throws PreflightError (no en fallback)", () => {
   const dir = makeTmpDir();
+  const packageRoot = makeTmpDir();
   try {
     writeManifest(dir, "ja");
     // Write only en asset — ja should NOT fall back
     writeWorkflowAsset(dir, "en", "kiro-impl");
-    const ctx = { projectRoot: dir, packageRoot: repoRoot };
+    writePackageWorkflowAsset(packageRoot, "en", "kiro-impl");
+    const ctx = { projectRoot: dir, packageRoot };
     assert.throws(
       () => preflight(ctx, "kiro-impl"),
       (err) => {
         assert.ok(err instanceof PreflightError, `Expected PreflightError, got ${err.constructor.name}`);
+        assert.ok(err.message.includes("kiro-impl"), `Expected message to include workflow name, got: ${err.message}`);
+        assert.ok(err.message.includes("ja"), `Expected message to include language, got: ${err.message}`);
         assert.ok(
-          err.message.includes("takt-sdd init"),
-          `Expected message to include 'takt-sdd init', got: ${err.message}`,
+          !err.message.includes("takt-sdd init"),
+          `Missing workflow message must not mention 'takt-sdd init', got: ${err.message}`,
         );
         return true;
       },
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
   }
 });
 
@@ -363,37 +412,18 @@ test("preflight: opsx-* workflow with missing openspec binary does NOT throw Pre
   }
 });
 
-// ─── preflight: package.json declares takt dep but binary missing → PreflightError listing takt only ───
+// ─── preflight: package.json declares takt dep but binary missing → packageRoot takt is used ───
 
-test("preflight: declared takt devDependency with missing takt binary throws PreflightError listing takt", () => {
+test("preflight: declared takt devDependency with missing project-local takt binary does not fail", () => {
   const dir = makeTmpDir();
   try {
     writeManifest(dir, "en");
-    writeWorkflowAsset(dir, "en", "kiro-impl");
     // Declare takt dep only — @fission-ai/openspec and cc-sdd are no longer checked
     writePkgJson(dir, { takt: "0.43.0" });
     const ctx = { projectRoot: dir, packageRoot: repoRoot };
-    assert.throws(
-      () => preflight(ctx, "kiro-impl"),
-      (err) => {
-        assert.ok(err instanceof PreflightError, `Expected PreflightError, got ${err.constructor.name}`);
-        // Message should list takt as missing
-        assert.ok(
-          err.message.includes("takt"),
-          `Expected message to list 'takt' as missing, got: ${err.message}`,
-        );
-        // Message must NOT mention openspec or cc-sdd
-        assert.ok(
-          !err.message.includes("openspec"),
-          `Message must not mention 'openspec', got: ${err.message}`,
-        );
-        assert.ok(
-          !err.message.includes("cc-sdd"),
-          `Message must not mention 'cc-sdd', got: ${err.message}`,
-        );
-        return true;
-      },
-    );
+    const result = preflight(ctx, "kiro-impl");
+    assert.equal(result.workflowSource, "package");
+    assert.equal(result.workflowPath, join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml"));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -416,16 +446,25 @@ test("preflight: @fission-ai/openspec and cc-sdd declared in package.json withou
   }
 });
 
-// ─── preflight: spawn does NOT reach in each failure case ───
+// ─── preflight: spawn reaches package workflow in package-runtime cases ───
 
-test("preflight failure (uninitialized): spawnImpl is never called", async () => {
+test("uninitialized project: runWorkflow reaches spawn with package bundled workflow", async () => {
   const dir = makeTmpDir();
   try {
     const ctx = { projectRoot: dir, packageRoot: repoRoot };
-    await assert.rejects(
-      runWorkflow("kiro-impl", [], ctx, noSpawnImpl),
-      (err) => err instanceof PreflightError,
-    );
+    let spawnCalledWith = null;
+    const captureSpawn = (nodeExec, args, opts) => {
+      spawnCalledWith = { nodeExec, args, opts };
+      const emitter = new EventEmitter();
+      process.nextTick(() => emitter.emit("close", 0, null));
+      return emitter;
+    };
+    const code = await runWorkflow("kiro-impl", [], ctx, captureSpawn);
+    assert.equal(code, 0);
+    assert.ok(spawnCalledWith !== null, "spawnImpl should have been called");
+    assert.equal(spawnCalledWith.opts.cwd, dir);
+    const wIdx = spawnCalledWith.args.indexOf("-w");
+    assert.equal(spawnCalledWith.args[wIdx + 1], join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml"));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -433,32 +472,37 @@ test("preflight failure (uninitialized): spawnImpl is never called", async () =>
 
 test("preflight failure (ja lang, ja asset missing): spawnImpl is never called", async () => {
   const dir = makeTmpDir();
+  const packageRoot = makeTmpDir();
   try {
     writeManifest(dir, "ja");
     writeWorkflowAsset(dir, "en", "kiro-impl"); // en only — ja not present
-    const ctx = { projectRoot: dir, packageRoot: repoRoot };
+    writePackageWorkflowAsset(packageRoot, "en", "kiro-impl");
+    const ctx = { projectRoot: dir, packageRoot };
     await assert.rejects(
       runWorkflow("kiro-impl", [], ctx, noSpawnImpl),
       (err) => err instanceof PreflightError,
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
   }
 });
 
-test("preflight failure (declared takt dep, takt binary missing): spawnImpl is never called", async () => {
+test("declared takt dep with missing project-local binary: runWorkflow reaches spawn", async () => {
   const dir = makeTmpDir();
   try {
     writeManifest(dir, "en");
-    writeWorkflowAsset(dir, "en", "kiro-impl");
     // Only takt declared — cc-sdd no longer in the map
     writePkgJson(dir, { takt: "0.43.0" });
     // No binaries in node_modules/.bin
     const ctx = { projectRoot: dir, packageRoot: repoRoot };
-    await assert.rejects(
-      runWorkflow("kiro-impl", [], ctx, noSpawnImpl),
-      (err) => err instanceof PreflightError,
-    );
+    let spawnCalled = false;
+    const code = await runWorkflow("kiro-impl", [], ctx, (...args) => {
+      spawnCalled = true;
+      return makeSpawnImpl(0)(...args);
+    });
+    assert.equal(code, 0);
+    assert.equal(spawnCalled, true);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -563,20 +607,26 @@ test("ja config.yaml: resolves ja workflow, not en (no language fallback)", asyn
 
 test("ja config.yaml with only en asset: no fallback — throws PreflightError", async () => {
   const dir = makeTmpDir();
+  const packageRoot = makeTmpDir();
   try {
     writeManifest(dir, "en");
     writeConfigYaml(dir, "ja");
     writeWorkflowAsset(dir, "en", "kiro-impl"); // only en
-    const ctx = { projectRoot: dir, packageRoot: repoRoot };
-    await assert.rejects(
-      runWorkflow("kiro-impl", [], ctx, noSpawnImpl),
+    writePackageWorkflowAsset(packageRoot, "en", "kiro-impl");
+    const ctx = { projectRoot: dir, packageRoot };
+    assert.throws(
+      () => preflight(ctx, "kiro-impl"),
       (err) => {
         assert.ok(err instanceof PreflightError, `Expected PreflightError`);
+        assert.ok(err.message.includes("kiro-impl"), `Expected workflow name in message, got: ${err.message}`);
+        assert.ok(err.message.includes("ja"), `Expected language in message, got: ${err.message}`);
+        assert.ok(!err.message.includes("takt-sdd init"), `Message must not mention init, got: ${err.message}`);
         return true;
       },
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
   }
 });
 
@@ -670,14 +720,27 @@ test("resolveWorkflowPathStrict: returns undefined when no asset exists", () => 
   }
 });
 
-test("resolveWorkflowPathStrict: ja lang does not return en asset (no language fallback)", () => {
+test("resolveWorkflowPathStrict: falls back to package workflow when packageRoot is provided", () => {
   const dir = makeTmpDir();
   try {
+    const result = resolveWorkflowPathStrict(dir, "en", "kiro-impl", repoRoot);
+    assert.equal(result, join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml"));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("resolveWorkflowPathStrict: ja lang does not return en asset (no language fallback)", () => {
+  const dir = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
     writeWorkflowAsset(dir, "en", "kiro-impl", "lang"); // only en
-    const result = resolveWorkflowPathStrict(dir, "ja", "kiro-impl");
+    writePackageWorkflowAsset(packageRoot, "en", "kiro-impl");
+    const result = resolveWorkflowPathStrict(dir, "ja", "kiro-impl", packageRoot);
     assert.equal(result, undefined, "Expected undefined: ja should not resolve en asset");
   } finally {
     rmSync(dir, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
   }
 });
 
@@ -913,51 +976,31 @@ test("main(['run']): returns exit code 1 (missing workflow name)", async () => {
   });
 });
 
-// ─── 'run kiro-impl' normalizes to same path as direct 'kiro-impl' ───
-// Both should go through workflow-runner and hit preflight. Using an uninitialized
-// tmp dir, both should throw a PreflightError with an identical 'takt-sdd init' message.
+// ─── 'run kiro-impl' normalizes to same package workflow as direct 'kiro-impl' ───
 
-test("main(['run', 'kiro-impl', '--cwd', <uninit>]): same PreflightError message as direct kiro-impl", async () => {
+test("runWorkflow direct and normalized forms use the same package workflow for uninitialized projects", async () => {
   const dir = makeTmpDir();
   try {
-    const errDirect = await captureStderr(async () => {
-      await main(["--cwd", dir, "kiro-impl"]);
-    });
-
-    const errRun = await captureStderr(async () => {
-      await main(["--cwd", dir, "run", "kiro-impl"]);
-    });
-
-    // Both should produce output with 'takt-sdd init' guidance
-    assert.ok(
-      errDirect.includes("takt-sdd init"),
-      `Direct kiro-impl should mention 'takt-sdd init', got: ${errDirect}`,
-    );
-    assert.ok(
-      errRun.includes("takt-sdd init"),
-      `'run kiro-impl' should mention 'takt-sdd init', got: ${errRun}`,
-    );
-    // Messages should be identical (same code path)
-    assert.equal(errDirect, errRun, "Direct and 'run' forms should produce identical error messages");
+    const ctx = { projectRoot: dir, packageRoot: repoRoot };
+    const direct = preflight(ctx, "kiro-impl");
+    const normalized = preflight(ctx, "kiro-impl");
+    assert.deepEqual(direct, normalized);
+    assert.equal(direct.workflowSource, "package");
+    assert.equal(direct.workflowPath, join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml"));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 });
 
-// ─── --cwd <fixture>: sets projectRoot (uninitialized → preflight error proves --cwd honored) ───
+// ─── --cwd <fixture>: package runtime does not require project .takt ───
 
-test("main(['--cwd', <uninit-dir>, 'kiro-impl']): preflight error shows takt-sdd init (--cwd honored)", async () => {
+test("preflight with uninitialized --cwd target resolves package workflow without writing .takt", () => {
   const dir = makeTmpDir();
   try {
-    let captured = "";
-    captured = await captureStderr(async () => {
-      const c = await main(["--cwd", dir, "kiro-impl"]);
-      assert.equal(c, 1, `Expected exit code 1 from preflight, got ${c}`);
-    });
-    assert.ok(
-      captured.includes("takt-sdd init"),
-      `Expected 'takt-sdd init' in error for uninitialized --cwd project, got: ${captured}`,
-    );
+    const result = preflight({ projectRoot: dir, packageRoot: repoRoot }, "kiro-impl");
+    assert.equal(result.workflowSource, "package");
+    assert.equal(result.workflowPath, join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml"));
+    assert.equal(existsSync(join(dir, ".takt")), false);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
