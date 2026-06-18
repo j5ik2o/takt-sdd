@@ -165,28 +165,28 @@ npx -y skills add j5ik2o/ai-tools --skill takt-task-builder
 
 ## Kiro 互換ワークフロー
 
-SDD ワークフローの実行には `kiro:*` scripts を使う。`cc-sdd:*` npm scripts の互換サーフェスは v2.0.0 で終了した。
+SDD ワークフローは `takt-sdd kiro-*` を直接実行する。`kiro:*` npm scripts は任意の project-owned alias であり、`takt-sdd init` や `create-takt-sdd` はそれらを作成・更新しない。`cc-sdd:*` npm scripts の互換サーフェスは v2.0.0 で終了した。
 
-| フェーズ | npm script | workflow identity | 内容 |
-|---------|------------|-------------------|------|
-| Discovery | `kiro:discovery` | `kiro-discovery` | feature idea を分類し、必要に応じて brief/roadmap を更新 |
-| Spec quick path | `kiro:spec:quick` | `kiro-spec-quick` | requirements/design/tasks を closed-loop で生成 |
-| Requirements | `kiro:spec:requirements` | `kiro-spec-requirements` | EARS 形式の要件を生成 |
-| Gap validation | `kiro:validate:gap` | `kiro-validate-gap` | 要件と既存コードベースの差分を確認 |
-| Design | `kiro:spec:design` | `kiro-spec-design` | 技術設計と発見ログを生成 |
-| Design validation | `kiro:validate:design` | `kiro-validate-design` | 設計品質をレビューし GO/NO-GO を返す |
-| Tasks | `kiro:spec:tasks` | `kiro-spec-tasks` | 実装タスクを生成 |
-| Batch specs | `kiro:spec:batch` | `kiro-spec-batch` | roadmap の依存順に複数 spec を生成 |
-| Status | `kiro:spec:status` | `kiro-spec-status` | spec phase、approval、readiness を報告 |
-| Implementation | `kiro:impl` | `kiro-impl` | review/debug/verify gate 付きで approved task を実装 |
-| Implementation validation | `kiro:validate:impl` | `kiro-validate-impl` | 実装 evidence と残る manual check を検証 |
+| フェーズ | 直接実行コマンド | 任意の npm alias | 内容 |
+|---------|------------------|------------------|------|
+| Discovery | `takt-sdd kiro-discovery` | `kiro:discovery` | feature idea を分類し、必要に応じて brief/roadmap を更新 |
+| Spec quick path | `takt-sdd kiro-spec-quick` | `kiro:spec:quick` | requirements/design/tasks を closed-loop で生成 |
+| Requirements | `takt-sdd kiro-spec-requirements` | `kiro:spec:requirements` | EARS 形式の要件を生成 |
+| Gap validation | `takt-sdd kiro-validate-gap` | `kiro:validate:gap` | 要件と既存コードベースの差分を確認 |
+| Design | `takt-sdd kiro-spec-design` | `kiro:spec:design` | 技術設計と発見ログを生成 |
+| Design validation | `takt-sdd kiro-validate-design` | `kiro:validate:design` | 設計品質をレビューし GO/NO-GO を返す |
+| Tasks | `takt-sdd kiro-spec-tasks` | `kiro:spec:tasks` | 実装タスクを生成 |
+| Batch specs | `takt-sdd kiro-spec-batch` | `kiro:spec:batch` | roadmap の依存順に複数 spec を生成 |
+| Status | `takt-sdd kiro-spec-status` | `kiro:spec:status` | spec phase、approval、readiness を報告 |
+| Implementation | `takt-sdd kiro-impl` | `kiro:impl` | review/debug/verify gate 付きで approved task を実装 |
+| Implementation validation | `takt-sdd kiro-validate-impl` | `kiro:validate:impl` | 実装 evidence と残る manual check を検証 |
 
 ### Quick 実行
 
 requirements → design → tasks を quick path で生成する：
 
 ```bash
-npm run kiro:spec:quick -- "要件の説明..."
+takt-sdd kiro-spec-quick -- "要件の説明..."
 ```
 
 ### フェーズ別実行
@@ -195,30 +195,32 @@ npm run kiro:spec:quick -- "要件の説明..."
 
 ```bash
 # 任意: discovery
-npm run kiro:discovery -- "feature idea..."
+takt-sdd kiro-discovery -- "feature idea..."
 
 # 要件生成
-npm run kiro:spec:requirements -- "要件の説明..."
+takt-sdd kiro-spec-requirements -- "要件の説明..."
 # .kiro/specs/{feature} の {feature} を確認すること
 
 # ギャップ分析（既存コードがある場合のみ）
-npm run kiro:validate:gap -- "feature={feature}"
+takt-sdd kiro-validate-gap -- "feature={feature}"
 
 # 設計生成
-npm run kiro:spec:design -- "feature={feature}"
+takt-sdd kiro-spec-design -- "feature={feature}"
 
 # 設計検証
-npm run kiro:validate:design -- "feature={feature}"
+takt-sdd kiro-validate-design -- "feature={feature}"
 
 # タスク生成
-npm run kiro:spec:tasks -- "feature={feature}"
+takt-sdd kiro-spec-tasks -- "feature={feature}"
 
 # 実装
-npm run kiro:impl -- "feature={feature}"
+takt-sdd kiro-impl -- "feature={feature}"
 
 # 実装検証
-npm run kiro:validate:impl -- "feature={feature}"
+takt-sdd kiro-validate-impl -- "feature={feature}"
 ```
+
+npm scripts を使いたい project は、Global CLI セクションの例のように `takt-sdd kiro-*` を呼ぶ alias を手動で追加する。それらの alias は project-owned である。
 
 ### Smoke Tests
 
@@ -245,9 +247,9 @@ timeout のデフォルトは workflow ごとに 15 分、`kiro:impl` は 30 分
 | 3 | `tasks.md` | 実装タスクリスト（実装中に進捗が更新される） |
 
 
-## Steering（プロジェクトメモリ管理）
+## Steering（repo-local プロジェクトメモリ helper）
 
-SDD ワークフローとは別に、`.kiro/steering/` をプロジェクトメモリとして管理するワークフローを提供する。
+global CLI の workflow surface とは別に、このリポジトリは `.kiro/steering/` をプロジェクトメモリとして管理する repo-local helper scripts を提供する。これらの helper は `takt-sdd init` や `create-takt-sdd` では作成・更新されない。
 
 | ワークフロー | 内容 |
 |--------|------|
@@ -269,14 +271,14 @@ npm run kiro:steering -- "TypeScript + Express のREST APIサーバー、Postgre
 
 ### steering-custom
 
-アーキテクチャ方針、API 標準、テスト戦略など、特定ドメインのsteeringファイルを作成する。`.takt/knowledge/steering-custom-template-files/` にテンプレートが用意されている。
+アーキテクチャ方針、API 標準、テスト戦略など、特定ドメインのsteeringファイルを作成する。ひな型が必要な場合は一般的な domain name を渡し、具体的な方針がある場合は command text に直接含める。
 
 ```bash
 npm run kiro:steering-custom -- "architecture"
-# .takt/knowledge/steering-custom-template-files/{name}.mdの{name}を指定する
+# domain name または具体的な方針を直接指定する
 ```
 
-利用可能なテンプレート：
+よく使う domain name：
 
 | テンプレート | 内容 |
 |-------------|------|
@@ -329,22 +331,22 @@ npm run kiro:steering-custom -- "testing"
 
 ## プロジェクト構造
 
+package bundled assets はこのレイアウトを使う。project 側に `.takt/<lang>/workflows` と `.takt/<lang>/facets` が必要になるのは `takt-sdd eject` で取り出した後だけで、通常実行では installed package 内のコピーが直接使われる。
+
 ```
 .takt/
-├── en/                      # 英語版ファセット・ワークフロー
-│   ├── pieces/              # Workflow definitions (YAML)
-│   ├── personas/            # Persona facets
-│   ├── policies/            # Policy facets
-│   ├── instructions/        # Instruction facets
-│   ├── knowledge/           # Knowledge facets
-│   └── output-contracts/    # Output contract facets
-└── ja/                      # 日本語版ファセット・ワークフロー
-    ├── pieces/              # ワークフロー定義（YAML）
-    ├── personas/            # ペルソナファセット
-    ├── policies/            # ポリシーファセット
-    ├── instructions/        # インストラクションファセット
-    ├── knowledge/           # ナレッジファセット
-    └── output-contracts/    # 出力契約ファセット
+├── en/
+│   ├── workflows/           # Workflow definitions (YAML)
+│   └── facets/
+│       ├── instructions/    # Instruction facets
+│       ├── output-contracts/ # Output contract facets
+│       └── policies/        # Policy facets
+└── ja/
+    ├── workflows/           # ワークフロー定義（YAML）
+    └── facets/
+        ├── instructions/    # インストラクションファセット
+        ├── output-contracts/ # 出力契約ファセット
+        └── policies/        # ポリシーファセット
 references/
 └── okite-ai/                # AI ルール集（submodule）
 scripts/

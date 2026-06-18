@@ -165,28 +165,28 @@ npx -y skills add j5ik2o/ai-tools --skill takt-task-builder
 
 ## Kiro Compatibility Workflow
 
-Use `kiro:*` scripts for SDD workflow execution. The `cc-sdd:*` npm scripts compatibility surface ended in v2.0.0.
+Run SDD workflows directly with `takt-sdd kiro-*`. `kiro:*` npm scripts are optional project-owned aliases; `takt-sdd init` and `create-takt-sdd` no longer create or update them. The `cc-sdd:*` npm scripts compatibility surface ended in v2.0.0.
 
-| Phase | npm script | Workflow identity | Description |
-|-------|------------|-------------------|-------------|
-| Discovery | `kiro:discovery` | `kiro-discovery` | Route a feature idea, update brief/roadmap when needed |
-| Spec quick path | `kiro:spec:quick` | `kiro-spec-quick` | Generate requirements, design, and tasks through the closed-loop path |
-| Requirements | `kiro:spec:requirements` | `kiro-spec-requirements` | Generate requirements in EARS format |
-| Gap validation | `kiro:validate:gap` | `kiro-validate-gap` | Compare requirements with the current codebase |
-| Design | `kiro:spec:design` | `kiro-spec-design` | Generate technical design and discovery notes |
-| Design validation | `kiro:validate:design` | `kiro-validate-design` | Review design quality and return a GO/NO-GO decision |
-| Tasks | `kiro:spec:tasks` | `kiro-spec-tasks` | Generate implementation tasks |
-| Batch specs | `kiro:spec:batch` | `kiro-spec-batch` | Generate multiple specs from roadmap dependency order |
-| Status | `kiro:spec:status` | `kiro-spec-status` | Report spec phase, approvals, and readiness |
-| Implementation | `kiro:impl` | `kiro-impl` | Implement approved tasks with review/debug/verify gates |
-| Implementation validation | `kiro:validate:impl` | `kiro-validate-impl` | Validate implementation evidence and remaining manual checks |
+| Phase | Direct command | Optional npm alias | Description |
+|-------|----------------|--------------------|-------------|
+| Discovery | `takt-sdd kiro-discovery` | `kiro:discovery` | Route a feature idea, update brief/roadmap when needed |
+| Spec quick path | `takt-sdd kiro-spec-quick` | `kiro:spec:quick` | Generate requirements, design, and tasks through the closed-loop path |
+| Requirements | `takt-sdd kiro-spec-requirements` | `kiro:spec:requirements` | Generate requirements in EARS format |
+| Gap validation | `takt-sdd kiro-validate-gap` | `kiro:validate:gap` | Compare requirements with the current codebase |
+| Design | `takt-sdd kiro-spec-design` | `kiro:spec:design` | Generate technical design and discovery notes |
+| Design validation | `takt-sdd kiro-validate-design` | `kiro:validate:design` | Review design quality and return a GO/NO-GO decision |
+| Tasks | `takt-sdd kiro-spec-tasks` | `kiro:spec:tasks` | Generate implementation tasks |
+| Batch specs | `takt-sdd kiro-spec-batch` | `kiro:spec:batch` | Generate multiple specs from roadmap dependency order |
+| Status | `takt-sdd kiro-spec-status` | `kiro:spec:status` | Report spec phase, approvals, and readiness |
+| Implementation | `takt-sdd kiro-impl` | `kiro:impl` | Implement approved tasks with review/debug/verify gates |
+| Implementation validation | `takt-sdd kiro-validate-impl` | `kiro:validate:impl` | Validate implementation evidence and remaining manual checks |
 
 ### Quick Execution
 
 Run requirements → design → tasks through the quick path:
 
 ```bash
-npm run kiro:spec:quick -- "description of requirements..."
+takt-sdd kiro-spec-quick -- "description of requirements..."
 ```
 
 ### Phase-by-Phase Execution
@@ -195,30 +195,32 @@ Run each phase workflow individually, allowing human intervention between phases
 
 ```bash
 # Optional discovery
-npm run kiro:discovery -- "feature idea..."
+takt-sdd kiro-discovery -- "feature idea..."
 
 # Requirements generation
-npm run kiro:spec:requirements -- "description of requirements..."
+takt-sdd kiro-spec-requirements -- "description of requirements..."
 # Check the {feature} name in .kiro/specs/{feature}
 
 # Gap analysis (only when existing code exists)
-npm run kiro:validate:gap -- "feature={feature}"
+takt-sdd kiro-validate-gap -- "feature={feature}"
 
 # Design generation
-npm run kiro:spec:design -- "feature={feature}"
+takt-sdd kiro-spec-design -- "feature={feature}"
 
 # Design validation
-npm run kiro:validate:design -- "feature={feature}"
+takt-sdd kiro-validate-design -- "feature={feature}"
 
 # Task generation
-npm run kiro:spec:tasks -- "feature={feature}"
+takt-sdd kiro-spec-tasks -- "feature={feature}"
 
 # Implementation
-npm run kiro:impl -- "feature={feature}"
+takt-sdd kiro-impl -- "feature={feature}"
 
 # Implementation validation
-npm run kiro:validate:impl -- "feature={feature}"
+takt-sdd kiro-validate-impl -- "feature={feature}"
 ```
+
+Projects that prefer npm scripts can add aliases manually, as shown in the Global CLI section. Those aliases should call `takt-sdd kiro-*` and remain owned by the project.
 
 ### Smoke Tests
 
@@ -245,9 +247,9 @@ Artifacts from each phase are output to `.kiro/specs/{feature}/`. The format is 
 | 3 | `tasks.md` | Implementation task list (progress updated during implementation) |
 
 
-## Steering (Project Memory Management)
+## Steering (Repo-Local Project Memory Helpers)
 
-Separate from the SDD workflow, workflows are provided to manage `.kiro/steering/` as project memory.
+Separate from the global CLI workflow surface, this repository provides repo-local helper scripts to manage `.kiro/steering/` as project memory. These helpers are not created or updated by `takt-sdd init` or `create-takt-sdd`.
 
 | Workflow | Description |
 |-------|-------------|
@@ -269,14 +271,14 @@ npm run kiro:steering -- "REST API server with TypeScript, Express, PostgreSQL"
 
 ### steering-custom
 
-Creates steering files for specific domains such as architecture policies, API standards, and testing strategies. Templates are available in `.takt/knowledge/steering-custom-template-files/`.
+Creates steering files for specific domains such as architecture policies, API standards, and testing strategies. Pass a common domain name for a skeleton, or include the policy details directly in the command text.
 
 ```bash
 npm run kiro:steering-custom -- "architecture"
-# Specify the {name} from .takt/knowledge/steering-custom-template-files/{name}.md
+# Specify a domain name or include policy details directly.
 ```
 
-Available templates:
+Common domain names:
 
 | Template | Description |
 |----------|-------------|
@@ -329,22 +331,22 @@ If you previously customized copied workflows or facets, run `takt-sdd eject` on
 
 ## Project Structure
 
+The package-bundled assets use this layout. A project only needs the `.takt/<lang>/workflows` and `.takt/<lang>/facets` tree after running `takt-sdd eject`; otherwise the installed package copy is used directly.
+
 ```
 .takt/
-├── en/                      # English facets and workflows
-│   ├── pieces/              # Workflow definitions (YAML)
-│   ├── personas/            # Persona facets
-│   ├── policies/            # Policy facets
-│   ├── instructions/        # Instruction facets
-│   ├── knowledge/           # Knowledge facets
-│   └── output-contracts/    # Output contract facets
-└── ja/                      # Japanese facets and workflows
-    ├── pieces/              # ワークフロー定義（YAML）
-    ├── personas/            # ペルソナファセット
-    ├── policies/            # ポリシーファセット
-    ├── instructions/        # インストラクションファセット
-    ├── knowledge/           # ナレッジファセット
-    └── output-contracts/    # 出力契約ファセット
+├── en/
+│   ├── workflows/           # Workflow definitions (YAML)
+│   └── facets/
+│       ├── instructions/    # Instruction facets
+│       ├── output-contracts/ # Output contract facets
+│       └── policies/        # Policy facets
+└── ja/
+    ├── workflows/           # ワークフロー定義（YAML）
+    └── facets/
+        ├── instructions/    # インストラクションファセット
+        ├── output-contracts/ # 出力契約ファセット
+        └── policies/        # ポリシーファセット
 references/
 └── okite-ai/                # AI rules collection (submodule)
 scripts/

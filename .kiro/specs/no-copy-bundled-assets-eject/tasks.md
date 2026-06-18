@@ -126,7 +126,7 @@
   - _Depends:_ 2.2, 2.3
 
 - [ ] 6. ドキュメントと migration を更新する
-- [ ] 6.1 no-copy runtime と eject 移行を README / CHANGELOG に反映する
+- [x] 6.1 no-copy runtime と eject 移行を README / CHANGELOG に反映する
   - 通常実行が package bundled workflows/facets を直接使うことを説明する。
   - customization には `takt-sdd eject` を使い、ejected files は project-owned で自動更新されないことを説明する。
   - `takt-sdd init` と `create-takt-sdd` が retired guidance only になることを説明する。
