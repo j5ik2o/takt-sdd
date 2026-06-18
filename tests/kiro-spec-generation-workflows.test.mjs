@@ -712,6 +712,28 @@ test("task 14.1 validation detects missing built-in facet parent", () => {
   );
 });
 
+test("task 14.1 validation detects semantic facet parent drift", () => {
+  const root = makeWritableValidationFixture();
+  for (const lang of ["en", "ja"]) {
+    const path = `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`;
+    const content = readFileSync(join(root, path), "utf8").replace("{extends: plan}", "{extends: review-pure}");
+    writeFixtureFile(root, path, content);
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("FACET_DRIFT") &&
+        failure.includes("kiro-spec-requirements.md") &&
+        failure.includes("must extend plan") &&
+        failure.includes("actual=review-pure"),
+    ),
+    result.failures.join("\n"),
+  );
+});
+
 test("task 14.1 validation detects unsupported facet extends references", () => {
   const root = makeFixture();
   for (const lang of ["en", "ja"]) {

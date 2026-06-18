@@ -1,4 +1,4 @@
-{extends: review-pure}
+{extends: plan}
 
 ## Kiro Skill Source
 

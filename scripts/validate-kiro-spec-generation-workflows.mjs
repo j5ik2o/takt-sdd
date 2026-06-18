@@ -164,21 +164,25 @@ const facetSpecs = [
   {
     kind: "instructions",
     name: "kiro-spec-init",
+    expectedParent: "plan",
     terms: ["spec.json", "requirements.md", "initialized", "brief.md"],
   },
   {
     kind: "instructions",
     name: "kiro-spec-requirements",
+    expectedParent: "plan",
     terms: ["requirements.md", "EARS", "requirements-generated", "BLOCKED"],
   },
   {
     kind: "instructions",
     name: "kiro-spec-requirements-review",
+    expectedParent: "review-pure",
     terms: ["Review Requirements Draft", "requirements review gate", "read-only", "validation.verdict", "PASS", "NEEDS_FIX", "BLOCKED"],
   },
   {
     kind: "instructions",
     name: "kiro-spec-design",
+    expectedParent: "architect",
     terms: ["design.md", "research.md"],
     termsByLang: {
       en: designSectionHeadings.en,
@@ -188,11 +192,13 @@ const facetSpecs = [
   {
     kind: "instructions",
     name: "kiro-spec-tasks",
+    expectedParent: "plan",
     terms: ["tasks.md", "_Boundary:_", "_Depends:_", "tasks-generated", "draft_artifacts.tasks", "non-empty dependencies"],
   },
   {
     kind: "instructions",
     name: "kiro-spec-tasks-review",
+    expectedParent: "review-pure",
     terms: [
       "Review Task Plan",
       "task_plan_review",
@@ -212,11 +218,13 @@ const facetSpecs = [
   {
     kind: "output-contracts",
     name: "kiro-spec-tasks-review-result",
+    expectedParent: "validation",
     terms: ["task_plan_review", "task_graph_sanity_review", "fatal_review_issue", "PASS", "NEEDS_FIXES", "RETURN_TO_DESIGN", "summary"],
   },
   {
     kind: "instructions",
     name: "kiro-spec-quick-sanity-review",
+    expectedParent: "review-qa",
     terms: ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"],
   },
   {
@@ -227,16 +235,19 @@ const facetSpecs = [
   {
     kind: "policies",
     name: "kiro-spec-task-annotations",
+    expectedParent: "task-decomposition",
     terms: ["_Boundary:_", "_Depends:_", "none", "(P)", "non-empty dependencies"],
   },
   {
     kind: "output-contracts",
     name: "kiro-spec-generation-result",
+    expectedParent: "validation",
     terms: generationResultContractTerms,
   },
   {
     kind: "output-contracts",
     name: "kiro-spec-sanity-review",
+    expectedParent: "validation",
     terms: ["verdict", "findings", "requirements", "design", "tasks", "PASS", "NEEDS_FIX", "BLOCKED"],
   },
 ];
@@ -915,6 +926,12 @@ function validateFacetFiles(repoRoot) {
       }
       const content = readText(path);
       containsAll(content, termsForLanguage(spec, lang, "terms", "termsByLang"), path, failures, repoRoot, "FACET_DRIFT");
+      const parent = extendsParent(content);
+      if (spec.expectedParent && parent !== spec.expectedParent) {
+        failures.push(
+          `FACET_DRIFT: ${rel(repoRoot, path)} must extend ${spec.expectedParent} actual=${parent ?? "<none>"}`,
+        );
+      }
       if (!/^\s*\{extends:\s*[^}]+}\s*$/m.test(content) && !content.includes("Full custom reason:")) {
         failures.push(`FACET_DRIFT: ${rel(repoRoot, path)} must use {extends: parent} or state Full custom reason`);
       }
