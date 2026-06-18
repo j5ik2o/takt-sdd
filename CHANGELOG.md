@@ -1,3 +1,11 @@
+## [2.2.1](https://github.com/j5ik2o/takt-sdd/compare/v2.2.0...v2.2.1) (2026-06-18)
+
+
+### Bug Fixes
+
+* **release:** relax migration validator changelog gate ([d73aa0d](https://github.com/j5ik2o/takt-sdd/commit/d73aa0dc46e46059f8113ad32441093c781b9192))
+* **release:** remove orphaned changelog read ([f2b45fc](https://github.com/j5ik2o/takt-sdd/commit/f2b45fc06aa8be05689b71ed36957db1b349829c))
+
 ## [2.2.0](https://github.com/j5ik2o/takt-sdd/compare/v2.1.0...v2.2.0) (2026-06-18)
 
 
