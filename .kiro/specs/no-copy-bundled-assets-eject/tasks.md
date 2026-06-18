@@ -138,7 +138,7 @@
   - _Depends:_ 4.1
 
 - [ ] 7. 最終統合検証を行う
-- [ ] 7.1 targeted checks と package smoke を通す
+- [x] 7.1 targeted checks と package smoke を通す
   - CLI、installer、package artifact、documentation regression の targeted test scripts を実行する。
   - package bundled workflow 実行、retired command、eject dry-run、eject collision の smoke 結果を確認する。
   - 既存 `.takt/config.yaml` や未関係の project-owned files を変更していないことを確認する。
