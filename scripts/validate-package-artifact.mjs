@@ -371,7 +371,7 @@ function validateReadmeMigration(errors, label, text) {
  * notes are generated separately, so this check avoids coupling package
  * artifact validation to a specific CHANGELOG prose shape or versioning policy.
  *
- * @param {{ readme?: string, readmeJa?: string, changelog?: string }} docs
+ * @param {{ readme?: string, readmeJa?: string }} docs
  * @returns {string[]}
  */
 export function validateDocumentationMigration(docs) {
@@ -530,7 +530,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const docErrors = validateDocumentationMigration({
     readme: readFileSync(join(repoRoot, "README.md"), "utf8"),
     readmeJa: readFileSync(join(repoRoot, "README.ja.md"), "utf8"),
-    changelog: readFileSync(join(repoRoot, "CHANGELOG.md"), "utf8"),
   });
   allErrors.push(...docErrors);
 
