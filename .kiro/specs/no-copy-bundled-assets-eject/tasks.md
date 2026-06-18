@@ -116,7 +116,7 @@
   - _Boundary:_ EjectCommand
   - _Depends:_ 3.3
 
-- [ ] 5.4 package artifact と migration 文言の regression を検証する
+- [x] 5.4 package artifact と migration 文言の regression を検証する
   - package artifact に runtime source として必要な bundled workflows/facets が含まれることを検証する。
   - retired copy surface が publish artifact や bin smoke で復活しないことを検証する。
   - README と CHANGELOG に package bundled runtime、eject、retired guidance、manual script 例、breaking behavior が残ることを検証する。

@@ -1,3 +1,9 @@
+## Unreleased
+
+### BREAKING BEHAVIOR CHANGE
+
+* `takt-sdd init` asset copy is retired. Package-bundled workflows/facets now run from the installed package for ordinary `takt-sdd kiro-*` execution, and `takt-sdd eject` is the only supported path for copying workflows/facets into project-owned files. `create-takt-sdd` now returns retired guidance instead of installing or copying `.takt` assets. This is a breaking behavior change without a major version bump, so projects that relied on initializer writes must migrate to direct `takt-sdd` commands or add manual npm scripts.
+
 ## [2.1.0](https://github.com/j5ik2o/takt-sdd/compare/v2.0.1...v2.1.0) (2026-06-17)
 
 
@@ -528,4 +534,3 @@ workflows will be re-provided in a future release.
 ### Features
 
 * **installer:** add --tag option and download from release tags ([7de6a77](https://github.com/j5ik2o/takt-sdd/commit/7de6a7742c2eb63ad8f96d3c9c74933202921995))
-

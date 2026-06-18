@@ -33,11 +33,14 @@ takt-sdd uses [takt](https://github.com/nrslib/takt)'s state-machine-based workf
 
 ## Prerequisites
 
-- Node.js 22+ (takt is automatically added to `devDependencies` during installation)
+- Node.js 22+
+- `takt-sdd` uses the `takt` dependency bundled with the installed package for workflow execution. A project-local `takt` dependency or copied `.takt/` directory is not required for ordinary use.
 
 ## Global CLI
 
 `takt-sdd` is available as a global npm package, letting you run any supported `kiro-*` workflow from any project without relying on repo-local npm scripts.
+
+Package-bundled workflows/facets run from the installed package. Project-local `.takt` workflow files are treated only as explicit overrides, so routine upgrades no longer require syncing copied workflow or facet assets.
 
 ### Installation
 
@@ -45,17 +48,11 @@ takt-sdd uses [takt](https://github.com/nrslib/takt)'s state-machine-based workf
 npm install -g takt-sdd
 ```
 
-### Initialize a project
+### Run workflows
 
 ```bash
-takt-sdd init .
-```
-
-`init` copies the bundled `.takt` assets (workflows and facets matching the installed package version) into the target directory and merges the required devDependencies into `package.json`.  
-`init` does **not** run `npm install` automatically. After `init` completes, run:
-
-```bash
-npm install
+takt-sdd kiro-spec-quick -- "description of requirements..."
+takt-sdd kiro-impl -- "feature={feature}"
 ```
 
 ### Supported commands
@@ -89,15 +86,50 @@ The `run` form is equivalent to the direct command form and accepts the same sup
 |--------|-------------|
 | `--cwd <dir>` | Set the target project root directory (default: current working directory) |
 
-### `init` options
+### Customization with `eject`
 
-| Option | Description |
-|--------|-------------|
-| `--lang en\|ja` | Language for installed assets and initial language preference (default: `en`). Reads existing `.takt/config.yaml` language if present and `--lang` is not specified. |
-| `--force` | Overwrite customized files (same semantics as `create-takt-sdd --force`) |
-| `--dry-run` | Preview changes without writing any files |
+Use `takt-sdd eject` only when you need to customize bundled workflows or facets:
 
-`--tag` is **not** supported by the global CLI. The bundled assets matching the installed package version are always used.
+```bash
+takt-sdd eject
+takt-sdd eject --lang ja --dry-run
+takt-sdd eject --all-languages
+```
+
+`eject` copies only `.takt/<lang>/workflows/**` and `.takt/<lang>/facets/**`. Ejected files are project-owned and will not be automatically updated. `eject` does not create or change `.takt/config.yaml`, `.takt/.manifest.json`, `scripts/kiro-staged.mjs`, or `package.json`.
+
+### Retired initializer commands
+
+`takt-sdd init` is retired and guidance-only. It no longer copies `.takt` assets, writes a manifest, creates `scripts/kiro-staged.mjs`, or edits `package.json`.
+
+`create-takt-sdd` is retired and guidance-only. It no longer installs or copies `.takt` assets.
+
+```bash
+takt-sdd init --help
+npx create-takt-sdd --help
+```
+
+Use direct `takt-sdd kiro-*` execution for normal workflows and `takt-sdd eject` for project-owned customization.
+
+**BREAKING BEHAVIOR CHANGE without a major version bump:** projects that relied on `takt-sdd init` or `create-takt-sdd` asset copy must stop depending on initializer writes. Add project-owned npm scripts manually if you want script aliases.
+
+### Manual npm script examples
+
+```json
+{
+  "scripts": {
+    "kiro:spec:quick": "takt-sdd kiro-spec-quick",
+    "kiro:impl": "takt-sdd kiro-impl",
+    "kiro:validate:impl": "takt-sdd kiro-validate-impl"
+  }
+}
+```
+
+Then pass workflow arguments after `--`, for example:
+
+```bash
+npm run kiro:impl -- "feature={feature}"
+```
 
 ### Retired workflows
 
@@ -117,44 +149,7 @@ takt-sdd run opsx-full      # Error: same rejection
 
 ### `.takt/config.yaml` ownership
 
-`.takt/config.yaml` is a **user-owned** file. It may be placed globally at `~/.takt/config.yaml` or per-project, and is created and maintained by the user, not by the CLI. The CLI only **reads** it (to determine language preference during `init` and workflow resolution). The CLI never creates or modifies this file. Language preference from `init` is recorded in `.takt/.manifest.json`.
-
-## Installation (create-takt-sdd)
-
-To add the SDD workflow to your project using the installer, run the following in your project root:
-
-```bash
-npx create-takt-sdd
-```
-
-For Japanese facets and messages:
-
-```bash
-npx create-takt-sdd --lang ja
-```
-
-To install a specific version or the latest release:
-
-```bash
-npx create-takt-sdd --tag latest
-npx create-takt-sdd --tag 0.1.2
-```
-
-The installer sets up the following:
-
-- **`.takt/`** — Workflows (YAML workflows) and facets in the selected language (`--lang`)
-- **`package.json`** — npm scripts for each phase + `takt` as a devDependency
-
-Options:
-
-| Option | Description |
-|--------|-------------|
-| `--force` | Overwrite existing `.takt/` directory |
-| `--tag <version>` | Install a specific version (`latest`, `0.2.0`, etc.) |
-| `--lang <en\|ja>` | Facet and message language (default: `en`) |
-| `--dry-run` | Preview files without writing |
-
-When `package.json` already exists, only npm scripts are merged (existing scripts are not overwritten).
+`.takt/config.yaml` is a **user-owned** file. It may be placed globally at `~/.takt/config.yaml` or per-project, and is created and maintained by the user, not by the CLI. The CLI only **reads** it to determine workflow language and the default `eject` language. The CLI never creates or modifies this file.
 
 ### Adding Individual Skills
 
@@ -322,17 +317,15 @@ npm run kiro:steering-custom -- "testing"
 
 Generated steering files are automatically referenced during design phases (`kiro:spec:design`, `kiro:validate:design`, etc.).
 
-## Updating an Existing Project (v1.x → v2.0.0)
+## Updating an Existing Project
 
-When you run `takt-sdd init .` on a project that was installed with v1.x, the installer automatically removes retired workflow assets (cc-sdd-* and opsx-* workflow files) that have not been customized, and removes them from the manifest. Assets that you have modified are left in place with a warning.
+For ordinary use, install or upgrade `takt-sdd` and run `takt-sdd kiro-*` directly. The package-bundled workflows/facets are resolved from the installed package, so existing copied `.takt` assets are no longer the default runtime source.
 
-In `--dry-run` mode, the list of files that would be removed is displayed without making any changes.
-
-Note: `openspec/` directories and any files you have added yourself are never touched by the update.
+If you previously customized copied workflows or facets, run `takt-sdd eject` only when you want to make those package assets project-owned again, then carry your customization forward manually. `takt-sdd` does not prune old copied files.
 
 ### Removing leftover `cc-sdd:*` and `opsx:*` scripts
 
-`init` does not modify your `package.json` scripts beyond adding missing `kiro:*` entries. If your project still contains `cc-sdd:*` or `opsx:*` scripts from a v1.x installation, remove them manually. They reference workflow files that no longer exist, so running them will result in a takt resolution error.
+`takt-sdd init` no longer modifies your `package.json` scripts. If your project still contains `cc-sdd:*` or `opsx:*` scripts from a v1.x installation, remove them manually. They reference workflow files that no longer exist, so running them will result in a takt resolution error.
 
 ## Project Structure
 
