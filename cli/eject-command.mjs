@@ -60,7 +60,17 @@ function assertSafeAssetRelativePath(relativePath) {
 }
 
 function collectAssetFiles(baseDir) {
-  if (!existsSync(baseDir)) return [];
+  if (!existsSync(baseDir)) {
+    throw new UsageError(
+      `Bundled asset directory is missing: ${toPortablePath(baseDir)}`,
+    );
+  }
+
+  if (!statSync(baseDir).isDirectory()) {
+    throw new UsageError(
+      `Bundled asset path is not a directory: ${toPortablePath(baseDir)}`,
+    );
+  }
 
   const assets = [];
   const walk = (dir) => {
@@ -101,6 +111,7 @@ function hasSameContent(sourcePath, targetPath) {
 
 function classifyEjectAction(sourcePath, targetPath, force) {
   if (!existsSync(targetPath)) return "copy";
+  if (!statSync(targetPath).isFile()) return "collision";
   if (hasSameContent(sourcePath, targetPath)) return "skip";
   return force ? "overwrite" : "collision";
 }

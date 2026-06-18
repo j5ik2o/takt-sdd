@@ -51,7 +51,7 @@ npm install -g takt-sdd
 ### Run workflows
 
 ```bash
-takt-sdd kiro-spec-quick -- "description of requirements..."
+takt-sdd kiro-spec-quick "description of requirements..."
 takt-sdd kiro-impl -- "feature={feature}"
 ```
 
@@ -186,7 +186,7 @@ Run SDD workflows directly with `takt-sdd kiro-*`. `kiro:*` npm scripts are opti
 Run requirements → design → tasks through the quick path:
 
 ```bash
-takt-sdd kiro-spec-quick -- "description of requirements..."
+takt-sdd kiro-spec-quick "description of requirements..."
 ```
 
 ### Phase-by-Phase Execution

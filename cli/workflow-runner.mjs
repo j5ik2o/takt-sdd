@@ -113,7 +113,7 @@ export function resolveTaktBin(packageRoot) {
  * Build the argument list for takt invocation.
  *
  * Always includes: --pipeline --skip-git -w <workflowPath>
- * Flags (args starting with - or --) are forwarded in order.
+ * A standalone -- separator is consumed. Other flags are forwarded in order.
  * Positional args (not starting with -) are joined with space and appended as a
  * single -t value. If there are no positionals, -t is omitted.
  *
@@ -126,6 +126,7 @@ export function buildWorkflowArgs(workflowPath, forwarded) {
   const positionals = [];
 
   for (const arg of forwarded) {
+    if (arg === "--") continue;
     if (arg.startsWith("-")) {
       flags.push(arg);
     } else {

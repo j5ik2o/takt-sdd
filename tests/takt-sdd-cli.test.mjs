@@ -629,6 +629,16 @@ test("buildWorkflowArgs: positional args are joined as single -t value", () => {
   assert.equal(args[tIdx + 1], "my-feature extra", `Expected joined positional, got: ${args[tIdx + 1]}`);
 });
 
+test("buildWorkflowArgs: standalone option separator is consumed before takt args", () => {
+  const wPath = "/some/kiro-impl.yaml";
+  const args = buildWorkflowArgs(wPath, ["--", "my-feature"]);
+
+  assert.ok(!args.includes("--"), `Expected option separator to be consumed: ${JSON.stringify(args)}`);
+  const tIdx = args.indexOf("-t");
+  assert.ok(tIdx !== -1, `Expected -t flag in: ${JSON.stringify(args)}`);
+  assert.equal(args[tIdx + 1], "my-feature");
+});
+
 test("buildWorkflowArgs: no -t flag when no positional args", () => {
   const wPath = "/some/kiro-impl.yaml";
   const args = buildWorkflowArgs(wPath, ["--some-flag"]);

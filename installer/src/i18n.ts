@@ -64,7 +64,7 @@ const en: Messages = {
 Options:
   --tag <version>    Version to install ("latest", "0.2.0", default: installer version)
   --lang <en|ja>     Message language (default: en)
-  --force            Overwrite existing bundled .takt/ assets, including customized files
+  --force            Overwrite existing .takt/ assets; legacy no-manifest projects may lose project-owned files
   --dry-run          Preview without writing files
   --layout <mode>    Directory layout: auto, modern, legacy (default: auto)
   -h, --help         Show this help
@@ -74,7 +74,7 @@ Options:
 create-takt-sdd is retired.
 
 Use takt-sdd directly for Kiro-compatible SDD workflows:
-  npx takt-sdd kiro-spec-quick -- "description of requirements"
+  npx takt-sdd kiro-spec-quick "description of requirements"
   npx takt-sdd kiro-impl -- "feature={feature}"
 
 For customization, eject bundled workflows and facets into your project:
@@ -86,7 +86,7 @@ Options:
   retiredGuidance: `create-takt-sdd is retired and no longer installs or copies .takt assets.
 
 Use takt-sdd directly; bundled workflows and facets run from the installed package:
-  npx takt-sdd kiro-spec-quick -- "description of requirements"
+  npx takt-sdd kiro-spec-quick "description of requirements"
 
 For customization, eject bundled workflows and facets into your project:
   npx takt-sdd eject
@@ -142,7 +142,7 @@ const ja: Messages = {
 オプション:
   --tag <version>    インストールするバージョン ("latest", "0.2.0", デフォルト: インストーラのバージョン)
   --lang <en|ja>     メッセージ言語 (デフォルト: en)
-  --force            既存のバンドル済み .takt/ 資産を上書き（カスタマイズ済みも含む）
+  --force            既存の .takt/ 資産を上書き（legacy no-manifest project では project-owned files が失われ得ます）
   --dry-run          プレビューのみ（ファイル書き込みなし）
   --layout <mode>    ディレクトリレイアウト: auto, modern, legacy（デフォルト: auto）
   -h, --help         ヘルプを表示
@@ -152,7 +152,7 @@ const ja: Messages = {
 create-takt-sdd は廃止済みです。
 
 Kiro 互換 SDD ワークフローは takt-sdd を直接使ってください:
-  npx takt-sdd kiro-spec-quick -- "要件の説明"
+  npx takt-sdd kiro-spec-quick "要件の説明"
   npx takt-sdd kiro-impl -- "feature={feature}"
 
 カスタマイズする場合は bundled workflows/facets を project に取り出してください:
@@ -164,7 +164,7 @@ Kiro 互換 SDD ワークフローは takt-sdd を直接使ってください:
   retiredGuidance: `create-takt-sdd は廃止済みであり、.takt assets の install や copy は行いません。
 
 takt-sdd を直接使ってください。bundled workflows/facets は installed package から実行されます:
-  npx takt-sdd kiro-spec-quick -- "要件の説明"
+  npx takt-sdd kiro-spec-quick "要件の説明"
 
 カスタマイズする場合は bundled workflows/facets を project に取り出してください:
   npx takt-sdd eject

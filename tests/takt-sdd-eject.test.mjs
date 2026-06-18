@@ -285,6 +285,7 @@ test("buildEjectPlan classifies differing targets as overwrite when force is set
   const packageRoot = makeTmpDir();
   try {
     writePackageAsset(packageRoot, "en", "workflows", "kiro-impl.yaml", "upstream\n");
+    mkdirSync(join(packageRoot, ".takt", "en", "facets"), { recursive: true });
     writeProjectAsset(projectRoot, "en", "workflows", "kiro-impl.yaml", "project\n");
 
     const plan = buildEjectPlan(
@@ -302,6 +303,54 @@ test("buildEjectPlan classifies differing targets as overwrite when force is set
   }
 });
 
+test("buildEjectPlan rejects missing bundled asset sections", () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    writePackageAsset(packageRoot, "en", "workflows", "kiro-impl.yaml", "workflow\n");
+
+    assertUsageError(
+      () => buildEjectPlan(
+        { projectRoot, packageRoot },
+        parseEjectArgs(["--lang", "en"]),
+      ),
+      /Bundled asset directory is missing/,
+    );
+    assert.equal(existsSync(join(projectRoot, ".takt")), false);
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
+});
+
+test("buildEjectPlan treats directory targets as collisions even with force", () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    mkdirSync(join(packageRoot, ".takt", "en", "workflows"), { recursive: true });
+    writePackageAsset(packageRoot, "en", "facets", "blocked.md", "upstream\n");
+    mkdirSync(join(projectRoot, ".takt", "en", "facets", "blocked.md"), {
+      recursive: true,
+    });
+
+    const plan = buildEjectPlan(
+      { projectRoot, packageRoot },
+      parseEjectArgs(["--lang", "en", "--force"]),
+    );
+
+    assert.deepEqual(actionByRelativePath(plan), new Map([
+      [".takt/en/facets/blocked.md", "collision"],
+    ]));
+    assert.deepEqual(
+      plan.collisions.map((item) => item.relativePath),
+      [".takt/en/facets/blocked.md"],
+    );
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
+});
+
 test("buildEjectPlan uses the resolved language when no language option is provided", () => {
   const projectRoot = makeTmpDir();
   const packageRoot = makeTmpDir();
@@ -309,6 +358,7 @@ test("buildEjectPlan uses the resolved language when no language option is provi
     writeProjectConfig(projectRoot, "ja");
     writePackageAsset(packageRoot, "en", "workflows", "kiro-impl.yaml", "english\n");
     writePackageAsset(packageRoot, "ja", "workflows", "kiro-impl.yaml", "japanese\n");
+    mkdirSync(join(packageRoot, ".takt", "ja", "facets"), { recursive: true });
 
     const plan = buildEjectPlan({ projectRoot, packageRoot }, parseEjectArgs([]));
 
@@ -442,6 +492,33 @@ test("runEject collision without force preserves the full project tree snapshot"
     assert.equal(result, 1);
     assert.match(stdout, /no files were written/i);
     assert.match(stdout, /\.takt\/en\/facets\/changed\.md/);
+    assert.deepEqual(snapshotProjectFiles(projectRoot), before);
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
+});
+
+test("runEject force refuses directory target collisions before any writes", async () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    writePackageAsset(packageRoot, "en", "workflows", "new.yaml", "new\n");
+    writePackageAsset(packageRoot, "en", "facets", "blocked.md", "upstream\n");
+    mkdirSync(join(projectRoot, ".takt", "en", "facets", "blocked.md"), {
+      recursive: true,
+    });
+
+    const before = snapshotProjectFiles(projectRoot);
+
+    const { result, stdout } = await captureStdout(() =>
+      runEject(["--lang", "en", "--force"], { projectRoot, packageRoot }),
+    );
+
+    assert.equal(result, 1);
+    assert.match(stdout, /collision/i);
+    assert.match(stdout, /\.takt\/en\/facets\/blocked\.md/);
+    assert.equal(existsSync(join(projectRoot, ".takt", "en", "workflows", "new.yaml")), false);
     assert.deepEqual(snapshotProjectFiles(projectRoot), before);
   } finally {
     rmSync(projectRoot, { recursive: true, force: true });
@@ -605,6 +682,7 @@ test("runEject shows ja-only manual config guidance using config-only language",
   const packageRoot = makeTmpDir();
   try {
     writePackageAsset(packageRoot, "ja", "workflows", "kiro-impl.yaml", "ja\n");
+    mkdirSync(join(packageRoot, ".takt", "ja", "facets"), { recursive: true });
     mkdirSync(join(projectRoot, ".takt"), { recursive: true });
     writeFileSync(
       join(projectRoot, ".takt", ".manifest.json"),
@@ -631,6 +709,7 @@ test("runEject suppresses ja-only manual config guidance when config language is
   const packageRoot = makeTmpDir();
   try {
     writePackageAsset(packageRoot, "ja", "workflows", "kiro-impl.yaml", "ja\n");
+    mkdirSync(join(packageRoot, ".takt", "ja", "facets"), { recursive: true });
     writeProjectConfig(projectRoot, "ja");
     writeFileSync(
       join(projectRoot, ".takt", ".manifest.json"),

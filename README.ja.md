@@ -51,7 +51,7 @@ npm install -g takt-sdd
 ### ワークフロー実行
 
 ```bash
-takt-sdd kiro-spec-quick -- "要件の説明..."
+takt-sdd kiro-spec-quick "要件の説明..."
 takt-sdd kiro-impl -- "feature={feature}"
 ```
 
@@ -186,7 +186,7 @@ SDD ワークフローは `takt-sdd kiro-*` を直接実行する。`kiro:*` npm
 requirements → design → tasks を quick path で生成する：
 
 ```bash
-takt-sdd kiro-spec-quick -- "要件の説明..."
+takt-sdd kiro-spec-quick "要件の説明..."
 ```
 
 ### フェーズ別実行
