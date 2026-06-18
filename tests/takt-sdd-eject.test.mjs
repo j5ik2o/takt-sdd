@@ -4,11 +4,13 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import os from "node:os";
 import { UsageError } from "../cli/init-adapter.mjs";
 import {
@@ -52,6 +54,29 @@ function assertUsageError(fn, messagePattern) {
 
 function actionByRelativePath(plan) {
   return new Map(plan.items.map((item) => [item.relativePath, item.action]));
+}
+
+function snapshotProjectFiles(projectRoot) {
+  const snapshot = new Map();
+
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const entryPath = join(dir, entry.name);
+      const relativePath = relative(projectRoot, entryPath).replaceAll("\\", "/");
+
+      if (entry.isDirectory()) {
+        walk(entryPath);
+      } else if (entry.isFile()) {
+        snapshot.set(relativePath, readFileSync(entryPath, "utf-8"));
+      }
+    }
+  };
+
+  if (statSync(projectRoot).isDirectory()) {
+    walk(projectRoot);
+  }
+
+  return snapshot;
 }
 
 async function captureStdout(fn) {
@@ -394,6 +419,108 @@ test("runEject refuses collisions without force before any writes", async () => 
   }
 });
 
+test("runEject collision without force preserves the full project tree snapshot", async () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    writePackageAsset(packageRoot, "en", "workflows", "missing.yaml", "missing\n");
+    writePackageAsset(packageRoot, "en", "facets", "changed.md", "upstream\n");
+    writeProjectAsset(projectRoot, "en", "facets", "changed.md", "project\n");
+    writeProjectAsset(projectRoot, "en", "workflows", "project-only.yaml", "project only\n");
+    writeProjectConfig(projectRoot, "en");
+    writeFileSync(join(projectRoot, ".takt", ".manifest.json"), '{"lang":"en"}\n', "utf-8");
+    mkdirSync(join(projectRoot, "scripts"), { recursive: true });
+    writeFileSync(join(projectRoot, "scripts", "kiro-staged.mjs"), "project script\n", "utf-8");
+    writeFileSync(join(projectRoot, "package.json"), '{"scripts":{"kiro:impl":"custom"}}\n', "utf-8");
+
+    const before = snapshotProjectFiles(projectRoot);
+
+    const { result, stdout } = await captureStdout(() =>
+      runEject(["--lang", "en"], { projectRoot, packageRoot }),
+    );
+
+    assert.equal(result, 1);
+    assert.match(stdout, /no files were written/i);
+    assert.match(stdout, /\.takt\/en\/facets\/changed\.md/);
+    assert.deepEqual(snapshotProjectFiles(projectRoot), before);
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
+});
+
+test("runEject all-languages force writes en and ja assets without metadata writes", async () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    writePackageAsset(packageRoot, "en", "workflows", "kiro-impl.yaml", "en workflow\n");
+    writePackageAsset(packageRoot, "en", "facets", "persona.md", "en facet\n");
+    writePackageAsset(packageRoot, "ja", "workflows", "kiro-impl.yaml", "ja workflow\n");
+    writePackageAsset(packageRoot, "ja", "facets", "persona.md", "ja facet\n");
+    writeFileSync(join(packageRoot, "package.json"), '{"version":"9.9.9"}\n', "utf-8");
+    writeFileSync(join(packageRoot, ".takt", "config.yaml"), "language: ja\n", "utf-8");
+    writeFileSync(join(packageRoot, ".takt", ".manifest.json"), '{"lang":"ja"}\n', "utf-8");
+    mkdirSync(join(packageRoot, "scripts"), { recursive: true });
+    writeFileSync(join(packageRoot, "scripts", "kiro-staged.mjs"), "package script\n", "utf-8");
+
+    writeProjectAsset(projectRoot, "en", "facets", "persona.md", "old en facet\n");
+    writeProjectAsset(projectRoot, "ja", "workflows", "kiro-impl.yaml", "old ja workflow\n");
+    writeProjectAsset(projectRoot, "en", "workflows", "project-only.yaml", "project only\n");
+    writeProjectConfig(projectRoot, "en");
+    writeFileSync(join(projectRoot, ".takt", ".manifest.json"), '{"lang":"en"}\n', "utf-8");
+    mkdirSync(join(projectRoot, "scripts"), { recursive: true });
+    writeFileSync(join(projectRoot, "scripts", "kiro-staged.mjs"), "project script\n", "utf-8");
+    writeFileSync(join(projectRoot, "package.json"), '{"scripts":{"kiro:impl":"custom"}}\n', "utf-8");
+
+    const plan = buildEjectPlan(
+      { projectRoot, packageRoot },
+      parseEjectArgs(["--all-languages", "--force"]),
+    );
+
+    assert.deepEqual(actionByRelativePath(plan), new Map([
+      [".takt/en/facets/persona.md", "overwrite"],
+      [".takt/en/workflows/kiro-impl.yaml", "copy"],
+      [".takt/ja/facets/persona.md", "copy"],
+      [".takt/ja/workflows/kiro-impl.yaml", "overwrite"],
+    ]));
+
+    const { result, stdout } = await captureStdout(() =>
+      runEject(["--all-languages", "--force"], { projectRoot, packageRoot }),
+    );
+
+    assert.equal(result, 0);
+    assert.match(stdout, /copied:\s*2/i);
+    assert.match(stdout, /overwritten:\s*2/i);
+    assert.equal(
+      readFileSync(join(projectRoot, ".takt", "en", "workflows", "kiro-impl.yaml"), "utf-8"),
+      "en workflow\n",
+    );
+    assert.equal(
+      readFileSync(join(projectRoot, ".takt", "en", "facets", "persona.md"), "utf-8"),
+      "en facet\n",
+    );
+    assert.equal(
+      readFileSync(join(projectRoot, ".takt", "ja", "workflows", "kiro-impl.yaml"), "utf-8"),
+      "ja workflow\n",
+    );
+    assert.equal(
+      readFileSync(join(projectRoot, ".takt", "ja", "facets", "persona.md"), "utf-8"),
+      "ja facet\n",
+    );
+    assert.equal(readFileSync(join(projectRoot, ".takt", "config.yaml"), "utf-8"), "language: en\n");
+    assert.equal(readFileSync(join(projectRoot, ".takt", ".manifest.json"), "utf-8"), '{"lang":"en"}\n');
+    assert.equal(readFileSync(join(projectRoot, "scripts", "kiro-staged.mjs"), "utf-8"), "project script\n");
+    assert.equal(readFileSync(join(projectRoot, "package.json"), "utf-8"), '{"scripts":{"kiro:impl":"custom"}}\n');
+    assert.equal(
+      readFileSync(join(projectRoot, ".takt", "en", "workflows", "project-only.yaml"), "utf-8"),
+      "project only\n",
+    );
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
+});
+
 test("runEject applies copies and force overwrites with success guidance", async () => {
   const projectRoot = makeTmpDir();
   const packageRoot = makeTmpDir();
@@ -433,6 +560,46 @@ test("runEject applies copies and force overwrites with success guidance", async
   }
 });
 
+test("runEject successful eject does not prune old files or create metadata", async () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    writePackageAsset(packageRoot, "en", "workflows", "kiro-impl.yaml", "workflow\n");
+    writePackageAsset(packageRoot, "en", "facets", "persona.md", "facet\n");
+    writeProjectAsset(projectRoot, "en", "workflows", "removed-upstream.yaml", "old workflow\n");
+    writeProjectAsset(projectRoot, "en", "facets", "local-only.md", "local facet\n");
+
+    const { result } = await captureStdout(() =>
+      runEject(["--lang", "en"], { projectRoot, packageRoot }),
+    );
+
+    assert.equal(result, 0);
+    assert.equal(
+      readFileSync(join(projectRoot, ".takt", "en", "workflows", "kiro-impl.yaml"), "utf-8"),
+      "workflow\n",
+    );
+    assert.equal(
+      readFileSync(join(projectRoot, ".takt", "en", "facets", "persona.md"), "utf-8"),
+      "facet\n",
+    );
+    assert.equal(
+      readFileSync(join(projectRoot, ".takt", "en", "workflows", "removed-upstream.yaml"), "utf-8"),
+      "old workflow\n",
+    );
+    assert.equal(
+      readFileSync(join(projectRoot, ".takt", "en", "facets", "local-only.md"), "utf-8"),
+      "local facet\n",
+    );
+    assert.equal(existsSync(join(projectRoot, ".takt", "config.yaml")), false);
+    assert.equal(existsSync(join(projectRoot, ".takt", ".manifest.json")), false);
+    assert.equal(existsSync(join(projectRoot, "scripts", "kiro-staged.mjs")), false);
+    assert.equal(existsSync(join(projectRoot, "package.json")), false);
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
+});
+
 test("runEject shows ja-only manual config guidance using config-only language", async () => {
   const projectRoot = makeTmpDir();
   const packageRoot = makeTmpDir();
@@ -453,6 +620,31 @@ test("runEject shows ja-only manual config guidance using config-only language",
     assert.match(stdout, /language:\s*ja/);
     assert.match(stdout, /\.takt\/config\.yaml/);
     assert.match(stdout, /manual|yourself|set/i);
+  } finally {
+    rmSync(projectRoot, { recursive: true, force: true });
+    rmSync(packageRoot, { recursive: true, force: true });
+  }
+});
+
+test("runEject suppresses ja-only manual config guidance when config language is ja", async () => {
+  const projectRoot = makeTmpDir();
+  const packageRoot = makeTmpDir();
+  try {
+    writePackageAsset(packageRoot, "ja", "workflows", "kiro-impl.yaml", "ja\n");
+    writeProjectConfig(projectRoot, "ja");
+    writeFileSync(
+      join(projectRoot, ".takt", ".manifest.json"),
+      JSON.stringify({ lang: "en" }),
+      "utf-8",
+    );
+
+    const { result, stdout } = await captureStdout(() =>
+      runEject(["--lang", "ja"], { projectRoot, packageRoot }),
+    );
+
+    assert.equal(result, 0);
+    assert.doesNotMatch(stdout, /For ja-only eject/);
+    assert.doesNotMatch(stdout, /set language:\s*ja/i);
   } finally {
     rmSync(projectRoot, { recursive: true, force: true });
     rmSync(packageRoot, { recursive: true, force: true });

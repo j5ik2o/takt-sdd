@@ -106,7 +106,7 @@
   - _Boundary:_ RetiredInitCommand, CreateTaktSddRetiredCli
   - _Depends:_ 2.1, 2.2
 
-- [ ] 5.3 (P) eject の plan、dry-run、write policy を検証する
+- [x] 5.3 (P) eject の plan、dry-run、write policy を検証する
   - help、language option、all-languages、mutually exclusive option を検証する。
   - missing、same content、collision、force overwrite、dry-run force を temp project で検証する。
   - config、manifest、script、package metadata が plan に入らず作成・変更されないことを検証する。
