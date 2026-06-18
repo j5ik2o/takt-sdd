@@ -33,11 +33,14 @@ takt-sdd uses [takt](https://github.com/nrslib/takt)'s state-machine-based workf
 
 ## Prerequisites
 
-- Node.js 22+ (takt is automatically added to `devDependencies` during installation)
+- Node.js 22+
+- `takt-sdd` uses the `takt` dependency bundled with the installed package for workflow execution. A project-local `takt` dependency or copied `.takt/` directory is not required for ordinary use.
 
 ## Global CLI
 
 `takt-sdd` is available as a global npm package, letting you run any supported `kiro-*` workflow from any project without relying on repo-local npm scripts.
+
+Package-bundled workflows/facets run from the installed package. Project-local `.takt` workflow files are treated only as explicit overrides, so routine upgrades no longer require syncing copied workflow or facet assets.
 
 ### Installation
 
@@ -45,17 +48,11 @@ takt-sdd uses [takt](https://github.com/nrslib/takt)'s state-machine-based workf
 npm install -g takt-sdd
 ```
 
-### Initialize a project
+### Run workflows
 
 ```bash
-takt-sdd init .
-```
-
-`init` copies the bundled `.takt` assets (workflows and facets matching the installed package version) into the target directory and merges the required devDependencies into `package.json`.  
-`init` does **not** run `npm install` automatically. After `init` completes, run:
-
-```bash
-npm install
+takt-sdd kiro-spec-quick "description of requirements..."
+takt-sdd kiro-impl -- "feature={feature}"
 ```
 
 ### Supported commands
@@ -89,15 +86,50 @@ The `run` form is equivalent to the direct command form and accepts the same sup
 |--------|-------------|
 | `--cwd <dir>` | Set the target project root directory (default: current working directory) |
 
-### `init` options
+### Customization with `eject`
 
-| Option | Description |
-|--------|-------------|
-| `--lang en\|ja` | Language for installed assets and initial language preference (default: `en`). Reads existing `.takt/config.yaml` language if present and `--lang` is not specified. |
-| `--force` | Overwrite customized files (same semantics as `create-takt-sdd --force`) |
-| `--dry-run` | Preview changes without writing any files |
+Use `takt-sdd eject` only when you need to customize bundled workflows or facets:
 
-`--tag` is **not** supported by the global CLI. The bundled assets matching the installed package version are always used.
+```bash
+takt-sdd eject
+takt-sdd eject --lang ja --dry-run
+takt-sdd eject --all-languages
+```
+
+`eject` copies only `.takt/<lang>/workflows/**` and `.takt/<lang>/facets/**`. Ejected files are project-owned and will not be automatically updated. `eject` does not create or change `.takt/config.yaml`, `.takt/.manifest.json`, `scripts/kiro-staged.mjs`, or `package.json`.
+
+### Retired initializer commands
+
+`takt-sdd init` is retired and guidance-only. It no longer copies `.takt` assets, writes a manifest, creates `scripts/kiro-staged.mjs`, or edits `package.json`.
+
+`create-takt-sdd` is retired and guidance-only. It no longer installs or copies `.takt` assets.
+
+```bash
+takt-sdd init --help
+npx create-takt-sdd --help
+```
+
+Use direct `takt-sdd kiro-*` execution for normal workflows and `takt-sdd eject` for project-owned customization.
+
+**BREAKING BEHAVIOR CHANGE without a major version bump:** projects that relied on `takt-sdd init` or `create-takt-sdd` asset copy must stop depending on initializer writes. Add project-owned npm scripts manually if you want script aliases.
+
+### Manual npm script examples
+
+```json
+{
+  "scripts": {
+    "kiro:spec:quick": "takt-sdd kiro-spec-quick",
+    "kiro:impl": "takt-sdd kiro-impl",
+    "kiro:validate:impl": "takt-sdd kiro-validate-impl"
+  }
+}
+```
+
+Then pass workflow arguments after `--`, for example:
+
+```bash
+npm run kiro:impl -- "feature={feature}"
+```
 
 ### Retired workflows
 
@@ -117,44 +149,7 @@ takt-sdd run opsx-full      # Error: same rejection
 
 ### `.takt/config.yaml` ownership
 
-`.takt/config.yaml` is a **user-owned** file. It may be placed globally at `~/.takt/config.yaml` or per-project, and is created and maintained by the user, not by the CLI. The CLI only **reads** it (to determine language preference during `init` and workflow resolution). The CLI never creates or modifies this file. Language preference from `init` is recorded in `.takt/.manifest.json`.
-
-## Installation (create-takt-sdd)
-
-To add the SDD workflow to your project using the installer, run the following in your project root:
-
-```bash
-npx create-takt-sdd
-```
-
-For Japanese facets and messages:
-
-```bash
-npx create-takt-sdd --lang ja
-```
-
-To install a specific version or the latest release:
-
-```bash
-npx create-takt-sdd --tag latest
-npx create-takt-sdd --tag 0.1.2
-```
-
-The installer sets up the following:
-
-- **`.takt/`** — Workflows (YAML workflows) and facets in the selected language (`--lang`)
-- **`package.json`** — npm scripts for each phase + `takt` as a devDependency
-
-Options:
-
-| Option | Description |
-|--------|-------------|
-| `--force` | Overwrite existing `.takt/` directory |
-| `--tag <version>` | Install a specific version (`latest`, `0.2.0`, etc.) |
-| `--lang <en\|ja>` | Facet and message language (default: `en`) |
-| `--dry-run` | Preview files without writing |
-
-When `package.json` already exists, only npm scripts are merged (existing scripts are not overwritten).
+`.takt/config.yaml` is a **user-owned** file. It may be placed globally at `~/.takt/config.yaml` or per-project, and is created and maintained by the user, not by the CLI. The CLI only **reads** it to determine workflow language and the default `eject` language. The CLI never creates or modifies this file.
 
 ### Adding Individual Skills
 
@@ -170,28 +165,28 @@ npx -y skills add j5ik2o/ai-tools --skill takt-task-builder
 
 ## Kiro Compatibility Workflow
 
-Use `kiro:*` scripts for SDD workflow execution. The `cc-sdd:*` npm scripts compatibility surface ended in v2.0.0.
+Run SDD workflows directly with `takt-sdd kiro-*`. `kiro:*` npm scripts are optional project-owned aliases; `takt-sdd init` and `create-takt-sdd` no longer create or update them. The `cc-sdd:*` npm scripts compatibility surface ended in v2.0.0.
 
-| Phase | npm script | Workflow identity | Description |
-|-------|------------|-------------------|-------------|
-| Discovery | `kiro:discovery` | `kiro-discovery` | Route a feature idea, update brief/roadmap when needed |
-| Spec quick path | `kiro:spec:quick` | `kiro-spec-quick` | Generate requirements, design, and tasks through the closed-loop path |
-| Requirements | `kiro:spec:requirements` | `kiro-spec-requirements` | Generate requirements in EARS format |
-| Gap validation | `kiro:validate:gap` | `kiro-validate-gap` | Compare requirements with the current codebase |
-| Design | `kiro:spec:design` | `kiro-spec-design` | Generate technical design and discovery notes |
-| Design validation | `kiro:validate:design` | `kiro-validate-design` | Review design quality and return a GO/NO-GO decision |
-| Tasks | `kiro:spec:tasks` | `kiro-spec-tasks` | Generate implementation tasks |
-| Batch specs | `kiro:spec:batch` | `kiro-spec-batch` | Generate multiple specs from roadmap dependency order |
-| Status | `kiro:spec:status` | `kiro-spec-status` | Report spec phase, approvals, and readiness |
-| Implementation | `kiro:impl` | `kiro-impl` | Implement approved tasks with review/debug/verify gates |
-| Implementation validation | `kiro:validate:impl` | `kiro-validate-impl` | Validate implementation evidence and remaining manual checks |
+| Phase | Direct command | Optional npm alias | Description |
+|-------|----------------|--------------------|-------------|
+| Discovery | `takt-sdd kiro-discovery` | `kiro:discovery` | Route a feature idea, update brief/roadmap when needed |
+| Spec quick path | `takt-sdd kiro-spec-quick` | `kiro:spec:quick` | Generate requirements, design, and tasks through the closed-loop path |
+| Requirements | `takt-sdd kiro-spec-requirements` | `kiro:spec:requirements` | Generate requirements in EARS format |
+| Gap validation | `takt-sdd kiro-validate-gap` | `kiro:validate:gap` | Compare requirements with the current codebase |
+| Design | `takt-sdd kiro-spec-design` | `kiro:spec:design` | Generate technical design and discovery notes |
+| Design validation | `takt-sdd kiro-validate-design` | `kiro:validate:design` | Review design quality and return a GO/NO-GO decision |
+| Tasks | `takt-sdd kiro-spec-tasks` | `kiro:spec:tasks` | Generate implementation tasks |
+| Batch specs | `takt-sdd kiro-spec-batch` | `kiro:spec:batch` | Generate multiple specs from roadmap dependency order |
+| Status | `takt-sdd kiro-spec-status` | `kiro:spec:status` | Report spec phase, approvals, and readiness |
+| Implementation | `takt-sdd kiro-impl` | `kiro:impl` | Implement approved tasks with review/debug/verify gates |
+| Implementation validation | `takt-sdd kiro-validate-impl` | `kiro:validate:impl` | Validate implementation evidence and remaining manual checks |
 
 ### Quick Execution
 
 Run requirements → design → tasks through the quick path:
 
 ```bash
-npm run kiro:spec:quick -- "description of requirements..."
+takt-sdd kiro-spec-quick "description of requirements..."
 ```
 
 ### Phase-by-Phase Execution
@@ -200,30 +195,32 @@ Run each phase workflow individually, allowing human intervention between phases
 
 ```bash
 # Optional discovery
-npm run kiro:discovery -- "feature idea..."
+takt-sdd kiro-discovery -- "feature idea..."
 
 # Requirements generation
-npm run kiro:spec:requirements -- "description of requirements..."
+takt-sdd kiro-spec-requirements -- "description of requirements..."
 # Check the {feature} name in .kiro/specs/{feature}
 
 # Gap analysis (only when existing code exists)
-npm run kiro:validate:gap -- "feature={feature}"
+takt-sdd kiro-validate-gap -- "feature={feature}"
 
 # Design generation
-npm run kiro:spec:design -- "feature={feature}"
+takt-sdd kiro-spec-design -- "feature={feature}"
 
 # Design validation
-npm run kiro:validate:design -- "feature={feature}"
+takt-sdd kiro-validate-design -- "feature={feature}"
 
 # Task generation
-npm run kiro:spec:tasks -- "feature={feature}"
+takt-sdd kiro-spec-tasks -- "feature={feature}"
 
 # Implementation
-npm run kiro:impl -- "feature={feature}"
+takt-sdd kiro-impl -- "feature={feature}"
 
 # Implementation validation
-npm run kiro:validate:impl -- "feature={feature}"
+takt-sdd kiro-validate-impl -- "feature={feature}"
 ```
+
+Projects that prefer npm scripts can add aliases manually, as shown in the Global CLI section. Those aliases should call `takt-sdd kiro-*` and remain owned by the project.
 
 ### Smoke Tests
 
@@ -250,9 +247,9 @@ Artifacts from each phase are output to `.kiro/specs/{feature}/`. The format is 
 | 3 | `tasks.md` | Implementation task list (progress updated during implementation) |
 
 
-## Steering (Project Memory Management)
+## Steering (Repo-Local Project Memory Helpers)
 
-Separate from the SDD workflow, workflows are provided to manage `.kiro/steering/` as project memory.
+Separate from the global CLI workflow surface, this repository provides repo-local helper scripts to manage `.kiro/steering/` as project memory. These helpers are not created or updated by `takt-sdd init` or `create-takt-sdd`.
 
 | Workflow | Description |
 |-------|-------------|
@@ -274,14 +271,14 @@ npm run kiro:steering -- "REST API server with TypeScript, Express, PostgreSQL"
 
 ### steering-custom
 
-Creates steering files for specific domains such as architecture policies, API standards, and testing strategies. Templates are available in `.takt/knowledge/steering-custom-template-files/`.
+Creates steering files for specific domains such as architecture policies, API standards, and testing strategies. Pass a common domain name for a skeleton, or include the policy details directly in the command text.
 
 ```bash
 npm run kiro:steering-custom -- "architecture"
-# Specify the {name} from .takt/knowledge/steering-custom-template-files/{name}.md
+# Specify a domain name or include policy details directly.
 ```
 
-Available templates:
+Common domain names:
 
 | Template | Description |
 |----------|-------------|
@@ -322,36 +319,34 @@ npm run kiro:steering-custom -- "testing"
 
 Generated steering files are automatically referenced during design phases (`kiro:spec:design`, `kiro:validate:design`, etc.).
 
-## Updating an Existing Project (v1.x → v2.0.0)
+## Updating an Existing Project
 
-When you run `takt-sdd init .` on a project that was installed with v1.x, the installer automatically removes retired workflow assets (cc-sdd-* and opsx-* workflow files) that have not been customized, and removes them from the manifest. Assets that you have modified are left in place with a warning.
+For ordinary use, install or upgrade `takt-sdd` and run `takt-sdd kiro-*` directly. The package-bundled workflows/facets are resolved from the installed package, so existing copied `.takt` assets are no longer the default runtime source.
 
-In `--dry-run` mode, the list of files that would be removed is displayed without making any changes.
-
-Note: `openspec/` directories and any files you have added yourself are never touched by the update.
+If you previously customized copied workflows or facets, run `takt-sdd eject` only when you want to make those package assets project-owned again, then carry your customization forward manually. `takt-sdd` does not prune old copied files.
 
 ### Removing leftover `cc-sdd:*` and `opsx:*` scripts
 
-`init` does not modify your `package.json` scripts beyond adding missing `kiro:*` entries. If your project still contains `cc-sdd:*` or `opsx:*` scripts from a v1.x installation, remove them manually. They reference workflow files that no longer exist, so running them will result in a takt resolution error.
+`takt-sdd init` no longer modifies your `package.json` scripts. If your project still contains `cc-sdd:*` or `opsx:*` scripts from a v1.x installation, remove them manually. They reference workflow files that no longer exist, so running them will result in a takt resolution error.
 
 ## Project Structure
 
+The package-bundled assets use this layout. A project only needs the `.takt/<lang>/workflows` and `.takt/<lang>/facets` tree after running `takt-sdd eject`; otherwise the installed package copy is used directly.
+
 ```
 .takt/
-├── en/                      # English facets and workflows
-│   ├── pieces/              # Workflow definitions (YAML)
-│   ├── personas/            # Persona facets
-│   ├── policies/            # Policy facets
-│   ├── instructions/        # Instruction facets
-│   ├── knowledge/           # Knowledge facets
-│   └── output-contracts/    # Output contract facets
-└── ja/                      # Japanese facets and workflows
-    ├── pieces/              # ワークフロー定義（YAML）
-    ├── personas/            # ペルソナファセット
-    ├── policies/            # ポリシーファセット
-    ├── instructions/        # インストラクションファセット
-    ├── knowledge/           # ナレッジファセット
-    └── output-contracts/    # 出力契約ファセット
+├── en/
+│   ├── workflows/           # Workflow definitions (YAML)
+│   └── facets/
+│       ├── instructions/    # Instruction facets
+│       ├── output-contracts/ # Output contract facets
+│       └── policies/        # Policy facets
+└── ja/
+    ├── workflows/           # ワークフロー定義（YAML）
+    └── facets/
+        ├── instructions/    # インストラクションファセット
+        ├── output-contracts/ # 出力契約ファセット
+        └── policies/        # ポリシーファセット
 references/
 └── okite-ai/                # AI rules collection (submodule)
 scripts/

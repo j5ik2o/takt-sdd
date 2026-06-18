@@ -243,10 +243,10 @@ test("takt-sdd global install smoke", { skip: shouldSkip }, async (t) => {
   });
 
   // --------------------------------------------------------------------------
-  // Test 3: init . --dry-run in empty project exits 0 with ZERO file writes
-  //         (req 8.2, 3.4)
+  // Test 3: init . --dry-run in empty project is retired with ZERO file writes
+  //         (req 3.2, 3.3, 3.4)
   // --------------------------------------------------------------------------
-  await t.test("takt-sdd init . --dry-run in empty dir exits 0 and writes nothing", () => {
+  await t.test("takt-sdd init . --dry-run in empty dir exits retired and writes nothing", () => {
     // Snapshot directory contents BEFORE.
     const snapshotBefore = readdirSync(projectDir);
 
@@ -257,9 +257,10 @@ test("takt-sdd global install smoke", { skip: shouldSkip }, async (t) => {
 
     assert.equal(
       result.status,
-      0,
+      1,
       `init --dry-run exited ${result.status}\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
     );
+    assert.match(result.stderr, /init.*retired|no longer needed|eject/i);
     assert.deepEqual(
       snapshotAfter.sort(),
       snapshotBefore.sort(),
@@ -268,31 +269,44 @@ test("takt-sdd global install smoke", { skip: shouldSkip }, async (t) => {
   });
 
   // --------------------------------------------------------------------------
-  // Test 4: uninitialized project preflight error mentions takt-sdd init
-  //         (req 8.3, 6.5)
+  // Test 4: uninitialized project resolves the package bundled workflow
+  //         without requiring project-local .takt assets (req 1.1, 1.4, 2.5)
   //
-  // Use a separate empty dir that has never been initialized so preflight
-  // cannot find .takt/workflows/<name>.yaml.
+  // Use a separate empty dir that has never been initialized. The mock provider
+  // intentionally aborts later because no mock scenario is configured; the
+  // smoke assertion is that public CLI preflight selected the installed package
+  // workflow and did not copy project-local workflow/facet assets.
   // --------------------------------------------------------------------------
   await t.test(
-    "takt-sdd kiro-impl foo in uninitialized dir exits non-0 and suggests takt-sdd init",
+    "takt-sdd kiro-spec-status in uninitialized dir starts package bundled workflow",
     () => {
       // Create a fresh uninitialised directory inside tmpDir.
       const uninitDir = join(tmpDir, "uninit-project");
       mkdirSync(uninitDir, { recursive: true });
 
-      const result = runCli(["kiro-impl", "foo"], { cwd: uninitDir, timeout: 30_000 });
+      assert.deepEqual(readdirSync(uninitDir), []);
+
+      const result = runCli(
+        ["kiro-spec-status", "sample", "--provider=mock", "--quiet"],
+        { cwd: uninitDir, timeout: 30_000 },
+      );
       assert.notEqual(
         result.status,
         0,
         `Expected non-0 exit for uninitialized project, got 0\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
       );
       const output = result.stdout + result.stderr;
+      const normalizedOutput = output.replaceAll("\\", "/");
       assert.match(
-        output,
-        /takt-sdd\s+init/i,
-        `Expected output to suggest 'takt-sdd init', got:\n${output}`,
+        normalizedOutput,
+        /Running workflow: .*\/node_modules\/takt-sdd\/\.takt\/en\/workflows\/kiro-spec-status\.yaml/,
+        `Expected package bundled workflow path, got:\n${output}`,
       );
+      assert.doesNotMatch(output, /takt-sdd\s+init/i);
+      assert.match(output, /Provider: mock/i);
+      assert.equal(existsSync(join(uninitDir, ".takt", "workflows")), false);
+      assert.equal(existsSync(join(uninitDir, ".takt", "en", "workflows")), false);
+      assert.equal(existsSync(join(uninitDir, ".takt", "en", "facets")), false);
     },
   );
 

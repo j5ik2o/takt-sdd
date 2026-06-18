@@ -6,7 +6,7 @@
  * reported by `npm pack --dry-run --json`) contains the expected files and
  * does NOT contain forbidden runtime state or credentials.
  *
- * Requirements: 7.4, 7.5, 8.5
+ * Requirements: 6.5, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6
  *
  * Design approach — exported functions + main guard:
  *   The core logic is exported so tests can unit-test it with synthetic file
@@ -58,9 +58,12 @@ const REQUIRED_EXACT = [
   "cli/main.mjs",
   "cli/command-catalog.mjs",
   "cli/init-adapter.mjs",
+  "cli/asset-resolution.mjs",
+  "cli/eject-command.mjs",
   "cli/workflow-runner.mjs",
   "scripts/kiro-staged.mjs",
   "installer/dist/install.js",
+  "installer/dist/cli.js",
   "installer/dist/i18n.js",
   "installer/package.json",
 ];
@@ -305,6 +308,128 @@ export function validateVersionConsistency(constants, pkg) {
 }
 
 // ---------------------------------------------------------------------------
+// Documentation migration checks
+// ---------------------------------------------------------------------------
+
+function normalizeDoc(text) {
+  return String(text ?? "").replace(/\s+/g, " ");
+}
+
+function requireDocPattern(errors, label, text, description, pattern) {
+  if (!pattern.test(text)) {
+    errors.push(`DOC_MISSING: ${label} missing ${description}`);
+  }
+}
+
+function validateReadmeMigration(errors, label, text) {
+  requireDocPattern(
+    errors,
+    label,
+    text,
+    "package bundled runtime guidance",
+    /package[- ]bundled workflows\/facets|bundled workflows\/facets.*installed package|installed package.*bundled workflows\/facets/i,
+  );
+  requireDocPattern(
+    errors,
+    label,
+    text,
+    "eject customization guidance",
+    /takt-sdd eject/i,
+  );
+  requireDocPattern(
+    errors,
+    label,
+    text,
+    "retired init guidance",
+    /takt-sdd init.*(retired|guidance-only|no longer copies|廃止|copy は行いません|コピーは行いません)/i,
+  );
+  requireDocPattern(
+    errors,
+    label,
+    text,
+    "retired create-takt-sdd guidance",
+    /create-takt-sdd.*(retired|guidance-only|no longer installs|廃止|install や copy は行いません|コピーは行いません)/i,
+  );
+  requireDocPattern(
+    errors,
+    label,
+    text,
+    "manual npm script example",
+    /"kiro:impl"\s*:\s*"takt-sdd kiro-impl"/,
+  );
+  requireDocPattern(
+    errors,
+    label,
+    text,
+    "BREAKING BEHAVIOR CHANGE wording",
+    /BREAKING BEHAVIOR CHANGE|破壊的挙動変更/i,
+  );
+  requireDocPattern(
+    errors,
+    label,
+    text,
+    "no-major-version-bump wording",
+    /without a major version bump|major version を上げない|メジャーバージョンを上げない|major version.*上げない/i,
+  );
+}
+
+function validateChangelogMigration(errors, text) {
+  requireDocPattern(
+    errors,
+    "CHANGELOG.md",
+    text,
+    "BREAKING BEHAVIOR CHANGE entry",
+    /BREAKING BEHAVIOR CHANGE/i,
+  );
+  requireDocPattern(
+    errors,
+    "CHANGELOG.md",
+    text,
+    "init asset copy retirement",
+    /takt-sdd init.*asset copy.*retired|init asset copy.*retired|init.*asset copy.*廃止/i,
+  );
+  requireDocPattern(
+    errors,
+    "CHANGELOG.md",
+    text,
+    "package bundled runtime guidance",
+    /package[- ]bundled workflows\/facets|bundled workflows\/facets.*installed package|installed package.*bundled workflows\/facets/i,
+  );
+  requireDocPattern(
+    errors,
+    "CHANGELOG.md",
+    text,
+    "eject migration guidance",
+    /takt-sdd eject/i,
+  );
+  requireDocPattern(
+    errors,
+    "CHANGELOG.md",
+    text,
+    "no-major-version-bump wording",
+    /without a major version bump|major version を上げない|メジャーバージョンを上げない|major version.*上げない/i,
+  );
+}
+
+/**
+ * Validate README and CHANGELOG migration guidance for the no-copy bundled
+ * runtime. This keeps a breaking behavior change from disappearing while the
+ * package still publishes without a major version bump.
+ *
+ * @param {{ readme?: string, readmeJa?: string, changelog?: string }} docs
+ * @returns {string[]}
+ */
+export function validateDocumentationMigration(docs) {
+  const errors = [];
+
+  validateReadmeMigration(errors, "README.md", normalizeDoc(docs.readme));
+  validateReadmeMigration(errors, "README.ja.md", normalizeDoc(docs.readmeJa));
+  validateChangelogMigration(errors, normalizeDoc(docs.changelog));
+
+  return errors;
+}
+
+// ---------------------------------------------------------------------------
 // Retired cross-check: catalog RETIRED_WORKFLOWS ↔ installer RETIRED_MANIFEST_KEY_PATTERNS
 // ---------------------------------------------------------------------------
 
@@ -446,6 +571,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // Detects drift between the two retired-list definitions (req 6.3, design cross-check).
   const crossCheckErrors = validateRetiredCrossCheck();
   allErrors.push(...crossCheckErrors);
+
+  // --- Documentation migration validation ---
+  const docErrors = validateDocumentationMigration({
+    readme: readFileSync(join(repoRoot, "README.md"), "utf8"),
+    readmeJa: readFileSync(join(repoRoot, "README.ja.md"), "utf8"),
+    changelog: readFileSync(join(repoRoot, "CHANGELOG.md"), "utf8"),
+  });
+  allErrors.push(...docErrors);
 
   // --- Report ---
   if (allErrors.length > 0) {

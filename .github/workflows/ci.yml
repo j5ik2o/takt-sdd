@@ -24,8 +24,13 @@ jobs:
         working-directory: installer
         run: npm ci --ignore-scripts && npm run build
 
-      - name: Dry-run (${{ matrix.lang }})
-        run: node installer/dist/cli.js --dry-run --lang ${{ matrix.lang }}
+      - name: Retired CLI guidance (${{ matrix.lang }})
+        run: |
+          node installer/dist/cli.js --help
+          if node installer/dist/cli.js --dry-run --lang ${{ matrix.lang }}; then
+            echo "::error::Retired create-takt-sdd unexpectedly succeeded"
+            exit 1
+          fi
 
   global-cli:
     runs-on: ubuntu-latest

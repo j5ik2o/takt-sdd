@@ -1322,8 +1322,12 @@ function taskAnnotationValue(block, label) {
 }
 
 function taskRequirementsValue(block) {
-  const match = block.match(/^\s+-\s+_Requirements:\s*(.+?)_\s*$/m);
-  return match?.[1]?.trim();
+  const canonicalMatch = block.match(/^\s+-\s+_Requirements:_\s*(.+?)\s*$/m);
+  if (canonicalMatch) {
+    return canonicalMatch[1].trim();
+  }
+  const legacyMatch = block.match(/^\s+-\s+_Requirements:\s*(.+?)_\s*$/m);
+  return legacyMatch?.[1]?.trim();
 }
 
 function hasObservableCompletion(block) {

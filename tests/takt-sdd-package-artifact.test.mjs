@@ -15,16 +15,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
+import { tmpdir } from "node:os";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 // Import the exported validator functions
-const { validateFileList, validateVersionConsistency } = await import(
-  "../scripts/validate-package-artifact.mjs"
-);
+const packageArtifactValidator = await import("../scripts/validate-package-artifact.mjs");
+const {
+  validateFileList,
+  validateVersionConsistency,
+  validateDocumentationMigration,
+} = packageArtifactValidator;
 
 // Import catalog constants to build the minimal valid file set programmatically.
 // This ensures MINIMAL_VALID_FILES stays aligned with ALL_CATALOG_WORKFLOWS.
@@ -59,9 +63,12 @@ const MINIMAL_VALID_FILES = [
   "cli/main.mjs",
   "cli/command-catalog.mjs",
   "cli/init-adapter.mjs",
+  "cli/asset-resolution.mjs",
+  "cli/eject-command.mjs",
   "cli/workflow-runner.mjs",
   "scripts/kiro-staged.mjs",
   "installer/dist/install.js",
+  "installer/dist/cli.js",
   "installer/dist/i18n.js",
   "installer/package.json",
   // All catalog workflow yamls — en and ja for every entry (30 x 2 = 60 files)
@@ -97,6 +104,24 @@ test("validateFileList: missing cli/main.mjs is reported", () => {
   const files = MINIMAL_VALID_FILES.filter((f) => f !== "cli/main.mjs");
   const errors = validateFileList(files);
   assert.ok(errors.some((e) => e.includes("cli/main.mjs")), `Errors: ${errors.join("; ")}`);
+});
+
+test("validateFileList: missing cli/asset-resolution.mjs is reported", () => {
+  const files = MINIMAL_VALID_FILES.filter((f) => f !== "cli/asset-resolution.mjs");
+  const errors = validateFileList(files);
+  assert.ok(
+    errors.some((e) => e.includes("cli/asset-resolution.mjs")),
+    `Errors: ${errors.join("; ")}`,
+  );
+});
+
+test("validateFileList: missing cli/eject-command.mjs is reported", () => {
+  const files = MINIMAL_VALID_FILES.filter((f) => f !== "cli/eject-command.mjs");
+  const errors = validateFileList(files);
+  assert.ok(
+    errors.some((e) => e.includes("cli/eject-command.mjs")),
+    `Errors: ${errors.join("; ")}`,
+  );
 });
 
 test("validateFileList: missing scripts/kiro-staged.mjs is reported", () => {
@@ -569,6 +594,136 @@ test("main() guard calls validateRetiredCrossCheck (wiring assertion)", () => {
     mainGuardBody.includes("validateRetiredCrossCheck()"),
     "main() guard must call validateRetiredCrossCheck() — it was found as export-only (not called at runtime)",
   );
+});
+
+test("main() guard calls validateDocumentationMigration (wiring assertion)", () => {
+  const validatorSrc = readFileSync(
+    join(repoRoot, "scripts", "validate-package-artifact.mjs"),
+    "utf8",
+  );
+  const mainGuardStart = validatorSrc.indexOf("if (process.argv[1] === fileURLToPath(import.meta.url))");
+  assert.ok(mainGuardStart !== -1, "Could not locate main() guard in validator source");
+  const mainGuardBody = validatorSrc.slice(mainGuardStart);
+  assert.ok(
+    mainGuardBody.includes("validateDocumentationMigration("),
+    "main() guard must call validateDocumentationMigration() so migration guidance regressions fail package validation",
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Documentation migration regression checks
+// ---------------------------------------------------------------------------
+test("validateDocumentationMigration: actual README and CHANGELOG contain no-copy migration guidance", () => {
+  assert.equal(typeof validateDocumentationMigration, "function");
+  const errors = validateDocumentationMigration({
+    readme: readFileSync(join(repoRoot, "README.md"), "utf8"),
+    readmeJa: readFileSync(join(repoRoot, "README.ja.md"), "utf8"),
+    changelog: readFileSync(join(repoRoot, "CHANGELOG.md"), "utf8"),
+  });
+  assert.deepEqual(errors, [], `Documentation migration errors: ${errors.join("; ")}`);
+});
+
+test("validateDocumentationMigration: missing README manual script example is reported", () => {
+  assert.equal(typeof validateDocumentationMigration, "function");
+  const docs = {
+    readme: [
+      "Package-bundled workflows/facets run from the installed package.",
+      "Use takt-sdd eject for customization.",
+      "takt-sdd init and create-takt-sdd are retired guidance-only commands.",
+      "BREAKING BEHAVIOR CHANGE without a major version bump.",
+    ].join("\n"),
+    readmeJa: [
+      "package bundled workflows/facets は installed package から実行されます。",
+      "カスタマイズには takt-sdd eject を使います。",
+      "takt-sdd init と create-takt-sdd は retired guidance only です。",
+      "major version を上げない BREAKING BEHAVIOR CHANGE です。",
+      "\"kiro:impl\": \"takt-sdd kiro-impl\"",
+    ].join("\n"),
+    changelog: [
+      "### BREAKING BEHAVIOR CHANGE",
+      "takt-sdd init asset copy is retired.",
+      "Package bundled workflows/facets run from the installed package.",
+      "Use takt-sdd eject for customization.",
+      "This ships without a major version bump.",
+    ].join("\n"),
+  };
+  const errors = validateDocumentationMigration(docs);
+  assert.ok(
+    errors.some((e) => e.includes("README.md") && e.includes("manual npm script")),
+    `Errors: ${errors.join("; ")}`,
+  );
+});
+
+test("validateDocumentationMigration: missing CHANGELOG breaking behavior is reported", () => {
+  assert.equal(typeof validateDocumentationMigration, "function");
+  const docs = {
+    readme: [
+      "Package-bundled workflows/facets run from the installed package.",
+      "Use takt-sdd eject for customization.",
+      "takt-sdd init and create-takt-sdd are retired guidance-only commands.",
+      "\"kiro:impl\": \"takt-sdd kiro-impl\"",
+      "BREAKING BEHAVIOR CHANGE without a major version bump.",
+    ].join("\n"),
+    readmeJa: [
+      "package bundled workflows/facets は installed package から実行されます。",
+      "カスタマイズには takt-sdd eject を使います。",
+      "takt-sdd init と create-takt-sdd は retired guidance only です。",
+      "\"kiro:impl\": \"takt-sdd kiro-impl\"",
+      "major version を上げない BREAKING BEHAVIOR CHANGE です。",
+    ].join("\n"),
+    changelog: "Maintenance release.",
+  };
+  const errors = validateDocumentationMigration(docs);
+  assert.ok(
+    errors.some((e) => e.includes("CHANGELOG.md") && e.includes("BREAKING BEHAVIOR CHANGE")),
+    `Errors: ${errors.join("; ")}`,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Bin smoke: retired copy surface must not come back through published bins
+// ---------------------------------------------------------------------------
+test("bin smoke: takt-sdd init returns retired no-write guidance", () => {
+  const projectRoot = mkdtempSync(join(tmpdir(), "takt-sdd-init-retired-"));
+  const result = spawnSync(process.execPath, [
+    join(repoRoot, "bin", "takt-sdd.mjs"),
+    "--cwd",
+    projectRoot,
+    "init",
+    "--force",
+    "--lang",
+    "ja",
+  ], {
+    cwd: projectRoot,
+    encoding: "utf8",
+    timeout: 30_000,
+  });
+
+  assert.equal(result.status, 1, `stdout: ${result.stdout}\nstderr: ${result.stderr}`);
+  assert.match(result.stderr, /init.*retired|no longer needed|eject/i);
+  assert.equal(existsSync(join(projectRoot, ".takt")), false, "init must not create .takt");
+  assert.equal(existsSync(join(projectRoot, "package.json")), false, "init must not create package.json");
+  assert.equal(existsSync(join(projectRoot, "scripts", "kiro-staged.mjs")), false, "init must not create scripts/kiro-staged.mjs");
+});
+
+test("bin smoke: create-takt-sdd returns retired no-write guidance", () => {
+  const projectRoot = mkdtempSync(join(tmpdir(), "create-takt-sdd-retired-"));
+  const result = spawnSync(process.execPath, [
+    join(repoRoot, "installer", "dist", "cli.js"),
+    "--force",
+    "--lang",
+    "ja",
+  ], {
+    cwd: projectRoot,
+    encoding: "utf8",
+    timeout: 30_000,
+  });
+
+  assert.equal(result.status, 1, `stdout: ${result.stdout}\nstderr: ${result.stderr}`);
+  assert.match(result.stderr, /create-takt-sdd.*retired|廃止済み|eject/i);
+  assert.equal(existsSync(join(projectRoot, ".takt")), false, "create-takt-sdd must not create .takt");
+  assert.equal(existsSync(join(projectRoot, "package.json")), false, "create-takt-sdd must not create package.json");
+  assert.equal(existsSync(join(projectRoot, "scripts", "kiro-staged.mjs")), false, "create-takt-sdd must not create scripts/kiro-staged.mjs");
 });
 
 // ---------------------------------------------------------------------------

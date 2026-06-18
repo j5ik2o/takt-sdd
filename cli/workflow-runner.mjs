@@ -20,11 +20,14 @@
  *   - config.yaml absence is not an error
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { createRequire } from "node:module";
 import { spawn as nodeSpawn } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import {
+  resolveLanguage,
+  resolveWorkflowAsset,
+} from "./asset-resolution.mjs";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typed error
@@ -46,9 +49,10 @@ export class PreflightError extends Error {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Try to resolve a workflow asset using strict 2-candidate strategy:
+ * Try to resolve a workflow asset using strict candidate strategy:
  *   1. <projectRoot>/.takt/workflows/<name>.yaml  (language-neutral root slot)
  *   2. <projectRoot>/.takt/<lang>/workflows/<name>.yaml  (language-specific slot)
+ *   3. <packageRoot>/.takt/<lang>/workflows/<name>.yaml  (bundled package slot)
  *
  * No language fallback: if lang is "ja", only ja-slot and root-slot are tried.
  * An "en" asset is NEVER returned for a "ja" resolution request.
@@ -56,16 +60,16 @@ export class PreflightError extends Error {
  * @param {string} projectRoot
  * @param {"en" | "ja"} lang
  * @param {string} name
+ * @param {string} [packageRoot]
  * @returns {string | undefined}
  */
-export function resolveWorkflowPathStrict(projectRoot, lang, name) {
-  const candidate1 = join(projectRoot, ".takt", "workflows", `${name}.yaml`);
-  if (existsSync(candidate1)) return candidate1;
-
-  const candidate2 = join(projectRoot, ".takt", lang, "workflows", `${name}.yaml`);
-  if (existsSync(candidate2)) return candidate2;
-
-  return undefined;
+export function resolveWorkflowPathStrict(projectRoot, lang, name, packageRoot = projectRoot) {
+  return resolveWorkflowAsset({
+    projectRoot,
+    packageRoot,
+    lang,
+    workflowName: name,
+  })?.workflowPath;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -109,7 +113,7 @@ export function resolveTaktBin(packageRoot) {
  * Build the argument list for takt invocation.
  *
  * Always includes: --pipeline --skip-git -w <workflowPath>
- * Flags (args starting with - or --) are forwarded in order.
+ * A standalone -- separator is consumed. Other flags are forwarded in order.
  * Positional args (not starting with -) are joined with space and appended as a
  * single -t value. If there are no positionals, -t is omitted.
  *
@@ -122,6 +126,7 @@ export function buildWorkflowArgs(workflowPath, forwarded) {
   const positionals = [];
 
   for (const arg of forwarded) {
+    if (arg === "--") continue;
     if (arg.startsWith("-")) {
       flags.push(arg);
     } else {
@@ -139,52 +144,6 @@ export function buildWorkflowArgs(workflowPath, forwarded) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Internal: read language from config.yaml (read-only)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Try to read language preference from .takt/config.yaml.
- * Returns null if file is absent, unreadable, or has no matching line.
- * config.yaml absence is never an error.
- *
- * @param {string} projectRoot
- * @returns {"en" | "ja" | null}
- */
-function readConfigYamlLang(projectRoot) {
-  const configPath = join(projectRoot, ".takt", "config.yaml");
-  if (!existsSync(configPath)) return null;
-  try {
-    const content = readFileSync(configPath, "utf-8");
-    for (const line of content.split("\n")) {
-      const match = line.match(/^language:\s*(en|ja)\s*$/);
-      if (match) return /** @type {"en"|"ja"} */ (match[1]);
-    }
-  } catch {
-    // unreadable — fall through
-  }
-  return null;
-}
-
-/**
- * Read language from .takt/.manifest.json.
- * Returns null if absent, unreadable, or lang is not "en"/"ja".
- *
- * @param {string} projectRoot
- * @returns {"en" | "ja" | null}
- */
-function readManifestLang(projectRoot) {
-  const manifestPath = join(projectRoot, ".takt", ".manifest.json");
-  if (!existsSync(manifestPath)) return null;
-  try {
-    const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
-    if (manifest.lang === "en" || manifest.lang === "ja") return manifest.lang;
-  } catch {
-    // malformed — fall through
-  }
-  return null;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // preflight
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -194,70 +153,39 @@ function readManifestLang(projectRoot) {
  *
  * Steps (per design):
  *   1. Determine language: config.yaml (read-only) > manifest.lang > "en"
- *   2. Strict workflow resolution: if not resolvable → init guidance
- *   3. project package.json SDD devDependencies (takt only): report missing binaries
+ *   2. Resolve selected workflow source: project root > project language > package language
  *
  * Precondition: workflowName is already catalog-validated (CliMain's responsibility).
  *
  * @param {{ projectRoot: string, packageRoot: string }} ctx
  * @param {string} workflowName
- * @returns {{ lang: "en" | "ja", workflowPath: string, missingDependencies: string[] }}
+ * @returns {{ lang: "en" | "ja", workflowPath: string, workflowSource: "project-root" | "project-language" | "package" }}
  */
 export function preflight(ctx, workflowName) {
-  const { projectRoot } = ctx;
+  const { projectRoot, packageRoot } = ctx;
 
   // Step 1: Determine language
-  const configLang = readConfigYamlLang(projectRoot);
-  const manifestLang = readManifestLang(projectRoot);
-  const lang = configLang ?? manifestLang ?? "en";
+  const { lang } = resolveLanguage(projectRoot);
 
-  // Step 2: Strict workflow resolution
-  const workflowPath = resolveWorkflowPathStrict(projectRoot, lang, workflowName);
-  if (workflowPath === undefined) {
+  // Step 2: Resolve the one workflow path that TAKT will receive.
+  const workflowAsset = resolveWorkflowAsset({
+    projectRoot,
+    packageRoot,
+    lang,
+    workflowName,
+  });
+  if (workflowAsset === undefined) {
     throw new PreflightError(
       `Workflow '${workflowName}' could not be resolved for language '${lang}'. ` +
-        `Run \`takt-sdd init .\` to initialize or update the project assets.`,
+        "Checked project overrides and package bundled workflows.",
     );
   }
 
-  // Step 3: Check SDD devDependencies declared in project package.json (takt only)
-  const missingDependencies = [];
-  const pkgJsonPath = join(projectRoot, "package.json");
-  if (existsSync(pkgJsonPath)) {
-    let projectPkg = null;
-    try {
-      projectPkg = JSON.parse(readFileSync(pkgJsonPath, "utf-8"));
-    } catch {
-      // malformed — skip check
-    }
-    if (projectPkg !== null) {
-      const allDeps = {
-        ...projectPkg.devDependencies,
-        ...projectPkg.dependencies,
-      };
-      // Binary name mapping: package → binary (takt only)
-      const sddBinMap = {
-        takt: "takt",
-      };
-      for (const [pkg, bin] of Object.entries(sddBinMap)) {
-        if (allDeps[pkg] !== undefined) {
-          const binPath = join(projectRoot, "node_modules", ".bin", bin);
-          if (!existsSync(binPath)) {
-            missingDependencies.push(bin);
-          }
-        }
-      }
-    }
-  }
-
-  if (missingDependencies.length > 0) {
-    throw new PreflightError(
-      `Missing project-local binaries: ${missingDependencies.join(", ")}. ` +
-        `Run \`npm install\` in your project to install the required dependencies.`,
-    );
-  }
-
-  return { lang, workflowPath, missingDependencies: [] };
+  return {
+    lang,
+    workflowPath: workflowAsset.workflowPath,
+    workflowSource: workflowAsset.kind,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

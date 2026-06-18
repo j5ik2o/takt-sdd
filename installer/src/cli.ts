@@ -1,20 +1,14 @@
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { type Lang, isLang } from "./i18n.js";
+import { type Lang } from "./i18n.js";
 import { getMessages } from "./i18n.js";
-import { install } from "./install.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const packageRoot = resolve(__dirname, "..");
 
-type Layout = "auto" | "modern" | "legacy";
 const MIN_NODE_VERSION = { major: 20, minor: 19, patch: 0 } as const;
-
-function isLayout(value: string): value is Layout {
-  return value === "auto" || value === "modern" || value === "legacy";
-}
 
 function assertSupportedNodeVersion(): void {
   const match = process.versions.node.match(/^(\d+)\.(\d+)\.(\d+)/);
@@ -45,85 +39,26 @@ function assertSupportedNodeVersion(): void {
   process.exit(1);
 }
 
-interface ParsedArgs {
-  lang: Lang;
-  force: boolean;
-  dryRun: boolean;
-  help: boolean;
-  version: boolean;
-  tag: string | undefined;
-  layout: Layout;
+type RetiredCliMode = "help" | "version" | "guidance";
+
+export function parseRetiredCliMode(argv: readonly string[]): RetiredCliMode {
+  if (argv.includes("--help") || argv.includes("-h")) return "help";
+  if (argv.includes("--version") || argv.includes("-v")) return "version";
+  return "guidance";
 }
 
-function parseArgs(argv: string[]): ParsedArgs {
-  const args: ParsedArgs = {
-    lang: "en",
-    force: false,
-    dryRun: false,
-    help: false,
-    version: false,
-    tag: undefined,
-    layout: "auto" as Layout,
-  };
-
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    switch (arg) {
-      case "--lang": {
-        const value = argv[++i];
-        if (!value || !isLang(value)) {
-          console.error(`Error: --lang requires "en" or "ja". Got: ${value ?? "(empty)"}`);
-          process.exit(1);
-        }
-        args.lang = value as Lang;
-        break;
-      }
-      case "--tag": {
-        const value = argv[++i];
-        if (!value) {
-          console.error('Error: --tag requires a value (e.g. "latest", "0.1.0")');
-          process.exit(1);
-        }
-        args.tag = value;
-        break;
-      }
-      case "--force":
-        args.force = true;
-        break;
-      case "--dry-run":
-        args.dryRun = true;
-        break;
-      case "--layout": {
-        const value = argv[++i];
-        if (!value || !isLayout(value)) {
-          console.error(`Error: --layout requires "auto", "modern", or "legacy". Got: ${value ?? "(empty)"}`);
-          process.exit(1);
-        }
-        args.layout = value;
-        break;
-      }
-      case "-h":
-      case "--help":
-        args.help = true;
-        break;
-      case "-v":
-      case "--version":
-        args.version = true;
-        break;
-      default:
-        console.error(`Unknown option: ${arg}`);
-        process.exit(1);
-    }
-  }
-
-  return args;
+function resolveMessageLanguage(argv: readonly string[]): Lang {
+  const langIndex = argv.indexOf("--lang");
+  const value = langIndex >= 0 ? argv[langIndex + 1] : undefined;
+  return value === "ja" ? "ja" : "en";
 }
 
 async function main(): Promise<void> {
   assertSupportedNodeVersion();
-  const args = parseArgs(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  const mode = parseRetiredCliMode(argv);
 
-  if (args.version) {
+  if (mode === "version") {
     const pkg = JSON.parse(
       readFileSync(resolve(packageRoot, "package.json"), "utf-8"),
     );
@@ -131,20 +66,15 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (args.help) {
-    const msg = getMessages(args.lang);
-    console.log(msg.helpText);
+  const msg = getMessages(resolveMessageLanguage(argv));
+
+  if (mode === "help") {
+    console.log(msg.retiredHelpText);
     return;
   }
 
-  await install({
-    lang: args.lang,
-    force: args.force,
-    dryRun: args.dryRun,
-    tag: args.tag,
-    layout: args.layout,
-    cwd: process.cwd(),
-  });
+  console.error(msg.retiredGuidance);
+  process.exit(1);
 }
 
 main().catch((err) => {
