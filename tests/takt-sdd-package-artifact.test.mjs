@@ -613,7 +613,7 @@ test("main() guard calls validateDocumentationMigration (wiring assertion)", () 
 // ---------------------------------------------------------------------------
 // Documentation migration regression checks
 // ---------------------------------------------------------------------------
-test("validateDocumentationMigration: actual README and CHANGELOG contain no-copy migration guidance", () => {
+test("validateDocumentationMigration: actual README files contain no-copy migration guidance", () => {
   assert.equal(typeof validateDocumentationMigration, "function");
   const errors = validateDocumentationMigration({
     readme: readFileSync(join(repoRoot, "README.md"), "utf8"),
@@ -630,21 +630,20 @@ test("validateDocumentationMigration: missing README manual script example is re
       "Package-bundled workflows/facets run from the installed package.",
       "Use takt-sdd eject for customization.",
       "takt-sdd init and create-takt-sdd are retired guidance-only commands.",
-      "BREAKING BEHAVIOR CHANGE without a major version bump.",
+      "BREAKING BEHAVIOR CHANGE.",
     ].join("\n"),
     readmeJa: [
       "package bundled workflows/facets は installed package から実行されます。",
       "カスタマイズには takt-sdd eject を使います。",
       "takt-sdd init と create-takt-sdd は retired guidance only です。",
-      "major version を上げない BREAKING BEHAVIOR CHANGE です。",
+      "BREAKING BEHAVIOR CHANGE です。",
       "\"kiro:impl\": \"takt-sdd kiro-impl\"",
     ].join("\n"),
     changelog: [
-      "### BREAKING BEHAVIOR CHANGE",
-      "takt-sdd init asset copy is retired.",
-      "Package bundled workflows/facets run from the installed package.",
-      "Use takt-sdd eject for customization.",
-      "This ships without a major version bump.",
+      "## [2.2.0]",
+      "### Features",
+      "* **no-copy-bundled-assets-eject:** run bundled workflows without init",
+      "* **no-copy-bundled-assets-eject:** wire eject into cli dispatch",
     ].join("\n"),
   };
   const errors = validateDocumentationMigration(docs);
@@ -654,7 +653,7 @@ test("validateDocumentationMigration: missing README manual script example is re
   );
 });
 
-test("validateDocumentationMigration: missing CHANGELOG breaking behavior is reported", () => {
+test("validateDocumentationMigration: release-generated CHANGELOG prose is not a package gate", () => {
   assert.equal(typeof validateDocumentationMigration, "function");
   const docs = {
     readme: [
@@ -662,20 +661,46 @@ test("validateDocumentationMigration: missing CHANGELOG breaking behavior is rep
       "Use takt-sdd eject for customization.",
       "takt-sdd init and create-takt-sdd are retired guidance-only commands.",
       "\"kiro:impl\": \"takt-sdd kiro-impl\"",
-      "BREAKING BEHAVIOR CHANGE without a major version bump.",
+      "BREAKING BEHAVIOR CHANGE.",
     ].join("\n"),
     readmeJa: [
       "package bundled workflows/facets は installed package から実行されます。",
       "カスタマイズには takt-sdd eject を使います。",
       "takt-sdd init と create-takt-sdd は retired guidance only です。",
       "\"kiro:impl\": \"takt-sdd kiro-impl\"",
-      "major version を上げない BREAKING BEHAVIOR CHANGE です。",
+      "BREAKING BEHAVIOR CHANGE です。",
+    ].join("\n"),
+    changelog: [
+      "## [2.2.0]",
+      "### Features",
+      "* **no-copy-bundled-assets-eject:** run bundled workflows without init",
+      "* **no-copy-bundled-assets-eject:** wire eject into cli dispatch",
+    ].join("\n"),
+  };
+  assert.deepEqual(validateDocumentationMigration(docs), []);
+});
+
+test("validateDocumentationMigration: missing README breaking behavior is reported", () => {
+  assert.equal(typeof validateDocumentationMigration, "function");
+  const docs = {
+    readme: [
+      "Package-bundled workflows/facets run from the installed package.",
+      "Use takt-sdd eject for customization.",
+      "takt-sdd init and create-takt-sdd are retired guidance-only commands.",
+      "\"kiro:impl\": \"takt-sdd kiro-impl\"",
+    ].join("\n"),
+    readmeJa: [
+      "package bundled workflows/facets は installed package から実行されます。",
+      "カスタマイズには takt-sdd eject を使います。",
+      "takt-sdd init と create-takt-sdd は retired guidance only です。",
+      "\"kiro:impl\": \"takt-sdd kiro-impl\"",
+      "BREAKING BEHAVIOR CHANGE です。",
     ].join("\n"),
     changelog: "Maintenance release.",
   };
   const errors = validateDocumentationMigration(docs);
   assert.ok(
-    errors.some((e) => e.includes("CHANGELOG.md") && e.includes("BREAKING BEHAVIOR CHANGE")),
+    errors.some((e) => e.includes("README.md") && e.includes("BREAKING BEHAVIOR CHANGE")),
     `Errors: ${errors.join("; ")}`,
   );
 });
