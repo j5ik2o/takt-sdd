@@ -11,7 +11,7 @@
 すべての executable task は以下をすべて含める。
 
 - Observable completion: 完了を観測できる具体的な signal を detail bullet に少なくとも 1 つ書く。
-- Numeric requirements: `_Requirements: ..._` には numeric requirement IDs だけを書く。
+- Numeric requirements: `_Requirements:_ ...` には numeric requirement IDs だけを書く。
 - Boundary annotation: `_Boundary:_ ...` には design 由来の component または workflow boundary names を書く。
 - Depends annotation: `_Depends:_ ...` には task IDs または dependency なしを表す canonical value `none` を書く。
 

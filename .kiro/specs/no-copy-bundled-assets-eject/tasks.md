@@ -88,7 +88,7 @@
   - _Depends:_ 1.2, 2.1, 2.3, 3.3
 
 - [ ] 5. 自動検証を追加・更新する
-- [x] 5.1 (P) package bundled runtime の実行前提を検証する
+- [x] 5.1 package bundled runtime の実行前提を検証する
   - `.takt/` 不在、root override、language override、package fallback の preflight 結果を検証する。
   - config、manifest、default language の優先順位と no language fallback を検証する。
   - project-local `takt` dependency があって binary がない場合も workflow 実行を拒否しないことを検証する。
@@ -97,7 +97,7 @@
   - _Boundary:_ WorkflowRunner, AssetResolution
   - _Depends:_ 1.2
 
-- [x] 5.2 (P) retired `init` と `create-takt-sdd` の no-write を検証する
+- [x] 5.2 retired `init` と `create-takt-sdd` の no-write を検証する
   - help と通常実行の exit code、message、旧 option validation skip を検証する。
   - temp project で `.takt`、manifest、script、package metadata が作成・変更されないことを検証する。
   - `create-takt-sdd` public CLI が install core に到達しないことを検証する。
@@ -106,7 +106,7 @@
   - _Boundary:_ RetiredInitCommand, CreateTaktSddRetiredCli
   - _Depends:_ 2.1, 2.2
 
-- [x] 5.3 (P) eject の plan、dry-run、write policy を検証する
+- [x] 5.3 eject の plan、dry-run、write policy を検証する
   - help、language option、all-languages、mutually exclusive option を検証する。
   - missing、same content、collision、force overwrite、dry-run force を temp project で検証する。
   - config、manifest、script、package metadata が plan に入らず作成・変更されないことを検証する。

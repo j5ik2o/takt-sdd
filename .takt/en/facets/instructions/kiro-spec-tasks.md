@@ -29,7 +29,7 @@ Generate `.kiro/specs/<feature>/tasks.md` from approved requirements and design.
 4. Perform task generation from `requirements.md`, `design.md`, `spec.json`, existing `tasks.md`, and `.kiro/settings/templates/specs/tasks.md`.
 5. Produce `tasks.md` as an implementation-ready plan. Every executable task must include:
    - observable completion detail in a task detail bullet.
-   - numeric requirements in `_Requirements: ..._`.
+   - numeric requirements in `_Requirements:_ ...`.
    - the canonical boundary annotation label `_Boundary:_`.
    - the canonical dependency annotation label `_Depends:_`.
 6. Use `_Depends:_ none` when an executable task has no dependency. Use task IDs when dependencies exist.

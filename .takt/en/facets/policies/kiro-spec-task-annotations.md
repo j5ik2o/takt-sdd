@@ -11,7 +11,7 @@ This policy defines the task annotation contract consumed by downstream `kiro-im
 Every executable task must include all of the following:
 
 - Observable completion: at least one task detail bullet that describes the concrete completion signal.
-- Numeric requirements: `_Requirements: ..._` with numeric requirement IDs only.
+- Numeric requirements: `_Requirements:_ ...` with numeric requirement IDs only.
 - Boundary annotation: `_Boundary:_ ...`, using component or workflow boundary names from design.
 - Depends annotation: `_Depends:_ ...`, using task IDs or the canonical empty dependency value `none`.
 
