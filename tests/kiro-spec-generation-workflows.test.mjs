@@ -1035,12 +1035,14 @@ test("task 15 adapter validation detects skill section, field, and enum drift", 
 
 test("requirements generation facet must not inherit review instructions", () => {
   const root = makeWritableValidationFixture();
-  const requirementsPath = ".takt/ja/facets/instructions/kiro-spec-requirements.md";
-  const requirements = readFileSync(join(root, requirementsPath), "utf8").replace(
-    "{extends: plan}",
-    "{extends: review-pure}",
-  );
-  writeFixtureFile(root, requirementsPath, requirements);
+  for (const lang of ["en", "ja"]) {
+    const requirementsPath = `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`;
+    const requirements = readFileSync(join(root, requirementsPath), "utf8").replace(
+      "{extends: plan}",
+      "{extends: review-pure}",
+    );
+    writeFixtureFile(root, requirementsPath, requirements);
+  }
 
   const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
 
