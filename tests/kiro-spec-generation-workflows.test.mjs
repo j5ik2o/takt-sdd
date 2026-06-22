@@ -690,17 +690,12 @@ test("task workflow validation detects finalize task result drift", () => {
 });
 
 test("task 14.1 validation detects missing built-in facet parent", () => {
-  const root = makeFixture();
+  const root = makeWritableValidationFixture();
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
       `.takt/${lang}/facets/instructions/kiro-spec-init.md`,
       ["{extends: missing-planning-parent}", "", "# Kiro Spec Init", "", "- spec.json"].join("\n"),
-    );
-    writeFixtureFile(
-      root,
-      `node_modules/takt/builtins/${lang}/facets/instructions/plan.md`,
-      "# Built-in Plan\n",
     );
   }
 
@@ -712,18 +707,35 @@ test("task 14.1 validation detects missing built-in facet parent", () => {
   );
 });
 
+test("task 14.1 validation detects semantic facet parent drift", () => {
+  const root = makeWritableValidationFixture();
+  for (const lang of ["en", "ja"]) {
+    const path = `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`;
+    const content = readFileSync(join(root, path), "utf8").replace("{extends: plan}", "{extends: review-pure}");
+    writeFixtureFile(root, path, content);
+  }
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("FACET_DRIFT") &&
+        failure.includes("kiro-spec-requirements.md") &&
+        failure.includes("must extend plan") &&
+        failure.includes("actual=review-pure"),
+    ),
+    result.failures.join("\n"),
+  );
+});
+
 test("task 14.1 validation detects unsupported facet extends references", () => {
-  const root = makeFixture();
+  const root = makeWritableValidationFixture();
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
       `.takt/${lang}/facets/instructions/kiro-spec-init.md`,
       ["{extends: instructions/plan}", "", "# Kiro Spec Init", "", "- spec.json"].join("\n"),
-    );
-    writeFixtureFile(
-      root,
-      `node_modules/takt/builtins/${lang}/facets/instructions/plan.md`,
-      "# Built-in Plan\n",
     );
   }
 
@@ -1023,21 +1035,24 @@ test("task 15 adapter validation detects skill section, field, and enum drift", 
 
 test("requirements generation facet must not inherit review instructions", () => {
   const root = makeWritableValidationFixture();
-  const requirementsPath = ".takt/ja/facets/instructions/kiro-spec-requirements.md";
-  const requirements = readFileSync(join(root, requirementsPath), "utf8").replace(
-    "{extends: plan}",
-    "{extends: review-pure}",
-  );
-  writeFixtureFile(root, requirementsPath, requirements);
+  for (const lang of ["en", "ja"]) {
+    const requirementsPath = `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`;
+    const requirements = readFileSync(join(root, requirementsPath), "utf8").replace(
+      "{extends: plan}",
+      "{extends: review-pure}",
+    );
+    writeFixtureFile(root, requirementsPath, requirements);
+  }
 
   const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
 
   assert.ok(
     result.failures.some(
       (failure) =>
-        failure.includes("BUILTIN_FACET_INHERITANCE_DRIFT") &&
+        failure.includes("FACET_DRIFT") &&
         failure.includes("kiro-spec-requirements.md") &&
-        failure.includes("{extends: plan}"),
+        failure.includes("must extend plan") &&
+        failure.includes("actual=review-pure"),
     ),
     result.failures.join("\n"),
   );
