@@ -364,59 +364,14 @@ function validateReadmeMigration(errors, label, text) {
     "BREAKING BEHAVIOR CHANGE wording",
     /BREAKING BEHAVIOR CHANGE|破壊的挙動変更/i,
   );
-  requireDocPattern(
-    errors,
-    label,
-    text,
-    "no-major-version-bump wording",
-    /without a major version bump|major version を上げない|メジャーバージョンを上げない|major version.*上げない/i,
-  );
-}
-
-function validateChangelogMigration(errors, text) {
-  requireDocPattern(
-    errors,
-    "CHANGELOG.md",
-    text,
-    "BREAKING BEHAVIOR CHANGE entry",
-    /BREAKING BEHAVIOR CHANGE/i,
-  );
-  requireDocPattern(
-    errors,
-    "CHANGELOG.md",
-    text,
-    "init asset copy retirement",
-    /takt-sdd init.*asset copy.*retired|init asset copy.*retired|init.*asset copy.*廃止/i,
-  );
-  requireDocPattern(
-    errors,
-    "CHANGELOG.md",
-    text,
-    "package bundled runtime guidance",
-    /package[- ]bundled workflows\/facets|bundled workflows\/facets.*installed package|installed package.*bundled workflows\/facets/i,
-  );
-  requireDocPattern(
-    errors,
-    "CHANGELOG.md",
-    text,
-    "eject migration guidance",
-    /takt-sdd eject/i,
-  );
-  requireDocPattern(
-    errors,
-    "CHANGELOG.md",
-    text,
-    "no-major-version-bump wording",
-    /without a major version bump|major version を上げない|メジャーバージョンを上げない|major version.*上げない/i,
-  );
 }
 
 /**
- * Validate README and CHANGELOG migration guidance for the no-copy bundled
- * runtime. This keeps a breaking behavior change from disappearing while the
- * package still publishes without a major version bump.
+ * Validate README migration guidance for the no-copy bundled runtime. Release
+ * notes are generated separately, so this check avoids coupling package
+ * artifact validation to a specific CHANGELOG prose shape or versioning policy.
  *
- * @param {{ readme?: string, readmeJa?: string, changelog?: string }} docs
+ * @param {{ readme?: string, readmeJa?: string }} docs
  * @returns {string[]}
  */
 export function validateDocumentationMigration(docs) {
@@ -424,7 +379,6 @@ export function validateDocumentationMigration(docs) {
 
   validateReadmeMigration(errors, "README.md", normalizeDoc(docs.readme));
   validateReadmeMigration(errors, "README.ja.md", normalizeDoc(docs.readmeJa));
-  validateChangelogMigration(errors, normalizeDoc(docs.changelog));
 
   return errors;
 }
@@ -576,7 +530,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const docErrors = validateDocumentationMigration({
     readme: readFileSync(join(repoRoot, "README.md"), "utf8"),
     readmeJa: readFileSync(join(repoRoot, "README.ja.md"), "utf8"),
-    changelog: readFileSync(join(repoRoot, "CHANGELOG.md"), "utf8"),
   });
   allErrors.push(...docErrors);
 

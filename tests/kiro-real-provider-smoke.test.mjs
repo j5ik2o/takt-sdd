@@ -249,6 +249,46 @@ smoke-output/
   writeFixtureFile(root, `.kiro/specs/${featureName}/spec.json`, `${JSON.stringify(spec, null, 2)}\n`);
 }
 
+function writeInitializedRequirementsFixture(root) {
+  const now = new Date().toISOString();
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/spec.json`,
+    `${JSON.stringify(
+      {
+        feature_name: featureName,
+        created_at: now,
+        updated_at: now,
+        language: "ja",
+        phase: "initialized",
+        approvals: {
+          requirements: { generated: false, approved: false },
+          design: { generated: false, approved: false },
+          tasks: { generated: false, approved: false },
+        },
+        ready_for_implementation: false,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  writeFixtureFile(
+    root,
+    `.kiro/specs/${featureName}/requirements.md`,
+    `# 要件定義
+
+## プロジェクト説明（入力）
+
+real provider requirements smoke は、\`smoke-output/provider-smoke-alpha.txt\` と \`smoke-output/provider-smoke-beta.txt\` だけを後続実装対象にする。
+要件は最小でよいが、日本語 EARS 形式、数値 ID、明確な対象範囲を保持する。
+production files、package metadata、workflow、facet、script、settings は対象外にする。
+
+## 要件
+<!-- /kiro-spec-requirements フェーズで生成されます -->
+`,
+  );
+}
+
 function terminateProcessGroup(child, signal) {
   try {
     process.kill(-child.pid, signal);
@@ -447,6 +487,22 @@ function hasCollectedWaveResults(root) {
   );
 }
 
+function hasGeneratedRequirements(root) {
+  const requirementsPath = join(root, ".kiro", "specs", featureName, "requirements.md");
+  if (!existsSync(requirementsPath)) {
+    return false;
+  }
+  const requirements = readFileSync(requirementsPath, "utf8");
+  const spec = readSpec(root);
+  return (
+    spec.phase === "requirements-generated" &&
+    spec.approvals?.requirements?.generated === true &&
+    /要件\s+1/.test(requirements) &&
+    /しなければならない/.test(requirements) &&
+    !requirements.includes("/kiro-spec-requirements フェーズで生成されます")
+  );
+}
+
 function assertRealProviderWaveSmokeOutcome(root) {
   const reportsDir = latestReportsDir(root);
   const waveReport = readFileSync(join(reportsDir, "kiro-task-wave-implementation-result.md"), "utf8");
@@ -558,6 +614,39 @@ setInterval(() => {}, 60000);
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test(
+  "kiro requirements smoke writes requirements artifact with the configured real provider",
+  { skip: process.env.KIRO_REAL_PROVIDER_SMOKE === "1" ? false : "set KIRO_REAL_PROVIDER_SMOKE=1 to call the real provider" },
+  async () => {
+    const root = makeRealProviderFixture();
+    let success = false;
+    try {
+      writeInitializedRequirementsFixture(root);
+      commitFixtureState(root, "real provider initialized requirements fixture");
+
+      const requirementsResult = await runWorkflow(root, "kiro:spec:requirements", `feature=${featureName}`, {
+        successWhen: ({ root }) => hasGeneratedRequirements(root),
+      });
+      assertRealProviderEarlySmokeSuccess(requirementsResult, "kiro:spec:requirements");
+      assertRealProviderPhase(root, "requirements-generated", ["requirements.md"]);
+
+      const requirements = readFileSync(join(root, ".kiro", "specs", featureName, "requirements.md"), "utf8");
+      assert.match(requirements, /要件\s+1/);
+      assert.match(requirements, /しなければならない/);
+      assert.doesNotMatch(requirements, /\/kiro-spec-requirements フェーズで生成されます/);
+      assert.equal(readSpec(root).approvals.requirements.generated, true);
+      assert.equal(readSpec(root).ready_for_implementation, false);
+      success = true;
+    } finally {
+      if (success && process.env.KIRO_REAL_PROVIDER_KEEP !== "1") {
+        rmSync(root, { recursive: true, force: true });
+      } else {
+        console.error(`Real provider smoke fixture retained at: ${root}`);
+      }
+    }
+  },
+);
 
 test(
   "kiro impl smoke runs with the configured real provider and (P) implementation tasks",

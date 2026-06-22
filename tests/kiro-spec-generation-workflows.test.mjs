@@ -1043,6 +1043,69 @@ test("task 15 adapter validation detects skill section, field, and enum drift", 
   );
 });
 
+test("requirements generation facet must not inherit review instructions", () => {
+  const root = makeWritableValidationFixture();
+  const requirementsPath = ".takt/ja/facets/instructions/kiro-spec-requirements.md";
+  const requirements = readFileSync(join(root, requirementsPath), "utf8").replace(
+    "{extends: plan}",
+    "{extends: review-pure}",
+  );
+  writeFixtureFile(root, requirementsPath, requirements);
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("FACET_DRIFT") &&
+        failure.includes("kiro-spec-requirements.md") &&
+        failure.includes("must extend plan") &&
+        failure.includes("actual=review-pure"),
+    ),
+    result.failures.join("\n"),
+  );
+});
+
+test("requirements generation facet must preserve exact EARS fixed phrase markers", () => {
+  const root = makeWritableValidationFixture();
+  const requirementsPath = ".takt/ja/facets/instructions/kiro-spec-requirements.md";
+  const requirements = readFileSync(join(root, requirementsPath), "utf8")
+    .replaceAll("が起きたとき", "するとき")
+    .replaceAll("を含む場合", "含まれる場合")
+    .replaceAll("し続けなければならない", "維持しなければならない");
+  writeFixtureFile(root, requirementsPath, requirements);
+
+  const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });
+
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("FACET_DRIFT") &&
+        failure.includes("kiro-spec-requirements.md") &&
+        failure.includes("が起きたとき"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("FACET_DRIFT") &&
+        failure.includes("kiro-spec-requirements.md") &&
+        failure.includes("を含む場合"),
+    ),
+    result.failures.join("\n"),
+  );
+  assert.ok(
+    result.failures.some(
+      (failure) =>
+        failure.includes("FACET_DRIFT") &&
+        failure.includes("kiro-spec-requirements.md") &&
+        failure.includes("し続けなければならない"),
+    ),
+    result.failures.join("\n"),
+  );
+});
+
 test("design generation review adapters preserve draft-before-finalize handoff", () => {
   const repoRoot = join(import.meta.dirname, "..");
   const designResultTerms = [

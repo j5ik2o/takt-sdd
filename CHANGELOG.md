@@ -1,8 +1,33 @@
-## Unreleased
+## [2.2.1](https://github.com/j5ik2o/takt-sdd/compare/v2.2.0...v2.2.1) (2026-06-18)
 
-### BREAKING BEHAVIOR CHANGE
 
-* `takt-sdd init` asset copy is retired. Package-bundled workflows/facets now run from the installed package for ordinary `takt-sdd kiro-*` execution, and `takt-sdd eject` is the only supported path for copying workflows/facets into project-owned files. `create-takt-sdd` now returns retired guidance instead of installing or copying `.takt` assets. This is a breaking behavior change without a major version bump, so projects that relied on initializer writes must migrate to direct `takt-sdd` commands or add manual npm scripts.
+### Bug Fixes
+
+* **release:** relax migration validator changelog gate ([d73aa0d](https://github.com/j5ik2o/takt-sdd/commit/d73aa0dc46e46059f8113ad32441093c781b9192))
+* **release:** remove orphaned changelog read ([f2b45fc](https://github.com/j5ik2o/takt-sdd/commit/f2b45fc06aa8be05689b71ed36957db1b349829c))
+
+## [2.2.0](https://github.com/j5ik2o/takt-sdd/compare/v2.1.0...v2.2.0) (2026-06-18)
+
+
+### Features
+
+* **no-copy-bundled-assets-eject:** add read-only asset resolution ([1732477](https://github.com/j5ik2o/takt-sdd/commit/17324772c870c3a4a63231454ca0e690b0690dd2))
+* **no-copy-bundled-assets-eject:** apply eject plans safely ([fba7ba8](https://github.com/j5ik2o/takt-sdd/commit/fba7ba8e06a3757b58b75d49997cbd6c2d5e3d42))
+* **no-copy-bundled-assets-eject:** parse eject options ([edc9e2c](https://github.com/j5ik2o/takt-sdd/commit/edc9e2c0bc742dd630fc09ac03a4d37a39a79134))
+* **no-copy-bundled-assets-eject:** plan eject asset copies ([8ab5d24](https://github.com/j5ik2o/takt-sdd/commit/8ab5d24ab5ba056ba42d4e64890845807d0873c1))
+* **no-copy-bundled-assets-eject:** retire create cli ([f3428a5](https://github.com/j5ik2o/takt-sdd/commit/f3428a5fc6e270cb59ba41f65fa564ab9df75394))
+* **no-copy-bundled-assets-eject:** retire init command ([e65d80f](https://github.com/j5ik2o/takt-sdd/commit/e65d80f6ab86c4a263ba4917e4f11c792dc5b3cd))
+* **no-copy-bundled-assets-eject:** run bundled workflows without init ([58a1168](https://github.com/j5ik2o/takt-sdd/commit/58a116817c324884f1a75fca8023ca17dd62fabc))
+* **no-copy-bundled-assets-eject:** update command help surface ([aa67fa7](https://github.com/j5ik2o/takt-sdd/commit/aa67fa75b11871940b18eca2ff43804315879174))
+* **no-copy-bundled-assets-eject:** validate package migration guidance ([97d5375](https://github.com/j5ik2o/takt-sdd/commit/97d53751fe8b82af4d2dcc7f4d0227ad5d5978d7))
+* **no-copy-bundled-assets-eject:** wire eject into cli dispatch ([4505dad](https://github.com/j5ik2o/takt-sdd/commit/4505dad5c37bad5b3787dbc1e2a0a4fe64f3e805))
+
+
+### Bug Fixes
+
+* **init:** honor force for bundled asset updates ([8fa9dc1](https://github.com/j5ik2o/takt-sdd/commit/8fa9dc1cc054dfe926c7d5fdedd4026f2439e770))
+* **kiro:** align task requirement annotations ([60838ae](https://github.com/j5ik2o/takt-sdd/commit/60838aedc32f2ee679dfd6688af51ecd55e2c06a))
+* **no-copy-bundled-assets-eject:** harden eject review findings ([662dc29](https://github.com/j5ik2o/takt-sdd/commit/662dc291a5080e4e20a78b3a24f0cfe5d09d071d))
 
 ## [2.1.0](https://github.com/j5ik2o/takt-sdd/compare/v2.0.1...v2.1.0) (2026-06-17)
 
@@ -534,3 +559,4 @@ workflows will be re-provided in a future release.
 ### Features
 
 * **installer:** add --tag option and download from release tags ([7de6a77](https://github.com/j5ik2o/takt-sdd/commit/7de6a7742c2eb63ad8f96d3c9c74933202921995))
+
