@@ -169,7 +169,31 @@ const facetSpecs = [
   {
     kind: "instructions",
     name: "kiro-spec-requirements",
+    parent: "plan",
     terms: ["requirements.md", "EARS", "requirements-generated", "BLOCKED"],
+    termsByLang: {
+      en: [
+        "literally contain",
+        "mandatory wording markers",
+        "When [event] occurs",
+        "While [precondition]",
+        "If [condition]",
+        "If [unwanted event] occurs",
+        "If [feature/option] is included",
+        "shall always",
+      ],
+      ja: [
+        "文字列として含める",
+        "必須表現",
+        "が起きたとき",
+        "の間",
+        "の場合",
+        "を含む場合",
+        "は常に",
+        "しなければならない",
+        "し続けなければならない",
+      ],
+    },
   },
   {
     kind: "instructions",
@@ -1731,6 +1755,13 @@ function validateBuiltinFacetInheritance(repoRoot) {
             `BUILTIN_FACET_INHERITANCE_DRIFT: ${rel(repoRoot, path)} must use {extends: parent} or state Full custom reason`,
           );
         }
+        continue;
+      }
+
+      if (spec.parent && parent !== spec.parent) {
+        failures.push(
+          `BUILTIN_FACET_INHERITANCE_DRIFT: ${rel(repoRoot, path)} must use {extends: ${spec.parent}}`,
+        );
         continue;
       }
 
