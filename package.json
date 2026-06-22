@@ -16,8 +16,8 @@
   "files": [
     "bin/",
     "cli/",
-    ".takt/en/",
-    ".takt/ja/",
+    "builtins/en/",
+    "builtins/ja/",
     "scripts/kiro-staged.mjs",
     "installer/dist/",
     "!installer/dist/**/*.test.js",

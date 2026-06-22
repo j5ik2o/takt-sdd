@@ -12,7 +12,7 @@
  * Key invariants:
  *   - All filesystem access is read-only.
  *   - Language priority is config > manifest > default en.
- *   - Workflow priority is project root > project language > package language.
+ *   - Workflow priority is project root > project language > package builtins.
  *   - A ja resolution request never falls back to en assets.
  */
 
@@ -94,7 +94,7 @@ function workflowResult(workflowPath, kind, lang) {
 /**
  * Resolve workflow source with read-only precedence:
  * project .takt/workflows > project .takt/<lang>/workflows > package
- * .takt/<lang>/workflows.
+ * builtins/<lang>/workflows.
  *
  * @param {{
  *   readonly projectRoot: string,
@@ -122,7 +122,7 @@ export function resolveWorkflowAsset(input) {
     return workflowResult(projectLangWorkflow, "project-language", lang);
   }
 
-  const packageWorkflow = join(packageRoot, ".takt", lang, "workflows", `${workflowName}.yaml`);
+  const packageWorkflow = join(packageRoot, "builtins", lang, "workflows", `${workflowName}.yaml`);
   if (existsSync(packageWorkflow)) {
     return workflowResult(packageWorkflow, "package", lang);
   }

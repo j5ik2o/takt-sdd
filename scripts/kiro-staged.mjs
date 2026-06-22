@@ -18,12 +18,18 @@ function configuredLanguage(root) {
   return match?.[1];
 }
 
-export function resolveWorkflowPath(root, workflowName) {
-  const preferredLanguage = configuredLanguage(root);
+export function resolveWorkflowPath(root, workflowName, packageRoot = root) {
+  const projectRoot = resolve(root);
+  const fallbackRoot = resolve(packageRoot);
+  const preferredLanguage = configuredLanguage(projectRoot);
   const languageOrder = preferredLanguage === "en" ? ["en", "ja"] : ["ja", "en"];
   const workflowCandidates = [
-    resolve(root, ".takt", "workflows", `${workflowName}.yaml`),
-    ...languageOrder.map((language) => resolve(root, ".takt", language, "workflows", `${workflowName}.yaml`)),
+    resolve(projectRoot, ".takt", "workflows", `${workflowName}.yaml`),
+    ...languageOrder.map((language) => resolve(projectRoot, ".takt", language, "workflows", `${workflowName}.yaml`)),
+    ...languageOrder.map((language) => resolve(projectRoot, "builtins", language, "workflows", `${workflowName}.yaml`)),
+    ...(fallbackRoot === projectRoot
+      ? []
+      : languageOrder.map((language) => resolve(fallbackRoot, "builtins", language, "workflows", `${workflowName}.yaml`))),
   ];
   return workflowCandidates.find((path) => existsSync(path));
 }
@@ -61,7 +67,7 @@ export function main(argv = process.argv.slice(2)) {
     return 1;
   }
 
-  const workflowPath = resolveWorkflowPath(repoRoot, workflowName);
+  const workflowPath = resolveWorkflowPath(repoRoot, workflowName, repoRoot);
 
   if (!workflowPath) {
     console.error(`Kiro workflow '${workflowName}' is not installed yet.`);

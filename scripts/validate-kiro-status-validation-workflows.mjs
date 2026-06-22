@@ -97,10 +97,10 @@ const instructionSpecs = [
 ];
 
 const sharedContractFiles = [
-  ".takt/{lang}/facets/output-contracts/kiro-status.md",
-  ".takt/{lang}/facets/output-contracts/kiro-validation-result.md",
-  ".takt/{lang}/facets/policies/kiro-artifact-operations.md",
-  ".takt/{lang}/facets/policies/kiro-spec-lifecycle.md",
+  "builtins/{lang}/facets/output-contracts/kiro-status.md",
+  "builtins/{lang}/facets/output-contracts/kiro-validation-result.md",
+  "builtins/{lang}/facets/policies/kiro-artifact-operations.md",
+  "builtins/{lang}/facets/policies/kiro-spec-lifecycle.md",
 ];
 
 const downstreamFieldContractSpecs = [
@@ -198,7 +198,7 @@ function validateInstructionFacets() {
   const failures = [];
   for (const lang of languages) {
     for (const spec of instructionSpecs) {
-      const path = join(repoRoot, ".takt", lang, "facets", "instructions", spec.file);
+      const path = join(repoRoot, "builtins", lang, "facets", "instructions", spec.file);
       if (!existsSync(path)) {
         failures.push(`${rel(path)} missing`);
         continue;
@@ -240,7 +240,7 @@ function validateSkillAdapterParity() {
   const failures = [];
   for (const spec of instructionSpecs.filter((instruction) => instruction.skill)) {
     const skillSources = languages.map((lang) => {
-      const path = join(repoRoot, ".takt", lang, "facets", "instructions", spec.file);
+      const path = join(repoRoot, "builtins", lang, "facets", "instructions", spec.file);
       return { path, skillSource: existsSync(path) ? extractKiroSkillSourceInstruction(readText(path)) : {} };
     });
     const [first, ...rest] = skillSources;
@@ -267,7 +267,7 @@ function validateReadOnlyWorkflowShape() {
   }
   for (const lang of languages) {
     for (const spec of workflowSpecs) {
-      const path = join(repoRoot, ".takt", lang, "workflows", spec.file);
+      const path = join(repoRoot, "builtins", lang, "workflows", spec.file);
       if (!existsSync(path)) continue;
       const content = readText(path);
       if (!readOnlyCoverageWorkflowFiles.has(spec.file)) {
@@ -313,7 +313,7 @@ function validateWorkflowFiles() {
   const failures = [];
   for (const lang of languages) {
     for (const spec of workflowSpecs) {
-      const path = join(repoRoot, ".takt", lang, "workflows", spec.file);
+      const path = join(repoRoot, "builtins", lang, "workflows", spec.file);
       if (!existsSync(path)) {
         failures.push(`${rel(path)} missing`);
         continue;
@@ -375,7 +375,7 @@ function validateDownstreamFieldContracts() {
   const failures = [];
   for (const lang of languages) {
     for (const spec of downstreamFieldContractSpecs) {
-      const path = join(repoRoot, ".takt", lang, "workflows", spec.file);
+      const path = join(repoRoot, "builtins", lang, "workflows", spec.file);
       if (!existsSync(path)) {
         failures.push(`${rel(path)} missing for downstream Kiro field contract validation`);
         continue;
@@ -408,7 +408,7 @@ function validateLanguageParity() {
   ]) {
     for (const name of names) {
       for (const lang of languages) {
-        const path = join(repoRoot, ".takt", lang, kind, name);
+        const path = join(repoRoot, "builtins", lang, kind, name);
         if (!existsSync(path)) {
           failures.push(`${rel(path)} missing for ${kind} parity`);
         }
@@ -430,8 +430,8 @@ function validateNoBoundaryLeaks() {
   const failures = [];
   const targets = [
     ...languages.flatMap((lang) => [
-      join(repoRoot, ".takt", lang, "workflows"),
-      join(repoRoot, ".takt", lang, "facets", "instructions"),
+      join(repoRoot, "builtins", lang, "workflows"),
+      join(repoRoot, "builtins", lang, "facets", "instructions"),
     ]),
   ];
   const ownedNames = new Set([

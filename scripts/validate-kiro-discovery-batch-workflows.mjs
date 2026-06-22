@@ -272,7 +272,7 @@ function containsAll(content, terms, path, failures, repoRoot, code = "DISCOVERY
 
 function validateWorkflow(repoRoot, lang, spec) {
   const failures = [];
-  const path = join(repoRoot, ".takt", lang, "workflows", spec.file);
+  const path = join(repoRoot, "builtins", lang, "workflows", spec.file);
   if (!existsSync(path)) {
     return [`WORKFLOW_DRIFT: ${rel(repoRoot, path)} missing`];
   }
@@ -314,7 +314,7 @@ function validateWorkflow(repoRoot, lang, spec) {
 
 function validateFacet(repoRoot, lang, spec) {
   const failures = [];
-  const path = join(repoRoot, ".takt", lang, "facets", spec.kind, spec.file);
+  const path = join(repoRoot, "builtins", lang, "facets", spec.kind, spec.file);
   if (!existsSync(path)) {
     return [`FACET_DRIFT: ${rel(repoRoot, path)} missing`];
   }
@@ -367,7 +367,7 @@ function isDiscoveryBatchScopedFacet(file) {
 function validateNoUnusedDiscoveryBatchFacets(repoRoot, lang) {
   const failures = [];
   for (const kind of discoveryBatchFacetKinds) {
-    const dir = join(repoRoot, ".takt", lang, "facets", kind);
+    const dir = join(repoRoot, "builtins", lang, "facets", kind);
     if (!existsSync(dir)) {
       continue;
     }
@@ -387,8 +387,8 @@ function validateNoUnusedDiscoveryBatchFacets(repoRoot, lang) {
 function validateLanguageParity(repoRoot) {
   const failures = [];
   for (const spec of workflowSpecs) {
-    const enPath = join(repoRoot, ".takt", "en", "workflows", spec.file);
-    const jaPath = join(repoRoot, ".takt", "ja", "workflows", spec.file);
+    const enPath = join(repoRoot, "builtins", "en", "workflows", spec.file);
+    const jaPath = join(repoRoot, "builtins", "ja", "workflows", spec.file);
     if (!existsSync(enPath) || !existsSync(jaPath)) {
       continue;
     }
@@ -412,8 +412,8 @@ function validateLanguageParity(repoRoot) {
   }
 
   for (const spec of facetSpecs) {
-    const enPath = join(repoRoot, ".takt", "en", "facets", spec.kind, spec.file);
-    const jaPath = join(repoRoot, ".takt", "ja", "facets", spec.kind, spec.file);
+    const enPath = join(repoRoot, "builtins", "en", "facets", spec.kind, spec.file);
+    const jaPath = join(repoRoot, "builtins", "ja", "facets", spec.kind, spec.file);
     if (!existsSync(enPath) || !existsSync(jaPath)) {
       continue;
     }

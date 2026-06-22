@@ -331,10 +331,10 @@ npm run kiro:steering-custom -- "testing"
 
 ## プロジェクト構造
 
-package bundled assets はこのレイアウトを使う。project 側に `.takt/<lang>/workflows` と `.takt/<lang>/facets` が必要になるのは `takt-sdd eject` で取り出した後だけで、通常実行では installed package 内のコピーが直接使われる。
+package bundled assets はこのレイアウトを使う。project 側に `.takt/<lang>/workflows` と `.takt/<lang>/facets` が必要になるのは `takt-sdd eject` で取り出した後だけで、通常実行では installed package 内の `builtins/<lang>` が直接使われる。
 
 ```
-.takt/
+builtins/
 ├── en/
 │   ├── workflows/           # Workflow definitions (YAML)
 │   └── facets/

@@ -72,12 +72,12 @@ const REQUIRED_EXACT = [
 // Workflow yaml presence is checked per-catalog-entry below (not here).
 const REQUIRED_PRESENT = [
   {
-    label: ".takt/en/facets/**",
-    test: (/** @type {string} */ f) => f.startsWith(".takt/en/facets/"),
+    label: "builtins/en/facets/**",
+    test: (/** @type {string} */ f) => f.startsWith("builtins/en/facets/"),
   },
   {
-    label: ".takt/ja/facets/**",
-    test: (/** @type {string} */ f) => f.startsWith(".takt/ja/facets/"),
+    label: "builtins/ja/facets/**",
+    test: (/** @type {string} */ f) => f.startsWith("builtins/ja/facets/"),
   },
 ];
 
@@ -178,11 +178,11 @@ const FORBIDDEN_PATTERNS = [
       f.startsWith("scripts/") && f !== "scripts/kiro-staged.mjs",
   },
   // Retired workflow yaml files must not appear in the artifact (req 6.3).
-  // Covers .takt/en/workflows/(cc-sdd-|opsx-)*.yaml and .takt/ja/workflows/(cc-sdd-|opsx-)*.yaml
+  // Covers builtins/en/workflows/(cc-sdd-|opsx-)*.yaml and builtins/ja/workflows/(cc-sdd-|opsx-)*.yaml
   {
-    label: ".takt/{en,ja}/workflows/(cc-sdd-|opsx-)*.yaml (retired workflow assets)",
+    label: "builtins/{en,ja}/workflows/(cc-sdd-|opsx-)*.yaml (retired workflow assets)",
     test: (/** @type {string} */ f) => {
-      const m = f.match(/^\.takt\/(en|ja)\/workflows\/(.+)\.yaml$/);
+      const m = f.match(/^builtins\/(en|ja)\/workflows\/(.+)\.yaml$/);
       if (!m) return false;
       return m[2].startsWith("cc-sdd-") || m[2].startsWith("opsx-");
     },
@@ -192,9 +192,9 @@ const FORBIDDEN_PATTERNS = [
   // v1.x shipped nested dirs like facets/knowledge/cc-sdd-steering-template-files/
   // whose contained files have neutral basenames.
   {
-    label: ".takt/{en,ja}/facets/**/(cc-sdd-|opsx-)* (retired cc-sdd/opsx facets, any path segment)",
+    label: "builtins/{en,ja}/facets/**/(cc-sdd-|opsx-)* (retired cc-sdd/opsx facets, any path segment)",
     test: (/** @type {string} */ f) => {
-      const m = f.match(/^\.takt\/(en|ja)\/facets\/(.+)$/);
+      const m = f.match(/^builtins\/(en|ja)\/facets\/(.+)$/);
       if (!m) return false;
       return m[2]
         .split("/")
@@ -205,10 +205,14 @@ const FORBIDDEN_PATTERNS = [
   {
     label: "retired-exclusive facets (ai-review-fix-loop-judge.md, batch-plan-implement-loop-judge.md)",
     test: (/** @type {string} */ f) => {
-      if (!f.startsWith(".takt/")) return false;
+      if (!f.startsWith("builtins/")) return false;
       const base = f.split("/").pop() ?? "";
       return RETIRED_EXCLUSIVE_FACETS.has(base);
     },
+  },
+  {
+    label: ".takt/{en,ja}/** (old bundled asset layout)",
+    test: (/** @type {string} */ f) => /^\.takt\/(en|ja)\//.test(f),
   },
 ];
 
@@ -241,10 +245,10 @@ export function validateFileList(files) {
   }
 
   // Catalog-driven workflow checks: every workflow in the catalog must have
-  // both .takt/en/workflows/<name>.yaml and .takt/ja/workflows/<name>.yaml.
+  // both builtins/en/workflows/<name>.yaml and builtins/ja/workflows/<name>.yaml.
   for (const name of ALL_CATALOG_WORKFLOWS) {
-    const enPath = `.takt/en/workflows/${name}.yaml`;
-    const jaPath = `.takt/ja/workflows/${name}.yaml`;
+    const enPath = `builtins/en/workflows/${name}.yaml`;
+    const jaPath = `builtins/ja/workflows/${name}.yaml`;
     if (!fileSet.has(enPath)) {
       errors.push(`MISSING_REQUIRED: ${enPath} not found in package`);
     }

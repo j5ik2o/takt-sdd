@@ -40,7 +40,7 @@ function copyCurrentSurfaceFixture() {
     "kiro-impl",
     "kiro-validate-impl",
   ]) {
-    writeFixtureFile(root, `.takt/ja/workflows/${workflow}.yaml`, `name: ${workflow}\nsteps: []\n`);
+    writeFixtureFile(root, `builtins/ja/workflows/${workflow}.yaml`, `name: ${workflow}\nsteps: []\n`);
   }
   return root;
 }
@@ -136,7 +136,7 @@ test("validation rejects cc-sdd:* scripts in installer SDD_SCRIPTS (absence enfo
 test("validation rejects retired workflow yaml in distribution asset path (absence enforcement)", () => {
   const root = copyCurrentSurfaceFixture();
   // Inject a retired cc-sdd workflow file
-  writeFixtureFile(root, ".takt/ja/workflows/cc-sdd-full.yaml", "name: cc-sdd-full\nsteps: []\n");
+  writeFixtureFile(root, "builtins/ja/workflows/cc-sdd-full.yaml", "name: cc-sdd-full\nsteps: []\n");
 
   const result = validateKiroWorkflowSurface({ repoRoot: root });
 
@@ -150,7 +150,7 @@ test("validation rejects retired workflow yaml in distribution asset path (absen
 test("validation rejects retired opsx workflow yaml in distribution asset path (absence enforcement)", () => {
   const root = copyCurrentSurfaceFixture();
   // Inject a retired opsx workflow file
-  writeFixtureFile(root, ".takt/en/workflows/opsx-full.yaml", "name: opsx-full\nsteps: []\n");
+  writeFixtureFile(root, "builtins/en/workflows/opsx-full.yaml", "name: opsx-full\nsteps: []\n");
 
   const result = validateKiroWorkflowSurface({ repoRoot: root });
 

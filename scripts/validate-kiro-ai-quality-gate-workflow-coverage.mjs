@@ -29,7 +29,7 @@ function rel(repoRoot, path) {
 }
 
 function listKiroWorkflowNames(repoRoot, language) {
-  const dir = join(repoRoot, ".takt", language, "workflows");
+  const dir = join(repoRoot, "builtins", language, "workflows");
   if (!existsSync(dir)) {
     return [];
   }
@@ -90,7 +90,7 @@ function extractReportNames(content) {
 }
 
 function workflowPath(repoRoot, language, workflowName) {
-  return join(repoRoot, ".takt", language, "workflows", `${workflowName}.yaml`);
+  return join(repoRoot, "builtins", language, "workflows", `${workflowName}.yaml`);
 }
 
 function validateCoverageInventory(repoRoot, coverageEntries) {
@@ -348,7 +348,7 @@ function validateDiscoveryGateEvidenceInstructions(repoRoot) {
     "kiro-spec-ai-antipattern-review.md",
   ];
   for (const language of languages) {
-    const path = join(repoRoot, ".takt", language, "facets", "instructions", "kiro-discovery.md");
+    const path = join(repoRoot, "builtins", language, "facets", "instructions", "kiro-discovery.md");
     if (!existsSync(path)) {
       failures.push(`DISCOVERY_GATE_EVIDENCE_DRIFT: ${rel(repoRoot, path)} missing`);
       continue;
@@ -373,7 +373,7 @@ function validateQuickGateEvidenceInstructions(repoRoot) {
     "kiro-spec-ai-antipattern-fix.md",
   ];
   for (const language of languages) {
-    const path = join(repoRoot, ".takt", language, "facets", "instructions", "kiro-spec-quick-sanity-review.md");
+    const path = join(repoRoot, "builtins", language, "facets", "instructions", "kiro-spec-quick-sanity-review.md");
     if (!existsSync(path)) {
       failures.push(`QUICK_GATE_EVIDENCE_DRIFT: ${rel(repoRoot, path)} missing`);
       continue;
@@ -418,7 +418,7 @@ function validateDownstreamGateEvidenceInstructions(repoRoot) {
   ];
   for (const language of languages) {
     for (const spec of specs) {
-      const path = join(repoRoot, ".takt", language, "facets", "instructions", spec.facet);
+      const path = join(repoRoot, "builtins", language, "facets", "instructions", spec.facet);
       if (!existsSync(path)) {
         failures.push(`DOWNSTREAM_GATE_EVIDENCE_DRIFT: ${rel(repoRoot, path)} missing`);
         continue;
@@ -439,7 +439,7 @@ function validatePolicyFacetBoundaries(repoRoot, coverageEntries) {
   const requiredTerms = ["scripts/kiro-ai-quality-gate-contracts.mjs", "roadmap checkbox"];
   const workflowNames = new Set(coverageEntries.map((entry) => entry.workflowName));
   for (const language of languages) {
-    const path = join(repoRoot, ".takt", language, "facets", "policies", "kiro-ai-quality-gate-coverage.md");
+    const path = join(repoRoot, "builtins", language, "facets", "policies", "kiro-ai-quality-gate-coverage.md");
     if (!existsSync(path)) {
       failures.push(`POLICY_INVENTORY_DUPLICATION: ${rel(repoRoot, path)} missing`);
       continue;

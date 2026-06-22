@@ -331,10 +331,10 @@ If you previously customized copied workflows or facets, run `takt-sdd eject` on
 
 ## Project Structure
 
-The package-bundled assets use this layout. A project only needs the `.takt/<lang>/workflows` and `.takt/<lang>/facets` tree after running `takt-sdd eject`; otherwise the installed package copy is used directly.
+The package-bundled assets use this layout. A project only needs the `.takt/<lang>/workflows` and `.takt/<lang>/facets` tree after running `takt-sdd eject`; otherwise the installed package reads `builtins/<lang>` directly.
 
 ```
-.takt/
+builtins/
 ├── en/
 │   ├── workflows/           # Workflow definitions (YAML)
 │   └── facets/

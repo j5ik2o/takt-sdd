@@ -23,7 +23,7 @@ function writeFixtureFile(root, path, content) {
 function copyCurrentTaktFixture() {
   const repoRoot = join(import.meta.dirname, "..");
   const root = makeFixture();
-  cpSync(join(repoRoot, ".takt"), join(root, ".takt"), { recursive: true });
+  cpSync(join(repoRoot, "builtins"), join(root, "builtins"), { recursive: true });
   return root;
 }
 
@@ -217,7 +217,7 @@ test("validation harness rejects workflow reuse shims", () => {
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
-      `.takt/${lang}/workflows/kiro-discovery.yaml`,
+      `builtins/${lang}/workflows/kiro-discovery.yaml`,
       [
         "name: kiro-discovery",
         "initial_step: prompt",
@@ -228,7 +228,7 @@ test("validation harness rejects workflow reuse shims", () => {
     );
     writeFixtureFile(
       root,
-      `.takt/${lang}/workflows/kiro-spec-batch.yaml`,
+      `builtins/${lang}/workflows/kiro-spec-batch.yaml`,
       [
         "name: kiro-spec-batch",
         "initial_step: dispatch",
@@ -253,8 +253,8 @@ test("discovery routing policy and result contract define stable action path fie
   const repoRoot = join(import.meta.dirname, "..");
   for (const lang of ["en", "ja"]) {
     for (const path of [
-      `.takt/${lang}/facets/policies/kiro-discovery-routing.md`,
-      `.takt/${lang}/facets/output-contracts/kiro-discovery-result.md`,
+      `builtins/${lang}/facets/policies/kiro-discovery-routing.md`,
+      `builtins/${lang}/facets/output-contracts/kiro-discovery-result.md`,
     ]) {
       assert.equal(existsSync(join(repoRoot, path)), true, `${path} should exist`);
       const content = readFileSync(join(repoRoot, path), "utf8");
@@ -269,7 +269,7 @@ test("discovery routing policy and result contract define stable action path fie
       }
     }
     const contract = readFileSync(
-      join(repoRoot, `.takt/${lang}/facets/output-contracts/kiro-discovery-result.md`),
+      join(repoRoot, `builtins/${lang}/facets/output-contracts/kiro-discovery-result.md`),
       "utf8",
     );
     for (const field of ["actionPath", "createdFiles", "nextAction", "blockingReason"]) {
@@ -281,7 +281,7 @@ test("discovery routing policy and result contract define stable action path fie
 test("kiro-discovery workflow uses multi-step routing and skill adapter metadata", () => {
   const repoRoot = join(import.meta.dirname, "..");
   for (const lang of ["en", "ja"]) {
-    const workflowPath = `.takt/${lang}/workflows/kiro-discovery.yaml`;
+    const workflowPath = `builtins/${lang}/workflows/kiro-discovery.yaml`;
     assert.equal(existsSync(join(repoRoot, workflowPath)), true, `${workflowPath} should exist`);
     const workflow = readFileSync(join(repoRoot, workflowPath), "utf8");
     for (const step of [
@@ -362,7 +362,7 @@ test("kiro-discovery workflow uses multi-step routing and skill adapter metadata
     assert.ok(planBlock >= 0 && planBlock < planSuccess, `${workflowPath} should plan blockers first`);
     assert.ok(writeBlock >= 0 && writeBlock < writeSuccess, `${workflowPath} should route write blockers first`);
 
-    const instructionPath = `.takt/${lang}/facets/instructions/kiro-discovery.md`;
+    const instructionPath = `builtins/${lang}/facets/instructions/kiro-discovery.md`;
     assert.equal(existsSync(join(repoRoot, instructionPath)), true, `${instructionPath} should exist`);
     const instruction = readFileSync(join(repoRoot, instructionPath), "utf8");
     assert.ok(instruction.includes("`$kiro-discovery`"));
@@ -376,8 +376,8 @@ test("kiro-discovery workflow uses multi-step routing and skill adapter metadata
 test("discovery artifacts define required brief sections and write path", () => {
   const repoRoot = join(import.meta.dirname, "..");
   for (const lang of ["en", "ja"]) {
-    const instruction = readFileSync(join(repoRoot, `.takt/${lang}/facets/instructions/kiro-discovery.md`), "utf8");
-    const contract = readFileSync(join(repoRoot, `.takt/${lang}/facets/output-contracts/kiro-discovery-result.md`), "utf8");
+    const instruction = readFileSync(join(repoRoot, `builtins/${lang}/facets/instructions/kiro-discovery.md`), "utf8");
+    const contract = readFileSync(join(repoRoot, `builtins/${lang}/facets/output-contracts/kiro-discovery-result.md`), "utf8");
     for (const term of [
       "## Problem",
       "## Current State",
@@ -398,7 +398,7 @@ test("discovery artifacts define required brief sections and write path", () => 
 test("roadmap dependency wave policy keeps awareness-only sections out of batch input", () => {
   const repoRoot = join(import.meta.dirname, "..");
   for (const lang of ["en", "ja"]) {
-    const policyPath = `.takt/${lang}/facets/policies/kiro-roadmap-dependency-waves.md`;
+    const policyPath = `builtins/${lang}/facets/policies/kiro-roadmap-dependency-waves.md`;
     assert.equal(existsSync(join(repoRoot, policyPath)), true, `${policyPath} should exist`);
     const policy = readFileSync(join(repoRoot, policyPath), "utf8");
     for (const term of [
@@ -434,7 +434,7 @@ test("roadmap dependency wave policy keeps awareness-only sections out of batch 
 test("kiro-spec-batch workflow uses dynamic worker dispatch without workflow reuse shims", () => {
   const repoRoot = join(import.meta.dirname, "..");
   for (const lang of ["en", "ja"]) {
-    const workflowPath = `.takt/${lang}/workflows/kiro-spec-batch.yaml`;
+    const workflowPath = `builtins/${lang}/workflows/kiro-spec-batch.yaml`;
     assert.equal(existsSync(join(repoRoot, workflowPath)), true, `${workflowPath} should exist`);
     const workflow = readFileSync(join(repoRoot, workflowPath), "utf8");
     for (const step of [
@@ -486,7 +486,7 @@ test("kiro-spec-batch workflow uses dynamic worker dispatch without workflow reu
     assert.equal(/\btakt\s+-w\b|\btakt\s+.*\s-w\s+/.test(workflow), false);
     assert.equal(workflow.includes("workflow_call"), false);
 
-    const instructionPath = `.takt/${lang}/facets/instructions/kiro-spec-batch.md`;
+    const instructionPath = `builtins/${lang}/facets/instructions/kiro-spec-batch.md`;
     assert.equal(existsSync(join(repoRoot, instructionPath)), true, `${instructionPath} should exist`);
     const instruction = readFileSync(join(repoRoot, instructionPath), "utf8");
     assert.ok(instruction.includes("`$kiro-spec-batch`"));
@@ -501,9 +501,9 @@ test("cross-spec review contract exposes machine-readable issue routing", () => 
   const repoRoot = join(import.meta.dirname, "..");
   for (const lang of ["en", "ja"]) {
     for (const path of [
-      `.takt/${lang}/facets/instructions/kiro-cross-spec-review.md`,
-      `.takt/${lang}/facets/policies/kiro-cross-spec-boundaries.md`,
-      `.takt/${lang}/facets/output-contracts/kiro-cross-spec-review.md`,
+      `builtins/${lang}/facets/instructions/kiro-cross-spec-review.md`,
+      `builtins/${lang}/facets/policies/kiro-cross-spec-boundaries.md`,
+      `builtins/${lang}/facets/output-contracts/kiro-cross-spec-review.md`,
     ]) {
       assert.equal(existsSync(join(repoRoot, path)), true, `${path} should exist`);
       const content = readFileSync(join(repoRoot, path), "utf8");
@@ -526,7 +526,7 @@ test("cross-spec review contract exposes machine-readable issue routing", () => 
 test("batch summary contract separates worker results from implementation readiness", () => {
   const repoRoot = join(import.meta.dirname, "..");
   for (const lang of ["en", "ja"]) {
-    const path = `.takt/${lang}/facets/output-contracts/kiro-batch-summary.md`;
+    const path = `builtins/${lang}/facets/output-contracts/kiro-batch-summary.md`;
     assert.equal(existsSync(join(repoRoot, path)), true, `${path} should exist`);
     const content = readFileSync(join(repoRoot, path), "utf8");
     for (const term of [
@@ -548,7 +548,7 @@ test("batch summary contract separates worker results from implementation readin
 
 test("validation rejects en/ja machine enum drift", () => {
   const root = copyCurrentTaktFixture();
-  const path = ".takt/ja/facets/output-contracts/kiro-discovery-result.md";
+  const path = "builtins/ja/facets/output-contracts/kiro-discovery-result.md";
   writeFixtureFile(
     root,
     path,
@@ -563,7 +563,7 @@ test("validation rejects en/ja machine enum drift", () => {
 
 test("validation rejects en/ja workflow structure drift", () => {
   const root = copyCurrentTaktFixture();
-  const path = ".takt/ja/workflows/kiro-discovery.yaml";
+  const path = "builtins/ja/workflows/kiro-discovery.yaml";
   writeFixtureFile(
     root,
     path,
@@ -594,7 +594,7 @@ test("validation rejects missing built-in facet parent", () => {
   const root = copyCurrentTaktFixture();
   const repoRoot = join(import.meta.dirname, "..");
   symlinkSync(join(repoRoot, "node_modules"), join(root, "node_modules"), "dir");
-  const path = ".takt/en/facets/instructions/kiro-discovery.md";
+  const path = "builtins/en/facets/instructions/kiro-discovery.md";
   writeFixtureFile(
     root,
     path,
@@ -619,7 +619,7 @@ test("validation rejects missing skill adapter section", () => {
 
 test("validation rejects independent remediation retry counters", () => {
   const root = copyCurrentTaktFixture();
-  const path = ".takt/en/workflows/kiro-spec-batch.yaml";
+  const path = "builtins/en/workflows/kiro-spec-batch.yaml";
   writeFixtureFile(
     root,
     path,
@@ -636,7 +636,7 @@ test("validation rejects unconnected discovery batch facets", () => {
   const root = copyCurrentTaktFixture();
   writeFixtureFile(
     root,
-    ".takt/en/facets/policies/kiro-unused-discovery-policy.md",
+    "builtins/en/facets/policies/kiro-unused-discovery-policy.md",
     "{extends: research}\n\n# Unused Discovery Policy\n",
   );
 

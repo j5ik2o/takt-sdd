@@ -27,9 +27,9 @@ steps:
     call: ./kiro-spec-design.yaml
 `;
 
-  const failures = validateKiroWorkflowCallBoundary(content, "kiro-impl.yaml", ".takt/en/workflows/kiro-impl.yaml");
+  const failures = validateKiroWorkflowCallBoundary(content, "kiro-impl.yaml", "builtins/en/workflows/kiro-impl.yaml");
 
-  assert.deepEqual(failures, [".takt/en/workflows/kiro-impl.yaml must not use workflow_call for Kiro workflow reuse"]);
+  assert.deepEqual(failures, ["builtins/en/workflows/kiro-impl.yaml must not use workflow_call for Kiro workflow reuse"]);
 });
 
 test("Kiro skill adapter facets must instruct runtime agents to read the source skill", () => {

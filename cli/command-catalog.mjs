@@ -40,7 +40,7 @@ export const SUPPORTED_WORKFLOWS = Object.freeze([
  * - internal: AI quality gate workflows (3 entries) — used internally by other
  *   workflows, not intended for direct user invocation.
  *
- * Every .takt/{en,ja}/workflows/*.yaml basename must appear in either
+ * Every builtins/{en,ja}/workflows/*.yaml basename must appear in either
  * SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.internal. Unclassified assets
  * cause drift tests to fail, forcing an explicit classification decision on review.
  *
@@ -66,7 +66,7 @@ export const EXCLUDED_WORKFLOWS = Object.freeze({
  *   future release.
  *
  * These workflows are NOT bundled in the package and must not appear in
- * .takt/{en,ja}/workflows/.
+ * builtins/{en,ja}/workflows/.
  *
  * @type {Readonly<Record<"legacy" | "opsx", readonly string[]>>}
  */

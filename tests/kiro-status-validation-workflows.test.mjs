@@ -8,7 +8,7 @@ import { validateKiroStatusValidationWorkflows } from "../scripts/validate-kiro-
 function makeValidationFixture() {
   const repoRoot = join(import.meta.dirname, "..");
   const root = mkdtempSync(join(tmpdir(), "kiro-status-validation-"));
-  cpSync(join(repoRoot, ".takt"), join(root, ".takt"), { recursive: true });
+  cpSync(join(repoRoot, "builtins"), join(root, "builtins"), { recursive: true });
   symlinkSync(join(repoRoot, "node_modules"), join(root, "node_modules"), "dir");
   writeFile(root, "package.json", readFileSync(join(repoRoot, "package.json"), "utf8"));
   return root;
@@ -42,7 +42,7 @@ test("task 14 rejects single-step or non-report read-only workflow shape", () =>
   const root = makeValidationFixture();
   writeFile(
     root,
-    ".takt/en/workflows/kiro-validate-gap.yaml",
+    "builtins/en/workflows/kiro-validate-gap.yaml",
     [
       "name: kiro-validate-gap",
       "description: Broken single prompt wrapper",
@@ -80,7 +80,7 @@ test("task 14 rejects single-step or non-report read-only workflow shape", () =>
 
 test("task 15 rejects validation facets without Kiro Skill Source instructions", () => {
   const root = makeValidationFixture();
-  const path = ".takt/en/facets/instructions/kiro-validate-gap-readiness.md";
+  const path = "builtins/en/facets/instructions/kiro-validate-gap-readiness.md";
   writeFile(root, path, readFixtureFile(root, path).replace("`$kiro-validate-gap`", "`$missing`"));
 
   const result = validateKiroStatusValidationWorkflows({ repoRoot: root });
@@ -89,7 +89,7 @@ test("task 15 rejects validation facets without Kiro Skill Source instructions",
 
 test("task 16 rejects standalone validation workflows that route on validation.verdict instead of DECISION", () => {
   const root = makeValidationFixture();
-  const path = ".takt/en/workflows/kiro-validate-impl.yaml";
+  const path = "builtins/en/workflows/kiro-validate-impl.yaml";
   writeFile(root, path, readFixtureFile(root, path).replace("condition: DECISION GO", "condition: validation.verdict PASS"));
 
   const result = validateKiroStatusValidationWorkflows({ repoRoot: root });
@@ -98,7 +98,7 @@ test("task 16 rejects standalone validation workflows that route on validation.v
 
 test("task 16 rejects downstream adapter steps that stop using DECISION as the primary Kiro field", () => {
   const root = makeValidationFixture();
-  const path = ".takt/en/workflows/kiro-impl.yaml";
+  const path = "builtins/en/workflows/kiro-impl.yaml";
   writeFile(root, path, readFixtureFile(root, path).replace("condition: DECISION GO", "condition: validation.verdict PASS"));
 
   const result = validateKiroStatusValidationWorkflows({ repoRoot: root });
@@ -107,7 +107,7 @@ test("task 16 rejects downstream adapter steps that stop using DECISION as the p
 
 test("read-only status and validation workflows reject AI gate loop monitor drift", () => {
   const root = makeValidationFixture();
-  const path = ".takt/en/workflows/kiro-validate-gap.yaml";
+  const path = "builtins/en/workflows/kiro-validate-gap.yaml";
   writeFile(
     root,
     path,

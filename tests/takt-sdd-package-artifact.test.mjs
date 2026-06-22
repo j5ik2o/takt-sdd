@@ -72,11 +72,11 @@ const MINIMAL_VALID_FILES = [
   "installer/dist/i18n.js",
   "installer/package.json",
   // All catalog workflow yamls — en and ja for every entry (30 x 2 = 60 files)
-  ...ALL_CATALOG_WORKFLOWS.map((name) => `.takt/en/workflows/${name}.yaml`),
-  ...ALL_CATALOG_WORKFLOWS.map((name) => `.takt/ja/workflows/${name}.yaml`),
+  ...ALL_CATALOG_WORKFLOWS.map((name) => `builtins/en/workflows/${name}.yaml`),
+  ...ALL_CATALOG_WORKFLOWS.map((name) => `builtins/ja/workflows/${name}.yaml`),
   // facet assets — at least one per language
-  ".takt/en/facets/instructions/kiro-discovery.md",
-  ".takt/ja/facets/instructions/kiro-discovery.md",
+  "builtins/en/facets/instructions/kiro-discovery.md",
+  "builtins/ja/facets/instructions/kiro-discovery.md",
 ];
 
 // ---------------------------------------------------------------------------
@@ -171,38 +171,38 @@ test("validateFileList: missing LICENSE-APACHE is reported as a hard error", () 
   );
 });
 
-test("validateFileList: no .takt/en/workflows files is reported", () => {
-  const files = MINIMAL_VALID_FILES.filter((f) => !f.startsWith(".takt/en/workflows/"));
+test("validateFileList: no builtins/en/workflows files is reported", () => {
+  const files = MINIMAL_VALID_FILES.filter((f) => !f.startsWith("builtins/en/workflows/"));
   const errors = validateFileList(files);
   assert.ok(
-    errors.some((e) => e.includes(".takt/en/workflows")),
+    errors.some((e) => e.includes("builtins/en/workflows")),
     `Errors: ${errors.join("; ")}`,
   );
 });
 
-test("validateFileList: no .takt/ja/workflows files is reported", () => {
-  const files = MINIMAL_VALID_FILES.filter((f) => !f.startsWith(".takt/ja/workflows/"));
+test("validateFileList: no builtins/ja/workflows files is reported", () => {
+  const files = MINIMAL_VALID_FILES.filter((f) => !f.startsWith("builtins/ja/workflows/"));
   const errors = validateFileList(files);
   assert.ok(
-    errors.some((e) => e.includes(".takt/ja/workflows")),
+    errors.some((e) => e.includes("builtins/ja/workflows")),
     `Errors: ${errors.join("; ")}`,
   );
 });
 
-test("validateFileList: no .takt/en/facets files is reported", () => {
-  const files = MINIMAL_VALID_FILES.filter((f) => !f.startsWith(".takt/en/facets/"));
+test("validateFileList: no builtins/en/facets files is reported", () => {
+  const files = MINIMAL_VALID_FILES.filter((f) => !f.startsWith("builtins/en/facets/"));
   const errors = validateFileList(files);
   assert.ok(
-    errors.some((e) => e.includes(".takt/en/facets")),
+    errors.some((e) => e.includes("builtins/en/facets")),
     `Errors: ${errors.join("; ")}`,
   );
 });
 
-test("validateFileList: no .takt/ja/facets files is reported", () => {
-  const files = MINIMAL_VALID_FILES.filter((f) => !f.startsWith(".takt/ja/facets/"));
+test("validateFileList: no builtins/ja/facets files is reported", () => {
+  const files = MINIMAL_VALID_FILES.filter((f) => !f.startsWith("builtins/ja/facets/"));
   const errors = validateFileList(files);
   assert.ok(
-    errors.some((e) => e.includes(".takt/ja/facets")),
+    errors.some((e) => e.includes("builtins/ja/facets")),
     `Errors: ${errors.join("; ")}`,
   );
 });
@@ -211,9 +211,9 @@ test("validateFileList: no .takt/ja/facets files is reported", () => {
 // validateFileList — catalog-driven workflow checks (FINDING 2)
 // ---------------------------------------------------------------------------
 
-test("validateFileList: missing .takt/en/workflows/kiro-spec-design.yaml is reported", () => {
+test("validateFileList: missing builtins/en/workflows/kiro-spec-design.yaml is reported", () => {
   const files = MINIMAL_VALID_FILES.filter(
-    (f) => f !== ".takt/en/workflows/kiro-spec-design.yaml",
+    (f) => f !== "builtins/en/workflows/kiro-spec-design.yaml",
   );
   const errors = validateFileList(files);
   assert.ok(errors.length > 0, "Expected error for missing kiro-spec-design en yaml");
@@ -433,8 +433,8 @@ test("validateVersionConsistency: missing takt is reported", () => {
 // Negative cases: retired workflow files must be forbidden (req 6.3)
 // ---------------------------------------------------------------------------
 
-test("validateFileList: cc-sdd-full.yaml in .takt/en/workflows is forbidden (retired workflow)", () => {
-  const files = [...MINIMAL_VALID_FILES, ".takt/en/workflows/cc-sdd-full.yaml"];
+test("validateFileList: cc-sdd-full.yaml in builtins/en/workflows is forbidden (retired workflow)", () => {
+  const files = [...MINIMAL_VALID_FILES, "builtins/en/workflows/cc-sdd-full.yaml"];
   const errors = validateFileList(files);
   assert.ok(errors.length > 0, "Expected forbidden file error for retired cc-sdd workflow");
   assert.ok(
@@ -443,8 +443,8 @@ test("validateFileList: cc-sdd-full.yaml in .takt/en/workflows is forbidden (ret
   );
 });
 
-test("validateFileList: opsx-full.yaml in .takt/ja/workflows is forbidden (retired workflow)", () => {
-  const files = [...MINIMAL_VALID_FILES, ".takt/ja/workflows/opsx-full.yaml"];
+test("validateFileList: opsx-full.yaml in builtins/ja/workflows is forbidden (retired workflow)", () => {
+  const files = [...MINIMAL_VALID_FILES, "builtins/ja/workflows/opsx-full.yaml"];
   const errors = validateFileList(files);
   assert.ok(errors.length > 0, "Expected forbidden file error for retired opsx workflow");
   assert.ok(
@@ -453,8 +453,18 @@ test("validateFileList: opsx-full.yaml in .takt/ja/workflows is forbidden (retir
   );
 });
 
+test("validateFileList: old .takt language asset layout is forbidden", () => {
+  const files = [...MINIMAL_VALID_FILES, ".takt/en/workflows/kiro-impl.yaml"];
+  const errors = validateFileList(files);
+  assert.ok(errors.length > 0, "Expected forbidden file error for old .takt asset layout");
+  assert.ok(
+    errors.some((e) => e.includes(".takt/en/workflows/kiro-impl.yaml") && e.includes("FORBIDDEN")),
+    `Errors: ${errors.join("; ")}`,
+  );
+});
+
 test("validateFileList: retired cc-sdd-* facet is forbidden", () => {
-  const files = [...MINIMAL_VALID_FILES, ".takt/en/facets/instructions/cc-sdd-impl.md"];
+  const files = [...MINIMAL_VALID_FILES, "builtins/en/facets/instructions/cc-sdd-impl.md"];
   const errors = validateFileList(files);
   assert.ok(errors.length > 0, "Expected forbidden file error for cc-sdd facet");
   assert.ok(
@@ -464,7 +474,7 @@ test("validateFileList: retired cc-sdd-* facet is forbidden", () => {
 });
 
 test("validateFileList: retired opsx-* facet is forbidden", () => {
-  const files = [...MINIMAL_VALID_FILES, ".takt/en/facets/personas/opsx-implementer.md"];
+  const files = [...MINIMAL_VALID_FILES, "builtins/en/facets/personas/opsx-implementer.md"];
   const errors = validateFileList(files);
   assert.ok(errors.length > 0, "Expected forbidden file error for opsx facet");
   assert.ok(
@@ -478,7 +488,7 @@ test("validateFileList: neutral-basename file nested under retired-prefixed face
   // the retired prefix is on the directory, not the filename (req 6.3).
   const files = [
     ...MINIMAL_VALID_FILES,
-    ".takt/en/facets/knowledge/cc-sdd-steering-template-files/product.md",
+    "builtins/en/facets/knowledge/cc-sdd-steering-template-files/product.md",
   ];
   const errors = validateFileList(files);
   assert.ok(errors.length > 0, "Expected forbidden file error for nested retired-dir facet");
@@ -491,7 +501,7 @@ test("validateFileList: neutral-basename file nested under retired-prefixed face
 test("validateFileList: nested file under opsx-prefixed facet dir is forbidden (ja)", () => {
   const files = [
     ...MINIMAL_VALID_FILES,
-    ".takt/ja/facets/templates/opsx-proposal-files/outline.md",
+    "builtins/ja/facets/templates/opsx-proposal-files/outline.md",
   ];
   const errors = validateFileList(files);
   assert.ok(errors.length > 0, "Expected forbidden file error for nested opsx-dir facet");
@@ -503,7 +513,7 @@ test("validateFileList: nested file under opsx-prefixed facet dir is forbidden (
 
 test("validateFileList: retired exclusive facet (ai-review-fix-loop-judge.md) is forbidden", () => {
   // This facet had no cc-sdd/opsx prefix but was exclusively used by retired workflows
-  const files = [...MINIMAL_VALID_FILES, ".takt/en/facets/instructions/ai-review-fix-loop-judge.md"];
+  const files = [...MINIMAL_VALID_FILES, "builtins/en/facets/instructions/ai-review-fix-loop-judge.md"];
   const errors = validateFileList(files);
   assert.ok(errors.length > 0, "Expected forbidden file error for retired-exclusive facet");
   assert.ok(
@@ -513,7 +523,7 @@ test("validateFileList: retired exclusive facet (ai-review-fix-loop-judge.md) is
 });
 
 test("validateFileList: retired exclusive facet (batch-plan-implement-loop-judge.md) is forbidden", () => {
-  const files = [...MINIMAL_VALID_FILES, ".takt/en/facets/instructions/batch-plan-implement-loop-judge.md"];
+  const files = [...MINIMAL_VALID_FILES, "builtins/en/facets/instructions/batch-plan-implement-loop-judge.md"];
   const errors = validateFileList(files);
   assert.ok(errors.length > 0, "Expected forbidden file error for retired-exclusive facet");
   assert.ok(

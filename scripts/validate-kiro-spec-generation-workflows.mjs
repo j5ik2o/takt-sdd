@@ -436,8 +436,8 @@ const phaseArtifactContracts = {
 const requiredDesignSectionSets = [designSectionHeadings.en, designSectionHeadings.ja];
 const taskAnnotationContractPaths = [
   ".kiro/settings/templates/specs/tasks.md",
-  ".takt/en/facets/policies/kiro-spec-task-annotations.md",
-  ".takt/ja/facets/policies/kiro-spec-task-annotations.md",
+  "builtins/en/facets/policies/kiro-spec-task-annotations.md",
+  "builtins/ja/facets/policies/kiro-spec-task-annotations.md",
 ];
 const skillAdapterFacetSpecs = [
   {
@@ -851,42 +851,42 @@ function contractTerms(content) {
 
 function validateLanguageParity(repoRoot) {
   const failures = [];
-  const enWorkflows = listBasenames(repoRoot, ".takt/en/workflows", ".yaml");
-  const jaWorkflows = listBasenames(repoRoot, ".takt/ja/workflows", ".yaml");
+  const enWorkflows = listBasenames(repoRoot, "builtins/en/workflows", ".yaml");
+  const jaWorkflows = listBasenames(repoRoot, "builtins/ja/workflows", ".yaml");
   compareSets(failures, "workflows", enWorkflows, jaWorkflows);
 
   for (const name of enWorkflows.filter((workflow) => jaWorkflows.includes(workflow))) {
-    const enPath = join(repoRoot, ".takt", "en", "workflows", `${name}.yaml`);
-    const jaPath = join(repoRoot, ".takt", "ja", "workflows", `${name}.yaml`);
+    const enPath = join(repoRoot, "builtins", "en", "workflows", `${name}.yaml`);
+    const jaPath = join(repoRoot, "builtins", "ja", "workflows", `${name}.yaml`);
     compareMachineFields(
       failures,
-      `.takt/{en,ja}/workflows/${name}.yaml`,
+      `builtins/{en,ja}/workflows/${name}.yaml`,
       workflowMachineFields(readText(enPath)),
       workflowMachineFields(readText(jaPath)),
     );
   }
 
   for (const kind of languageParityFacetKinds) {
-    const enFacets = listBasenames(repoRoot, `.takt/en/facets/${kind}`, ".md");
-    const jaFacets = listBasenames(repoRoot, `.takt/ja/facets/${kind}`, ".md");
+    const enFacets = listBasenames(repoRoot, `builtins/en/facets/${kind}`, ".md");
+    const jaFacets = listBasenames(repoRoot, `builtins/ja/facets/${kind}`, ".md");
     compareSets(failures, `facets/${kind}`, enFacets, jaFacets);
 
     for (const name of enFacets.filter((facet) => jaFacets.includes(facet))) {
-      const enPath = join(repoRoot, ".takt", "en", "facets", kind, `${name}.md`);
-      const jaPath = join(repoRoot, ".takt", "ja", "facets", kind, `${name}.md`);
+      const enPath = join(repoRoot, "builtins", "en", "facets", kind, `${name}.md`);
+      const jaPath = join(repoRoot, "builtins", "ja", "facets", kind, `${name}.md`);
       const enTerms = contractTerms(readText(enPath));
       const jaTerms = contractTerms(readText(jaPath));
       for (const term of enTerms) {
         if (!jaTerms.includes(term)) {
           failures.push(
-            `LANGUAGE_PARITY_DRIFT: markdown contract terms .takt/{en,ja}/facets/${kind}/${name}.md missing in ja: ${term}`,
+            `LANGUAGE_PARITY_DRIFT: markdown contract terms builtins/{en,ja}/facets/${kind}/${name}.md missing in ja: ${term}`,
           );
         }
       }
       for (const term of jaTerms) {
         if (!enTerms.includes(term)) {
           failures.push(
-            `LANGUAGE_PARITY_DRIFT: markdown contract terms .takt/{en,ja}/facets/${kind}/${name}.md missing in en: ${term}`,
+            `LANGUAGE_PARITY_DRIFT: markdown contract terms builtins/{en,ja}/facets/${kind}/${name}.md missing in en: ${term}`,
           );
         }
       }
@@ -900,7 +900,7 @@ function validateWorkflowFiles(repoRoot) {
   const failures = [];
   for (const lang of languages) {
     for (const spec of [...phaseWorkflowSpecs, ...auxiliaryWorkflowSpecs]) {
-      const path = join(repoRoot, ".takt", lang, "workflows", `${spec.name}.yaml`);
+      const path = join(repoRoot, "builtins", lang, "workflows", `${spec.name}.yaml`);
       if (!existsSync(path)) {
         failures.push(`WORKFLOW_MISSING: ${rel(repoRoot, path)} missing`);
         continue;
@@ -942,7 +942,7 @@ function validateFacetFiles(repoRoot) {
   const failures = [];
   for (const lang of languages) {
     for (const spec of facetSpecs) {
-      const path = join(repoRoot, ".takt", lang, "facets", spec.kind, `${spec.name}.md`);
+      const path = join(repoRoot, "builtins", lang, "facets", spec.kind, `${spec.name}.md`);
       if (!existsSync(path)) {
         failures.push(`FACET_MISSING: ${rel(repoRoot, path)} missing`);
         continue;
@@ -983,7 +983,7 @@ function validateGenerationResultContractShape(content, path, failures, repoRoot
 function validateLifecycleTerms(repoRoot) {
   const failures = [];
   for (const lang of languages) {
-    const path = join(repoRoot, ".takt", lang, "facets", "policies", "kiro-spec-lifecycle.md");
+    const path = join(repoRoot, "builtins", lang, "facets", "policies", "kiro-spec-lifecycle.md");
     if (!existsSync(path)) {
       failures.push(`LIFECYCLE_DRIFT: ${rel(repoRoot, path)} missing shared lifecycle policy`);
       continue;
@@ -996,7 +996,7 @@ function validateLifecycleTerms(repoRoot) {
 function validateQuickComposition(repoRoot) {
   const failures = [];
   for (const lang of languages) {
-    const path = join(repoRoot, ".takt", lang, "workflows", "kiro-spec-quick.yaml");
+    const path = join(repoRoot, "builtins", lang, "workflows", "kiro-spec-quick.yaml");
     if (!existsSync(path)) {
       failures.push(`QUICK_COMPOSITION_DRIFT: ${rel(repoRoot, path)} missing`);
       continue;
@@ -1066,7 +1066,7 @@ function validateQuickComposition(repoRoot) {
 function validateTaskWorkflowCompletion(repoRoot) {
   const failures = [];
   for (const lang of languages) {
-    const path = join(repoRoot, ".takt", lang, "workflows", "kiro-spec-tasks.yaml");
+    const path = join(repoRoot, "builtins", lang, "workflows", "kiro-spec-tasks.yaml");
     if (!existsSync(path)) {
       failures.push(`TASK_WORKFLOW_DRIFT: ${rel(repoRoot, path)} missing`);
       continue;
@@ -1526,7 +1526,7 @@ function compareAdapterSignatures(failures, spec, enSignature, jaSignature) {
   for (const key of ["skill", "section", "additionalSections"]) {
     if (JSON.stringify(enSignature[key]) !== JSON.stringify(jaSignature[key])) {
       failures.push(
-        `SKILL_ADAPTER_DRIFT: .takt/{en,ja}/facets/instructions/${spec.name}.md ${key} mismatch: en=${JSON.stringify(enSignature[key])} ja=${JSON.stringify(jaSignature[key])}`,
+        `SKILL_ADAPTER_DRIFT: builtins/{en,ja}/facets/instructions/${spec.name}.md ${key} mismatch: en=${JSON.stringify(enSignature[key])} ja=${JSON.stringify(jaSignature[key])}`,
       );
     }
   }
@@ -1536,7 +1536,7 @@ function compareAdapterSignatures(failures, spec, enSignature, jaSignature) {
     const jaValue = JSON.stringify(jaSignature[key]);
     if (enValue !== jaValue) {
       failures.push(
-        `SKILL_ADAPTER_DRIFT: .takt/{en,ja}/facets/instructions/${spec.name}.md ${key} mismatch: en=${enValue} ja=${jaValue}`,
+        `SKILL_ADAPTER_DRIFT: builtins/{en,ja}/facets/instructions/${spec.name}.md ${key} mismatch: en=${enValue} ja=${jaValue}`,
       );
     }
   }
@@ -1547,7 +1547,7 @@ function validateSkillAdapterFacets(repoRoot) {
   for (const spec of skillAdapterFacetSpecs) {
     const signatures = {};
     for (const lang of languages) {
-      const path = join(repoRoot, ".takt", lang, "facets", "instructions", `${spec.name}.md`);
+      const path = join(repoRoot, "builtins", lang, "facets", "instructions", `${spec.name}.md`);
       if (!existsSync(path)) {
         failures.push(`SKILL_ADAPTER_DRIFT: ${rel(repoRoot, path)} missing`);
         continue;
@@ -1610,7 +1610,7 @@ function validateLegacyKiroGenerationSurface(repoRoot) {
   for (const lang of languages) {
     const referencedInstructionFacets = new Set();
     for (const spec of phaseWorkflowSpecs) {
-      const workflowPath = join(repoRoot, ".takt", lang, "workflows", `${spec.name}.yaml`);
+      const workflowPath = join(repoRoot, "builtins", lang, "workflows", `${spec.name}.yaml`);
       if (!existsSync(workflowPath)) {
         continue;
       }
@@ -1620,7 +1620,7 @@ function validateLegacyKiroGenerationSurface(repoRoot) {
     }
 
     for (const spec of generationWorkflowStepSpecs) {
-      const workflowPath = join(repoRoot, ".takt", lang, "workflows", `${spec.name}.yaml`);
+      const workflowPath = join(repoRoot, "builtins", lang, "workflows", `${spec.name}.yaml`);
       if (!existsSync(workflowPath)) {
         continue;
       }
@@ -1635,7 +1635,7 @@ function validateLegacyKiroGenerationSurface(repoRoot) {
     }
 
     for (const facet of expectedInstructionFacets) {
-      const facetPath = join(repoRoot, ".takt", lang, "facets", "instructions", `${facet}.md`);
+      const facetPath = join(repoRoot, "builtins", lang, "facets", "instructions", `${facet}.md`);
       if (!existsSync(facetPath)) {
         continue;
       }
@@ -1647,7 +1647,7 @@ function validateLegacyKiroGenerationSurface(repoRoot) {
       }
     }
 
-    const instructionFacetDir = join(repoRoot, ".takt", lang, "facets", "instructions");
+    const instructionFacetDir = join(repoRoot, "builtins", lang, "facets", "instructions");
     for (const facet of listBasenames(repoRoot, rel(repoRoot, instructionFacetDir), ".md")) {
       if (outOfBoundaryKiroSpecInstructionFacets.has(facet)) {
         continue;
@@ -1668,7 +1668,7 @@ function validateReviewFieldContracts(repoRoot) {
   const failures = [];
   for (const lang of languages) {
     for (const spec of reviewStepFieldContractSpecs) {
-      const workflowPath = join(repoRoot, ".takt", lang, "workflows", `${spec.workflow}.yaml`);
+      const workflowPath = join(repoRoot, "builtins", lang, "workflows", `${spec.workflow}.yaml`);
       if (!existsSync(workflowPath)) {
         continue;
       }
@@ -1758,7 +1758,7 @@ function validateBuiltinFacetInheritance(repoRoot) {
   const failures = [];
   for (const lang of languages) {
     for (const spec of builtinInheritanceFacetSpecs) {
-      const path = join(repoRoot, ".takt", lang, "facets", spec.kind, `${spec.name}.md`);
+      const path = join(repoRoot, "builtins", lang, "facets", spec.kind, `${spec.name}.md`);
       if (!existsSync(path)) {
         continue;
       }
