@@ -1,4 +1,4 @@
-{extends: review-pure}
+{extends: plan}
 
 ## Kiro Skill Source
 
@@ -26,8 +26,9 @@ Generate requirements content from initialized Kiro context. The final success s
 2. Perform context loading from `brief.md`, the existing draft `requirements.md`, `spec.json`, relevant steering context, and requirements rules before writing.
 3. If `spec.json` is missing, unreadable, or not in an initialized state that can advance to `requirements-generated`, return `validation.verdict: "BLOCKED"` and do not write success metadata.
 4. Generate draft requirements content with numeric IDs only. Do not use prefixes such as `REQ-`, alphabetic IDs, or unnumbered acceptance criteria.
-5. Write each acceptance criterion with EARS fixed phrase structure:
+5. Write each acceptance criterion with the EARS fixed phrase structure from `rules/ears-format.md`. Each criterion must literally contain one of the fixed phrase markers and mandatory wording markers for the target language; do not paraphrase those markers.
    - `When [event] occurs, [system] shall [response]`
+   - `While [precondition], [system] shall [response]`
    - `If [condition], [system] shall [response]`
    - `If [unwanted event] occurs, [system] shall [response]`
    - `If [feature/option] is included, [system] shall [response]`
