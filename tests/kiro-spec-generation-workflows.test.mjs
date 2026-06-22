@@ -690,17 +690,12 @@ test("task workflow validation detects finalize task result drift", () => {
 });
 
 test("task 14.1 validation detects missing built-in facet parent", () => {
-  const root = makeFixture();
+  const root = makeWritableValidationFixture();
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
       `.takt/${lang}/facets/instructions/kiro-spec-init.md`,
       ["{extends: missing-planning-parent}", "", "# Kiro Spec Init", "", "- spec.json"].join("\n"),
-    );
-    writeFixtureFile(
-      root,
-      `node_modules/takt/builtins/${lang}/facets/instructions/plan.md`,
-      "# Built-in Plan\n",
     );
   }
 
@@ -735,17 +730,12 @@ test("task 14.1 validation detects semantic facet parent drift", () => {
 });
 
 test("task 14.1 validation detects unsupported facet extends references", () => {
-  const root = makeFixture();
+  const root = makeWritableValidationFixture();
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
       `.takt/${lang}/facets/instructions/kiro-spec-init.md`,
       ["{extends: instructions/plan}", "", "# Kiro Spec Init", "", "- spec.json"].join("\n"),
-    );
-    writeFixtureFile(
-      root,
-      `node_modules/takt/builtins/${lang}/facets/instructions/plan.md`,
-      "# Built-in Plan\n",
     );
   }
 

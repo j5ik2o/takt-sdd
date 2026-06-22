@@ -1774,13 +1774,6 @@ function validateBuiltinFacetInheritance(repoRoot) {
         continue;
       }
 
-      if (spec.parent && parent !== spec.parent) {
-        failures.push(
-          `BUILTIN_FACET_INHERITANCE_DRIFT: ${rel(repoRoot, path)} must use {extends: ${spec.parent}}`,
-        );
-        continue;
-      }
-
       if (unsupportedExtendsPattern.test(parent)) {
         failures.push(
           `BUILTIN_FACET_EXTENDS_UNSUPPORTED: ${rel(repoRoot, path)} uses non-bare parent reference: ${parent}`,
@@ -1792,6 +1785,14 @@ function validateBuiltinFacetInheritance(repoRoot) {
       if (!existsSync(parentPath)) {
         failures.push(
           `BUILTIN_FACET_NOT_FOUND: ${rel(repoRoot, path)} extends missing built-in facet ${rel(repoRoot, parentPath)}`,
+        );
+        continue;
+      }
+
+      const expectedParent = spec.expectedParent ?? spec.parent;
+      if (expectedParent && parent !== expectedParent) {
+        failures.push(
+          `BUILTIN_FACET_INHERITANCE_DRIFT: ${rel(repoRoot, path)} must use {extends: ${expectedParent}} actual=${parent ?? "<none>"}`,
         );
       }
     }
