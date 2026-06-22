@@ -1,3 +1,13 @@
+## [2.2.2](https://github.com/j5ik2o/takt-sdd/compare/v2.2.1...v2.2.2) (2026-06-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency takt to v0.48.0 ([ad0292e](https://github.com/j5ik2o/takt-sdd/commit/ad0292eccd09c6104b35d038550cfaae1d3aa80f))
+* **kiro:** align merged validator expectations ([2946a86](https://github.com/j5ik2o/takt-sdd/commit/2946a8644c5d9252281ee70294773cba8581dbf3))
+* **kiro:** correct requirements facet inheritance ([03f0267](https://github.com/j5ik2o/takt-sdd/commit/03f0267bc4f0084e2c4aaa47cd27c8d0ab69b8ce))
+* **kiro:** restore requirements generation facet behavior ([1533ebd](https://github.com/j5ik2o/takt-sdd/commit/1533ebd32f0a682dbc031b4a0004534c4776fcc5))
+
 ## [2.2.1](https://github.com/j5ik2o/takt-sdd/compare/v2.2.0...v2.2.1) (2026-06-18)
 
 
