@@ -136,13 +136,13 @@ function validateRetiredScriptsAbsent(repoRoot) {
 
 /**
  * Validate that retired cc-sdd-* and opsx-* workflow yaml files are NOT
- * present in .takt/{en,ja}/workflows/ (req 1.1, 1.2, 8.2 — absence enforcement).
+ * present in builtins/{en,ja}/workflows/ (req 1.1, 1.2, 8.2 — absence enforcement).
  */
 function validateRetiredWorkflowAssetsAbsent(repoRoot) {
   const failures = [];
 
   for (const lang of languages) {
-    const workflowDir = join(repoRoot, ".takt", lang, "workflows");
+    const workflowDir = join(repoRoot, "builtins", lang, "workflows");
     if (!existsSync(workflowDir)) continue;
     let entries;
     try {
@@ -154,7 +154,7 @@ function validateRetiredWorkflowAssetsAbsent(repoRoot) {
       if (entry.startsWith("cc-sdd-") || entry.startsWith("opsx-")) {
         const workflowName = entry.replace(/\.yaml$/, "");
         failures.push(
-          `RETIRED_WORKFLOW_ASSET: .takt/${lang}/workflows/${entry} must not be present — ${workflowName} was retired in v2.0.0`,
+          `RETIRED_WORKFLOW_ASSET: builtins/${lang}/workflows/${entry} must not be present — ${workflowName} was retired in v2.0.0`,
         );
       }
     }
@@ -164,7 +164,7 @@ function validateRetiredWorkflowAssetsAbsent(repoRoot) {
 }
 
 function hasWorkflow(repoRoot, workflowName) {
-  return languages.some((language) => existsSync(join(repoRoot, ".takt", language, "workflows", `${workflowName}.yaml`)))
+  return languages.some((language) => existsSync(join(repoRoot, "builtins", language, "workflows", `${workflowName}.yaml`)))
     || existsSync(join(repoRoot, ".takt", "workflows", `${workflowName}.yaml`));
 }
 

@@ -650,7 +650,7 @@ function builtInFacetPath(repoRoot, lang, kind, name) {
 }
 
 function localFacetPath(repoRoot, lang, kind, name) {
-  return join(repoRoot, ".takt", lang, "facets", kind, `${name}.md`);
+  return join(repoRoot, "builtins", lang, "facets", kind, `${name}.md`);
 }
 
 function facetReferenceExists(repoRoot, lang, kind, name) {
@@ -686,7 +686,7 @@ function validatePackageScripts(repoRoot) {
 function validateWorkflowFiles(repoRoot) {
   const failures = [];
   for (const lang of languages) {
-    const workflowPath = join(repoRoot, ".takt", lang, "workflows", "kiro-impl.yaml");
+    const workflowPath = join(repoRoot, "builtins", lang, "workflows", "kiro-impl.yaml");
     if (!existsSync(workflowPath)) {
       failures.push(`WORKFLOW_MISSING: ${rel(repoRoot, workflowPath)} missing`);
       continue;
@@ -1011,7 +1011,7 @@ function validateWorkflowFiles(repoRoot) {
 function validateGateWorkflowFiles(repoRoot) {
   const failures = [];
   for (const lang of languages) {
-    const workflowPath = join(repoRoot, ".takt", lang, "workflows", "kiro-ai-quality-gate.yaml");
+    const workflowPath = join(repoRoot, "builtins", lang, "workflows", "kiro-ai-quality-gate.yaml");
     if (!existsSync(workflowPath)) {
       failures.push(`GATE_WORKFLOW_MISSING: ${rel(repoRoot, workflowPath)} missing`);
       continue;
@@ -1136,7 +1136,7 @@ function validateFacetFiles(repoRoot) {
       ...policySpecs.map((spec) => ({ ...spec, kind: "policies" })),
     ];
     for (const spec of specs) {
-      const path = join(repoRoot, ".takt", lang, "facets", spec.kind, `${spec.name}.md`);
+      const path = join(repoRoot, "builtins", lang, "facets", spec.kind, `${spec.name}.md`);
       if (!existsSync(path)) {
         failures.push(`FACET_MISSING: ${rel(repoRoot, path)} missing`);
         continue;
@@ -1247,7 +1247,7 @@ function validateFacetFiles(repoRoot) {
 function validateNoStandaloneAdapterWorkflows(repoRoot) {
   const failures = [];
   for (const lang of languages) {
-    const workflowDir = join(repoRoot, ".takt", lang, "workflows");
+    const workflowDir = join(repoRoot, "builtins", lang, "workflows");
     for (const name of forbiddenStandaloneWorkflows) {
       const path = join(workflowDir, `${name}.yaml`);
       if (existsSync(path)) {
@@ -1270,8 +1270,8 @@ function validateLanguageParity(repoRoot) {
     ...policySpecs.map((spec) => `facets/policies/${spec.name}.md`),
   ];
   for (const file of relativeFiles) {
-    const enPath = join(repoRoot, ".takt", "en", file);
-    const jaPath = join(repoRoot, ".takt", "ja", file);
+    const enPath = join(repoRoot, "builtins", "en", file);
+    const jaPath = join(repoRoot, "builtins", "ja", file);
     if (existsSync(enPath) !== existsSync(jaPath)) {
       failures.push(`LANGUAGE_PARITY_DRIFT: ${file} must exist in both en and ja`);
       continue;

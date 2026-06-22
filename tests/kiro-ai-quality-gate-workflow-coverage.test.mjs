@@ -13,7 +13,7 @@ const repoRoot = join(import.meta.dirname, "..");
 const languages = ["en", "ja"];
 
 function listKiroWorkflowNames(language) {
-  return readdirSync(join(repoRoot, ".takt", language, "workflows"))
+  return readdirSync(join(repoRoot, "builtins", language, "workflows"))
     .filter((file) => file.startsWith("kiro-") && file.endsWith(".yaml"))
     .map((file) => file.replace(/\.yaml$/, ""))
     .sort();
@@ -21,7 +21,7 @@ function listKiroWorkflowNames(language) {
 
 function makeCoverageFixture() {
   const root = mkdtempSync(join(tmpdir(), "kiro-ai-quality-gate-coverage-"));
-  cpSync(join(repoRoot, ".takt"), join(root, ".takt"), { recursive: true });
+  cpSync(join(repoRoot, "builtins"), join(root, "builtins"), { recursive: true });
   return root;
 }
 
@@ -77,7 +77,7 @@ test("batch orchestration delegates artifact-level AI review without direct AI g
   assert.equal(entry.allowedGateCall, undefined);
 
   for (const language of languages) {
-    const path = join(repoRoot, ".takt", language, "workflows", "kiro-spec-batch.yaml");
+    const path = join(repoRoot, "builtins", language, "workflows", "kiro-spec-batch.yaml");
     const content = readFileSync(path, "utf8");
     assert.equal(content.includes("kiro-ai-quality-gate"), false, `${path} must not call implementation AI gate`);
     assert.equal(content.includes("kiro-spec-ai-quality-gate"), false, `${path} must not call spec AI gate directly`);
@@ -86,7 +86,7 @@ test("batch orchestration delegates artifact-level AI review without direct AI g
 
 test("discovery workflow routes discovery artifacts through discovery AI quality gate", () => {
   for (const language of languages) {
-    const path = join(repoRoot, ".takt", language, "workflows", "kiro-discovery.yaml");
+    const path = join(repoRoot, "builtins", language, "workflows", "kiro-discovery.yaml");
     const content = readFileSync(path, "utf8");
 
     assert.match(content, /- name: ai-quality-gate-discovery[\s\S]*kind: workflow_call[\s\S]*call: \.\/kiro-discovery-ai-quality-gate\.yaml/);
@@ -117,7 +117,7 @@ test("kiro AI quality gate coverage policy facets explain categories without dup
   ];
 
   for (const language of languages) {
-    const path = join(repoRoot, ".takt", language, "facets", "policies", "kiro-ai-quality-gate-coverage.md");
+    const path = join(repoRoot, "builtins", language, "facets", "policies", "kiro-ai-quality-gate-coverage.md");
     const content = readFileSync(path, "utf8");
 
     for (const term of requiredTerms) {
@@ -146,7 +146,7 @@ test("spec generation AI quality gate workflow is callable and separates spec re
   ];
 
   for (const language of languages) {
-    const path = join(repoRoot, ".takt", language, "workflows", "kiro-spec-ai-quality-gate.yaml");
+    const path = join(repoRoot, "builtins", language, "workflows", "kiro-spec-ai-quality-gate.yaml");
     const content = readFileSync(path, "utf8");
 
     for (const term of requiredTerms) {
@@ -173,7 +173,7 @@ test("discovery AI quality gate workflow is callable and separates discovery rep
   ];
 
   for (const language of languages) {
-    const path = join(repoRoot, ".takt", language, "workflows", "kiro-discovery-ai-quality-gate.yaml");
+    const path = join(repoRoot, "builtins", language, "workflows", "kiro-discovery-ai-quality-gate.yaml");
     const content = readFileSync(path, "utf8");
 
     for (const term of requiredTerms) {
@@ -209,14 +209,14 @@ test("discovery AI quality gate uses discovery-specific fix instruction and outp
   ];
 
   for (const language of languages) {
-    const workflowPath = join(repoRoot, ".takt", language, "workflows", "kiro-discovery-ai-quality-gate.yaml");
+    const workflowPath = join(repoRoot, "builtins", language, "workflows", "kiro-discovery-ai-quality-gate.yaml");
     const workflowContent = readFileSync(workflowPath, "utf8");
     assert.ok(workflowContent.includes("kiro-ai-antipattern-fix-discovery"));
     assert.ok(workflowContent.includes("kiro-discovery-ai-antipattern-fix-result"));
 
     const instructionPath = join(
       repoRoot,
-      ".takt",
+      "builtins",
       language,
       "facets",
       "instructions",
@@ -229,7 +229,7 @@ test("discovery AI quality gate uses discovery-specific fix instruction and outp
 
     const contractPath = join(
       repoRoot,
-      ".takt",
+      "builtins",
       language,
       "facets",
       "output-contracts",
@@ -264,14 +264,14 @@ test("spec generation AI quality gate uses generation-specific fix instruction a
   ];
 
   for (const language of languages) {
-    const workflowPath = join(repoRoot, ".takt", language, "workflows", "kiro-spec-ai-quality-gate.yaml");
+    const workflowPath = join(repoRoot, "builtins", language, "workflows", "kiro-spec-ai-quality-gate.yaml");
     const workflowContent = readFileSync(workflowPath, "utf8");
     assert.ok(workflowContent.includes("kiro-ai-antipattern-fix-spec-generation"));
     assert.ok(workflowContent.includes("kiro-spec-ai-antipattern-fix-result"));
 
     const instructionPath = join(
       repoRoot,
-      ".takt",
+      "builtins",
       language,
       "facets",
       "instructions",
@@ -284,7 +284,7 @@ test("spec generation AI quality gate uses generation-specific fix instruction a
 
     const contractPath = join(
       repoRoot,
-      ".takt",
+      "builtins",
       language,
       "facets",
       "output-contracts",
@@ -342,7 +342,7 @@ test("downstream generation review facets consume spec AI quality gate evidence"
 
   for (const language of languages) {
     for (const facetSpec of facetSpecs) {
-      const path = join(repoRoot, ".takt", language, "facets", "instructions", facetSpec.name);
+      const path = join(repoRoot, "builtins", language, "facets", "instructions", facetSpec.name);
       const content = readFileSync(path, "utf8");
       for (const term of [...requiredTerms, ...facetSpec.namespacedTerms]) {
         assert.ok(content.includes(term), `${path} should include ${term}`);
@@ -372,7 +372,7 @@ test("design readiness allows missing spec AI gate evidence only for standalone 
   };
 
   for (const language of languages) {
-    const path = join(repoRoot, ".takt", language, "facets", "instructions", "kiro-validate-design-readiness.md");
+    const path = join(repoRoot, "builtins", language, "facets", "instructions", "kiro-validate-design-readiness.md");
     const content = readFileSync(path, "utf8");
     for (const term of requiredTermsByLanguage[language]) {
       assert.ok(content.includes(term), `${path} should include ${term}`);
@@ -407,7 +407,7 @@ test("standalone spec generation workflows route drafts through spec AI quality 
 
   for (const language of languages) {
     for (const spec of workflowSpecs) {
-      const path = join(repoRoot, ".takt", language, "workflows", `${spec.workflow}.yaml`);
+      const path = join(repoRoot, "builtins", language, "workflows", `${spec.workflow}.yaml`);
       const content = readFileSync(path, "utf8");
       assert.ok(content.includes(`- ${spec.gate}`), `${path} loop monitor should include ${spec.gate}`);
       assert.match(content, new RegExp(`- name: ${spec.gate}[\\s\\S]*kind: workflow_call[\\s\\S]*call: ./kiro-spec-ai-quality-gate.yaml`));
@@ -451,7 +451,7 @@ test("quick spec workflow routes each phase draft through spec AI quality gate b
   ];
 
   for (const language of languages) {
-    const path = join(repoRoot, ".takt", language, "workflows", "kiro-spec-quick.yaml");
+    const path = join(repoRoot, "builtins", language, "workflows", "kiro-spec-quick.yaml");
     const content = readFileSync(path, "utf8");
 
     for (const spec of phaseSpecs) {
@@ -483,7 +483,7 @@ test("quick sanity review requires namespaced AI gate evidence for each quick ph
   ];
 
   for (const language of languages) {
-    const path = join(repoRoot, ".takt", language, "facets", "instructions", "kiro-spec-quick-sanity-review.md");
+    const path = join(repoRoot, "builtins", language, "facets", "instructions", "kiro-spec-quick-sanity-review.md");
     const content = readFileSync(path, "utf8");
     for (const term of requiredTerms) {
       assert.ok(content.includes(term), `${path} should include ${term}`);
@@ -501,12 +501,12 @@ test("coverage validator reports unclassified Kiro workflows as maintainer decis
   const root = makeCoverageFixture();
   writeFixtureFile(
     root,
-    ".takt/en/workflows/kiro-new-orchestration.yaml",
+    "builtins/en/workflows/kiro-new-orchestration.yaml",
     "name: kiro-new-orchestration\nsteps:\n  - name: inspect\n    edit: false\n",
   );
   writeFixtureFile(
     root,
-    ".takt/ja/workflows/kiro-new-orchestration.yaml",
+    "builtins/ja/workflows/kiro-new-orchestration.yaml",
     "name: kiro-new-orchestration\nsteps:\n  - name: inspect\n    edit: false\n",
   );
 
@@ -537,7 +537,7 @@ test("coverage validator rejects decision-required coverage entries as not yet c
 
 test("coverage validator detects eligible generation workflows that bypass the spec AI quality gate", () => {
   const root = makeCoverageFixture();
-  const path = ".takt/en/workflows/kiro-spec-requirements.yaml";
+  const path = "builtins/en/workflows/kiro-spec-requirements.yaml";
   writeFixtureFile(root, path, readFixtureFile(root, path).replaceAll("ai-quality-gate-requirements", "review-requirements"));
 
   const result = validateKiroAiQualityGateWorkflowCoverage({ repoRoot: root });
@@ -551,7 +551,7 @@ test("coverage validator detects eligible generation workflows that bypass the s
 
 test("coverage validator detects bare workflow name gate calls", () => {
   const root = makeCoverageFixture();
-  const path = ".takt/en/workflows/kiro-spec-design.yaml";
+  const path = "builtins/en/workflows/kiro-spec-design.yaml";
   writeFixtureFile(
     root,
     path,
@@ -569,7 +569,7 @@ test("coverage validator detects bare workflow name gate calls", () => {
 
 test("coverage validator detects read-only workflows that gain AI fix loop behavior", () => {
   const root = makeCoverageFixture();
-  const path = ".takt/en/workflows/kiro-validate-design.yaml";
+  const path = "builtins/en/workflows/kiro-validate-design.yaml";
   writeFixtureFile(
     root,
     path,
@@ -590,7 +590,7 @@ test("coverage validator detects read-only workflows that gain AI fix loop behav
 
 test("coverage validator detects language drift in gate call paths before treating workflows as covered", () => {
   const root = makeCoverageFixture();
-  const path = ".takt/ja/workflows/kiro-spec-quick.yaml";
+  const path = "builtins/ja/workflows/kiro-spec-quick.yaml";
   writeFixtureFile(
     root,
     path,
@@ -611,7 +611,7 @@ test("coverage validator detects language drift in gate call paths before treati
 
 test("coverage validator detects spec gate need_replan routing back into local repair", () => {
   const root = makeCoverageFixture();
-  const path = ".takt/en/workflows/kiro-spec-requirements.yaml";
+  const path = "builtins/en/workflows/kiro-spec-requirements.yaml";
   writeFixtureFile(
     root,
     path,
@@ -632,7 +632,7 @@ test("coverage validator detects spec gate need_replan routing back into local r
 
 test("coverage validator detects loop monitor Healthy routing that skips the spec AI gate", () => {
   const root = makeCoverageFixture();
-  const path = ".takt/en/workflows/kiro-spec-quick.yaml";
+  const path = "builtins/en/workflows/kiro-spec-quick.yaml";
   writeFixtureFile(
     root,
     path,
@@ -653,7 +653,7 @@ test("coverage validator detects loop monitor Healthy routing that skips the spe
 
 test("coverage validator detects downstream review facets that omit namespaced gate evidence paths", () => {
   const root = makeCoverageFixture();
-  const path = ".takt/en/facets/instructions/kiro-validate-design-readiness.md";
+  const path = "builtins/en/facets/instructions/kiro-validate-design-readiness.md";
   writeFixtureFile(
     root,
     path,
@@ -676,7 +676,7 @@ test("coverage validator detects downstream review facets that omit namespaced g
 
 test("coverage validator detects missing quick phase namespaced gate evidence instructions", () => {
   const root = makeCoverageFixture();
-  const path = ".takt/en/facets/instructions/kiro-spec-quick-sanity-review.md";
+  const path = "builtins/en/facets/instructions/kiro-spec-quick-sanity-review.md";
   writeFixtureFile(
     root,
     path,
@@ -697,7 +697,7 @@ test("coverage validator detects missing quick phase namespaced gate evidence in
 
 test("coverage validator detects policy facets that duplicate workflow inventory rows", () => {
   const root = makeCoverageFixture();
-  const path = ".takt/en/facets/policies/kiro-ai-quality-gate-coverage.md";
+  const path = "builtins/en/facets/policies/kiro-ai-quality-gate-coverage.md";
   writeFixtureFile(root, path, `${readFixtureFile(root, path)}\n| \`kiro-impl\` | existing_gate_coverage |\n`);
 
   const result = validateKiroAiQualityGateWorkflowCoverage({ repoRoot: root });

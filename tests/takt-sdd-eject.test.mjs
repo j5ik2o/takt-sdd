@@ -32,7 +32,7 @@ function writeProjectConfig(projectRoot, lang) {
 }
 
 function writePackageAsset(packageRoot, lang, section, relativePath, content) {
-  const assetPath = join(packageRoot, ".takt", lang, section, relativePath);
+  const assetPath = join(packageRoot, "builtins", lang, section, relativePath);
   mkdirSync(dirname(assetPath), { recursive: true });
   writeFileSync(assetPath, content, "utf-8");
   return assetPath;
@@ -227,12 +227,13 @@ test("buildEjectPlan classifies package workflows and facets without non-asset f
     writePackageAsset(packageRoot, "en", "facets", "changed.md", "upstream facet\n");
     writePackageAsset(packageRoot, "en", "facets", "nested/deep.md", "nested facet\n");
     writeFileSync(join(packageRoot, "package.json"), "{}\n", "utf-8");
+    mkdirSync(join(packageRoot, ".takt"), { recursive: true });
     writeFileSync(join(packageRoot, ".takt", "config.yaml"), "language: en\n", "utf-8");
     writeFileSync(join(packageRoot, ".takt", ".manifest.json"), "{}\n", "utf-8");
     mkdirSync(join(packageRoot, "scripts"), { recursive: true });
     writeFileSync(join(packageRoot, "scripts", "kiro-staged.mjs"), "script\n", "utf-8");
-    mkdirSync(join(packageRoot, ".takt", "en", "metadata"), { recursive: true });
-    writeFileSync(join(packageRoot, ".takt", "en", "metadata", "ignored.json"), "{}\n", "utf-8");
+    mkdirSync(join(packageRoot, "builtins", "en", "metadata"), { recursive: true });
+    writeFileSync(join(packageRoot, "builtins", "en", "metadata", "ignored.json"), "{}\n", "utf-8");
 
     writeProjectAsset(projectRoot, "en", "facets", "shared.md", "same facet\n");
     const changedTarget = writeProjectAsset(
@@ -285,7 +286,7 @@ test("buildEjectPlan classifies differing targets as overwrite when force is set
   const packageRoot = makeTmpDir();
   try {
     writePackageAsset(packageRoot, "en", "workflows", "kiro-impl.yaml", "upstream\n");
-    mkdirSync(join(packageRoot, ".takt", "en", "facets"), { recursive: true });
+    mkdirSync(join(packageRoot, "builtins", "en", "facets"), { recursive: true });
     writeProjectAsset(projectRoot, "en", "workflows", "kiro-impl.yaml", "project\n");
 
     const plan = buildEjectPlan(
@@ -327,7 +328,7 @@ test("buildEjectPlan treats directory targets as collisions even with force", ()
   const projectRoot = makeTmpDir();
   const packageRoot = makeTmpDir();
   try {
-    mkdirSync(join(packageRoot, ".takt", "en", "workflows"), { recursive: true });
+    mkdirSync(join(packageRoot, "builtins", "en", "workflows"), { recursive: true });
     writePackageAsset(packageRoot, "en", "facets", "blocked.md", "upstream\n");
     mkdirSync(join(projectRoot, ".takt", "en", "facets", "blocked.md"), {
       recursive: true,
@@ -358,7 +359,7 @@ test("buildEjectPlan uses the resolved language when no language option is provi
     writeProjectConfig(projectRoot, "ja");
     writePackageAsset(packageRoot, "en", "workflows", "kiro-impl.yaml", "english\n");
     writePackageAsset(packageRoot, "ja", "workflows", "kiro-impl.yaml", "japanese\n");
-    mkdirSync(join(packageRoot, ".takt", "ja", "facets"), { recursive: true });
+    mkdirSync(join(packageRoot, "builtins", "ja", "facets"), { recursive: true });
 
     const plan = buildEjectPlan({ projectRoot, packageRoot }, parseEjectArgs([]));
 
@@ -535,6 +536,7 @@ test("runEject all-languages force writes en and ja assets without metadata writ
     writePackageAsset(packageRoot, "ja", "workflows", "kiro-impl.yaml", "ja workflow\n");
     writePackageAsset(packageRoot, "ja", "facets", "persona.md", "ja facet\n");
     writeFileSync(join(packageRoot, "package.json"), '{"version":"9.9.9"}\n', "utf-8");
+    mkdirSync(join(packageRoot, ".takt"), { recursive: true });
     writeFileSync(join(packageRoot, ".takt", "config.yaml"), "language: ja\n", "utf-8");
     writeFileSync(join(packageRoot, ".takt", ".manifest.json"), '{"lang":"ja"}\n', "utf-8");
     mkdirSync(join(packageRoot, "scripts"), { recursive: true });
@@ -682,7 +684,7 @@ test("runEject shows ja-only manual config guidance using config-only language",
   const packageRoot = makeTmpDir();
   try {
     writePackageAsset(packageRoot, "ja", "workflows", "kiro-impl.yaml", "ja\n");
-    mkdirSync(join(packageRoot, ".takt", "ja", "facets"), { recursive: true });
+    mkdirSync(join(packageRoot, "builtins", "ja", "facets"), { recursive: true });
     mkdirSync(join(projectRoot, ".takt"), { recursive: true });
     writeFileSync(
       join(projectRoot, ".takt", ".manifest.json"),
@@ -709,7 +711,7 @@ test("runEject suppresses ja-only manual config guidance when config language is
   const packageRoot = makeTmpDir();
   try {
     writePackageAsset(packageRoot, "ja", "workflows", "kiro-impl.yaml", "ja\n");
-    mkdirSync(join(packageRoot, ".takt", "ja", "facets"), { recursive: true });
+    mkdirSync(join(packageRoot, "builtins", "ja", "facets"), { recursive: true });
     writeProjectConfig(projectRoot, "ja");
     writeFileSync(
       join(projectRoot, ".takt", ".manifest.json"),

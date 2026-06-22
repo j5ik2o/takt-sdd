@@ -36,7 +36,7 @@ function writeManifest(projectRoot, lang) {
 }
 
 function writePackageWorkflow(packageRoot, lang, workflowName) {
-  const workflowDir = join(packageRoot, ".takt", lang, "workflows");
+  const workflowDir = join(packageRoot, "builtins", lang, "workflows");
   mkdirSync(workflowDir, { recursive: true });
   const workflowPath = join(workflowDir, `${workflowName}.yaml`);
   writeFileSync(workflowPath, `# package ${lang} ${workflowName}\nsteps: []\n`, "utf-8");

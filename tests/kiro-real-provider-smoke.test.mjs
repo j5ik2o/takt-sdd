@@ -87,8 +87,7 @@ function makeRealProviderFixture() {
   const root = mkdtempSync(join(tmpdir(), "kiro-real-provider-smoke-"));
   const repoRoot = join(import.meta.dirname, "..");
 
-  cpSync(join(repoRoot, ".takt"), join(root, ".takt"), { recursive: true });
-  rmSync(join(root, ".takt", "runs"), { recursive: true, force: true });
+  cpSync(join(repoRoot, "builtins"), join(root, "builtins"), { recursive: true });
   symlinkSync(join(repoRoot, ".agents"), join(root, ".agents"), "dir");
   symlinkSync(join(repoRoot, "node_modules"), join(root, "node_modules"), "dir");
   mkdirSync(join(root, ".kiro"), { recursive: true });
@@ -114,6 +113,13 @@ function makeRealProviderFixture() {
     )}\n`,
   );
   writeFixtureFile(root, ".gitignore", ".codex\n.takt/runs/\n.takt/worktrees/\n");
+  for (const configName of ["config.yaml", "config.yml"]) {
+    const sourceConfigPath = join(repoRoot, ".takt", configName);
+    if (existsSync(sourceConfigPath)) {
+      writeFixtureFile(root, `.takt/${configName}`, readFileSync(sourceConfigPath, "utf8"));
+      break;
+    }
+  }
   linkCodexHomeIfConfigured(root);
   writeFixtureFile(root, ".kiro/steering/product.md", "# Product\n\nReal-provider smoke fixture for TAKT/Kiro workflow validation.\n");
   writeFixtureFile(root, ".kiro/steering/tech.md", "# Tech\n\nUse only local files in this temporary fixture.\n");

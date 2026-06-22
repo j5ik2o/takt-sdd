@@ -11,8 +11,9 @@
 
 | パス | 内容 |
 |------|------|
-| `.takt/{ja,en}/pieces/` | SDD ワークフローの YAML（ピース定義） |
-| `.takt/{ja,en}/facets/` | Persona / Policy / Instruction / Knowledge / Output-Contract |
+| `builtins/{ja,en}/workflows/` | package 同梱の SDD ワークフロー YAML |
+| `builtins/{ja,en}/facets/` | package 同梱の Persona / Policy / Instruction / Knowledge / Output-Contract |
+| `.takt/` | project-local override、`eject` 出力、ユーザー所有 config、実行状態 |
 | `references/okite-ai/` | AI ルール集（参照専用） |
 | `installer/` | `npx create-takt-sdd` のインストーラ本体（TypeScript） |
 | `.kiro/specs/` | Kiro SDD の出力先（requirements.md / design.md / tasks.md 等） |
@@ -20,7 +21,7 @@
 
 ## Global CLI
 
-`takt-sdd` は npm グローバルパッケージとして提供されている。`npm install -g takt-sdd` → `takt-sdd init .` → `npm install` の順で導入し、`takt-sdd <workflow>` または `takt-sdd run <workflow>` で実行する。
+`takt-sdd` は npm グローバルパッケージとして提供されている。`npm install -g takt-sdd` 後、`takt-sdd <workflow>` または `takt-sdd run <workflow>` で実行する。package 同梱 workflow/facet は installed package の `builtins/{ja,en}` から直接解決される。
 
 サポートコマンド: `kiro-discovery`, `kiro-spec-init`, `kiro-spec-requirements`, `kiro-spec-design`, `kiro-spec-tasks`, `kiro-spec-quick`, `kiro-spec-batch`, `kiro-spec-status`, `kiro-impl`, `kiro-validate-gap`, `kiro-validate-design`, `kiro-validate-impl`（kiro 12 件）。
 
@@ -38,7 +39,8 @@ Kiro スキルでは `$kiro-discovery`, `$kiro-spec-quick`, `$kiro-spec-batch`, 
 
 ## インストーラの仕組み
 
-- `installer/src/install.ts` が本体。`.takt/` のピースとファセットを配置し、`package.json` に必要な scripts と `takt` の devDependency を追加する。
+- `installer/src/install.ts` が本体。現在の initializer は guidance-only で、`.takt/` assets、manifest、`scripts/kiro-staged.mjs`、`package.json` を作成・変更しない。
+- project-owned customization が必要な場合のみ、`takt-sdd eject` が `builtins/{ja,en}/workflows` と `builtins/{ja,en}/facets` を `.takt/{ja,en}/...` へコピーする。
 - v1.x から update すると、退役済みワークフロー資産（cc-sdd-* / opsx-*）のうちカスタマイズされていないものを自動削除する。カスタマイズ済みの場合は警告のみ。
 - TAKT スキルは別リポジトリで提供しており、必要に応じて個別に導入する。
 

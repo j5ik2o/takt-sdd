@@ -30,8 +30,7 @@ function workflowOutput(result) {
 function makeRuntimeFixture() {
   const root = mkdtempSync(join(tmpdir(), "kiro-ai-quality-gate-runtime-"));
   const repoRoot = join(import.meta.dirname, "..");
-  cpSync(join(repoRoot, ".takt"), join(root, ".takt"), { recursive: true });
-  rmSync(join(root, ".takt", "runs"), { recursive: true, force: true });
+  cpSync(join(repoRoot, "builtins"), join(root, "builtins"), { recursive: true });
   symlinkSync(join(repoRoot, ".agents"), join(root, ".agents"), "dir");
   symlinkSync(join(repoRoot, "node_modules"), join(root, "node_modules"), "dir");
   mkdirSync(join(root, "scripts"), { recursive: true });

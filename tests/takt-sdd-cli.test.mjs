@@ -30,24 +30,24 @@ test("SUPPORTED_WORKFLOWS has exactly 12 entries", () => {
   assert.equal(SUPPORTED_WORKFLOWS.length, 12, `Expected 12 entries but got ${SUPPORTED_WORKFLOWS.length}: ${SUPPORTED_WORKFLOWS.join(", ")}`);
 });
 
-test("every SUPPORTED_WORKFLOWS entry has a .takt/en/workflows/<name>.yaml asset", () => {
+test("every SUPPORTED_WORKFLOWS entry has a builtins/en/workflows/<name>.yaml asset", () => {
   const missing = SUPPORTED_WORKFLOWS.filter(
-    (name) => !existsSync(join(repoRoot, ".takt", "en", "workflows", `${name}.yaml`)),
+    (name) => !existsSync(join(repoRoot, "builtins", "en", "workflows", `${name}.yaml`)),
   );
   assert.deepEqual(missing, [], `Missing en assets: ${missing.join(", ")}`);
 });
 
-test("every SUPPORTED_WORKFLOWS entry has a .takt/ja/workflows/<name>.yaml asset", () => {
+test("every SUPPORTED_WORKFLOWS entry has a builtins/ja/workflows/<name>.yaml asset", () => {
   const missing = SUPPORTED_WORKFLOWS.filter(
-    (name) => !existsSync(join(repoRoot, ".takt", "ja", "workflows", `${name}.yaml`)),
+    (name) => !existsSync(join(repoRoot, "builtins", "ja", "workflows", `${name}.yaml`)),
   );
   assert.deepEqual(missing, [], `Missing ja assets: ${missing.join(", ")}`);
 });
 
-// (b) bidirectional drift: every bundled .takt/en/workflows/*.yaml basename is in SUPPORTED ∪ internal
+// (b) bidirectional drift: every bundled builtins/en/workflows/*.yaml basename is in SUPPORTED ∪ internal
 // RETIRED assets must NOT be bundled
-test("every .takt/en/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.internal (no unclassified assets)", () => {
-  const enDir = join(repoRoot, ".takt", "en", "workflows");
+test("every builtins/en/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.internal (no unclassified assets)", () => {
+  const enDir = join(repoRoot, "builtins", "en", "workflows");
   const allNames = readdirSync(enDir)
     .filter((f) => f.endsWith(".yaml"))
     .map((f) => f.replace(/\.yaml$/, ""));
@@ -61,13 +61,13 @@ test("every .takt/en/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS or EXCL
   assert.deepEqual(
     unclassified,
     [],
-    `Unclassified workflow assets in .takt/en/workflows/: ${unclassified.join(", ")}. Add them to SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.internal.`,
+    `Unclassified workflow assets in builtins/en/workflows/: ${unclassified.join(", ")}. Add them to SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.internal.`,
   );
 });
 
-test("every .takt/ja/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.internal (no unclassified assets)", async () => {
+test("every builtins/ja/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.internal (no unclassified assets)", async () => {
   const { readdirSync } = await import("node:fs");
-  const jaDir = join(repoRoot, ".takt", "ja", "workflows");
+  const jaDir = join(repoRoot, "builtins", "ja", "workflows");
   const allNames = readdirSync(jaDir)
     .filter((f) => f.endsWith(".yaml"))
     .map((f) => f.replace(/\.yaml$/, ""));
@@ -81,13 +81,13 @@ test("every .takt/ja/workflows/*.yaml basename is in SUPPORTED_WORKFLOWS or EXCL
   assert.deepEqual(
     unclassified,
     [],
-    `Unclassified workflow assets in .takt/ja/workflows/: ${unclassified.join(", ")}. Add them to SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.internal.`,
+    `Unclassified workflow assets in builtins/ja/workflows/: ${unclassified.join(", ")}. Add them to SUPPORTED_WORKFLOWS or EXCLUDED_WORKFLOWS.internal.`,
   );
 });
 
 // (b-new) RETIRED workflow assets must NOT be bundled
-test("no RETIRED workflow asset is bundled in .takt/en/workflows/", () => {
-  const enDir = join(repoRoot, ".takt", "en", "workflows");
+test("no RETIRED workflow asset is bundled in builtins/en/workflows/", () => {
+  const enDir = join(repoRoot, "builtins", "en", "workflows");
   const allRetired = [...RETIRED_WORKFLOWS.legacy, ...RETIRED_WORKFLOWS.opsx];
   const found = allRetired.filter((name) =>
     existsSync(join(enDir, `${name}.yaml`)),
@@ -95,8 +95,8 @@ test("no RETIRED workflow asset is bundled in .takt/en/workflows/", () => {
   assert.deepEqual(found, [], `RETIRED workflow assets must not be bundled in en: ${found.join(", ")}`);
 });
 
-test("no RETIRED workflow asset is bundled in .takt/ja/workflows/", () => {
-  const jaDir = join(repoRoot, ".takt", "ja", "workflows");
+test("no RETIRED workflow asset is bundled in builtins/ja/workflows/", () => {
+  const jaDir = join(repoRoot, "builtins", "ja", "workflows");
   const allRetired = [...RETIRED_WORKFLOWS.legacy, ...RETIRED_WORKFLOWS.opsx];
   const found = allRetired.filter((name) =>
     existsSync(join(jaDir, `${name}.yaml`)),
@@ -266,7 +266,7 @@ function writeWorkflowAsset(projectRoot, lang, name, slotType = "lang") {
  * Helper: create a package bundled workflow YAML in the given lang slot.
  */
 function writePackageWorkflowAsset(packageRoot, lang, name) {
-  const dir = join(packageRoot, ".takt", lang, "workflows");
+  const dir = join(packageRoot, "builtins", lang, "workflows");
   mkdirSync(dir, { recursive: true });
   const workflowPath = join(dir, `${name}.yaml`);
   writeFileSync(workflowPath, `# package workflow ${name}\nsteps: []\n`, "utf-8");
@@ -323,7 +323,7 @@ test("preflight: uninitialized project (.takt absent) resolves package bundled w
     const result = preflight(ctx, "kiro-impl");
     assert.equal(result.lang, "en");
     assert.equal(result.workflowSource, "package");
-    assert.equal(result.workflowPath, join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml"));
+    assert.equal(result.workflowPath, join(repoRoot, "builtins", "en", "workflows", "kiro-impl.yaml"));
     assert.equal(existsSync(join(dir, ".takt")), false);
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -363,7 +363,7 @@ test("preflight: project facet-only files do not change package workflow selecti
 
     const result = preflight({ projectRoot: dir, packageRoot: repoRoot }, "kiro-impl");
     assert.equal(result.workflowSource, "package");
-    assert.equal(result.workflowPath, join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml"));
+    assert.equal(result.workflowPath, join(repoRoot, "builtins", "en", "workflows", "kiro-impl.yaml"));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -388,7 +388,7 @@ test("runWorkflow: package workflow with project facet-only files passes only th
 
     assert.equal(code, 0);
     assert.ok(spawnCalledWith !== null, "spawnImpl should have been called");
-    const expectedWorkflow = join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml");
+    const expectedWorkflow = join(repoRoot, "builtins", "en", "workflows", "kiro-impl.yaml");
     const workflowArgs = spawnCalledWith.args.filter((arg) => arg.endsWith("kiro-impl.yaml"));
     assert.deepEqual(workflowArgs, [expectedWorkflow]);
     assert.ok(
@@ -466,7 +466,7 @@ test("preflight: declared takt devDependency with missing project-local takt bin
     const ctx = { projectRoot: dir, packageRoot: repoRoot };
     const result = preflight(ctx, "kiro-impl");
     assert.equal(result.workflowSource, "package");
-    assert.equal(result.workflowPath, join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml"));
+    assert.equal(result.workflowPath, join(repoRoot, "builtins", "en", "workflows", "kiro-impl.yaml"));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -507,7 +507,7 @@ test("uninitialized project: runWorkflow reaches spawn with package bundled work
     assert.ok(spawnCalledWith !== null, "spawnImpl should have been called");
     assert.equal(spawnCalledWith.opts.cwd, dir);
     const wIdx = spawnCalledWith.args.indexOf("-w");
-    assert.equal(spawnCalledWith.args[wIdx + 1], join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml"));
+    assert.equal(spawnCalledWith.args[wIdx + 1], join(repoRoot, "builtins", "en", "workflows", "kiro-impl.yaml"));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -599,7 +599,7 @@ test("config.yaml absent: manifest lang (ja) is used for workflow resolution", a
     assert.equal(code, 0);
     assert.ok(spawnCalledWith !== null, "spawnImpl should have been called");
     assert.equal(spawnCalledWith.opts.cwd, dir, "spawn cwd must be projectRoot");
-    // args should contain a path inside .takt/ja/workflows/
+    // args should contain a path inside builtins/ja/workflows/
     const wArg = spawnCalledWith.args.find((a) => a.includes("kiro-impl.yaml"));
     assert.ok(wArg && wArg.includes("ja"), `Expected ja workflow path, got: ${wArg}`);
   } finally {
@@ -610,7 +610,7 @@ test("config.yaml absent: manifest lang (ja) is used for workflow resolution", a
 // ─── buildWorkflowArgs: --pipeline --skip-git -w <path> always present ───
 
 test("buildWorkflowArgs includes --pipeline, --skip-git, and -w <path>", () => {
-  const wPath = "/some/.takt/en/workflows/kiro-impl.yaml";
+  const wPath = "/some/builtins/en/workflows/kiro-impl.yaml";
   const args = buildWorkflowArgs(wPath, []);
   assert.ok(args.includes("--pipeline"), `missing --pipeline in: ${JSON.stringify(args)}`);
   assert.ok(args.includes("--skip-git"), `missing --skip-git in: ${JSON.stringify(args)}`);
@@ -782,7 +782,7 @@ test("runWorkflow: project workflow passes only the selected project workflow wi
     assert.equal(code, 0);
     assert.ok(spawnCalledWith !== null, "spawnImpl should have been called");
     const expectedWorkflow = join(dir, ".takt", "en", "workflows", "kiro-impl.yaml");
-    const packageWorkflow = join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml");
+    const packageWorkflow = join(repoRoot, "builtins", "en", "workflows", "kiro-impl.yaml");
     const wIdx = spawnCalledWith.args.indexOf("-w");
     assert.equal(spawnCalledWith.args[wIdx + 1], expectedWorkflow);
     assert.ok(
@@ -790,7 +790,7 @@ test("runWorkflow: project workflow passes only the selected project workflow wi
       `package workflow path must not be passed when project workflow is selected: ${JSON.stringify(spawnCalledWith.args)}`,
     );
     assert.ok(
-      !spawnCalledWith.args.some((arg) => arg.includes(join(repoRoot, ".takt", "en", "facets"))),
+      !spawnCalledWith.args.some((arg) => arg.includes(join(repoRoot, "builtins", "en", "facets"))),
       `package facet paths must not be passed to TAKT: ${JSON.stringify(spawnCalledWith.args)}`,
     );
   } finally {
@@ -840,7 +840,7 @@ test("resolveWorkflowPathStrict: falls back to package workflow when packageRoot
   const dir = makeTmpDir();
   try {
     const result = resolveWorkflowPathStrict(dir, "en", "kiro-impl", repoRoot);
-    assert.equal(result, join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml"));
+    assert.equal(result, join(repoRoot, "builtins", "en", "workflows", "kiro-impl.yaml"));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -1152,7 +1152,7 @@ test("runWorkflow direct and normalized forms use the same package workflow for 
     const normalized = preflight(ctx, "kiro-impl");
     assert.deepEqual(direct, normalized);
     assert.equal(direct.workflowSource, "package");
-    assert.equal(direct.workflowPath, join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml"));
+    assert.equal(direct.workflowPath, join(repoRoot, "builtins", "en", "workflows", "kiro-impl.yaml"));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -1165,7 +1165,7 @@ test("preflight with uninitialized --cwd target resolves package workflow withou
   try {
     const result = preflight({ projectRoot: dir, packageRoot: repoRoot }, "kiro-impl");
     assert.equal(result.workflowSource, "package");
-    assert.equal(result.workflowPath, join(repoRoot, ".takt", "en", "workflows", "kiro-impl.yaml"));
+    assert.equal(result.workflowPath, join(repoRoot, "builtins", "en", "workflows", "kiro-impl.yaml"));
     assert.equal(existsSync(join(dir, ".takt")), false);
   } finally {
     rmSync(dir, { recursive: true, force: true });

@@ -52,7 +52,7 @@ export class PreflightError extends Error {
  * Try to resolve a workflow asset using strict candidate strategy:
  *   1. <projectRoot>/.takt/workflows/<name>.yaml  (language-neutral root slot)
  *   2. <projectRoot>/.takt/<lang>/workflows/<name>.yaml  (language-specific slot)
- *   3. <packageRoot>/.takt/<lang>/workflows/<name>.yaml  (bundled package slot)
+ *   3. <packageRoot>/builtins/<lang>/workflows/<name>.yaml  (bundled package slot)
  *
  * No language fallback: if lang is "ja", only ja-slot and root-slot are tried.
  * An "en" asset is NEVER returned for a "ja" resolution request.

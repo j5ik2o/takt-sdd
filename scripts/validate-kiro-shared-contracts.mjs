@@ -260,7 +260,7 @@ function validateOutputContracts() {
   const failures = [];
   for (const lang of languages) {
     for (const contract of outputContracts) {
-      const path = join(repoRoot, ".takt", lang, "facets", "output-contracts", contract.file);
+      const path = join(repoRoot, "builtins", lang, "facets", "output-contracts", contract.file);
       if (!existsSync(path)) {
         failures.push(`${rel(path)} missing`);
         continue;
@@ -280,7 +280,7 @@ function validateKiroSkillInheritance() {
   const failures = [];
   const byLanguage = new Map();
   for (const lang of languages) {
-    const dir = join(repoRoot, ".takt", lang, "facets", "instructions");
+    const dir = join(repoRoot, "builtins", lang, "facets", "instructions");
     for (const path of listFilesRecursive(dir).filter((file) => basename(file).startsWith("kiro-"))) {
       const content = readText(path);
       const frontmatter = parseFrontmatter(content);
@@ -414,10 +414,10 @@ function workflowStepConditions(block) {
 function validateKiroSkillFieldContract() {
   const failures = [];
   for (const lang of languages) {
-    const reviewPath = join(repoRoot, ".takt", lang, "facets", "output-contracts", "kiro-review-verdict.md");
-    const debugPath = join(repoRoot, ".takt", lang, "facets", "output-contracts", "kiro-debug-decision.md");
-    const validationPath = join(repoRoot, ".takt", lang, "facets", "output-contracts", "kiro-validation-result.md");
-    const completionPath = join(repoRoot, ".takt", lang, "facets", "output-contracts", "kiro-completion-verification.md");
+    const reviewPath = join(repoRoot, "builtins", lang, "facets", "output-contracts", "kiro-review-verdict.md");
+    const debugPath = join(repoRoot, "builtins", lang, "facets", "output-contracts", "kiro-debug-decision.md");
+    const validationPath = join(repoRoot, "builtins", lang, "facets", "output-contracts", "kiro-validation-result.md");
+    const completionPath = join(repoRoot, "builtins", lang, "facets", "output-contracts", "kiro-completion-verification.md");
     if (!existsSync(reviewPath)) {
       failures.push(`${rel(reviewPath)} missing`);
     } else {
@@ -444,7 +444,7 @@ function validateKiroSkillFieldContract() {
       );
     }
 
-    const workflowDir = join(repoRoot, ".takt", lang, "workflows");
+    const workflowDir = join(repoRoot, "builtins", lang, "workflows");
     for (const workflow of listFilesRecursive(workflowDir).filter((path) => basename(path).startsWith("kiro-") && path.endsWith(".yaml"))) {
       const content = readText(workflow);
       for (const block of workflowStepBlocks(content)) {
@@ -495,7 +495,7 @@ function validateSkillIdentityFixtures() {
     failures.push(`opsx:apply must be unsupported: ${JSON.stringify(unsupported)}`);
   }
   for (const lang of languages) {
-    const path = join(repoRoot, ".takt", lang, "facets", "instructions", "kiro-resolve-skill-identity.md");
+    const path = join(repoRoot, "builtins", lang, "facets", "instructions", "kiro-resolve-skill-identity.md");
     if (!existsSync(path)) {
       failures.push(`${rel(path)} missing`);
       continue;
@@ -538,8 +538,8 @@ function validateArtifactLifecycleTerms() {
     "auto-approve",
   ];
   for (const lang of languages) {
-    const artifactPath = join(repoRoot, ".takt", lang, "facets", "policies", "kiro-artifact-operations.md");
-    const lifecyclePath = join(repoRoot, ".takt", lang, "facets", "policies", "kiro-spec-lifecycle.md");
+    const artifactPath = join(repoRoot, "builtins", lang, "facets", "policies", "kiro-artifact-operations.md");
+    const lifecyclePath = join(repoRoot, "builtins", lang, "facets", "policies", "kiro-spec-lifecycle.md");
     if (!existsSync(artifactPath)) {
       failures.push(`${rel(artifactPath)} missing`);
     } else {
@@ -582,7 +582,7 @@ function validateFacetInheritance() {
 
   for (const lang of languages) {
     for (const kind of facetKinds) {
-      const dir = join(repoRoot, ".takt", lang, "facets", kind);
+      const dir = join(repoRoot, "builtins", lang, "facets", kind);
       for (const path of listFilesRecursive(dir).filter((file) => basename(file).startsWith("kiro-"))) {
         const content = readText(path);
         const match = content.match(/^[ \t]*\{extends:\s*([^}]+?)\s*\}[ \t]*$/m);
@@ -610,13 +610,13 @@ function validateFacetInheritance() {
 function validateWorkflowFacetReferences() {
   const failures = [];
   for (const lang of languages) {
-    const workflowDir = join(repoRoot, ".takt", lang, "workflows");
+    const workflowDir = join(repoRoot, "builtins", lang, "workflows");
     const kiroWorkflows = listFilesRecursive(workflowDir).filter((path) => basename(path).startsWith("kiro-") && path.endsWith(".yaml"));
     for (const workflow of kiroWorkflows) {
       const content = readText(workflow);
       const refs = [...content.matchAll(/\.\.\/facets\/([^/\s]+)\/([^/\s]+)\.md/g)];
       for (const [, kind, file] of refs) {
-        const facetPath = join(repoRoot, ".takt", lang, "facets", kind, `${file}.md`);
+        const facetPath = join(repoRoot, "builtins", lang, "facets", kind, `${file}.md`);
         if (!existsSync(facetPath)) {
           failures.push(`${rel(workflow)} references missing facet ${rel(facetPath)}`);
         }
@@ -632,8 +632,8 @@ function validateWorkflowFacetReferences() {
 function validateUnusedKiroInstructionFacets() {
   const failures = [];
   for (const lang of languages) {
-    const instructionDir = join(repoRoot, ".takt", lang, "facets", "instructions");
-    const workflowDir = join(repoRoot, ".takt", lang, "workflows");
+    const instructionDir = join(repoRoot, "builtins", lang, "facets", "instructions");
+    const workflowDir = join(repoRoot, "builtins", lang, "workflows");
     const referenced = new Set();
 
     for (const workflow of listFilesRecursive(workflowDir).filter((path) => basename(path).startsWith("kiro-") && path.endsWith(".yaml"))) {
@@ -658,7 +658,7 @@ function validateKiroWorkflowShapeRules() {
   const closedLoopWorkflowPattern = /^kiro-spec-(requirements|design|tasks)\.yaml$/;
   const readOnlyWorkflowPattern = /^(kiro-spec-status|kiro-validate-(gap|design|impl))\.yaml$/;
   for (const lang of languages) {
-    const workflowDir = join(repoRoot, ".takt", lang, "workflows");
+    const workflowDir = join(repoRoot, "builtins", lang, "workflows");
     for (const workflow of listFilesRecursive(workflowDir).filter((path) => basename(path).startsWith("kiro-") && path.endsWith(".yaml"))) {
       const content = readText(workflow);
       const workflowName = basename(workflow);

@@ -299,7 +299,7 @@ test("takt-sdd global install smoke", { skip: shouldSkip }, async (t) => {
       const normalizedOutput = output.replaceAll("\\", "/");
       assert.match(
         normalizedOutput,
-        /Running workflow: .*\/node_modules\/takt-sdd\/\.takt\/en\/workflows\/kiro-spec-status\.yaml/,
+        /Running workflow: .*\/node_modules\/takt-sdd\/builtins\/en\/workflows\/kiro-spec-status\.yaml/,
         `Expected package bundled workflow path, got:\n${output}`,
       );
       assert.doesNotMatch(output, /takt-sdd\s+init/i);

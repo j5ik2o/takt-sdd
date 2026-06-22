@@ -12,7 +12,7 @@ function makeFixture() {
 function makeValidationFixture() {
   const root = makeFixture();
   const repoRoot = join(import.meta.dirname, "..");
-  symlinkSync(join(repoRoot, ".takt"), join(root, ".takt"), "dir");
+  symlinkSync(join(repoRoot, "builtins"), join(root, "builtins"), "dir");
   symlinkSync(join(repoRoot, "node_modules"), join(root, "node_modules"), "dir");
   mkdirSync(join(root, ".kiro"), { recursive: true });
   symlinkSync(join(repoRoot, ".kiro", "settings"), join(root, ".kiro", "settings"), "dir");
@@ -36,7 +36,7 @@ function makeValidationFixture() {
 function makeWritableValidationFixture() {
   const root = makeFixture();
   const repoRoot = join(import.meta.dirname, "..");
-  cpSync(join(repoRoot, ".takt"), join(root, ".takt"), { recursive: true });
+  cpSync(join(repoRoot, "builtins"), join(root, "builtins"), { recursive: true });
   symlinkSync(join(repoRoot, "node_modules"), join(root, "node_modules"), "dir");
   mkdirSync(join(root, ".kiro"), { recursive: true });
   symlinkSync(join(repoRoot, ".kiro", "settings"), join(root, ".kiro", "settings"), "dir");
@@ -218,10 +218,10 @@ test("task 2.1 shared spec generation policy and result contract are available i
   ];
 
   for (const lang of ["en", "ja"]) {
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/policies/kiro-spec-generation.md`, policyTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/policies/kiro-spec-generation.md`, policyTerms);
     assertFacetTerms(
       repoRoot,
-      `.takt/${lang}/facets/output-contracts/kiro-spec-generation-result.md`,
+      `builtins/${lang}/facets/output-contracts/kiro-spec-generation-result.md`,
       resultTerms,
     );
   }
@@ -246,7 +246,7 @@ test("task 7.1 quick sanity review contract exposes machine-readable verdict and
   ];
 
   for (const lang of ["en", "ja"]) {
-    const path = `.takt/${lang}/facets/output-contracts/kiro-spec-sanity-review.md`;
+    const path = `builtins/${lang}/facets/output-contracts/kiro-spec-sanity-review.md`;
     assertFacetTerms(repoRoot, path, contractTerms);
     const content = readFileSync(join(repoRoot, path), "utf8");
     assert.ok(content.startsWith("{extends: validation}"), `${path} should extend validation`);
@@ -341,7 +341,7 @@ test("task 8.1 quick workflow composes standalone phase contracts in one YAML", 
   ];
 
   for (const lang of ["en", "ja"]) {
-    const workflowPath = `.takt/${lang}/workflows/kiro-spec-quick.yaml`;
+    const workflowPath = `builtins/${lang}/workflows/kiro-spec-quick.yaml`;
     assertFacetTerms(repoRoot, workflowPath, workflowTerms);
     const workflow = readFileSync(join(repoRoot, workflowPath), "utf8");
     assertOrderedStepNames(workflow, orderedSteps, workflowPath);
@@ -349,7 +349,7 @@ test("task 8.1 quick workflow composes standalone phase contracts in one YAML", 
       assert.equal(workflow.includes(forbiddenTerm), false, `${workflowPath} should not include ${forbiddenTerm}`);
     }
 
-    const instructionPath = `.takt/${lang}/facets/instructions/kiro-spec-quick-sanity-review.md`;
+    const instructionPath = `builtins/${lang}/facets/instructions/kiro-spec-quick-sanity-review.md`;
     assertFacetTerms(repoRoot, instructionPath, instructionTerms);
   }
 });
@@ -361,7 +361,7 @@ test("kiro spec generation validation passes current spec generation surface", (
   assert.equal(result.sections.downstreamBoundaries.ok, true, result.failures.join("\n"));
   assert.equal(result.sections.builtinFacetInheritance.ok, true, result.failures.join("\n"));
   assert.equal(
-    result.failures.some((failure) => failure.includes(".takt/en/workflows/kiro-spec-tasks.yaml")),
+    result.failures.some((failure) => failure.includes("builtins/en/workflows/kiro-spec-tasks.yaml")),
     false,
   );
   assert.equal(result.failures.some((failure) => failure.includes("kiro-discovery")), false);
@@ -394,7 +394,7 @@ test("kiro spec generation validation detects generation result draft routing dr
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
-      `.takt/${lang}/facets/output-contracts/kiro-spec-generation-result.md`,
+      `builtins/${lang}/facets/output-contracts/kiro-spec-generation-result.md`,
       driftedGenerationResult,
     );
   }
@@ -431,7 +431,7 @@ test("kiro spec generation validation rejects verdict values as draft status sta
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
-      `.takt/${lang}/facets/output-contracts/kiro-spec-generation-result.md`,
+      `builtins/${lang}/facets/output-contracts/kiro-spec-generation-result.md`,
       invalidGenerationResult,
     );
   }
@@ -514,7 +514,7 @@ test("validation detects workflow permission mode drift rejected by TAKT runtime
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
-      `.takt/${lang}/workflows/kiro-spec-quick.yaml`,
+      `builtins/${lang}/workflows/kiro-spec-quick.yaml`,
       [
         "name: kiro-spec-quick",
         "steps:",
@@ -541,7 +541,7 @@ test("validation detects quick workflow task annotation policy drift", () => {
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
-      `.takt/${lang}/workflows/kiro-spec-quick.yaml`,
+      `builtins/${lang}/workflows/kiro-spec-quick.yaml`,
       [
         "name: kiro-spec-quick",
         "policies:",
@@ -572,7 +572,7 @@ test("validation detects quick workflow standalone phase parity drift", () => {
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
-      `.takt/${lang}/workflows/kiro-spec-quick.yaml`,
+      `builtins/${lang}/workflows/kiro-spec-quick.yaml`,
       [
         "name: kiro-spec-quick",
         "instructions:",
@@ -665,7 +665,7 @@ test("task workflow validation detects finalize task result drift", () => {
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
-      `.takt/${lang}/workflows/kiro-spec-tasks.yaml`,
+      `builtins/${lang}/workflows/kiro-spec-tasks.yaml`,
       [
         "name: kiro-spec-tasks",
         "steps:",
@@ -694,7 +694,7 @@ test("task 14.1 validation detects missing built-in facet parent", () => {
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
-      `.takt/${lang}/facets/instructions/kiro-spec-init.md`,
+      `builtins/${lang}/facets/instructions/kiro-spec-init.md`,
       ["{extends: missing-planning-parent}", "", "# Kiro Spec Init", "", "- spec.json"].join("\n"),
     );
   }
@@ -710,7 +710,7 @@ test("task 14.1 validation detects missing built-in facet parent", () => {
 test("task 14.1 validation detects semantic facet parent drift", () => {
   const root = makeWritableValidationFixture();
   for (const lang of ["en", "ja"]) {
-    const path = `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`;
+    const path = `builtins/${lang}/facets/instructions/kiro-spec-requirements.md`;
     const content = readFileSync(join(root, path), "utf8").replace("{extends: plan}", "{extends: review-pure}");
     writeFixtureFile(root, path, content);
   }
@@ -734,7 +734,7 @@ test("task 14.1 validation detects unsupported facet extends references", () => 
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
-      `.takt/${lang}/facets/instructions/kiro-spec-init.md`,
+      `builtins/${lang}/facets/instructions/kiro-spec-init.md`,
       ["{extends: instructions/plan}", "", "# Kiro Spec Init", "", "- spec.json"].join("\n"),
     );
   }
@@ -846,9 +846,9 @@ test("task 4.1 requirements workflow connects EARS generation, review gate, and 
   ];
 
   for (const lang of ["en", "ja"]) {
-    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-requirements.yaml`, workflowTerms);
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`, instructionTerms);
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-requirements-review.md`, [
+    assertFacetTerms(repoRoot, `builtins/${lang}/workflows/kiro-spec-requirements.yaml`, workflowTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/instructions/kiro-spec-requirements.md`, instructionTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/instructions/kiro-spec-requirements-review.md`, [
       "Review Requirements Draft",
       "requirements review gate",
       "read-only",
@@ -911,9 +911,9 @@ test("task 6.1 tasks workflow requires canonical task annotations and ready stat
   ];
 
   for (const lang of ["en", "ja"]) {
-    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-tasks.yaml`, workflowTerms);
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-tasks.md`, instructionTerms);
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-tasks-review.md`, [
+    assertFacetTerms(repoRoot, `builtins/${lang}/workflows/kiro-spec-tasks.yaml`, workflowTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/instructions/kiro-spec-tasks.md`, instructionTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/instructions/kiro-spec-tasks-review.md`, [
       "Review Task Plan",
       "task_plan_review",
       "task_graph_sanity_review",
@@ -926,7 +926,7 @@ test("task 6.1 tasks workflow requires canonical task annotations and ready stat
       "RETURN_TO_DESIGN",
       "non-empty dependencies",
     ]);
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/output-contracts/kiro-spec-tasks-review-result.md`, [
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/output-contracts/kiro-spec-tasks-review-result.md`, [
       "task_plan_review",
       "task_graph_sanity_review",
       "fatal_review_issue",
@@ -935,9 +935,9 @@ test("task 6.1 tasks workflow requires canonical task annotations and ready stat
       "RETURN_TO_DESIGN",
       "summary",
     ]);
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/policies/kiro-spec-task-annotations.md`, policyTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/policies/kiro-spec-task-annotations.md`, policyTerms);
 
-    const workflow = readFileSync(join(repoRoot, `.takt/${lang}/workflows/kiro-spec-tasks.yaml`), "utf8");
+    const workflow = readFileSync(join(repoRoot, `builtins/${lang}/workflows/kiro-spec-tasks.yaml`), "utf8");
     const autoApproveRule =
       "validation.verdict PASS and auto-approve and phase tasks and draft_status WRITTEN and review_gate PASSED and tasks.md written and tasks-generated and approvals.requirements.approved true and approvals.design.approved true and approvals.tasks.generated true and approvals.tasks.approved true and ready_for_implementation true";
     const normalRule = "validation.verdict PASS and not auto-approve and phase tasks and draft_status WRITTEN and review_gate PASSED";
@@ -962,9 +962,9 @@ test("task 6.1 tasks workflow requires canonical task annotations and ready stat
 
 test("task 15 adapter validation detects skill section, field, and enum drift", () => {
   const root = makeWritableValidationFixture();
-  const requirementsReviewPath = ".takt/ja/facets/instructions/kiro-spec-requirements-review.md";
-  const tasksReviewPath = ".takt/ja/facets/instructions/kiro-spec-tasks-review.md";
-  const designReadinessPath = ".takt/ja/facets/instructions/kiro-validate-design-readiness.md";
+  const requirementsReviewPath = "builtins/ja/facets/instructions/kiro-spec-requirements-review.md";
+  const tasksReviewPath = "builtins/ja/facets/instructions/kiro-spec-tasks-review.md";
+  const designReadinessPath = "builtins/ja/facets/instructions/kiro-validate-design-readiness.md";
   const requirementsReview = readFileSync(join(root, requirementsReviewPath), "utf8")
     .replace("`### Step 4: Review Requirements Draft` section", "`### Step 4: Draft Review` section")
     .replaceAll("validation.verdict", "validation.status");
@@ -1036,7 +1036,7 @@ test("task 15 adapter validation detects skill section, field, and enum drift", 
 test("requirements generation facet must not inherit review instructions", () => {
   const root = makeWritableValidationFixture();
   for (const lang of ["en", "ja"]) {
-    const requirementsPath = `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`;
+    const requirementsPath = `builtins/${lang}/facets/instructions/kiro-spec-requirements.md`;
     const requirements = readFileSync(join(root, requirementsPath), "utf8").replace(
       "{extends: plan}",
       "{extends: review-pure}",
@@ -1060,7 +1060,7 @@ test("requirements generation facet must not inherit review instructions", () =>
 
 test("requirements generation facet must preserve exact EARS fixed phrase markers", () => {
   const root = makeWritableValidationFixture();
-  const requirementsPath = ".takt/ja/facets/instructions/kiro-spec-requirements.md";
+  const requirementsPath = "builtins/ja/facets/instructions/kiro-spec-requirements.md";
   const requirements = readFileSync(join(root, requirementsPath), "utf8")
     .replaceAll("が起きたとき", "するとき")
     .replaceAll("を含む場合", "含まれる場合")
@@ -1184,24 +1184,24 @@ test("design generation review adapters preserve draft-before-finalize handoff",
   ];
 
   for (const lang of ["en", "ja"]) {
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/output-contracts/kiro-spec-generation-result.md`, [
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/output-contracts/kiro-spec-generation-result.md`, [
       "draft_artifacts",
     ]);
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-design.md`, designResultTerms);
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-tasks.md`, tasksTerms);
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-tasks-review.md`, tasksReviewTerms);
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-validate-design-readiness.md`, readinessTerms);
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/ai-review.md`, aiReviewTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/instructions/kiro-spec-design.md`, designResultTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/instructions/kiro-spec-tasks.md`, tasksTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/instructions/kiro-spec-tasks-review.md`, tasksReviewTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/instructions/kiro-validate-design-readiness.md`, readinessTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/instructions/ai-review.md`, aiReviewTerms);
     assertFacetTerms(
       repoRoot,
-      `.takt/${lang}/facets/instructions/kiro-ai-antipattern-fix-spec-generation.md`,
+      `builtins/${lang}/facets/instructions/kiro-ai-antipattern-fix-spec-generation.md`,
       fixTerms,
     );
-    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-design.yaml`, workflowTerms);
-    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-quick.yaml`, workflowTerms);
-    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-tasks.yaml`, tasksWorkflowTerms);
-    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-quick.yaml`, tasksWorkflowTerms);
-    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-ai-quality-gate.yaml`, aiQualityGateWorkflowTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/workflows/kiro-spec-design.yaml`, workflowTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/workflows/kiro-spec-quick.yaml`, workflowTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/workflows/kiro-spec-tasks.yaml`, tasksWorkflowTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/workflows/kiro-spec-quick.yaml`, tasksWorkflowTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/workflows/kiro-spec-ai-quality-gate.yaml`, aiQualityGateWorkflowTerms);
   }
 });
 
@@ -1231,8 +1231,8 @@ test("task 16 validation detects legacy kiro spec generation surfaces", () => {
     "        next: COMPLETE",
   ].join("\n");
   for (const lang of ["en", "ja"]) {
-    writeFixtureFile(root, `.takt/${lang}/workflows/kiro-spec-requirements.yaml`, wrapperWorkflow);
-    const requirementsFacetPath = `.takt/${lang}/facets/instructions/kiro-spec-requirements.md`;
+    writeFixtureFile(root, `builtins/${lang}/workflows/kiro-spec-requirements.yaml`, wrapperWorkflow);
+    const requirementsFacetPath = `builtins/${lang}/facets/instructions/kiro-spec-requirements.md`;
     const requirementsFacet = readFileSync(join(root, requirementsFacetPath), "utf8").replace(
       /.*`\$kiro-spec-requirements`.*`SKILL\.md`.*\n/,
       "",
@@ -1240,7 +1240,7 @@ test("task 16 validation detects legacy kiro spec generation surfaces", () => {
     writeFixtureFile(root, requirementsFacetPath, requirementsFacet);
     writeFixtureFile(
       root,
-      `.takt/${lang}/facets/instructions/kiro-spec-orphan.md`,
+      `builtins/${lang}/facets/instructions/kiro-spec-orphan.md`,
       [
         "{extends: plan}",
         "",
@@ -1289,13 +1289,13 @@ test("task 16 validation detects legacy kiro spec generation surfaces", () => {
 test("task 17 validation detects translated review field and output contract drift", () => {
   const root = makeWritableValidationFixture();
   for (const lang of ["en", "ja"]) {
-    const designWorkflowPath = `.takt/${lang}/workflows/kiro-spec-design.yaml`;
+    const designWorkflowPath = `builtins/${lang}/workflows/kiro-spec-design.yaml`;
     const designWorkflow = readFileSync(join(root, designWorkflowPath), "utf8")
       .replace("condition: DECISION GO and design review gate passed", "condition: validation.verdict PASS")
       .replace("format: kiro-validation-result", "format: kiro-spec-generation-result");
     writeFixtureFile(root, designWorkflowPath, designWorkflow);
 
-    const tasksWorkflowPath = `.takt/${lang}/workflows/kiro-spec-tasks.yaml`;
+    const tasksWorkflowPath = `builtins/${lang}/workflows/kiro-spec-tasks.yaml`;
     const tasksWorkflow = readFileSync(join(root, tasksWorkflowPath), "utf8")
       .replace(
         "condition: task_plan_review PASS and task_graph_sanity_review PASS",
@@ -1304,7 +1304,7 @@ test("task 17 validation detects translated review field and output contract dri
       .replace("format: kiro-spec-tasks-review-result", "format: kiro-spec-generation-result");
     writeFixtureFile(root, tasksWorkflowPath, tasksWorkflow);
 
-    const quickWorkflowPath = `.takt/${lang}/workflows/kiro-spec-quick.yaml`;
+    const quickWorkflowPath = `builtins/${lang}/workflows/kiro-spec-quick.yaml`;
     const quickWorkflow = readFileSync(join(root, quickWorkflowPath), "utf8")
       .replace("condition: DECISION GO and design review gate passed", "condition: validation.verdict PASS")
       .replace(
@@ -1364,7 +1364,7 @@ test("task 17 validation detects translated review field and output contract dri
 test("task 17 validation distinguishes GO from NO-GO in review field conditions", () => {
   const root = makeWritableValidationFixture();
   for (const lang of ["en", "ja"]) {
-    const designWorkflowPath = `.takt/${lang}/workflows/kiro-spec-design.yaml`;
+    const designWorkflowPath = `builtins/${lang}/workflows/kiro-spec-design.yaml`;
     const designWorkflow = readFileSync(join(root, designWorkflowPath), "utf8").replace(
       "condition: DECISION GO and design review gate passed",
       "condition: DECISION NO-GO and design review gate passed",
@@ -1424,11 +1424,11 @@ test("task 5.1 design workflow connects research, required sections, review gate
   };
 
   for (const lang of ["en", "ja"]) {
-    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-design.yaml`, [
+    assertFacetTerms(repoRoot, `builtins/${lang}/workflows/kiro-spec-design.yaml`, [
       ...workflowTerms,
       ...designHeadingTermsByLang[lang],
     ]);
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-design.md`, [
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/instructions/kiro-spec-design.md`, [
       ...instructionTerms,
       ...designHeadingTermsByLang[lang],
     ]);
@@ -1465,8 +1465,8 @@ test("task 3.1 init workflow captures brief reuse and initialized artifact contr
   ];
 
   for (const lang of ["en", "ja"]) {
-    assertFacetTerms(repoRoot, `.takt/${lang}/workflows/kiro-spec-init.yaml`, workflowTerms);
-    assertFacetTerms(repoRoot, `.takt/${lang}/facets/instructions/kiro-spec-init.md`, instructionTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/workflows/kiro-spec-init.yaml`, workflowTerms);
+    assertFacetTerms(repoRoot, `builtins/${lang}/facets/instructions/kiro-spec-init.md`, instructionTerms);
   }
 });
 
@@ -2049,7 +2049,7 @@ test("kiro spec generation validation detects lifecycle drift", () => {
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
-      `.takt/${lang}/facets/policies/kiro-spec-lifecycle.md`,
+      `builtins/${lang}/facets/policies/kiro-spec-lifecycle.md`,
       [
         "# Kiro Spec Lifecycle Policy",
         "",
@@ -2082,7 +2082,7 @@ test("kiro spec generation validation detects quick workflow composition drift",
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
-      `.takt/${lang}/workflows/kiro-spec-quick.yaml`,
+      `builtins/${lang}/workflows/kiro-spec-quick.yaml`,
       [
         "name: kiro-spec-quick",
         "steps:",
@@ -2116,7 +2116,7 @@ test("kiro spec generation validation detects nested takt execution with equals 
   for (const lang of ["en", "ja"]) {
     writeFixtureFile(
       root,
-      `.takt/${lang}/workflows/kiro-spec-quick.yaml`,
+      `builtins/${lang}/workflows/kiro-spec-quick.yaml`,
       [
         "name: kiro-spec-quick",
         "steps:",
@@ -2143,7 +2143,7 @@ test("kiro spec generation validation detects language-only workflow and facet a
   const root = makeFixture();
   writeFixtureFile(
     root,
-    ".takt/en/workflows/kiro-spec-extra.yaml",
+    "builtins/en/workflows/kiro-spec-extra.yaml",
     [
       "name: kiro-spec-extra",
       "workflow_config:",
@@ -2165,7 +2165,7 @@ test("kiro spec generation validation detects language-only workflow and facet a
   );
   writeFixtureFile(
     root,
-    ".takt/en/facets/instructions/kiro-spec-extra.md",
+    "builtins/en/facets/instructions/kiro-spec-extra.md",
     ["{extends: analysis}", "", "# Extra Instruction", "", "- Keep `phase` stable."].join("\n"),
   );
 
@@ -2226,16 +2226,16 @@ test("kiro spec generation validation detects workflow machine field and markdow
     .replace("instruction: kiro-spec-drift", "instruction: kiro-spec-translated")
     .replace("format: kiro-spec-generation-result", "format: kiro-spec-generation-result-ja")
     .replace("next: COMPLETE", "next: ABORT");
-  writeFixtureFile(root, ".takt/en/workflows/kiro-spec-drift.yaml", workflow);
-  writeFixtureFile(root, ".takt/ja/workflows/kiro-spec-drift.yaml", driftedWorkflow);
+  writeFixtureFile(root, "builtins/en/workflows/kiro-spec-drift.yaml", workflow);
+  writeFixtureFile(root, "builtins/ja/workflows/kiro-spec-drift.yaml", driftedWorkflow);
   writeFixtureFile(
     root,
-    ".takt/en/facets/output-contracts/kiro-spec-drift.md",
+    "builtins/en/facets/output-contracts/kiro-spec-drift.md",
     ["{extends: validation}", "", "- `phase`", "- `featureName`", "- `updatedFiles`"].join("\n"),
   );
   writeFixtureFile(
     root,
-    ".takt/ja/facets/output-contracts/kiro-spec-drift.md",
+    "builtins/ja/facets/output-contracts/kiro-spec-drift.md",
     ["{extends: validation}", "", "- `phase`", "- `featureName`", "- `translatedFiles`"].join("\n"),
   );
 

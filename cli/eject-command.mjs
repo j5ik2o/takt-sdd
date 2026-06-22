@@ -346,7 +346,7 @@ export function buildEjectPlan(ctx, options) {
 
   for (const lang of languages) {
     for (const section of EJECT_ASSET_SECTIONS) {
-      const sourceBase = join(ctx.packageRoot, ".takt", lang, section);
+      const sourceBase = join(ctx.packageRoot, "builtins", lang, section);
       const targetBase = join(ctx.projectRoot, ".takt", lang, section);
 
       for (const asset of collectAssetFiles(sourceBase)) {
