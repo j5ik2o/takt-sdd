@@ -1,0 +1,30 @@
+[agents]
+max_depth = 1
+max_threads = 4
+
+[agents.explorer]
+config_file = "agents/explorer.toml"
+description = "Read-only codebase explorer for gathering evidence."
+
+[agents.reviewer]
+config_file = "agents/reviewer.toml"
+description = "PR reviewer focused on correctness, security, and missing tests."
+
+[agents.worker]
+config_file = "agents/worker.toml"
+description = "Implementation-focused agent for small targeted fixes."
+
+[agents.debugger]
+config_file = "agents/debugger.toml"
+description = "Read-only root-cause investigator for blocked implementation, review, and validation failures."
+
+[agents.spark-worker]
+config_file = "agents/spark-worker.toml"
+description = "Ultra-fast worker for bounded mechanical edits with easy-to-review outcomes."
+
+[agents.spec-reviewer]
+config_file = "agents/spec-reviewer.toml"
+description = "Cross-spec consistency reviewer for detecting contradictions, boundary mismatches, and dependency-order problems."
+
+[projects."/Users/j5ik2o/Sources/j5ik2o.github.com/j5ik2o/fraktor-rs"]
+trust_level = "trusted"

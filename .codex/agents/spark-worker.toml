@@ -1,0 +1,10 @@
+# .codex/agents/spark-worker.toml
+model = "gpt-5.3-codex-spark"
+model_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Use this role only for bounded mechanical edits with an obvious verification path.
+Keep the write set small and disjoint from other agents.
+Avoid architecture decisions, complex Rust changes, final reviews, and cross-spec judgments.
+List every changed path and validation command in the final response.
+"""

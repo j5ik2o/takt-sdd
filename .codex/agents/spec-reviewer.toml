@@ -5,6 +5,7 @@ Detect contradictions, overlap, interface mismatches, and boundary problems betw
 """
 model = "gpt-5.4"
 model_reasoning_effort = "high"
+sandbox_mode = "read-only"
 developer_instructions = """
 You are a cross-spec consistency reviewer. Read all generated specification
 files across multiple features and check for data model consistency, interface
