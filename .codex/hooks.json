@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.agents/skills/agmsg/scripts/session-start.sh\" codex \"$(git rev-parse --show-toplevel)\"",
+            "commandWindows": "$b=$env:GIT_BASH; if (-not $b) { $b=$env:AGMSG_BASH }; if (-not $b) { $b='bash.exe' }; & $b -lc '\"$HOME/.agents/skills/agmsg/scripts/session-start.sh\" codex \"$(git rev-parse --show-toplevel)\"'"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.agents/skills/agmsg/scripts/session-end.sh\" codex \"$(git rev-parse --show-toplevel)\"",
+            "commandWindows": "$b=$env:GIT_BASH; if (-not $b) { $b=$env:AGMSG_BASH }; if (-not $b) { $b='bash.exe' }; & $b -lc '\"$HOME/.agents/skills/agmsg/scripts/session-end.sh\" codex \"$(git rev-parse --show-toplevel)\"'"
+          }
+        ]
+      }
+    ]
+  }
+}
