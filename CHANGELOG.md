@@ -1,3 +1,12 @@
+## [2.3.0](https://github.com/j5ik2o/takt-sdd/compare/v2.2.2...v2.3.0) (2026-06-29)
+
+
+### Features
+
+* **codex:** add session start/end hooks configuration ([3290e2b](https://github.com/j5ik2o/takt-sdd/commit/3290e2bb70e0fc23a51c60dcad9f6b9cc84d7db8))
+* **codex:** introduce agent configurations and role-specific guidelines ([4375f19](https://github.com/j5ik2o/takt-sdd/commit/4375f1928d7d25c4fcfd9f9aa67893fa17e942c3))
+* **skills:** add domain reconciliation and entrypoint skills for Kiro workflow ([31b7fc3](https://github.com/j5ik2o/takt-sdd/commit/31b7fc38815587167dbeda2a859cd5cf90911ca7))
+
 ## [2.2.2](https://github.com/j5ik2o/takt-sdd/compare/v2.2.1...v2.2.2) (2026-06-22)
 
 
