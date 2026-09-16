@@ -259,7 +259,7 @@ const instructionSpecs = [
     name: "kiro-review-qa-task",
     skill: "kiro-review",
     section: "## Outputs",
-    parent: "review-qa",
+    customReason: "TAKT 0.65 removed the generic review parent",
     terms: [
       "VERDICT",
       "APPROVED",
@@ -387,7 +387,7 @@ const gateInstructionSpecs = [
 const outputContractSpecs = [
   {
     name: "kiro-implementation-result",
-    parent: "validation",
+    parent: "supervisor-validation",
     terms: [
       "STATUS",
       "READY_FOR_REVIEW",
@@ -424,7 +424,7 @@ const outputContractSpecs = [
 const gateOutputContractSpecs = [
   {
     name: "kiro-ai-antipattern-fix-result",
-    parent: "validation",
+    parent: "supervisor-validation",
     terms: [
       "STATUS",
       "FIXED",
@@ -724,8 +724,14 @@ function validateWorkflowFiles(repoRoot) {
       failures.push(`GATE_ORDER_DRIFT: ${rel(repoRoot, workflowPath)} step order must be ${expectedSteps.join(" -> ")}`);
     }
     const blocks = new Map(stepBlocks(content).map((block) => [stepScalar(block, "name"), block]));
+    const personaSection = content.match(/^personas:\n((?:[ \t]+[^\n]*\n)*)/m)?.[1] ?? "";
+    const personaPaths = new Map([...personaSection.matchAll(/^  ([\w-]+):\s*(.+)$/gm)]
+      .map((match) => [match[1], resolve(dirname(workflowPath), match[2].trim())]));
     for (const persona of scalarLines(content, "persona")) {
-      if (!facetReferenceExists(repoRoot, lang, "personas", persona)) {
+      const exists = personaPaths.has(persona)
+        ? existsSync(personaPaths.get(persona))
+        : facetReferenceExists(repoRoot, lang, "personas", persona);
+      if (!exists) {
         failures.push(`RESOURCE_REFERENCE_DRIFT: ${rel(repoRoot, workflowPath)} persona references missing resource ${persona}`);
       }
     }
@@ -887,7 +893,7 @@ function validateWorkflowFiles(repoRoot) {
       },
       {
         name: "qa-review",
-        persona: "qa-reviewer",
+        persona: "kiro-reviewer",
         instruction: "kiro-review-qa-task",
         report: "kiro-task-qa-review.md",
         format: "kiro-review-verdict",
@@ -1032,7 +1038,7 @@ function validateGateWorkflowFiles(repoRoot) {
         "type: facet_ref[]",
         "facet_kind: knowledge",
         "initial_step: ai-antipattern-review-1st",
-        "loop-monitor-ai-antipattern-fix",
+        "loop-monitor-reviewers-fix",
         "threshold: 3",
         "next: request-replan",
         "kiro-ai-antipattern-review.md",
@@ -1079,7 +1085,7 @@ function validateGateWorkflowFiles(repoRoot) {
     if (!hasRuleWithTerms(reviewBlock, ["AI-specific issues found", "next: ai-antipattern-fix"])) {
       failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern review must route AI-specific issues to fix`);
     }
-    if (!hasRuleWithTerms(reviewBlock, ['when: "true"', "next: request-replan"])) {
+    if (!hasRuleWithTerms(reviewBlock, ['condition: when(true)', "next: request-replan"])) {
       failures.push(`GATE_WORKFLOW_DRIFT: ${rel(repoRoot, workflowPath)} AI antipattern review must route ambiguous outcomes to request-replan`);
     }
     const fixBlock = blocks.get("ai-antipattern-fix") ?? [];
@@ -1205,6 +1211,9 @@ function validateFacetFiles(repoRoot) {
             failures.push(`AI_QUALITY_GATE_DRIFT: ${rel(repoRoot, path)} update-progress must not read ${forbiddenReport} directly`);
           }
         }
+      }
+      if (spec.customReason) {
+        containsAll(content, [`Full custom reason: ${spec.customReason}`], path, failures, repoRoot, "FACET_DRIFT");
       }
       const parent = extendsParent(content);
       if (spec.parent) {

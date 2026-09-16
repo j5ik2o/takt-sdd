@@ -1,4 +1,4 @@
-{extends: validation}
+{extends: supervisor-validation}
 
 # Kiro Spec Tasks Review Result Output Contract
 

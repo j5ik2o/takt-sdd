@@ -79,7 +79,7 @@ function writeDiscoveryMockScenario(root) {
       content:
         "## Kiro Discovery Result\n\nactionPath: SINGLE_SPEC\nreason: deterministic discovery runtime smoke\nplannedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\ncreatedFiles: []\nnextAction: write discovery artifact\nblockingReason: none\nawarenessOnlyItems: []\nsummary: classify as single spec",
     },
-    { persona: "conductor", content: '{"step":3}', structured_output: { step: 3 } },
+    { persona: "conductor", content: '{"step":3}', structured_output: { step: 3, reason: "Deterministic smoke scenario" } },
     {
       persona: "planner",
       content:
@@ -90,7 +90,7 @@ function writeDiscoveryMockScenario(root) {
       content:
         "## Kiro Discovery Result\n\nactionPath: SINGLE_SPEC\nreason: deterministic discovery runtime smoke\nplannedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\ncreatedFiles: []\nnextAction: write discovery artifact\nblockingReason: none\nawarenessOnlyItems: []\nsummary: plan brief artifact",
     },
-    { persona: "conductor", content: '{"step":2}', structured_output: { step: 2 } },
+    { persona: "conductor", content: '{"step":2}', structured_output: { step: 2, reason: "Deterministic smoke scenario" } },
     {
       persona: "planner",
       content:
@@ -101,14 +101,14 @@ function writeDiscoveryMockScenario(root) {
       content:
         "## Kiro Discovery Result\n\nactionPath: SINGLE_SPEC\nreason: deterministic discovery runtime smoke\nplannedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\ncreatedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\nnextAction: run discovery AI quality gate\nblockingReason: none\nawarenessOnlyItems: []\nsummary: discovery artifact written",
     },
-    { persona: "conductor", content: '{"step":2}', structured_output: { step: 2 } },
+    { persona: "conductor", content: '{"step":2}', structured_output: { step: 2, reason: "Deterministic smoke scenario" } },
     { persona: "ai-antipattern-reviewer", content: "Discovery AI antipattern smoke review complete. No AI-specific issues." },
     {
       persona: "ai-antipattern-reviewer",
       content:
         "# Discovery AI Antipattern Review\n\n## Result: APPROVE\n\nNo AI-specific issues.\n\nNo fix report is required for this successful smoke path.",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     {
       persona: "supervisor",
       content:
@@ -119,7 +119,7 @@ function writeDiscoveryMockScenario(root) {
       content:
         "## Kiro Discovery Result\n\nactionPath: SINGLE_SPEC\nreason: deterministic discovery runtime smoke\nplannedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\ncreatedFiles: [.kiro/specs/kiro-discovery-ai-quality-gate-smoke/brief.md]\nnextAction: run kiro-spec-init\nblockingReason: none\nawarenessOnlyItems: []\ndiscovery AI quality gate passed\nsummary: report discovery after gate",
     },
-    { persona: "conductor", content: '{"step":3}', structured_output: { step: 3 } },
+    { persona: "conductor", content: '{"step":3}', structured_output: { step: 3, reason: "Deterministic smoke scenario" } },
   ];
   const scenarioPath = join(root, ".takt", "runs", "kiro-discovery-ai-quality-gate-runtime-smoke-scenario.json");
   writeFixtureFile(root, ".takt/runs/kiro-discovery-ai-quality-gate-runtime-smoke-scenario.json", `${JSON.stringify(entries, null, 2)}\n`);
@@ -268,28 +268,28 @@ function writeMockScenario(root) {
       content:
         "## Status Report\n\nSTATUS: READY_FOR_REVIEW\nready_for_implementation: true\ndispatch_mode: single\nwave_tasks: N/A\nwave_result_refs: N/A\nbaseline_dirty_files: none\nsummary: no safe (P) wave, use single task path",
     },
-    { persona: "conductor", content: '{"step":3}', structured_output: { step: 3 } },
+    { persona: "conductor", content: '{"step":3}', structured_output: { step: 3, reason: "Deterministic smoke scenario" } },
     { persona: "planner", content: "Plan smoke task. STATUS: READY_FOR_REVIEW." },
     {
       persona: "planner",
       content:
         "## Status Report\n\nSTATUS: READY_FOR_REVIEW\nready_for_implementation: true\nselected_task: 1.1 Create mock-only smoke evidence\nblocker_note_required: false\nimplementation_plan: mock provider only\nsummary: smoke plan ready",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     { persona: "coder", content: "Mock implementation completed. STATUS: READY_FOR_REVIEW." },
     {
       persona: "coder",
       content:
         "## Status Report\n\nSTATUS: READY_FOR_REVIEW\nselected_task: 1.1 Create mock-only smoke evidence\nchanged_files: none\nvalidation_evidence: mock provider smoke\nRED_PHASE_OUTPUT: N/A\nsummary: smoke implementation ready for AI gate",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     { persona: "ai-antipattern-reviewer", content: "AI antipattern smoke review complete. No AI-specific issues." },
     {
       persona: "ai-antipattern-reviewer",
       content:
         "# AI生成コードレビュー\n\n## 結果: APPROVE\n\n## サマリー\nmock smoke has no AI-specific findings.\n\n## 今回の指摘（new）\nnone\n\n## 継続指摘（persists）\nnone\n\n## 解消済み（resolved）\nnone",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     { persona: "coding-reviewer", content: "Kiro task review smoke approved. VERDICT: APPROVED." },
     {
       persona: "coding-reviewer",
@@ -301,9 +301,9 @@ function writeMockScenario(root) {
       content:
         "# アーキテクチャレビュー\n\n## 結果: APPROVE\n\n## サマリー\nmock smoke architecture evidence accepted.\n\nVERDICT: APPROVED\ncondition: approved",
     },
-    { persona: "qa-reviewer", content: "Kiro QA review smoke approved. VERDICT: APPROVED." },
+    { persona: "kiro-reviewer", content: "Kiro QA review smoke approved. VERDICT: APPROVED." },
     {
-      persona: "qa-reviewer",
+      persona: "kiro-reviewer",
       content: "# QAレビュー\n\n## 結果: APPROVE\n\n## サマリー\nmock smoke QA evidence accepted.\n\nVERDICT: APPROVED\ncondition: approved",
     },
     { persona: "testing-reviewer", content: "Kiro testing review smoke approved. VERDICT: APPROVED." },
@@ -311,31 +311,31 @@ function writeMockScenario(root) {
       persona: "testing-reviewer",
       content: "# テストレビュー\n\n## 結果: APPROVE\n\n## サマリー\nmock smoke testing evidence accepted.\n\nVERDICT: APPROVED\ncondition: approved",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     { persona: "supervisor", content: "Completion verification smoke passed. STATUS: VERIFIED." },
     {
       persona: "supervisor",
       content:
         "## Verification\n\nSTATUS: VERIFIED\nCLAIM_TYPE: TASK\nCLAIM: smoke task completed\nEVIDENCE: mock smoke route reached verify step\nGAPS: none\nsafe_to_update_progress: true",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     { persona: "coder", content: "Progress update smoke completed. STATUS: READY_FOR_REVIEW." },
     {
       persona: "coder",
       content:
         "## Status Report\n\nSTATUS: READY_FOR_REVIEW\nselected_task: 1.1 Create mock-only smoke evidence\ntask_set_status: ALL_TASKS_COMPLETE\nsummary: smoke progress update simulated",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     { persona: "supervisor", content: "Final implementation validation smoke passed. DECISION: GO." },
     {
       persona: "supervisor",
       content:
         "## Final Implementation Validation\n\nDECISION: GO\nverdict: PASS\nscope: mock smoke feature\nchecked_items: mock scenario\nfindings: []\nevidence: mock smoke route reached final validation\nsummary: final validation passed",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
   ];
   const scenarioPath = join(root, ".takt", "runs", "kiro-ai-quality-gate-runtime-smoke-scenario.json");
   writeFixtureFile(root, ".takt/runs/kiro-ai-quality-gate-runtime-smoke-scenario.json", `${JSON.stringify(entries, null, 2)}\n`);
@@ -354,25 +354,25 @@ function writeSpecGenerationMockScenario(root) {
       content:
         "## Requirements Generation Report\n\nphase: requirements\nvalidation.verdict: PASS\ndraft_status: READY_FOR_REVIEW\nreview_gate: PENDING\nfeatureName: kiro-spec-ai-quality-gate-smoke\nupdatedFiles: []\nsummary: draft ready for spec AI gate",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     { persona: "ai-antipattern-reviewer", content: "Spec AI antipattern smoke review complete. No AI-specific issues." },
     {
       persona: "ai-antipattern-reviewer",
       content:
         "# Spec AI Antipattern Review\n\n## Result: APPROVE\n\nNo AI-specific issues.\n\nNo fix report is required for this successful smoke path.",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     {
-      persona: "reviewer",
+      persona: "kiro-reviewer",
       content:
         "## Requirements Review\n\nphase: requirements\nvalidation.verdict: PASS\ndraft_status: READY_FOR_REVIEW\nreview_gate: PENDING\nrequirements review gate passed\nsummary: requirements review passed after spec AI gate",
     },
     {
-      persona: "reviewer",
+      persona: "kiro-reviewer",
       content:
         "## Requirements Review Report\n\nphase: requirements\nvalidation.verdict: PASS\ndraft_status: READY_FOR_REVIEW\nreview_gate: PENDING\nrequirements review gate passed\nsummary: requirements review passed after spec AI gate",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     {
       persona: "supervisor",
       content:
@@ -383,7 +383,7 @@ function writeSpecGenerationMockScenario(root) {
       content:
         "## Requirements Finalize Report\n\nphase: requirements\nvalidation.verdict: PASS\ndraft_status: WRITTEN\nreview_gate: PASSED\nrequirements.md written\nrequirements-generated\napprovals.requirements.generated true\nfeatureName: kiro-spec-ai-quality-gate-smoke\nupdatedFiles: [\"requirements.md\", \"spec.json\"]\nsummary: requirements finalized",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
   ];
   const scenarioPath = join(root, ".takt", "runs", "kiro-spec-ai-quality-gate-runtime-smoke-scenario.json");
   writeFixtureFile(root, ".takt/runs/kiro-spec-ai-quality-gate-runtime-smoke-scenario.json", `${JSON.stringify(entries, null, 2)}\n`);
@@ -591,7 +591,7 @@ function writeInitMockScenario(root) {
       content:
         `## Init Result\n\nphase: init\nvalidation.verdict: PASS\nfeatureName: ${fullChainFeature}\nspec.json written\nrequirements.md written\ninitialized\nsummary: initialized mock full chain spec`,
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
   ];
   const scenarioPath = join(root, ".takt", "runs", "kiro-full-chain-init-scenario.json");
   writeFixtureFile(root, ".takt/runs/kiro-full-chain-init-scenario.json", `${JSON.stringify(entries, null, 2)}\n`);
@@ -606,27 +606,27 @@ function writeRequirementsFullChainScenario(root) {
       content:
         `## Requirements Generation Report\n\nphase: requirements\nvalidation.verdict: PASS\ndraft_status: READY_FOR_REVIEW\nreview_gate: PENDING\nfeatureName: ${fullChainFeature}\nupdatedFiles: []\nsummary: requirements draft ready for spec AI gate`,
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     { persona: "ai-antipattern-reviewer", content: "Spec AI antipattern smoke review complete. No AI-specific issues." },
     {
       persona: "ai-antipattern-reviewer",
       content: "# Spec AI Antipattern Review\n\n## Result: APPROVE\n\nNo AI-specific issues.",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
-    { persona: "reviewer", content: "Requirements review passed. validation.verdict PASS." },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
+    { persona: "kiro-reviewer", content: "Requirements review passed. validation.verdict PASS." },
     {
-      persona: "reviewer",
+      persona: "kiro-reviewer",
       content:
         "## Requirements Review Report\n\nphase: requirements\nvalidation.verdict: PASS\nrequirements review gate passed\nsummary: requirements review passed after spec AI gate",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     { persona: "supervisor", content: "Finalize requirements. validation.verdict PASS." },
     {
       persona: "supervisor",
       content:
         `## Requirements Finalize Report\n\nphase: requirements\nvalidation.verdict: PASS\ndraft_status: WRITTEN\nreview_gate: PASSED\nrequirements.md written\nrequirements-generated\napprovals.requirements.generated true\nfeatureName: ${fullChainFeature}\nupdatedFiles: ["requirements.md", "spec.json"]\nsummary: requirements finalized`,
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
   ];
   const scenarioPath = join(root, ".takt", "runs", "kiro-full-chain-requirements-scenario.json");
   writeFixtureFile(root, ".takt/runs/kiro-full-chain-requirements-scenario.json", `${JSON.stringify(entries, null, 2)}\n`);
@@ -641,27 +641,27 @@ function writeDesignFullChainScenario(root) {
       content:
         `## Design Generation Report\n\nphase: design\nvalidation.verdict: PASS\ndraft_status: READY_FOR_REVIEW\nreview_gate: PENDING\nfeatureName: ${fullChainFeature}\ndraft_artifacts.design: available\ndraft_artifacts.research: available\nsummary: design draft ready for spec AI gate`,
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     { persona: "ai-antipattern-reviewer", content: "Design AI antipattern smoke review complete. No AI-specific issues." },
     {
       persona: "ai-antipattern-reviewer",
       content: "# Spec AI Antipattern Review\n\n## Result: APPROVE\n\nNo AI-specific issues.",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     { persona: "architecture-reviewer", content: "Design review passed. DECISION: GO." },
     {
       persona: "architecture-reviewer",
       content:
         "## Design Review\n\nDECISION: GO\ndesign review gate passed\nchecked_items: mock design draft\nfindings: []\nsummary: design review passed after spec AI gate",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     { persona: "planner", content: "Finalize design. validation.verdict PASS." },
     {
       persona: "planner",
       content:
         `## Design Finalize Report\n\nphase: design\nvalidation.verdict: PASS\ndesign.md written\nresearch.md written\ndesign-generated\napprovals.requirements.approved true\napprovals.design.generated true\nfeatureName: ${fullChainFeature}\nupdatedFiles: ["design.md", "research.md", "spec.json"]\nsummary: design finalized`,
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
   ];
   const scenarioPath = join(root, ".takt", "runs", "kiro-full-chain-design-scenario.json");
   writeFixtureFile(root, ".takt/runs/kiro-full-chain-design-scenario.json", `${JSON.stringify(entries, null, 2)}\n`);
@@ -676,27 +676,27 @@ function writeTasksFullChainScenario(root) {
       content:
         `## Tasks Generation Report\n\nphase: tasks\nvalidation.verdict: PASS\ndraft_status: READY_FOR_REVIEW\nreview_gate: PENDING\nfeatureName: ${fullChainFeature}\ndraft_artifacts.tasks: available\nsummary: task draft ready for spec AI gate`,
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     { persona: "ai-antipattern-reviewer", content: "Tasks AI antipattern smoke review complete. No AI-specific issues." },
     {
       persona: "ai-antipattern-reviewer",
       content: "# Spec AI Antipattern Review\n\n## Result: APPROVE\n\nNo AI-specific issues.",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
-    { persona: "reviewer", content: "Task plan review passed." },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
+    { persona: "kiro-reviewer", content: "Task plan review passed." },
     {
-      persona: "reviewer",
+      persona: "kiro-reviewer",
       content:
         "## Task Plan Review\n\ntask_plan_review: PASS\ntask_graph_sanity_review: PASS\nsummary: task plan review passed after spec AI gate",
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
     { persona: "planner", content: "Finalize tasks. validation.verdict PASS." },
     {
       persona: "planner",
       content:
         `## Tasks Finalize Report\n\nphase: tasks\nvalidation.verdict: PASS\nauto-approve\ndraft_status: WRITTEN\nreview_gate: PASSED\ntasks.md written\ntasks-generated\napprovals.requirements.approved true\napprovals.design.approved true\napprovals.tasks.generated true\napprovals.tasks.approved true\nready_for_implementation true\nfeatureName: ${fullChainFeature}\nupdatedFiles: ["tasks.md", "spec.json"]\nsummary: tasks finalized`,
     },
-    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1 } },
+    { persona: "conductor", content: '{"step":1}', structured_output: { step: 1, reason: "Deterministic smoke scenario" } },
   ];
   const scenarioPath = join(root, ".takt", "runs", "kiro-full-chain-tasks-scenario.json");
   writeFixtureFile(root, ".takt/runs/kiro-full-chain-tasks-scenario.json", `${JSON.stringify(entries, null, 2)}\n`);
@@ -749,9 +749,9 @@ test("kiro full lifecycle smoke runs init, requirements, design, tasks, and impl
       writeRequirementsFullChainScenario(root),
     );
     assert.equal(requirements.status, 0, requirements.output);
-    assert.match(requirements.output, /\[2\/14\] ai-quality-gate-requirements/);
-    assert.match(requirements.output, /\[4\/14\] review-requirements/);
-    assert.match(requirements.output, /\[5\/14\] finalize-requirements/);
+    assert.match(requirements.output, /\[2\/14\] ai-antipattern-review-1st/);
+    assert.match(requirements.output, /\[3\/14\] review-requirements/);
+    assert.match(requirements.output, /\[4\/14\] finalize-requirements/);
     assert.match(requirements.output, /Result: Success/);
     writeFullChainRequirements(root, { approved: true });
 
@@ -762,9 +762,9 @@ test("kiro full lifecycle smoke runs init, requirements, design, tasks, and impl
       writeDesignFullChainScenario(root),
     );
     assert.equal(design.status, 0, design.output);
-    assert.match(design.output, /\[2\/14\] ai-quality-gate-design/);
-    assert.match(design.output, /\[4\/14\] review-design/);
-    assert.match(design.output, /\[5\/14\] finalize-design/);
+    assert.match(design.output, /\[2\/14\] ai-antipattern-review-1st/);
+    assert.match(design.output, /\[3\/14\] review-design/);
+    assert.match(design.output, /\[4\/14\] finalize-design/);
     assert.match(design.output, /Result: Success/);
     writeFullChainDesign(root, { approved: true });
 
@@ -775,9 +775,9 @@ test("kiro full lifecycle smoke runs init, requirements, design, tasks, and impl
       writeTasksFullChainScenario(root),
     );
     assert.equal(tasks.status, 0, tasks.output);
-    assert.match(tasks.output, /\[2\/14\] ai-quality-gate-tasks/);
-    assert.match(tasks.output, /\[4\/14\] review-tasks/);
-    assert.match(tasks.output, /\[5\/14\] finalize-tasks/);
+    assert.match(tasks.output, /\[2\/14\] ai-antipattern-review-1st/);
+    assert.match(tasks.output, /\[3\/14\] review-tasks/);
+    assert.match(tasks.output, /\[4\/14\] finalize-tasks/);
     assert.match(tasks.output, /Result: Success/);
     writeFullChainTasks(root);
 
@@ -788,9 +788,9 @@ test("kiro full lifecycle smoke runs init, requirements, design, tasks, and impl
       writeMockScenario(root),
     );
     assert.equal(implementation.status, 0, implementation.output);
-    assert.match(implementation.output, /\[4\/200\] ai-quality-gate/);
-    assert.match(implementation.output, /\[6\/200\] reviewers/);
-    assert.match(implementation.output, /\[9\/200\] validate-impl-final/);
+    assert.match(implementation.output, /\[4\/200\] ai-antipattern-review-1st/);
+    assert.match(implementation.output, /\[5\/200\] reviewers/);
+    assert.match(implementation.output, /\[8\/200\] validate-impl-final/);
     assert.match(implementation.output, /Result: Success/);
 
     const reportRoot = join(root, ".takt", "runs");
@@ -819,11 +819,10 @@ test("kiro impl runtime wiring calls AI quality gate subworkflow and returns to 
     const output = workflowOutput(result);
 
     assert.equal(result.status, 0, output);
-    assert.match(output, /\[4\/200\] ai-quality-gate/);
-    assert.match(output, /\[5\/200\] ai-antipattern-review-1st/);
-    assert.match(output, /Status: COMPLETE/);
-    assert.match(output, /\[6\/200\] reviewers/);
-    assert.match(output, /\[9\/200\] validate-impl-final/);
+    assert.match(output, /\[4\/200\] ai-antipattern-review-1st/);
+    assert.match(output, /Status: No AI-specific issues \(structured_output\)/);
+    assert.match(output, /\[5\/200\] reviewers/);
+    assert.match(output, /\[8\/200\] validate-impl-final/);
     assert.match(output, /Result: Success/);
 
     const reportRoot = join(root, ".takt", "runs");
@@ -864,11 +863,10 @@ test("kiro spec generation runtime wiring calls spec AI gate before requirements
     const output = workflowOutput(result);
 
     assert.equal(result.status, 0, output);
-    assert.match(output, /\[2\/14\] ai-quality-gate-requirements/);
-    assert.match(output, /\[3\/14\] ai-antipattern-review-1st/);
-    assert.match(output, /Status: COMPLETE/);
-    assert.match(output, /\[4\/14\] review-requirements/);
-    assert.match(output, /\[5\/14\] finalize-requirements/);
+    assert.match(output, /\[2\/14\] ai-antipattern-review-1st/);
+    assert.match(output, /Status: No AI-specific issues \(structured_output\)/);
+    assert.match(output, /\[3\/14\] review-requirements/);
+    assert.match(output, /\[4\/14\] finalize-requirements/);
     assert.match(output, /Result: Success/);
 
     const reportRoot = join(root, ".takt", "runs");
@@ -907,10 +905,9 @@ test("kiro discovery runtime wiring calls discovery AI gate before report", () =
 
     assert.equal(result.status, 0, output);
     assert.match(output, /\[3\/12\] write-discovery-artifacts/);
-    assert.match(output, /\[4\/12\] ai-quality-gate-discovery/);
-    assert.match(output, /\[5\/12\] ai-antipattern-review-1st/);
-    assert.match(output, /Status: COMPLETE/);
-    assert.match(output, /\[6\/12\] report-discovery/);
+    assert.match(output, /\[4\/12\] ai-antipattern-review-1st/);
+    assert.match(output, /Status: No AI-specific issues \(structured_output\)/);
+    assert.match(output, /\[5\/12\] report-discovery/);
     assert.match(output, /Result: Success/);
 
     const reportRoot = join(root, ".takt", "runs");

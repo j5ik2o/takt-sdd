@@ -63,7 +63,7 @@ const instructionSpecs = [
   },
   {
     file: "kiro-validate-gap-readiness.md",
-    parent: "review-qa",
+    customReason: "TAKT 0.65 removed the generic review parent",
     skill: "kiro-validate-gap",
     skillSection: "## Core Task",
     primaryField: "DECISION",
@@ -211,13 +211,17 @@ function validateInstructionFacets() {
       if (spec.skillSection && skillSource.section !== spec.skillSection) {
         failures.push(`${rel(path)} must apply skill section "${spec.skillSection}"`);
       }
-      const extendsPattern = new RegExp(`^\\{extends:\\s*${spec.parent}\\s*\\}$`, "m");
-      if (!extendsPattern.test(content)) {
-        failures.push(`${rel(path)} must extend built-in instructions/${spec.parent} with {extends: ${spec.parent}}`);
-      }
-      const parentPath = join(repoRoot, "node_modules", "takt", "builtins", lang, "facets", "instructions", `${spec.parent}.md`);
-      if (!existsSync(parentPath)) {
-        failures.push(`${rel(path)} extends missing built-in parent ${rel(parentPath)}`);
+      if (spec.customReason) {
+        containsAll(content, [`Full custom reason: ${spec.customReason}`], path, failures);
+      } else {
+        const extendsPattern = new RegExp(`^\\{extends:\\s*${spec.parent}\\s*\\}$`, "m");
+        if (!extendsPattern.test(content)) {
+          failures.push(`${rel(path)} must extend built-in instructions/${spec.parent} with {extends: ${spec.parent}}`);
+        }
+        const parentPath = join(repoRoot, "node_modules", "takt", "builtins", lang, "facets", "instructions", `${spec.parent}.md`);
+        if (!existsSync(parentPath)) {
+          failures.push(`${rel(path)} extends missing built-in parent ${rel(parentPath)}`);
+        }
       }
       containsAll(content, termsForLanguage(spec, lang, "terms", "termsByLang"), path, failures);
       if (spec.primaryField && !content.includes(`primary field`) && !content.includes(`primary workflow-routing field`)) {

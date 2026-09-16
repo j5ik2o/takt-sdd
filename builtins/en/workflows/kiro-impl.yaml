@@ -1,13 +1,10 @@
 name: kiro-impl
 description: Kiro - Implement eligible tasks from an approved spec, using TeamLeader only for safe (P) task waves and otherwise preserving the one-task review loop
-workflow_config:
-  provider_options:
-    codex:
-      network_access: true
-    opencode:
-      network_access: true
 max_steps: 200
 initial_step: plan-dispatch
+
+personas:
+  kiro-reviewer: ./personas/kiro-reviewer.md
 
 instructions:
   kiro-impl-plan-dispatch: ../facets/instructions/kiro-impl-plan-dispatch.md
@@ -81,13 +78,6 @@ steps:
     session: refresh
     knowledge:
       - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Bash
     required_permission_mode: readonly
     pass_previous_response: false
     instruction: kiro-impl-plan-dispatch
@@ -119,15 +109,6 @@ steps:
     session: refresh
     knowledge:
       - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Edit
-          - Write
-          - Bash
     required_permission_mode: full
     instruction: kiro-impl-prepare-task-wave
     output_contracts:
@@ -152,18 +133,8 @@ steps:
       - testing
       - kiro-artifact-operations
       - kiro-impl-task-progress
-    session: refresh
     knowledge:
       - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Edit
-          - Write
-          - Bash
     required_permission_mode: edit
     team_leader:
       max_parts: 2
@@ -194,13 +165,6 @@ steps:
     session: refresh
     knowledge:
       - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Bash
     required_permission_mode: readonly
     pass_previous_response: false
     instruction: kiro-impl-collect-wave-results
@@ -229,15 +193,6 @@ steps:
     session: refresh
     knowledge:
       - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Edit
-          - Write
-          - Bash
     required_permission_mode: edit
     instruction: kiro-impl-apply-wave-task
     output_contracts:
@@ -263,13 +218,6 @@ steps:
     session: refresh
     knowledge:
       - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Bash
     required_permission_mode: readonly
     pass_previous_response: false
     instruction: kiro-impl-plan-one-task
@@ -298,15 +246,6 @@ steps:
     session: refresh
     knowledge:
       - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Edit
-          - Write
-          - Bash
     required_permission_mode: edit
     instruction: kiro-impl-execute-task
     output_contracts:
@@ -343,18 +282,11 @@ steps:
         persona: coding-reviewer
         policy:
           - review
-          - qa
+          - evidence-based-judgment
           - kiro-artifact-operations
           - kiro-impl-task-progress
         knowledge:
           - architecture
-        provider_options:
-          claude:
-            allowed_tools:
-              - Read
-              - Glob
-              - Grep
-              - Bash
         required_permission_mode: readonly
         instruction: kiro-review-task
         output_contracts:
@@ -374,13 +306,6 @@ steps:
           - kiro-impl-task-progress
         knowledge:
           - architecture
-        provider_options:
-          claude:
-            allowed_tools:
-              - Read
-              - Glob
-              - Grep
-              - Bash
         required_permission_mode: readonly
         instruction: kiro-review-architecture-task
         output_contracts:
@@ -393,19 +318,12 @@ steps:
 
       - name: qa-review
         edit: false
-        persona: qa-reviewer
+        persona: kiro-reviewer
         policy:
           - review
-          - qa
+          - evidence-based-judgment
           - kiro-artifact-operations
           - kiro-impl-task-progress
-        provider_options:
-          claude:
-            allowed_tools:
-              - Read
-              - Glob
-              - Grep
-              - Bash
         required_permission_mode: readonly
         instruction: kiro-review-qa-task
         output_contracts:
@@ -427,13 +345,6 @@ steps:
         knowledge:
           - unit-testing
           - e2e-testing
-        provider_options:
-          claude:
-            allowed_tools:
-              - Read
-              - Glob
-              - Grep
-              - Bash
         required_permission_mode: readonly
         instruction: kiro-review-testing-task
         output_contracts:
@@ -458,15 +369,6 @@ steps:
       - kiro-impl-task-progress
     knowledge:
       - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Bash
-          - WebSearch
-          - WebFetch
     required_permission_mode: readonly
     pass_previous_response: false
     instruction: kiro-debug-task
@@ -489,18 +391,11 @@ steps:
     persona: supervisor
     policy:
       - review
-      - qa
+      - evidence-based-judgment
       - kiro-artifact-operations
       - kiro-impl-task-progress
     knowledge:
       - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Bash
     required_permission_mode: readonly
     pass_previous_response: false
     instruction: kiro-verify-task-completion
@@ -522,15 +417,6 @@ steps:
     policy:
       - kiro-artifact-operations
       - kiro-impl-task-progress
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Edit
-          - Write
-          - Bash
     required_permission_mode: edit
     pass_previous_response: false
     instruction: kiro-impl-update-progress
@@ -555,19 +441,12 @@ steps:
     persona: supervisor
     policy:
       - review
-      - qa
+      - evidence-based-judgment
       - kiro-artifact-operations
       - kiro-spec-lifecycle
       - kiro-impl-task-progress
     knowledge:
       - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Bash
     required_permission_mode: readonly
     pass_previous_response: false
     instruction: kiro-validate-impl-final

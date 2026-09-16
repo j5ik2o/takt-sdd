@@ -15,12 +15,6 @@ subworkflow:
       facet_kind: knowledge
       default:
         - architecture
-workflow_config:
-  provider_options:
-    codex:
-      network_access: true
-    opencode:
-      network_access: true
 max_steps: 12
 initial_step: ai-antipattern-review-1st
 
@@ -42,7 +36,7 @@ loop_monitors:
     threshold: 3
     judge:
       persona: supervisor
-      instruction: loop-monitor-ai-antipattern-fix
+      instruction: loop-monitor-reviewers-fix
       rules:
         - condition: Healthy (findings are shrinking or the latest fix has concrete finding_decisions)
           next: ai-antipattern-review-1st
@@ -60,13 +54,6 @@ steps:
       - kiro-impl-task-progress
     knowledge:
       $param: domain_knowledge
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Bash
     required_permission_mode: readonly
     instruction: ai-antipattern-review
     output_contracts:
@@ -78,7 +65,7 @@ steps:
         next: COMPLETE
       - condition: AI-specific issues found
         next: ai-antipattern-fix
-      - when: "true"
+      - condition: when(true)
         next: request-replan
         appendix: Treat ambiguous, blocked, or internally inconsistent review outcomes as requiring replanning.
 
@@ -94,15 +81,6 @@ steps:
     session: refresh
     knowledge:
       $param: domain_knowledge
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Edit
-          - Write
-          - Bash
     required_permission_mode: edit
     pass_previous_response: false
     instruction:

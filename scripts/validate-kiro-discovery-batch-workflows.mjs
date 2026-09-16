@@ -140,13 +140,13 @@ const facetSpecs = [
   {
     kind: "output-contracts",
     file: "kiro-discovery-result.md",
-    parent: "validation",
+    parent: "supervisor-validation",
     terms: ["actionPath", "createdFiles", "nextAction", "blockingReason", ...actionPathEnums],
   },
   {
     kind: "output-contracts",
     file: "kiro-discovery-ai-antipattern-fix-result.md",
-    parent: "validation",
+    parent: "supervisor-validation",
     terms: [
       "STATUS",
       "finding_decisions",
@@ -162,13 +162,13 @@ const facetSpecs = [
   {
     kind: "output-contracts",
     file: "kiro-batch-summary.md",
-    parent: "validation",
+    parent: "supervisor-validation",
     terms: ["wavePlan", "skippedSpecReady", "featureResults", "failedFeatures", "crossSpecReview", "implementationReady"],
   },
   {
     kind: "output-contracts",
     file: "kiro-cross-spec-review.md",
-    parent: "validation",
+    parent: "supervisor-validation",
     terms: ["severity", "affectedSpecs", "suggestedFix", "DECOMPOSITION_RETURN", "repairTarget"],
   },
 ];

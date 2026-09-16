@@ -1,4 +1,4 @@
-{extends: validation}
+{extends: supervisor-validation}
 
 # Kiro Spec Sanity Review Output Contract
 

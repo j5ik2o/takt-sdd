@@ -1,8 +1,8 @@
-{extends: validation}
+{extends: supervisor-validation}
 
 # Kiro Debug Decision Output Contract
 
-Full custom reason: N/A; this facet extends the built-in validation output contract and defines debug decision fields.
+Full custom reason: N/A; this facet extends the built-in supervisor-validation output contract and defines debug decision fields.
 
 ## Machine Fields
 

@@ -30,7 +30,7 @@ jobs:
           node-version: "24"
 
       - name: Upgrade takt
-        run: npx -y npm-check-updates -u --filter takt --packageFile package.json
+        run: npm install --save-exact takt@latest --ignore-scripts
 
       - name: Detect changes
         id: changes
@@ -41,6 +41,10 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Verify updated TAKT
+        if: steps.changes.outputs.changed == 'true'
+        run: npm run test:all
+
       - name: Configure Git User
         if: steps.changes.outputs.changed == 'true'
         run: |
@@ -50,7 +54,7 @@ jobs:
       - name: Commit changes
         if: steps.changes.outputs.changed == 'true'
         run: |
-          git add package.json
+          git add package.json package-lock.json
           git commit -m "chore(deps): bump takt version"
 
       - name: Push changes

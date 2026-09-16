@@ -199,7 +199,7 @@ const facetSpecs = [
   {
     kind: "instructions",
     name: "kiro-spec-requirements-review",
-    expectedParent: "review-pure",
+    customReason: "TAKT 0.65 removed the generic review parent",
     terms: ["Review Requirements Draft", "requirements review gate", "read-only", "validation.verdict", "PASS", "NEEDS_FIX", "BLOCKED"],
   },
   {
@@ -221,7 +221,7 @@ const facetSpecs = [
   {
     kind: "instructions",
     name: "kiro-spec-tasks-review",
-    expectedParent: "review-pure",
+    customReason: "TAKT 0.65 removed the generic review parent",
     terms: [
       "Review Task Plan",
       "task_plan_review",
@@ -241,13 +241,13 @@ const facetSpecs = [
   {
     kind: "output-contracts",
     name: "kiro-spec-tasks-review-result",
-    expectedParent: "validation",
+    expectedParent: "supervisor-validation",
     terms: ["task_plan_review", "task_graph_sanity_review", "fatal_review_issue", "PASS", "NEEDS_FIXES", "RETURN_TO_DESIGN", "summary"],
   },
   {
     kind: "instructions",
     name: "kiro-spec-quick-sanity-review",
-    expectedParent: "review-qa",
+    customReason: "TAKT 0.65 removed the generic review parent",
     terms: ["quick-init", "quick-requirements", "quick-design", "quick-tasks", "quick-sanity-review"],
   },
   {
@@ -264,13 +264,13 @@ const facetSpecs = [
   {
     kind: "output-contracts",
     name: "kiro-spec-generation-result",
-    expectedParent: "validation",
+    expectedParent: "supervisor-validation",
     terms: generationResultContractTerms,
   },
   {
     kind: "output-contracts",
     name: "kiro-spec-sanity-review",
-    expectedParent: "validation",
+    expectedParent: "supervisor-validation",
     terms: ["verdict", "findings", "requirements", "design", "tasks", "PASS", "NEEDS_FIX", "BLOCKED"],
   },
 ];
@@ -949,6 +949,9 @@ function validateFacetFiles(repoRoot) {
       }
       const content = readText(path);
       containsAll(content, termsForLanguage(spec, lang, "terms", "termsByLang"), path, failures, repoRoot, "FACET_DRIFT");
+      if (spec.customReason) {
+        containsAll(content, [`Full custom reason: ${spec.customReason}`], path, failures, repoRoot, "FACET_DRIFT");
+      }
       const parent = extendsParent(content);
       if (spec.expectedParent && parent !== spec.expectedParent) {
         failures.push(
@@ -1764,6 +1767,9 @@ function validateBuiltinFacetInheritance(repoRoot) {
       }
 
       const content = readText(path);
+      if (spec.customReason) {
+        containsAll(content, [`Full custom reason: ${spec.customReason}`], path, failures, repoRoot, "FACET_DRIFT");
+      }
       const parent = extendsParent(content);
       if (!parent) {
         if (!content.includes("Full custom reason:")) {

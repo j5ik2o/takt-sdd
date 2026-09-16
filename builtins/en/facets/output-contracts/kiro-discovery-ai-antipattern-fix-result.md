@@ -3,10 +3,10 @@ id: kiro-discovery-ai-antipattern-fix-result
 kind: output-contract
 name: Kiro Discovery AI Antipattern Fix Result
 version: 1.0.0
-extends: validation
+extends: supervisor-validation
 ---
 
-{extends: validation}
+{extends: supervisor-validation}
 
 # Kiro Discovery AI Antipattern Fix Result
 

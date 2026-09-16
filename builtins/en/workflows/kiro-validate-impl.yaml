@@ -1,12 +1,6 @@
 name: kiro-validate-impl
 description: Kiro - Read-only implementation completion validation
 # Checks tasks.md and spec.json.ready_for_implementation without executing implementation tasks.
-workflow_config:
-  provider_options:
-    codex:
-      network_access: true
-    opencode:
-      network_access: true
 max_steps: 5
 initial_step: collect-impl-evidence
 
@@ -22,7 +16,7 @@ steps:
     persona: supervisor
     policy:
       - review
-      - qa
+      - evidence-based-judgment
     required_permission_mode: readonly
     instruction: kiro-validate-impl-readiness
     rules:
@@ -36,7 +30,7 @@ steps:
     persona: supervisor
     policy:
       - review
-      - qa
+      - evidence-based-judgment
     required_permission_mode: readonly
     instruction: kiro-validate-impl-readiness
     output_contracts:
@@ -56,7 +50,7 @@ steps:
     persona: supervisor
     policy:
       - review
-      - qa
+      - evidence-based-judgment
     required_permission_mode: readonly
     instruction: kiro-validate-impl-readiness
     output_contracts:

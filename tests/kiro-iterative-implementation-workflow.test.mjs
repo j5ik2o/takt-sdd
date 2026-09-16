@@ -509,7 +509,7 @@ test("validator rejects AI quality gate review routing gaps", () => {
   const root = makeCurrentSurfaceFixture();
   const workflowPath = join(root, "builtins", "en", "workflows", "kiro-ai-quality-gate.yaml");
   const workflow = readFileSync(workflowPath, "utf8").replace(
-    '      - when: "true"\n        next: request-replan\n        appendix: Treat ambiguous, blocked, or internally inconsistent review outcomes as requiring replanning.\n',
+    '      - condition: when(true)\n        next: request-replan\n        appendix: Treat ambiguous, blocked, or internally inconsistent review outcomes as requiring replanning.\n',
     "",
   );
   writeFixtureFile(root, "builtins/en/workflows/kiro-ai-quality-gate.yaml", workflow);

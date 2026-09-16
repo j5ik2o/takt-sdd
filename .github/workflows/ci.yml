@@ -22,7 +22,7 @@ jobs:
 
       - name: Build installer
         working-directory: installer
-        run: npm ci --ignore-scripts && npm run build
+        run: npm ci --ignore-scripts && npm test
 
       - name: Retired CLI guidance (${{ matrix.lang }})
         run: |
@@ -51,6 +51,8 @@ jobs:
 
       - name: CLI unit/integration tests
         run: |
+          node --test tests/takt-sdd-asset-resolution.test.mjs
+          node --test tests/takt-sdd-eject.test.mjs
           node --test tests/takt-sdd-cli.test.mjs
           node --test tests/takt-sdd-init-policy.test.mjs
           node --test tests/takt-sdd-package-artifact.test.mjs
@@ -75,27 +77,8 @@ jobs:
       - name: Install root dependencies
         run: npm ci --ignore-scripts
 
-      - name: Install takt
-        run: npm install -g takt
-
-      - name: Validate workflows (en)
-        run: |
-          failed=0
-          for workflow in .takt/en/workflows/*.yaml; do
-            echo "::group::$(basename "$workflow")"
-            output=$(takt prompt "$workflow" 2>&1) && { echo "$output"; } || {
-              if echo "$output" | grep -qE "reportContent is required|Persona prompt file path is not allowed"; then
-                echo "$output"
-                echo "::notice::Validation skipped (expected limitation)"
-              else
-                echo "$output"
-                echo "::error::Validation failed: $workflow"
-                failed=1
-              fi
-            }
-            echo "::endgroup::"
-          done
-          exit $failed
+      - name: Validate workflows with bundled TAKT (en/ja)
+        run: npm run validate:takt-workflows
 
       - name: Validate Kiro AI quality gate coverage
         run: |
@@ -116,22 +99,3 @@ jobs:
           npm run test:kiro-ai-quality-gate-runtime-smoke
           npm run test:kiro-discovery-ai-quality-gate-runtime-smoke
           npm run test:kiro-real-provider-smoke
-
-      - name: Validate workflows (ja)
-        run: |
-          failed=0
-          for workflow in .takt/ja/workflows/*.yaml; do
-            echo "::group::$(basename "$workflow")"
-            output=$(takt prompt "$workflow" 2>&1) && { echo "$output"; } || {
-              if echo "$output" | grep -qE "reportContent is required|Persona prompt file path is not allowed"; then
-                echo "$output"
-                echo "::notice::Validation skipped (expected limitation)"
-              else
-                echo "$output"
-                echo "::error::Validation failed: $workflow"
-                failed=1
-              fi
-            }
-            echo "::endgroup::"
-          done
-          exit $failed

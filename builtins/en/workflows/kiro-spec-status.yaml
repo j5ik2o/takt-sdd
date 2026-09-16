@@ -1,11 +1,5 @@
 name: kiro-spec-status
 description: Kiro - Read-only spec status and readiness report
-workflow_config:
-  provider_options:
-    codex:
-      network_access: true
-    opencode:
-      network_access: true
 max_steps: 5
 initial_step: collect-status-evidence
 

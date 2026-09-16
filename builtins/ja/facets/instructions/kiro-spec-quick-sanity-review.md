@@ -1,4 +1,4 @@
-{extends: review-qa}
+Full custom reason: TAKT 0.65 removed the generic review parent; the Kiro-specific review criteria below define this read-only artifact/acceptance review.
 
 ## Kiro Skill Source
 
