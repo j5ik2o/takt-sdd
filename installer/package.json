@@ -24,7 +24,7 @@
   },
   "license": "(MIT OR Apache-2.0)",
   "engines": {
-    "node": ">=20.19.0"
+    "node": "24.x"
   },
   "files": [
     "dist",
