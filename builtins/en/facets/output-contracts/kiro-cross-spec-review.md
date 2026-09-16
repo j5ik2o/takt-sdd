@@ -1,4 +1,4 @@
-{extends: validation}
+{extends: supervisor-validation}
 
 # Kiro Cross-Spec Review Output Contract
 

@@ -1,11 +1,5 @@
 name: kiro-discovery
 description: Kiro - Classify new work and create discovery artifacts
-workflow_config:
-  provider_options:
-    codex:
-      network_access: true
-    opencode:
-      network_access: true
 max_steps: 12
 initial_step: classify-action-path
 

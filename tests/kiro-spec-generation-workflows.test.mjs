@@ -249,7 +249,7 @@ test("task 7.1 quick sanity review contract exposes machine-readable verdict and
     const path = `builtins/${lang}/facets/output-contracts/kiro-spec-sanity-review.md`;
     assertFacetTerms(repoRoot, path, contractTerms);
     const content = readFileSync(join(repoRoot, path), "utf8");
-    assert.ok(content.startsWith("{extends: validation}"), `${path} should extend validation`);
+    assert.ok(content.startsWith("{extends: supervisor-validation}"), `${path} should extend validation`);
     if (lang === "en") {
       assert.ok(content.includes("branch on `verdict`"), `${path} should branch on verdict`);
     } else {
@@ -372,7 +372,7 @@ test("kiro spec generation validation passes current spec generation surface", (
 test("kiro spec generation validation detects generation result draft routing drift", () => {
   const root = makeFixture();
   const driftedGenerationResult = [
-    "{extends: validation}",
+    "{extends: supervisor-validation}",
     "",
     "- `phase`",
     "- `validation`",
@@ -412,7 +412,7 @@ test("kiro spec generation validation detects generation result draft routing dr
 test("kiro spec generation validation rejects verdict values as draft status states", () => {
   const root = makeFixture();
   const invalidGenerationResult = [
-    "{extends: validation}",
+    "{extends: supervisor-validation}",
     "",
     "- `phase`: one of `init`, `requirements`, `design`, `tasks`, or `quick`.",
     "- `validation`: object with `verdict`, `evidence`, `findings`, and optional `sharedContractValidation`.",
@@ -2231,12 +2231,12 @@ test("kiro spec generation validation detects workflow machine field and markdow
   writeFixtureFile(
     root,
     "builtins/en/facets/output-contracts/kiro-spec-drift.md",
-    ["{extends: validation}", "", "- `phase`", "- `featureName`", "- `updatedFiles`"].join("\n"),
+    ["{extends: supervisor-validation}", "", "- `phase`", "- `featureName`", "- `updatedFiles`"].join("\n"),
   );
   writeFixtureFile(
     root,
     "builtins/ja/facets/output-contracts/kiro-spec-drift.md",
-    ["{extends: validation}", "", "- `phase`", "- `featureName`", "- `translatedFiles`"].join("\n"),
+    ["{extends: supervisor-validation}", "", "- `phase`", "- `featureName`", "- `translatedFiles`"].join("\n"),
   );
 
   const result = validateKiroSpecGenerationWorkflows({ repoRoot: root });

@@ -1,11 +1,5 @@
 name: kiro-spec-init
 description: Kiro - description または brief.md から feature spec を初期化する
-workflow_config:
-  provider_options:
-    codex:
-      network_access: true
-    opencode:
-      network_access: true
 max_steps: 5
 initial_step: initialize-spec
 

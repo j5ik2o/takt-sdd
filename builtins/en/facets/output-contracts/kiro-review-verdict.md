@@ -1,8 +1,8 @@
-{extends: validation}
+{extends: supervisor-validation}
 
 # Kiro Review Verdict Output Contract
 
-Full custom reason: N/A; this facet extends the built-in validation output contract and defines review verdict fields.
+Full custom reason: N/A; this facet extends the built-in supervisor-validation output contract and defines review verdict fields.
 
 ## Machine Fields
 

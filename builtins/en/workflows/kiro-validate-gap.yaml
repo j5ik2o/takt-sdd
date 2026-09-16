@@ -1,13 +1,10 @@
 name: kiro-validate-gap
 description: Kiro - Read-only gap validation before design
-workflow_config:
-  provider_options:
-    codex:
-      network_access: true
-    opencode:
-      network_access: true
 max_steps: 5
 initial_step: collect-gap-evidence
+
+personas:
+  kiro-reviewer: ./personas/kiro-reviewer.md
 
 instructions:
   kiro-validate-gap-readiness: ../facets/instructions/kiro-validate-gap-readiness.md
@@ -18,10 +15,10 @@ report_formats:
 steps:
   - name: collect-gap-evidence
     edit: false
-    persona: qa-reviewer
+    persona: kiro-reviewer
     policy:
       - review
-      - qa
+      - evidence-based-judgment
     required_permission_mode: readonly
     instruction: kiro-validate-gap-readiness
     rules:
@@ -32,10 +29,10 @@ steps:
 
   - name: validate-gap
     edit: false
-    persona: qa-reviewer
+    persona: kiro-reviewer
     policy:
       - review
-      - qa
+      - evidence-based-judgment
     required_permission_mode: readonly
     instruction: kiro-validate-gap-readiness
     output_contracts:
@@ -52,10 +49,10 @@ steps:
 
   - name: report-gap
     edit: false
-    persona: qa-reviewer
+    persona: kiro-reviewer
     policy:
       - review
-      - qa
+      - evidence-based-judgment
     required_permission_mode: readonly
     instruction: kiro-validate-gap-readiness
     output_contracts:

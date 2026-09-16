@@ -1,11 +1,5 @@
 name: kiro-spec-batch
 description: Kiro - Generate specs by roadmap dependency waves and review cross-spec consistency
-workflow_config:
-  provider_options:
-    codex:
-      network_access: true
-    opencode:
-      network_access: true
 max_steps: 24
 initial_step: parse-roadmap
 

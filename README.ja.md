@@ -33,7 +33,7 @@ takt-sdd は [takt](https://github.com/nrslib/takt) のステートマシンベ�
 
 ## 前提条件
 
-- Node.js 22+
+- Node.js 22.22.0+
 - `takt-sdd` は workflow 実行時に installed package に同梱された `takt` dependency を使う。通常利用では project-local `takt` dependency やコピー済み `.takt/` は必須ではない。
 
 ## Global CLI
@@ -150,6 +150,27 @@ takt-sdd run opsx-full      # Error: 同様に拒否
 ### `.takt/config.yaml` の所有権
 
 `.takt/config.yaml` は**ユーザー所有**のファイルである。グローバル（`~/.takt/config.yaml`）またはプロジェクト単位でユーザーが作成・管理する。CLI は workflow language と default `eject` language を決めるためにこのファイルを**読み取るのみ**で、作成・変更しない。
+
+### TAKT 0.65 の実行設定
+
+プロバイダーの実行設定は、ワークフロー YAML からユーザー所有の `.takt/runtime.yaml`（または `~/.takt/runtime.yaml`）へ移す。同梱ワークフローは `edit` と `required_permission_mode` を維持するが、ネットワークアクセスやプロバイダー固有のツール一覧は強制しない。
+
+たとえば Codex のネットワークアクセスを許可する場合は、次の `YOUR_MODEL_ID` を使用するモデル名に置き換える。
+
+```yaml
+version: 1
+provider:
+  defaults:
+    profile: default
+  profiles:
+    default:
+      provider: codex
+      model: YOUR_MODEL_ID
+      options:
+        network_access: true
+```
+
+`runtime.yaml` を使用する場合、既存の provider・model・options 設定は `config.yaml` から移し、`language` などは残す。Claude のツール制限は、Claude 用プロファイルの `options.allowed_tools` に設定する。eject 済みのワークフローも `provider_options` の削除、`when: "true"` から `condition: when(true)` への変更、廃止された組み込みファセット参照の更新が必要になる。別ディレクトリで最新版を `takt-sdd eject` し、カスタマイズ済みワークフローとの差分を確認して反映する。
 
 ### スキルの個別追加
 

@@ -33,7 +33,7 @@ takt-sdd uses [takt](https://github.com/nrslib/takt)'s state-machine-based workf
 
 ## Prerequisites
 
-- Node.js 22+
+- Node.js 22.22.0+
 - `takt-sdd` uses the `takt` dependency bundled with the installed package for workflow execution. A project-local `takt` dependency or copied `.takt/` directory is not required for ordinary use.
 
 ## Global CLI
@@ -150,6 +150,27 @@ takt-sdd run opsx-full      # Error: same rejection
 ### `.takt/config.yaml` ownership
 
 `.takt/config.yaml` is a **user-owned** file. It may be placed globally at `~/.takt/config.yaml` or per-project, and is created and maintained by the user, not by the CLI. The CLI only **reads** it to determine workflow language and the default `eject` language. The CLI never creates or modifies this file.
+
+### TAKT 0.65 runtime settings
+
+Provider execution settings belong in user-owned `.takt/runtime.yaml` (or `~/.takt/runtime.yaml`), not in workflow YAML. Bundled workflows retain `edit` and `required_permission_mode`, but no longer force network access or provider-specific tool lists.
+
+For example, to allow network access with Codex, replace `YOUR_MODEL_ID` with your model:
+
+```yaml
+version: 1
+provider:
+  defaults:
+    profile: default
+  profiles:
+    default:
+      provider: codex
+      model: YOUR_MODEL_ID
+      options:
+        network_access: true
+```
+
+When using `runtime.yaml`, move existing provider/model/options settings out of `config.yaml`; keep settings such as `language` there. Claude tool restrictions belong under the Claude profile's `options.allowed_tools`. Ejected workflows must also remove `provider_options`, change `when: "true"` to `condition: when(true)`, and update removed builtin facet references. Compare them with a fresh `takt-sdd eject` in a separate directory before applying changes to customized workflows.
 
 ### Adding Individual Skills
 

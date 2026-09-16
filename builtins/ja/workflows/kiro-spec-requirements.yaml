@@ -1,13 +1,10 @@
 name: kiro-spec-requirements
 description: Kiro - brief、steering context、draft requirements から EARS requirements を生成する
-workflow_config:
-  provider_options:
-    codex:
-      network_access: true
-    opencode:
-      network_access: true
 max_steps: 14
 initial_step: generate-requirements
+
+personas:
+  kiro-reviewer: ./personas/kiro-reviewer.md
 
 instructions:
   kiro-spec-requirements: ../facets/instructions/kiro-spec-requirements.md
@@ -76,7 +73,7 @@ steps:
 
   - name: review-requirements
     edit: false
-    persona: reviewer
+    persona: kiro-reviewer
     policy:
       - kiro-artifact-operations
       - kiro-spec-lifecycle

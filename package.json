@@ -8,7 +8,7 @@
   },
   "license": "(MIT OR Apache-2.0)",
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=22.22.0"
   },
   "bin": {
     "takt-sdd": "bin/takt-sdd.mjs"
@@ -28,7 +28,7 @@
     "LICENSE-APACHE"
   ],
   "dependencies": {
-    "takt": "0.48.0"
+    "takt": "0.65.0"
   },
   "scripts": {
     "build:installer": "npm --prefix installer ci && npm --prefix installer run build",
@@ -52,7 +52,7 @@
     "kiro:validate:impl": "node scripts/kiro-staged.mjs kiro-validate-impl --pipeline --skip-git -t",
     "kiro:steering": "node scripts/kiro-staged.mjs kiro-steering --pipeline --skip-git -t",
     "kiro:steering-custom": "node scripts/kiro-staged.mjs kiro-steering-custom --pipeline --skip-git -t",
-    "validate:all": "npm run validate:kiro-workflow-surface && npm run validate:kiro-discovery-batch-workflows && npm run validate:kiro-ai-quality-gate-workflow-coverage && npm run validate:kiro-shared-contracts && npm run validate:kiro-spec-generation-workflows && npm run validate:kiro-status-validation-workflows && npm run validate:kiro-iterative-implementation-workflow",
+    "validate:all": "npm run validate:kiro-workflow-surface && npm run validate:kiro-discovery-batch-workflows && npm run validate:kiro-ai-quality-gate-workflow-coverage && npm run validate:kiro-shared-contracts && npm run validate:kiro-spec-generation-workflows && npm run validate:kiro-status-validation-workflows && npm run validate:kiro-iterative-implementation-workflow && npm run validate:takt-workflows",
     "validate:kiro-workflow-surface": "node scripts/validate-kiro-workflow-surface.mjs",
     "validate:kiro-discovery-batch-workflows": "node scripts/validate-kiro-discovery-batch-workflows.mjs",
     "validate:kiro-ai-quality-gate-workflow-coverage": "node scripts/validate-kiro-ai-quality-gate-workflow-coverage.mjs",
@@ -60,7 +60,7 @@
     "validate:kiro-spec-generation-workflows": "node scripts/validate-kiro-spec-generation-workflows.mjs",
     "validate:kiro-status-validation-workflows": "node scripts/validate-kiro-status-validation-workflows.mjs",
     "validate:kiro-iterative-implementation-workflow": "node scripts/validate-kiro-iterative-implementation-workflow.mjs",
-    "test:all": "npm run validate:all && npm run test:kiro-workflow-surface && npm run test:kiro-discovery-batch-workflows && npm run test:kiro-ai-quality-gate-workflow-coverage && npm run test:kiro-shared-contracts && npm run test:kiro-spec-generation-workflows && npm run test:kiro-status-validation-workflows && npm run test:kiro-iterative-implementation-workflow && npm run test:kiro-ai-quality-gate-runtime-smoke && npm run test:kiro-discovery-ai-quality-gate-runtime-smoke && npm run test:kiro-real-provider-smoke",
+    "test:all": "npm run build:installer && npm run validate:all && npm --prefix installer test && node --test tests/*.test.mjs",
     "test:kiro-workflow-surface": "node --test tests/kiro-workflow-surface.test.mjs",
     "test:kiro-discovery-batch-workflows": "node --test tests/kiro-discovery-batch-workflows.test.mjs",
     "test:kiro-ai-quality-gate-workflow-coverage": "node --test tests/kiro-ai-quality-gate-workflow-coverage.test.mjs",
@@ -70,6 +70,7 @@
     "test:kiro-iterative-implementation-workflow": "node --test tests/kiro-iterative-implementation-workflow.test.mjs",
     "test:kiro-ai-quality-gate-runtime-smoke": "node --test tests/kiro-ai-quality-gate-runtime-smoke.test.mjs",
     "test:kiro-discovery-ai-quality-gate-runtime-smoke": "node --test --test-name-pattern \"kiro discovery runtime wiring\" tests/kiro-ai-quality-gate-runtime-smoke.test.mjs",
-    "test:kiro-real-provider-smoke": "node --test tests/kiro-real-provider-smoke.test.mjs"
+    "test:kiro-real-provider-smoke": "node --test tests/kiro-real-provider-smoke.test.mjs",
+    "validate:takt-workflows": "takt-cli workflow doctor builtins/en/workflows/*.yaml builtins/ja/workflows/*.yaml"
   }
 }

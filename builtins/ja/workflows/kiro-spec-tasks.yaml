@@ -1,13 +1,10 @@
 name: kiro-spec-tasks
 description: Kiro - approved requirements と design から implementation-ready な tasks.md を生成する
-workflow_config:
-  provider_options:
-    codex:
-      network_access: true
-    opencode:
-      network_access: true
 max_steps: 14
 initial_step: generate-tasks
+
+personas:
+  kiro-reviewer: ./personas/kiro-reviewer.md
 
 instructions:
   kiro-spec-tasks: ../facets/instructions/kiro-spec-tasks.md
@@ -50,14 +47,6 @@ steps:
       - kiro-spec-task-annotations
     knowledge:
       - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Write
-          - Bash
     required_permission_mode: edit
     instruction: kiro-spec-tasks
     output_contracts:
@@ -89,7 +78,7 @@ steps:
 
   - name: review-tasks
     edit: false
-    persona: reviewer
+    persona: kiro-reviewer
     policy:
       - kiro-artifact-operations
       - kiro-spec-lifecycle

@@ -1,4 +1,4 @@
-{extends: validation}
+{extends: supervisor-validation}
 
 # Kiro Batch Summary Output Contract
 

@@ -1,8 +1,8 @@
-{extends: validation}
+{extends: supervisor-validation}
 
 # Kiro Implementation Result Output Contract
 
-Full custom reason: N/A; this facet extends the built-in validation output contract and defines selected task implementation fields.
+Full custom reason: N/A; this facet extends the built-in supervisor-validation output contract and defines selected task implementation fields.
 
 ## Machine Fields
 

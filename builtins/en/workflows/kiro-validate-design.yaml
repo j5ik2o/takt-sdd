@@ -1,12 +1,6 @@
 name: kiro-validate-design
 description: Kiro - Read-only design readiness validation
 # Checks Boundary Commitments and File Structure Plan without editing design artifacts.
-workflow_config:
-  provider_options:
-    codex:
-      network_access: true
-    opencode:
-      network_access: true
 max_steps: 5
 initial_step: collect-design-evidence
 

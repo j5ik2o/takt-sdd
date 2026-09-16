@@ -1,4 +1,4 @@
-{extends: validation}
+{extends: supervisor-validation}
 
 # Kiro Discovery Result Output Contract
 

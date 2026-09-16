@@ -1,13 +1,10 @@
 name: kiro-spec-quick
 description: Kiro - Compose init, requirements, design, tasks, and final sanity review in one workflow
-workflow_config:
-  provider_options:
-    codex:
-      network_access: true
-    opencode:
-      network_access: true
 max_steps: 30
 initial_step: quick-init
+
+personas:
+  kiro-reviewer: ./personas/kiro-reviewer.md
 
 instructions:
   kiro-spec-init: ../facets/instructions/kiro-spec-init.md
@@ -137,7 +134,7 @@ steps:
 
   - name: quick-review-requirements
     edit: false
-    persona: reviewer
+    persona: kiro-reviewer
     policy:
       - kiro-artifact-operations
       - kiro-spec-lifecycle
@@ -211,16 +208,6 @@ steps:
       - kiro-spec-generation
     knowledge:
       - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Write
-          - Bash
-          - WebSearch
-          - WebFetch
     required_permission_mode: edit
     instruction: kiro-spec-design
     output_contracts:
@@ -341,14 +328,6 @@ steps:
       - kiro-spec-task-annotations
     knowledge:
       - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Write
-          - Bash
     required_permission_mode: edit
     instruction: kiro-spec-tasks
     output_contracts:
@@ -380,7 +359,7 @@ steps:
 
   - name: quick-review-tasks
     edit: false
-    persona: reviewer
+    persona: kiro-reviewer
     policy:
       - kiro-artifact-operations
       - kiro-spec-lifecycle
@@ -462,7 +441,7 @@ steps:
 
   - name: quick-sanity-review
     edit: false
-    persona: reviewer
+    persona: kiro-reviewer
     policy:
       - kiro-artifact-operations
       - kiro-spec-lifecycle

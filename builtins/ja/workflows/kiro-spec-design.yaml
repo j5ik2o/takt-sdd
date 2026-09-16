@@ -1,11 +1,5 @@
 name: kiro-spec-design
 description: Kiro - approved requirements から design.md と research.md を生成する
-workflow_config:
-  provider_options:
-    codex:
-      network_access: true
-    opencode:
-      network_access: true
 max_steps: 14
 initial_step: generate-design
 
@@ -48,16 +42,6 @@ steps:
       - kiro-spec-generation
     knowledge:
       - architecture
-    provider_options:
-      claude:
-        allowed_tools:
-          - Read
-          - Glob
-          - Grep
-          - Write
-          - Bash
-          - WebSearch
-          - WebFetch
     required_permission_mode: edit
     instruction: kiro-spec-design
     output_contracts:
