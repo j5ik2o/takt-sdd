@@ -33,7 +33,7 @@ takt-sdd uses [takt](https://github.com/nrslib/takt)'s state-machine-based workf
 
 ## Prerequisites
 
-- Node.js 22.22.0+
+- Node.js 24.x
 - `takt-sdd` uses the `takt` dependency bundled with the installed package for workflow execution. A project-local `takt` dependency or copied `.takt/` directory is not required for ordinary use.
 
 ## Global CLI

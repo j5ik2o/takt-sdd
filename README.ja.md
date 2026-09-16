@@ -33,7 +33,7 @@ takt-sdd は [takt](https://github.com/nrslib/takt) のステートマシンベ�
 
 ## 前提条件
 
-- Node.js 22.22.0+
+- Node.js 24.x
 - `takt-sdd` は workflow 実行時に installed package に同梱された `takt` dependency を使う。通常利用では project-local `takt` dependency やコピー済み `.takt/` は必須ではない。
 
 ## Global CLI
