@@ -1,3 +1,10 @@
+## [2.3.1](https://github.com/j5ik2o/takt-sdd/compare/v2.3.0...v2.3.1) (2026-09-16)
+
+
+### Bug Fixes
+
+* restore workflow compatibility with TAKT 0.65 ([81e4f64](https://github.com/j5ik2o/takt-sdd/commit/81e4f641b3e3d6e3802e86a83b00dbc7f8a96b11))
+
 ## [2.3.0](https://github.com/j5ik2o/takt-sdd/compare/v2.2.2...v2.3.0) (2026-06-29)
 
 
