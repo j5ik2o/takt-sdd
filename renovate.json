@@ -14,5 +14,6 @@
       "matchPackageNames": ["typescript"],
       "allowedVersions": "6.x"
     }
-  ]
+  ],
+  "enabled": false
 }
